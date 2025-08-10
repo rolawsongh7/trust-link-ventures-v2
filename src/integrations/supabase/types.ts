@@ -757,6 +757,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_customer_for_quote: {
+        Args: {
+          p_company_name: string
+          p_contact_name: string
+          p_email: string
+          p_country: string
+          p_industry?: string
+          p_notes?: string
+        }
+        Returns: string
+      }
+      create_lead_for_quote: {
+        Args: {
+          p_customer_id: string
+          p_title: string
+          p_description: string
+          p_source?: string
+          p_lead_score?: number
+        }
+        Returns: string
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: string
