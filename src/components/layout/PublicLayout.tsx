@@ -1,12 +1,12 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { AppHeader } from './AppHeader';
+import { PublicHeader } from './PublicHeader';
 import Footer from './Footer';
 
 export const PublicLayout = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <AppHeader onOpenCommandPalette={() => {}} />
+      <PublicHeader />
       
       <main className="flex-1">
         <Outlet />
