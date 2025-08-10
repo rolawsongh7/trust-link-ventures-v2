@@ -608,6 +608,162 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_description: string | null
+          product_name: string
+          quantity: number
+          quote_id: string
+          specifications: string | null
+          total_price: number
+          unit: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_description?: string | null
+          product_name: string
+          quantity?: number
+          quote_id: string
+          specifications?: string | null
+          total_price?: number
+          unit?: string
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_description?: string | null
+          product_name?: string
+          quantity?: number
+          quote_id?: string
+          specifications?: string | null
+          total_price?: number
+          unit?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_request_items: {
+        Row: {
+          created_at: string
+          id: string
+          preferred_grade: string | null
+          product_name: string
+          quantity: number
+          quote_request_id: string
+          specifications: string | null
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          preferred_grade?: string | null
+          product_name: string
+          quantity?: number
+          quote_request_id: string
+          specifications?: string | null
+          unit?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          preferred_grade?: string | null
+          product_name?: string
+          quantity?: number
+          quote_request_id?: string
+          specifications?: string | null
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_request_items_quote_request_id_fkey"
+            columns: ["quote_request_id"]
+            isOneToOne: false
+            referencedRelation: "quote_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          customer_id: string | null
+          expected_delivery_date: string | null
+          id: string
+          lead_company_name: string | null
+          lead_contact_name: string | null
+          lead_country: string | null
+          lead_email: string | null
+          lead_industry: string | null
+          lead_phone: string | null
+          message: string | null
+          request_type: string
+          status: string
+          title: string
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          customer_id?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          lead_company_name?: string | null
+          lead_contact_name?: string | null
+          lead_country?: string | null
+          lead_email?: string | null
+          lead_industry?: string | null
+          lead_phone?: string | null
+          message?: string | null
+          request_type?: string
+          status?: string
+          title: string
+          updated_at?: string
+          urgency?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          customer_id?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          lead_company_name?: string | null
+          lead_contact_name?: string | null
+          lead_country?: string | null
+          lead_email?: string | null
+          lead_industry?: string | null
+          lead_phone?: string | null
+          message?: string | null
+          request_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quotes: {
         Row: {
           created_at: string
