@@ -1,0 +1,43 @@
+{
+  "appId": "app.lovable.747d765560614215adc70c8134db2cfc",
+  "appName": "trust-link-ventures-v2",
+  "webDir": "dist",
+  "server": {
+    "url": "https://747d7655-6061-4215-adc7-0c8134db2cfc.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  },
+  "plugins": {
+    "Camera": {
+      "permissions": [
+        "camera",
+        "photos"
+      ]
+    },
+    "Geolocation": {
+      "permissions": [
+        "location"
+      ]
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#488AFF",
+      "sound": "beep.wav"
+    }
+  },
+  "cordova": {},
+  "ios": {
+    "scheme": "trust-link-ventures-v2"
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": "",
+      "keystorePassword": "",
+      "keystoreAlias": "",
+      "keystoreAliasPassword": "",
+      "releaseType": "APK"
+    }
+  }
+}
