@@ -18,6 +18,7 @@ import CRM from "./pages/CRM";
 import CustomerPortal from "./pages/CustomerPortal";
 import AdminLogin from "./pages/AdminLogin";
 import Cookies from "./pages/Cookies";
+import Products from "./pages/Products";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +41,7 @@ const App = () => (
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/cookies" element={<Cookies />} />
-              <Route path="/products" element={<div>Products Page</div>} />
+              <Route path="/products" element={<Products />} />
               <Route path="/customers" element={<div>Customers Page</div>} />
               <Route path="/quote-requests" element={<div>Quote Requests Page</div>} />
               <Route path="/partners" element={<Partners />} />
