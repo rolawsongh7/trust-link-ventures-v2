@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { PublicLayout } from "@/components/layout/PublicLayout";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Auth from "./pages/Auth";
@@ -35,31 +36,40 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Public routes */}
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/partners" element={<Partners />} />
+              <Route path="/ventures" element={<Ventures />} />
+              <Route path="/quote-request" element={<QuoteRequest />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/cookies" element={<Cookies />} />
+            </Route>
+            
+            {/* Auth routes (standalone) */}
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/customer-portal" element={<CustomerPortal />} />
             <Route path="/admin-login" element={<AdminLogin />} />
+            
+            {/* Protected routes */}
             <Route element={<AppLayout />}>
-              <Route path="/" element={<Home />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/crm" element={<CRM />} />
               <Route path="/analytics" element={<Analytics />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/cookies" element={<Cookies />} />
-              <Route path="/products" element={<Products />} />
               <Route path="/customers" element={<div>Customers Page</div>} />
               <Route path="/quote-requests" element={<div>Quote Requests Page</div>} />
-              <Route path="/quote-request" element={<QuoteRequest />} />
               <Route path="/quote-system" element={<QuoteSystem />} />
-              <Route path="/partners" element={<Partners />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/ventures" element={<Ventures />} />
-              <Route path="/about" element={<About />} />
               <Route path="/settings" element={<div>Settings Page</div>} />
               <Route path="/notifications" element={<div>Notifications Page</div>} />
-              <Route path="*" element={<NotFound />} />
             </Route>
+            
+            {/* Catch all route */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
