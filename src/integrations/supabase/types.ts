@@ -812,6 +812,15 @@ export type Database = {
       }
     }
     Enums: {
+      communication_type: "email" | "phone" | "meeting" | "note"
+      lead_status:
+        | "new"
+        | "contacted"
+        | "qualified"
+        | "proposal"
+        | "negotiation"
+        | "closed_won"
+        | "closed_lost"
       user_role: "admin" | "user" | "moderator"
     }
     CompositeTypes: {
@@ -940,6 +949,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      communication_type: ["email", "phone", "meeting", "note"],
+      lead_status: [
+        "new",
+        "contacted",
+        "qualified",
+        "proposal",
+        "negotiation",
+        "closed_won",
+        "closed_lost",
+      ],
       user_role: ["admin", "user", "moderator"],
     },
   },
