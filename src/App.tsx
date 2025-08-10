@@ -8,6 +8,10 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import CRM from "./pages/CRM";
+import CustomerPortal from "./pages/CustomerPortal";
+import AdminLogin from "./pages/AdminLogin";
+import Cookies from "./pages/Cookies";
 
 const queryClient = new QueryClient();
 
@@ -20,11 +24,14 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/customer-portal" element={<CustomerPortal />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
             <Route element={<AppLayout />}>
               <Route path="/" element={<Index />} />
+              <Route path="/crm" element={<CRM />} />
+              <Route path="/cookies" element={<Cookies />} />
               <Route path="/products" element={<div>Products Page</div>} />
               <Route path="/customers" element={<div>Customers Page</div>} />
-              <Route path="/crm" element={<div>CRM Page</div>} />
               <Route path="/analytics" element={<div>Analytics Page</div>} />
               <Route path="/quote-requests" element={<div>Quote Requests Page</div>} />
               <Route path="/partners" element={<div>Partners Page</div>} />
