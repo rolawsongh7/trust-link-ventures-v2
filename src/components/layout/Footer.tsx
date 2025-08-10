@@ -4,7 +4,7 @@ import { Mail, Phone, MapPin, Linkedin, Twitter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { TermsDialog, PrivacyDialog, CookiesDialog } from '@/components/legal/LegalDialogs';
 
 const Footer = () => {
   const [email, setEmail] = useState('');
@@ -24,66 +24,6 @@ const Footer = () => {
       console.error('Newsletter subscription error:', error);
     }
   };
-
-  const TermsDialog = ({ trigger }: { trigger: React.ReactNode }) => (
-    <Dialog>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Terms of Service</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 text-sm">
-          <p>Last updated: January 2025</p>
-          <h3 className="font-semibold">1. Acceptance of Terms</h3>
-          <p>By accessing and using Trust Link Ventures services, you accept and agree to be bound by the terms and provision of this agreement.</p>
-          <h3 className="font-semibold">2. Services</h3>
-          <p>Trust Link Ventures provides food export and supply chain management services. We reserve the right to modify or discontinue services at any time.</p>
-          <h3 className="font-semibold">3. User Responsibilities</h3>
-          <p>Users must provide accurate information and comply with all applicable laws and regulations when using our services.</p>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-
-  const PrivacyDialog = ({ trigger }: { trigger: React.ReactNode }) => (
-    <Dialog>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Privacy Policy</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 text-sm">
-          <p>Last updated: January 2025</p>
-          <h3 className="font-semibold">Information We Collect</h3>
-          <p>We collect information you provide directly to us, such as when you create an account, make a purchase, or contact us.</p>
-          <h3 className="font-semibold">How We Use Your Information</h3>
-          <p>We use the information we collect to provide, maintain, and improve our services, process transactions, and communicate with you.</p>
-          <h3 className="font-semibold">Information Sharing</h3>
-          <p>We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this policy.</p>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-
-  const CookiesDialog = ({ trigger }: { trigger: React.ReactNode }) => (
-    <Dialog>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Cookie Policy</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 text-sm">
-          <p>Last updated: January 2025</p>
-          <h3 className="font-semibold">What Are Cookies</h3>
-          <p>Cookies are small text files that are stored on your computer or mobile device when you visit our website.</p>
-          <h3 className="font-semibold">How We Use Cookies</h3>
-          <p>We use cookies to improve your experience on our website, remember your preferences, and analyze how our website is used.</p>
-          <h3 className="font-semibold">Managing Cookies</h3>
-          <p>You can control and manage cookies in your browser settings. Please note that removing or blocking cookies may impact your user experience.</p>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
 
   return (
     <footer className="bg-sidebar border-t border-border mt-auto">

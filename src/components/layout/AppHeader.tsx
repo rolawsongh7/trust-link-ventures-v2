@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Search, Bell, User, LogOut } from 'lucide-react';
+import { Search, Bell, User, LogOut, Package, MessageSquare, Shield } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,9 +21,15 @@ interface AppHeaderProps {
 
 export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) => {
   const { user, signOut } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const ADMIN_EMAIL = 'trustlinkventureslimitedghana@gmail.com';
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   const handleSignOut = async () => {
     await signOut();
+    navigate('/');
   };
 
   const getInitials = (name?: string) => {
@@ -33,6 +40,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  // Use admin email prefix for display name  
+  const getDisplayName = () => {
+    if (isAdmin) {
+      return 'trustlinkventureslimitedghana';
+    }
+    return user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
   };
 
   return (
@@ -83,7 +98,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    {user?.user_metadata?.full_name || 'User'}
+                    {getDisplayName()}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user?.email}
@@ -91,10 +106,54 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
+              
+              {/* Enhanced dropdown items based on admin/customer status */}
+              {isAdmin ? (
+                <>
+                  {location.pathname !== '/crm' && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/customer-portal" className="flex items-center space-x-2 cursor-pointer">
+                          <Package className="mr-2 h-4 w-4" />
+                          <span>Customer Portal</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link to="/customer-portal" className="flex items-center space-x-2 cursor-pointer">
+                      <Package className="mr-2 h-4 w-4" />
+                      <span>Previous Orders</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/contact" className="flex items-center space-x-2 cursor-pointer">
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      <span>Previous Messages</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/auth" className="flex items-center space-x-2 cursor-pointer">
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Login & Security</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  {/* Show admin login option for customers */}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin-login" className="flex items-center space-x-2 cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Admin Login</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+              
+              <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <Bell className="mr-2 h-4 w-4" />
                 <span>Notifications</span>
