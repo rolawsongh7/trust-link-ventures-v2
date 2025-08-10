@@ -109,6 +109,101 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
+
+  /* Interactive Elements */
+  .story-link {
+    @apply relative inline-block after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left;
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+  
+  .interactive-element {
+    @apply transition-all duration-200 hover:scale-[1.02] hover:shadow-md focus:scale-[1.02] focus:shadow-md;
+  }
+
+  .focus-enhanced:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+
+  /* Card Variants */
+  .card-glass {
+    @apply bg-background/80 backdrop-blur-sm border border-white/20;
+  }
+
+  .geometric-border {
+    @apply relative overflow-hidden before:absolute before:inset-0 before:p-[1px] before:bg-gradient-to-r before:from-primary/50 before:to-accent/50 before:rounded-lg;
+  }
+
+  .geometric-border > * {
+    @apply relative bg-background rounded-[calc(0.5rem-1px)];
+  }
+
+  .brand-pattern-overlay {
+    @apply relative overflow-hidden;
+  }
+
+  .brand-pattern-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0);
+    background-size: 20px 20px;
+    pointer-events: none;
+  }
+
+  /* Loading States */
+  .loading-shimmer {
+    @apply bg-gradient-to-r from-muted via-muted/50 to-muted bg-[length:200%_100%] animate-shimmer;
+  }
+
+  .skeleton-line {
+    @apply h-4 bg-muted rounded animate-pulse;
+  }
+
+  .skeleton-avatar {
+    @apply h-12 w-12 bg-muted rounded-full animate-pulse;
+  }
+
+  .skeleton-card {
+    @apply h-32 bg-muted rounded-lg animate-pulse;
+  }
+
+  /* Haptic Feedback */
+  .haptic-feedback:active {
+    @apply scale-95 transition-transform duration-75;
+  }
+
+  /* Hover Effects */
+  .hover-glow:hover {
+    @apply shadow-[0_0_20px_rgba(var(--primary),0.3)];
+  }
+
+  /* Animation utilities */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* Success/Error states */
+  .success-pulse {
+    @apply bg-green-500/10 border-green-500/20 animate-pulse-glow;
+  }
+
+  .error-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
