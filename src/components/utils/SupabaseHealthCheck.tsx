@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { SUPABASE_CONFIG } from '@/config/supabase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle, AlertTriangle, Info } from 'lucide-react';
 
@@ -11,21 +12,10 @@ export const SupabaseHealthCheck = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        // Test connection with a simple query
-        const { data, error } = await supabase.from('profiles').select('count').limit(1);
+        // Test connection with a simple query and get additional details
+        const { data, error } = await supabase.from('user_roles').select('count').limit(1);
         
         if (error) {
-          // If profiles table doesn't exist, that's still a successful connection
-          if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
-            // Connection is healthy, just no profiles table yet
-            setStatus('healthy');
-            setConnectionDetails({
-              url: 'Connected to Supabase',
-              timestamp: new Date().toLocaleString(),
-              note: 'Connected (some tables may not exist yet)'
-            });
-            return;
-          }
           throw new Error(`Database connection failed: ${error.message}`);
         }
 
@@ -33,7 +23,8 @@ export const SupabaseHealthCheck = () => {
         const { data: { user } } = await supabase.auth.getUser();
         
         setConnectionDetails({
-          url: 'Connected to Supabase',
+          projectId: SUPABASE_CONFIG.expectedProjectId,
+          url: SUPABASE_CONFIG.url,
           timestamp: new Date().toLocaleString(),
           userConnected: !!user
         });
@@ -74,10 +65,10 @@ export const SupabaseHealthCheck = () => {
           <AlertTitle className="text-green-800">Trust Link Ventures - Backend Connected</AlertTitle>
           <AlertDescription className="text-green-700 mt-2">
             <div className="space-y-1 text-sm">
+              <div><strong>Project ID:</strong> {connectionDetails?.projectId}</div>
               <div><strong>Project URL:</strong> {connectionDetails?.url}</div>
               <div><strong>Last Verified:</strong> {connectionDetails?.timestamp}</div>
-              <div><strong>Status:</strong> ✅ Ready for use</div>
-              {connectionDetails?.note && <div><strong>Note:</strong> {connectionDetails.note}</div>}
+              <div><strong>Status:</strong> ✅ Separate from New Gen Link</div>
             </div>
           </AlertDescription>
         </Alert>
@@ -92,7 +83,7 @@ export const SupabaseHealthCheck = () => {
       <AlertDescription className="text-red-700 mt-2">
         <div className="space-y-1 text-sm">
           <div><strong>Error:</strong> {error}</div>
-          <div><strong>Project:</strong> Trust Link Ventures</div>
+          <div><strong>Expected Project:</strong> Trust Link Ventures (ppyfrftmexvgnsxlhdbz)</div>
         </div>
       </AlertDescription>
     </Alert>
