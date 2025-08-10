@@ -1466,6 +1466,10 @@ export type Database = {
         Args: { check_user_id: string; required_role: string }
         Returns: boolean
       }
+      cleanup_expired_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       create_customer_for_quote: {
         Args: {
           p_company_name: string
@@ -1487,9 +1491,50 @@ export type Database = {
         }
         Returns: string
       }
+      enhanced_audit_log: {
+        Args: {
+          p_action: string
+          p_table_name?: string
+          p_record_id?: string
+          p_old_data?: Json
+          p_new_data?: Json
+          p_ip_address?: unknown
+          p_user_agent?: string
+          p_risk_level?: string
+        }
+        Returns: undefined
+      }
+      get_password_policy: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: string
+      }
+      log_security_event: {
+        Args: {
+          p_event_type: string
+          p_user_id?: string
+          p_event_data?: Json
+          p_ip_address?: unknown
+          p_user_agent?: string
+          p_severity?: string
+        }
+        Returns: undefined
+      }
+      validate_file_upload: {
+        Args: {
+          p_filename: string
+          p_mime_type: string
+          p_file_size: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      validate_session: {
+        Args: { p_session_token: string }
+        Returns: boolean
       }
     }
     Enums: {
