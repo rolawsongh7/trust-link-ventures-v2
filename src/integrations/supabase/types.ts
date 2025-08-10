@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      activities: {
+        Row: {
+          activity_date: string
+          activity_type: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          lead_id: string | null
+          status: string | null
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          activity_date?: string
+          activity_type: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          activity_date?: string
+          activity_type?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       communications: {
         Row: {
           communication_date: string
@@ -71,53 +131,100 @@ export type Database = {
       customers: {
         Row: {
           address: string | null
+          annual_revenue: number | null
           assigned_to: string | null
           city: string | null
           company_name: string
           contact_name: string | null
           country: string | null
           created_at: string
+          customer_status: string | null
           email: string | null
           id: string
           industry: string | null
+          last_contact_date: string | null
           notes: string | null
           phone: string | null
+          priority: string | null
+          tags: string[] | null
           updated_at: string
           website: string | null
         }
         Insert: {
           address?: string | null
+          annual_revenue?: number | null
           assigned_to?: string | null
           city?: string | null
           company_name: string
           contact_name?: string | null
           country?: string | null
           created_at?: string
+          customer_status?: string | null
           email?: string | null
           id?: string
           industry?: string | null
+          last_contact_date?: string | null
           notes?: string | null
           phone?: string | null
+          priority?: string | null
+          tags?: string[] | null
           updated_at?: string
           website?: string | null
         }
         Update: {
           address?: string | null
+          annual_revenue?: number | null
           assigned_to?: string | null
           city?: string | null
           company_name?: string
           contact_name?: string | null
           country?: string | null
           created_at?: string
+          customer_status?: string | null
           email?: string | null
           id?: string
           industry?: string | null
+          last_contact_date?: string | null
           notes?: string | null
           phone?: string | null
+          priority?: string | null
+          tags?: string[] | null
           updated_at?: string
           website?: string | null
         }
         Relationships: []
+      }
+      entity_tags: {
+        Row: {
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          tag_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          tag_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          tag_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leads: {
         Row: {
@@ -127,6 +234,9 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          last_activity_date: string | null
+          lead_score: number | null
+          next_follow_up_date: string | null
           notes: string | null
           phone: string | null
           source: string | null
@@ -140,6 +250,9 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          last_activity_date?: string | null
+          lead_score?: number | null
+          next_follow_up_date?: string | null
           notes?: string | null
           phone?: string | null
           source?: string | null
@@ -153,6 +266,9 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          last_activity_date?: string | null
+          lead_score?: number | null
+          next_follow_up_date?: string | null
           notes?: string | null
           phone?: string | null
           source?: string | null
@@ -160,6 +276,142 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      opportunities: {
+        Row: {
+          actual_close_date: string | null
+          assigned_to: string | null
+          close_reason: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          description: string | null
+          expected_close_date: string | null
+          id: string
+          name: string
+          probability: number | null
+          source: string | null
+          stage: string
+          updated_at: string
+          value: number | null
+        }
+        Insert: {
+          actual_close_date?: string | null
+          assigned_to?: string | null
+          close_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          description?: string | null
+          expected_close_date?: string | null
+          id?: string
+          name: string
+          probability?: number | null
+          source?: string | null
+          stage?: string
+          updated_at?: string
+          value?: number | null
+        }
+        Update: {
+          actual_close_date?: string | null
+          assigned_to?: string | null
+          close_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          description?: string | null
+          expected_close_date?: string | null
+          id?: string
+          name?: string
+          probability?: number | null
+          source?: string | null
+          stage?: string
+          updated_at?: string
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_stages: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          position: number
+          probability: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          position: number
+          probability?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          position?: number
+          probability?: number | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          supplier_id: string | null
+          unit: string | null
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          supplier_id?: string | null
+          unit?: string | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          supplier_id?: string | null
+          unit?: string | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -302,6 +554,30 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           website?: string | null
+        }
+        Relationships: []
+      }
+      tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          entity_type: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          entity_type: string
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          entity_type?: string
+          id?: string
+          name?: string
         }
         Relationships: []
       }
