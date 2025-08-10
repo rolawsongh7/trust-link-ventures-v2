@@ -101,6 +101,42 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          session_id: string | null
+          severity: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          session_id?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          session_id?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       communications: {
         Row: {
           communication_date: string
@@ -182,6 +218,48 @@ export type Database = {
           ip_address?: unknown | null
           user_agent?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      csp_violations: {
+        Row: {
+          blocked_uri: string | null
+          column_number: number | null
+          created_at: string
+          document_uri: string | null
+          id: string
+          ip_address: unknown | null
+          line_number: number | null
+          source_file: string | null
+          user_agent: string | null
+          user_id: string | null
+          violated_directive: string | null
+        }
+        Insert: {
+          blocked_uri?: string | null
+          column_number?: number | null
+          created_at?: string
+          document_uri?: string | null
+          id?: string
+          ip_address?: unknown | null
+          line_number?: number | null
+          source_file?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          violated_directive?: string | null
+        }
+        Update: {
+          blocked_uri?: string | null
+          column_number?: number | null
+          created_at?: string
+          document_uri?: string | null
+          id?: string
+          ip_address?: unknown | null
+          line_number?: number | null
+          source_file?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          violated_directive?: string | null
         }
         Relationships: []
       }
@@ -337,6 +415,57 @@ export type Database = {
           id?: string
           ip_address?: unknown | null
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      file_uploads: {
+        Row: {
+          created_at: string
+          file_hash: string | null
+          file_size: number
+          file_type: string
+          filename: string
+          id: string
+          metadata: Json | null
+          storage_path: string | null
+          updated_at: string
+          upload_ip: unknown | null
+          user_id: string
+          validation_errors: string[] | null
+          validation_status: string
+          virus_scan_status: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_hash?: string | null
+          file_size: number
+          file_type: string
+          filename: string
+          id?: string
+          metadata?: Json | null
+          storage_path?: string | null
+          updated_at?: string
+          upload_ip?: unknown | null
+          user_id: string
+          validation_errors?: string[] | null
+          validation_status?: string
+          virus_scan_status?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_hash?: string | null
+          file_size?: number
+          file_type?: string
+          filename?: string
+          id?: string
+          metadata?: Json | null
+          storage_path?: string | null
+          updated_at?: string
+          upload_ip?: unknown | null
+          user_id?: string
+          validation_errors?: string[] | null
+          validation_status?: string
+          virus_scan_status?: string | null
         }
         Relationships: []
       }
@@ -964,6 +1093,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rate_limit_attempts: {
+        Row: {
+          attempt_count: number
+          created_at: string
+          id: string
+          identifier: string
+          last_attempt: string
+          window_start: string
+        }
+        Insert: {
+          attempt_count?: number
+          created_at?: string
+          id?: string
+          identifier: string
+          last_attempt?: string
+          window_start?: string
+        }
+        Update: {
+          attempt_count?: number
+          created_at?: string
+          id?: string
+          identifier?: string
+          last_attempt?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
+      security_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          alert_type: string
+          created_at: string
+          description: string
+          id: string
+          metadata: Json | null
+          resolved_at: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          alert_type: string
+          created_at?: string
+          description: string
+          id?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          severity: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          alert_type?: string
+          created_at?: string
+          description?: string
+          id?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       security_events: {
         Row: {
