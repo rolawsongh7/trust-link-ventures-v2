@@ -2,6 +2,83 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Animation utilities for enhanced UI components */
+@layer utilities {
+  /* Button animations */
+  .ripple-effect {
+    @apply relative overflow-hidden;
+  }
+  
+  .ripple-effect::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+  
+  .ripple-effect:active::before {
+    width: 300px;
+    height: 300px;
+  }
+  
+  .magnetic-hover {
+    @apply transition-transform duration-300 ease-out;
+  }
+  
+  .magnetic-hover:hover {
+    @apply scale-105;
+  }
+  
+  .button-press {
+    @apply transition-transform duration-100;
+  }
+  
+  .button-press:active {
+    @apply scale-95;
+  }
+  
+  .focus-ring:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2;
+  }
+  
+  .touch-feedback {
+    @apply active:scale-95 transition-transform duration-100;
+  }
+  
+  /* Card animations */
+  .card-elevated {
+    @apply shadow-sm transition-shadow duration-300;
+  }
+  
+  .hover-lift-shadow:hover {
+    @apply shadow-lg transform -translate-y-1;
+  }
+  
+  /* Scroll animations */
+  .scroll-fade {
+    @apply opacity-0 translate-y-4 transition-all duration-700 ease-out;
+  }
+  
+  .scroll-fade.in-view {
+    @apply opacity-100 translate-y-0;
+  }
+  
+  /* Layout utilities */
+  .container-balanced {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .fluid-spacing {
+    @apply space-y-4 sm:space-y-6 lg:space-y-8;
+  }
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
