@@ -781,6 +781,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_user_role: {
+        Args: { check_user_id: string; required_role: string }
+        Returns: boolean
+      }
       create_customer_for_quote: {
         Args: {
           p_company_name: string
