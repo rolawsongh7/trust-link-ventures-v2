@@ -10,6 +10,31 @@ interface QuoteConfirmationData {
 
 export class EmailService {
   /**
+   * Send MFA enabled alert email
+   */
+  static async sendMFAEnabledAlert(email: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: email,
+          subject: 'Multi-Factor Authentication Enabled - SeaPro SAS',
+          type: 'security-alert',
+          data: {
+            alertType: 'MFA Enabled',
+            message: 'Multi-factor authentication has been successfully enabled on your account.',
+            timestamp: new Date().toISOString()
+          }
+        }
+      });
+
+      if (error) throw error;
+      return data?.success || false;
+    } catch (error) {
+      console.error('Error sending MFA enabled alert:', error);
+      return false;
+    }
+  }
+  /**
    * Send welcome email to new users
    */
   static async sendWelcomeEmail(email: string, name?: string): Promise<boolean> {

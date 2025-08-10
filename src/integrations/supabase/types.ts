@@ -251,6 +251,36 @@ export type Database = {
         }
         Relationships: []
       }
+      device_fingerprints: {
+        Row: {
+          created_at: string
+          device_info: Json | null
+          fingerprint_hash: string
+          first_seen: string
+          id: string
+          last_seen: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: Json | null
+          fingerprint_hash: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: Json | null
+          fingerprint_hash?: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       entity_tags: {
         Row: {
           created_at: string
@@ -282,6 +312,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      failed_login_attempts: {
+        Row: {
+          attempt_time: string
+          created_at: string
+          email: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+        }
+        Insert: {
+          attempt_time?: string
+          created_at?: string
+          email: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+        }
+        Update: {
+          attempt_time?: string
+          created_at?: string
+          email?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      ip_whitelist: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          ip_address: unknown
+          is_active: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          ip_address: unknown
+          is_active?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          ip_address?: unknown
+          is_active?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       leads: {
         Row: {
@@ -480,6 +570,45 @@ export type Database = {
           password_hash?: string
           strength_score?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      password_policies: {
+        Row: {
+          created_at: string
+          id: number
+          max_age_days: number | null
+          min_length: number
+          prevent_reuse_count: number | null
+          require_lowercase: boolean
+          require_numbers: boolean
+          require_special_chars: boolean
+          require_uppercase: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          max_age_days?: number | null
+          min_length?: number
+          prevent_reuse_count?: number | null
+          require_lowercase?: boolean
+          require_numbers?: boolean
+          require_special_chars?: boolean
+          require_uppercase?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          max_age_days?: number | null
+          min_length?: number
+          prevent_reuse_count?: number | null
+          require_lowercase?: boolean
+          require_numbers?: boolean
+          require_special_chars?: boolean
+          require_uppercase?: boolean
+          updated_at?: string
         }
         Relationships: []
       }
@@ -836,6 +965,36 @@ export type Database = {
           },
         ]
       }
+      security_events: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -908,6 +1067,135 @@ export type Database = {
         }
         Relationships: []
       }
+      user_data_exports: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          export_type: string
+          file_url: string | null
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          export_type: string
+          file_url?: string | null
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          export_type?: string
+          file_url?: string | null
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_locations: {
+        Row: {
+          city: string | null
+          country_name: string | null
+          created_at: string
+          id: string
+          ip_address: unknown
+          is_suspicious: boolean | null
+          login_time: string
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          country_name?: string | null
+          created_at?: string
+          id?: string
+          ip_address: unknown
+          is_suspicious?: boolean | null
+          login_time?: string
+          user_id: string
+        }
+        Update: {
+          city?: string | null
+          country_name?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          is_suspicious?: boolean | null
+          login_time?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_login_history: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          location_data: Json | null
+          login_time: string
+          risk_score: number | null
+          success: boolean
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          location_data?: Json | null
+          login_time?: string
+          risk_score?: number | null
+          success?: boolean
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          location_data?: Json | null
+          login_time?: string
+          risk_score?: number | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_mfa_settings: {
+        Row: {
+          backup_codes: string[] | null
+          created_at: string
+          enabled: boolean
+          id: string
+          secret_key: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          backup_codes?: string[] | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          secret_key?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          backup_codes?: string[] | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          secret_key?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -928,6 +1216,42 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: unknown | null
+          is_active: boolean
+          session_id: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean
+          session_id: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean
+          session_id?: string
+          updated_at?: string
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
