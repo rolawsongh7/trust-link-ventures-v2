@@ -11,6 +11,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Contact from "./pages/Contact";
+import Partners from "./pages/Partners";
+import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 import CRM from "./pages/CRM";
 import CustomerPortal from "./pages/CustomerPortal";
@@ -41,7 +43,8 @@ const App = () => (
               <Route path="/products" element={<div>Products Page</div>} />
               <Route path="/customers" element={<div>Customers Page</div>} />
               <Route path="/quote-requests" element={<div>Quote Requests Page</div>} />
-              <Route path="/partners" element={<div>Partners Page</div>} />
+              <Route path="/partners" element={<Partners />} />
+              <Route path="/privacy" element={<Privacy />} />
               <Route path="/ventures" element={<div>Ventures Page</div>} />
               <Route path="/about" element={<div>About Page</div>} />
               <Route path="/settings" element={<div>Settings Page</div>} />
