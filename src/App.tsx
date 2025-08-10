@@ -19,6 +19,10 @@ import CustomerPortal from "./pages/CustomerPortal";
 import AdminLogin from "./pages/AdminLogin";
 import Cookies from "./pages/Cookies";
 import Products from "./pages/Products";
+import QuoteRequest from "./pages/QuoteRequest";
+import QuoteSystem from "./pages/QuoteSystem";
+import Terms from "./pages/Terms";
+import Ventures from "./pages/Ventures";
 
 const queryClient = new QueryClient();
 
@@ -44,9 +48,12 @@ const App = () => (
               <Route path="/products" element={<Products />} />
               <Route path="/customers" element={<div>Customers Page</div>} />
               <Route path="/quote-requests" element={<div>Quote Requests Page</div>} />
+              <Route path="/quote-request" element={<QuoteRequest />} />
+              <Route path="/quote-system" element={<QuoteSystem />} />
               <Route path="/partners" element={<Partners />} />
               <Route path="/privacy" element={<Privacy />} />
-              <Route path="/ventures" element={<div>Ventures Page</div>} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/ventures" element={<Ventures />} />
               <Route path="/about" element={<div>About Page</div>} />
               <Route path="/settings" element={<div>Settings Page</div>} />
               <Route path="/notifications" element={<div>Notifications Page</div>} />
