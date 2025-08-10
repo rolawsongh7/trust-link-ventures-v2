@@ -15,11 +15,11 @@ import { format } from 'date-fns';
 
 interface QuoteRequest {
   id: string;
-  request_type: 'customer' | 'lead';
+  request_type: string;
   title: string;
   message: string;
   urgency: string;
-  status: 'pending' | 'reviewed' | 'quoted' | 'converted' | 'declined';
+  status: string;
   expected_delivery_date?: string;
   customer_id?: string;
   lead_company_name?: string;
@@ -30,6 +30,7 @@ interface QuoteRequest {
   lead_industry?: string;
   admin_notes?: string;
   created_at: string;
+  updated_at: string;
   customer?: {
     company_name: string;
     contact_name: string;

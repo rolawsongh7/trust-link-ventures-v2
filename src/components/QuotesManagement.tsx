@@ -19,9 +19,9 @@ interface Quote {
   total_amount: number;
   currency: string;
   status: string;
-  valid_until: string;
-  terms: string;
-  notes: string;
+  valid_until?: string;
+  description?: string;
+  notes?: string;
   created_at: string;
   customers?: {
     company_name: string;
@@ -116,7 +116,7 @@ const QuotesManagement = () => {
         currency: editingQuote.currency || 'USD',
         status: editingQuote.status || 'draft',
         valid_until: editingQuote.valid_until || '',
-        terms: editingQuote.terms || '',
+        terms: '',
         notes: editingQuote.notes || ''
       });
     }
@@ -135,7 +135,7 @@ const QuotesManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setQuotes(data || []);
+      setQuotes(data || [] as any);
     } catch (error: any) {
       console.error('Error fetching quotes:', error);
       toast({
