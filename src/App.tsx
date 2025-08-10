@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
+import About from "./pages/About";
 import Auth from "./pages/Auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
@@ -54,7 +55,7 @@ const App = () => (
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/ventures" element={<Ventures />} />
-              <Route path="/about" element={<div>About Page</div>} />
+              <Route path="/about" element={<About />} />
               <Route path="/settings" element={<div>Settings Page</div>} />
               <Route path="/notifications" element={<div>Notifications Page</div>} />
               <Route path="*" element={<NotFound />} />
