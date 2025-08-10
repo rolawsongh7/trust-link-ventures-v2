@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          deletion_reason: string | null
+          id: string
+          scheduled_for: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          deletion_reason?: string | null
+          id?: string
+          scheduled_for: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          deletion_reason?: string | null
+          id?: string
+          scheduled_for?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       activities: {
         Row: {
           activity_date: string
@@ -127,6 +154,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      consent_history: {
+        Row: {
+          consent_data: Json
+          consent_type: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          consent_data?: Json
+          consent_type: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          consent_data?: Json
+          consent_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       customers: {
         Row: {
@@ -277,6 +334,39 @@ export type Database = {
         }
         Relationships: []
       }
+      network_security_settings: {
+        Row: {
+          block_tor: boolean
+          block_vpn: boolean
+          created_at: string
+          enable_geo_blocking: boolean
+          id: string
+          risk_threshold: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          block_tor?: boolean
+          block_vpn?: boolean
+          created_at?: string
+          enable_geo_blocking?: boolean
+          id?: string
+          risk_threshold?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          block_tor?: boolean
+          block_vpn?: boolean
+          created_at?: string
+          enable_geo_blocking?: boolean
+          id?: string
+          risk_threshold?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       opportunities: {
         Row: {
           actual_close_date: string | null
@@ -339,6 +429,30 @@ export type Database = {
           },
         ]
       }
+      password_history: {
+        Row: {
+          created_at: string
+          id: string
+          password_hash: string
+          strength_score: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          password_hash: string
+          strength_score: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          password_hash?: string
+          strength_score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       pipeline_stages: {
         Row: {
           created_at: string
@@ -363,6 +477,30 @@ export type Database = {
           name?: string
           position?: number
           probability?: number | null
+        }
+        Relationships: []
+      }
+      privacy_settings: {
+        Row: {
+          created_at: string
+          id: string
+          settings: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          settings?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          settings?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
