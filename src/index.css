@@ -77,6 +77,38 @@
   .fluid-spacing {
     @apply space-y-4 sm:space-y-6 lg:space-y-8;
   }
+
+  /* Enhanced component utilities */
+  .focus-within-enhanced:focus-within {
+    @apply ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  .smart-loading {
+    @apply relative;
+  }
+
+  .smart-loading.loading {
+    @apply opacity-70 pointer-events-none;
+  }
+
+  .smart-loading.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-top: 2px solid #000;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
