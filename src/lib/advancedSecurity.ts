@@ -1,199 +1,74 @@
 import { supabase } from '@/integrations/supabase/client';
+import QRCode from 'qrcode';
 
-// Simplified services for browser compatibility
-
-// Anomaly Detection Service
-export class AnomalyDetectionService {
-  static async detectLoginAnomaly(userId: string, ipAddress: string, userAgent: string) {
-    try {
-      // Get user's login history
-      const { data: loginHistory } = await supabase
-        .from('user_login_history')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      const reasons: string[] = [];
-      let riskScore = 0;
-
-      // Check for unusual IP address
-      const recentIps = loginHistory?.map(login => login.ip_address) || [];
-      if (!recentIps.includes(ipAddress)) {
-        reasons.push('Login from new IP address');
-        riskScore += 30;
-      }
-
-      // Check for unusual user agent
-      const recentAgents = loginHistory?.map(login => login.user_agent) || [];
-      if (!recentAgents.includes(userAgent)) {
-        reasons.push('Login from new device/browser');
-        riskScore += 25;
-      }
-
-      // Check time patterns (simplified)
-      const currentHour = new Date().getHours();
-      const recentHours = loginHistory?.map(login => new Date(login.created_at).getHours()) || [];
-      const isUnusualTime = currentHour < 6 || currentHour > 22;
-      const hasRecentSimilarTime = recentHours.some(hour => Math.abs(hour - currentHour) <= 2);
-      
-      if (isUnusualTime && !hasRecentSimilarTime) {
-        reasons.push('Login at unusual time');
-        riskScore += 20;
-      }
-
-      // Check for rapid successive attempts
-      const recentLogins = loginHistory?.filter(login => 
-        new Date(login.created_at).getTime() > Date.now() - 5 * 60 * 1000
-      ) || [];
-      
-      if (recentLogins.length > 3) {
-        reasons.push('Multiple rapid login attempts');
-        riskScore += 40;
-      }
-
-      // Log the login attempt
-      await supabase
-        .from('user_login_history')
-        .insert({
-          user_id: userId,
-          ip_address: ipAddress,
-          user_agent: userAgent,
-          risk_score: riskScore,
-          anomaly_reasons: reasons
-        });
-
-      return {
-        isAnomalous: riskScore > 40,
-        riskScore,
-        reasons
-      };
-    } catch (error) {
-      console.error('Error detecting anomaly:', error);
-      return {
-        isAnomalous: false,
-        riskScore: 0,
-        reasons: []
-      };
-    }
-  }
-
-  static async logSecurityEvent(userId: string, eventType: string, details: any) {
-    try {
-      await supabase
-        .from('security_events')
-        .insert({
-          user_id: userId,
-          event_type: eventType,
-          event_details: details,
-          created_at: new Date().toISOString()
-        });
-    } catch (error) {
-      console.error('Error logging security event:', error);
-    }
-  }
-}
-
-// Device Fingerprinting Service
-export class DeviceFingerprintService {
-  static async generateFingerprint(): Promise<string> {
-    const components = [
-      navigator.userAgent,
-      navigator.language,
-      navigator.platform,
-      screen.width + 'x' + screen.height,
-      screen.colorDepth,
-      new Date().getTimezoneOffset(),
-      navigator.hardwareConcurrency || 'unknown',
-      (navigator as any).deviceMemory || 'unknown',
-      navigator.cookieEnabled ? '1' : '0'
-    ];
-
-    // Add canvas fingerprint
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.textBaseline = 'top';
-      ctx.font = '14px Arial';
-      ctx.fillText('Device fingerprint test', 2, 2);
-      components.push(canvas.toDataURL());
-    }
-
-    // Create simple hash of all components
-    const data = components.join('|');
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-      const char = data.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return Math.abs(hash).toString(36);
-  }
-
-  static async logDeviceFingerprint() {
-    try {
-      const fingerprint = await this.generateFingerprint();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        await supabase
-          .from('device_fingerprints')
-          .upsert({
-            user_id: user.id,
-            fingerprint_hash: fingerprint,
-            device_info: { userAgent: navigator.userAgent },
-            last_seen: new Date().toISOString()
-          });
-      }
-      
-      return fingerprint;
-    } catch (error) {
-      console.error('Error logging device fingerprint:', error);
-      return null;
-    }
-  }
-
-  static async getDeviceHistory(userId: string) {
-    try {
-      const { data } = await supabase
-        .from('device_fingerprints')
-        .select('*')
-        .eq('user_id', userId)
-        .order('last_seen', { ascending: false });
-
-      return data || [];
-    } catch (error) {
-      console.error('Error getting device history:', error);
-      return [];
-    }
-  }
-}
-
-// Multi-Factor Authentication Service
+// Simple MFA Service without complex OTPAuth dependencies
 export class MFAService {
   static generateSecret(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    // Generate a random 32-character base32 secret
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
     let secret = '';
     for (let i = 0; i < 32; i++) {
-      secret += chars.charAt(Math.floor(Math.random() * chars.length));
+      secret += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
     }
     return secret;
   }
 
-  static generateQRCode(email: string, secret: string, issuer: string = 'SeaproSAS'): string {
-    const otpUrl = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(email)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}`;
-    return otpUrl;
+  static generateQRCode(userEmail: string, secret: string, issuer: string = 'Trust Link Ventures'): string {
+    // Create the otpauth URL manually
+    const params = new URLSearchParams({
+      secret,
+      issuer,
+      algorithm: 'SHA1',
+      digits: '6',
+      period: '30'
+    });
+    
+    return `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(userEmail)}?${params.toString()}`;
   }
 
   static async generateQRCodeImage(otpUrl: string): Promise<string> {
-    // Using a QR code service for demonstration
-    const encodedUrl = encodeURIComponent(otpUrl);
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedUrl}`;
+    try {
+      return await QRCode.toDataURL(otpUrl);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      throw error;
+    }
   }
 
   static verifyToken(secret: string, token: string): boolean {
-    // Simplified verification for demo purposes
-    return token.length === 6 && /^\d+$/.test(token);
+    try {
+      // Simple TOTP verification (for demonstration)
+      // In production, use a proper TOTP library
+      const epoch = Math.floor(Date.now() / 1000);
+      const timeStep = Math.floor(epoch / 30);
+      
+      // Generate expected token (simplified)
+      const expectedToken = this.generateTOTP(secret, timeStep);
+      const previousToken = this.generateTOTP(secret, timeStep - 1);
+      const nextToken = this.generateTOTP(secret, timeStep + 1);
+      
+      return token === expectedToken || token === previousToken || token === nextToken;
+    } catch (error) {
+      console.error('Error verifying token:', error);
+      return false;
+    }
+  }
+
+  private static generateTOTP(secret: string, timeStep: number): string {
+    // Simplified TOTP generation (for demonstration only)
+    // In production, use a proper crypto library
+    const hash = this.simpleHash(secret + timeStep.toString());
+    return (parseInt(hash.slice(-6), 16) % 1000000).toString().padStart(6, '0');
+  }
+
+  private static simpleHash(input: string): string {
+    let hash = 0;
+    for (let i = 0; i < input.length; i++) {
+      const char = input.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(16);
   }
 
   static async enableMFA(userId: string, secret: string): Promise<boolean> {
@@ -202,8 +77,8 @@ export class MFAService {
         .from('user_mfa_settings')
         .upsert({
           user_id: userId,
-          secret_key: secret,
           enabled: true,
+          secret_key: secret,
           updated_at: new Date().toISOString()
         });
 
@@ -218,7 +93,11 @@ export class MFAService {
     try {
       const { error } = await supabase
         .from('user_mfa_settings')
-        .update({ enabled: false, updated_at: new Date().toISOString() })
+        .update({
+          enabled: false,
+          secret_key: null,
+          updated_at: new Date().toISOString()
+        })
         .eq('user_id', userId);
 
       return !error;
@@ -228,139 +107,398 @@ export class MFAService {
     }
   }
 
-  static async getMFAStatus(userId: string): Promise<boolean> {
+  static async getMFASettings(userId: string): Promise<{ enabled: boolean; secret?: string } | null> {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_mfa_settings')
-        .select('enabled')
+        .select('enabled, secret_key')
         .eq('user_id', userId)
         .single();
 
-      return data?.enabled || false;
+      if (error || !data) return null;
+
+      return {
+        enabled: data.enabled,
+        secret: data.secret_key
+      };
     } catch (error) {
-      console.error('Error getting MFA status:', error);
-      return false;
-    }
-  }
-
-  static async verifyMFA(userId: string, token: string): Promise<boolean> {
-    try {
-      const { data } = await supabase
-        .from('user_mfa_settings')
-        .select('secret_key')
-        .eq('user_id', userId)
-        .eq('enabled', true)
-        .single();
-
-      if (!data?.secret_key) {
-        return false;
-      }
-
-      return this.verifyToken(data.secret_key, token);
-    } catch (error) {
-      console.error('Error verifying MFA:', error);
-      return false;
+      console.error('Error getting MFA settings:', error);
+      return null;
     }
   }
 }
 
-// Password Security Service
-export class PasswordSecurityService {
-  static analyzePassword(password: string) {
-    const analysis = {
-      length: password.length >= 8,
-      uppercase: /[A-Z]/.test(password),
-      lowercase: /[a-z]/.test(password),
-      numbers: /\d/.test(password),
-      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-      strength: 0
-    };
+// Device Fingerprinting Service
+export class DeviceFingerprintService {
+  static async generateFingerprint(): Promise<string> {
+    const components = [];
 
-    const checks = [analysis.length, analysis.uppercase, analysis.lowercase, analysis.numbers, analysis.special];
-    analysis.strength = (checks.filter(Boolean).length / checks.length) * 100;
-
-    return analysis;
-  }
-
-  static async checkBreachedPassword(password: string): Promise<boolean> {
-    // Simplified check against common passwords
-    const commonPasswords = ['password', '123456', 'password123', 'admin', 'qwerty'];
-    return commonPasswords.includes(password.toLowerCase());
-  }
-
-  static async logPasswordChange(userId: string) {
+    // Screen information
+    components.push(`screen:${screen.width}x${screen.height}x${screen.colorDepth}`);
+    
+    // Timezone
+    components.push(`tz:${Intl.DateTimeFormat().resolvedOptions().timeZone}`);
+    
+    // Language
+    components.push(`lang:${navigator.language}`);
+    
+    // Platform
+    components.push(`platform:${navigator.platform}`);
+    
+    // User agent (simplified)
+    const ua = navigator.userAgent;
+    // Simple user agent parsing without external library
+    const browserMatch = ua.match(/(Chrome|Firefox|Safari|Edge)\/[\d.]+/);
+    const browser = browserMatch ? browserMatch[0] : 'Unknown';
+    components.push(`browser:${browser}`);
+    
+    // Canvas fingerprinting
     try {
-      await supabase
-        .from('password_history')
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('Device fingerprint', 2, 2);
+        components.push(`canvas:${canvas.toDataURL().slice(-100)}`);
+      }
+    } catch (e) {
+      components.push('canvas:blocked');
+    }
+
+    // Hardware concurrency
+    components.push(`cores:${navigator.hardwareConcurrency || 'unknown'}`);
+    
+    // Memory (if available)
+    if ('memory' in performance) {
+      components.push(`memory:${(performance as any).memory.jsHeapSizeLimit}`);
+    }
+
+    const fingerprint = components.join('|');
+    return this.hashString(fingerprint);
+  }
+
+  private static async hashString(str: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  static async logDeviceFingerprint(userId?: string): Promise<void> {
+    try {
+      const fingerprint = await this.generateFingerprint();
+      
+      const { error } = await supabase
+        .from('device_fingerprints')
+        .upsert({
+          user_id: userId!,
+          fingerprint_hash: fingerprint,
+          device_info: {
+            user_agent: navigator.userAgent,
+            screen: `${screen.width}x${screen.height}`,
+            language: navigator.language,
+            platform: navigator.platform,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+          },
+          last_seen: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Error logging device fingerprint:', error);
+      }
+    } catch (error) {
+      console.error('Error generating device fingerprint:', error);
+    }
+  }
+
+  static async getDeviceHistory(userId: string): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('device_fingerprints')
+        .select('*')
+        .eq('user_id', userId)
+        .order('last_seen', { ascending: false });
+
+      if (error) {
+        console.error('Error getting device history:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error getting device history:', error);
+      return [];
+    }
+  }
+}
+
+// Anomaly Detection Service
+export class AnomalyDetectionService {
+  static async detectLoginAnomaly(userId: string, ipAddress: string, userAgent: string): Promise<{
+    isAnomalous: boolean;
+    reasons: string[];
+    riskScore: number;
+  }> {
+    const reasons: string[] = [];
+    let riskScore = 0;
+
+    try {
+      // Get user's login history
+      const { data: loginHistory } = await supabase
+        .from('user_login_history')
+        .select('*')
+        .eq('user_id', userId)
+        .order('login_time', { ascending: false })
+        .limit(50);
+
+      if (loginHistory && loginHistory.length > 0) {
+        // Check for unusual IP address
+        const knownIPs = new Set(loginHistory.map(log => log.ip_address?.toString()).filter(Boolean));
+        if (!knownIPs.has(ipAddress)) {
+          reasons.push('Unknown IP address');
+          riskScore += 30;
+        }
+
+        // Check for unusual user agent
+        const knownUserAgents = new Set(loginHistory.map(log => log.user_agent).filter(Boolean));
+        if (!knownUserAgents.has(userAgent)) {
+          reasons.push('Unknown device/browser');
+          riskScore += 20;
+        }
+
+        // Check for unusual time patterns
+        const currentHour = new Date().getHours();
+        const recentLogins = loginHistory.slice(0, 10);
+        const averageLoginHour = recentLogins.reduce((sum, log) => {
+          return sum + new Date(log.login_time).getHours();
+        }, 0) / recentLogins.length;
+
+        if (Math.abs(currentHour - averageLoginHour) > 6) {
+          reasons.push('Unusual login time');
+          riskScore += 15;
+        }
+
+        // Check for rapid successive logins
+        const lastLogin = loginHistory[0];
+        const timeSinceLastLogin = Date.now() - new Date(lastLogin.login_time).getTime();
+        if (timeSinceLastLogin < 60000) { // Less than 1 minute
+          reasons.push('Rapid successive login attempts');
+          riskScore += 25;
+        }
+      }
+
+      return {
+        isAnomalous: riskScore > 40,
+        reasons,
+        riskScore: Math.min(riskScore, 100)
+      };
+    } catch (error) {
+      console.error('Error detecting login anomaly:', error);
+      return { isAnomalous: false, reasons: [], riskScore: 0 };
+    }
+  }
+
+  static async logSecurityEvent(userId: string, eventType: string, details: any, severity: 'low' | 'medium' | 'high' = 'low'): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('security_events')
         .insert({
           user_id: userId,
-          password_hash: 'hashed',
-          strength_score: 3
+          event_type: eventType,
+          details,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Error logging security event:', error);
+      }
+    } catch (error) {
+      console.error('Error logging security event:', error);
+    }
+  }
+}
+
+// CSRF Protection Service
+export class CSRFProtectionService {
+  private static tokens = new Map<string, { token: string; expires: number }>();
+
+  static generateToken(sessionId: string): string {
+    const token = crypto.randomUUID();
+    const expires = Date.now() + (30 * 60 * 1000); // 30 minutes
+    
+    this.tokens.set(sessionId, { token, expires });
+    return token;
+  }
+
+  static validateToken(sessionId: string, token: string): boolean {
+    const stored = this.tokens.get(sessionId);
+    
+    if (!stored) return false;
+    if (stored.expires < Date.now()) {
+      this.tokens.delete(sessionId);
+      return false;
+    }
+    
+    return stored.token === token;
+  }
+
+  static removeToken(sessionId: string): void {
+    this.tokens.delete(sessionId);
+  }
+
+  static cleanupExpiredTokens(): void {
+    const now = Date.now();
+    for (const [sessionId, { expires }] of this.tokens.entries()) {
+      if (expires < now) {
+        this.tokens.delete(sessionId);
+      }
+    }
+  }
+}
+
+// Security Headers Service
+export class SecurityHeadersService {
+  static getSecurityHeaders(): Record<string, string> {
+    return {
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+      'Content-Security-Policy': this.getCSPHeader()
+    };
+  }
+
+  private static getCSPHeader(): string {
+    return [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: https: blob:",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+      "frame-src 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+      "block-all-mixed-content",
+      "upgrade-insecure-requests"
+    ].join('; ');
+  }
+}
+
+// Honeypot Service
+export class HoneypotService {
+  static createHoneypotField(): HTMLInputElement {
+    const honeypot = document.createElement('input');
+    honeypot.type = 'text';
+    honeypot.name = 'website'; // Common honeypot field name
+    honeypot.style.position = 'absolute';
+    honeypot.style.left = '-9999px';
+    honeypot.style.opacity = '0';
+    honeypot.style.pointerEvents = 'none';
+    honeypot.tabIndex = -1;
+    honeypot.autocomplete = 'off';
+    return honeypot;
+  }
+
+  static validateHoneypot(formData: FormData): boolean {
+    const honeypotValue = formData.get('website');
+    return !honeypotValue || honeypotValue === '';
+  }
+
+  static async logHoneypotTrigger(userId?: string, formType?: string): Promise<void> {
+    try {
+      await supabase
+        .from('security_events')
+        .insert({
+          user_id: userId!,
+          event_type: 'honeypot_triggered',
+          details: {
+            form_type: formType,
+            timestamp: new Date().toISOString(),
+            user_agent: navigator.userAgent
+          }
         });
     } catch (error) {
-      console.error('Error logging password change:', error);
+      console.error('Error logging honeypot trigger:', error);
     }
   }
 }
 
-// Session Security Service
-export class SessionSecurityService {
-  static async validateSession(sessionId: string): Promise<boolean> {
-    try {
-      const { data } = await supabase
-        .from('user_sessions')
-        .select('*')
-        .eq('session_id', sessionId)
-        .eq('is_active', true)
-        .single();
+// Brute Force Protection Service
+export class BruteForceProtectionService {
+  private static attempts = new Map<string, { count: number; lastAttempt: number; blocked: boolean }>();
 
-      if (!data) return false;
-
-      // Check if session is expired
-      const expiresAt = new Date(data.expires_at);
-      if (expiresAt < new Date()) {
-        await this.invalidateSession(sessionId);
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error validating session:', error);
+  static recordFailedAttempt(identifier: string): boolean {
+    const now = Date.now();
+    const existing = this.attempts.get(identifier);
+    
+    if (!existing) {
+      this.attempts.set(identifier, { count: 1, lastAttempt: now, blocked: false });
       return false;
     }
-  }
 
-  static async invalidateSession(sessionId: string) {
-    try {
-      await supabase
-        .from('user_sessions')
-        .update({ is_active: false, ended_at: new Date().toISOString() })
-        .eq('session_id', sessionId);
-    } catch (error) {
-      console.error('Error invalidating session:', error);
+    // Reset if more than 15 minutes have passed
+    if (now - existing.lastAttempt > 15 * 60 * 1000) {
+      this.attempts.set(identifier, { count: 1, lastAttempt: now, blocked: false });
+      return false;
     }
+
+    existing.count++;
+    existing.lastAttempt = now;
+
+    // Block after 5 failed attempts
+    if (existing.count >= 5) {
+      existing.blocked = true;
+      return true;
+    }
+
+    return false;
   }
 
-  static async createSession(userId: string, ipAddress: string, userAgent: string) {
-    try {
-      const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+  static isBlocked(identifier: string): boolean {
+    const existing = this.attempts.get(identifier);
+    if (!existing) return false;
 
+    // Unblock after 30 minutes
+    if (existing.blocked && Date.now() - existing.lastAttempt > 30 * 60 * 1000) {
+      this.attempts.delete(identifier);
+      return false;
+    }
+
+    return existing.blocked;
+  }
+
+  static reset(identifier: string): void {
+    this.attempts.delete(identifier);
+  }
+
+  static getRemainingBlockTime(identifier: string): number {
+    const existing = this.attempts.get(identifier);
+    if (!existing || !existing.blocked) return 0;
+
+    const blockDuration = 30 * 60 * 1000; // 30 minutes
+    const elapsed = Date.now() - existing.lastAttempt;
+    return Math.max(0, blockDuration - elapsed);
+  }
+
+  static async logFailedAttempt(email: string, ipAddress: string, userAgent: string): Promise<void> {
+    try {
       await supabase
-        .from('user_sessions')
+        .from('failed_login_attempts')
         .insert({
-          session_id: sessionId,
-          user_id: userId,
+          email,
           ip_address: ipAddress,
           user_agent: userAgent,
-          expires_at: expiresAt.toISOString(),
-          is_active: true
+          attempt_time: new Date().toISOString()
         });
-
-      return sessionId;
     } catch (error) {
-      console.error('Error creating session:', error);
-      return null;
+      console.error('Error logging failed attempt:', error);
     }
   }
 }
