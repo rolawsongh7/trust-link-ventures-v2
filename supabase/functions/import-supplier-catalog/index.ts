@@ -113,6 +113,43 @@ function parseProductsGenericFromMarkdown(md: string) {
   return unique;
 }
 
+function parseProductsGenericFromHtml(html: string) {
+  const items: { name: string; image: string }[] = [];
+  const add = (name?: string | null, image?: string | null) => {
+    if (!image) return;
+    const n = (name && name.trim()) || filenameToName(image);
+    if (!n) return;
+    items.push({ name: n, image });
+  };
+  // Parse <img> tags with alt text and lazy-loaded sources
+  const imgTagRegex = /<img[^>]*>/gi;
+  const srcAttrRegex = /\s(?:data-src|data-original|src|srcset)\s*=\s*"([^"]+)"|\s(?:data-src|data-original|src|srcset)\s*=\s*'([^']+)'/i;
+  const altAttrRegex = /\salt\s*=\s*"([^"]*)"|\salt\s*=\s*'([^']*)'/i;
+  const candidates = html.match(imgTagRegex) || [];
+  for (const tag of candidates) {
+    const altMatch = tag.match(altAttrRegex);
+    const altRaw = altMatch ? (altMatch[1] || altMatch[2] || '').trim() : '';
+    let srcRaw = '';
+    const srcMatch = tag.match(srcAttrRegex);
+    if (srcMatch) {
+      srcRaw = (srcMatch[1] || srcMatch[2] || '').trim();
+      // If srcset, take the first URL
+      if (srcRaw.includes(' ')) srcRaw = srcRaw.split(',')[0].trim().split(' ')[0];
+    }
+    if (!/^https?:\/\//.test(srcRaw)) continue;
+    add(altRaw, srcRaw);
+  }
+  // Deduplicate by name (case-insensitive)
+  const seen = new Set<string>();
+  const unique = items.filter((it) => {
+    const key = it.name.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return unique;
+}
+
 Deno.serve(async (req) => {
   // CORS preflight
   if (req.method === "OPTIONS") {
@@ -173,7 +210,18 @@ Deno.serve(async (req) => {
       ? crawlRes.data.map((p: any) => p.markdown).join("\n\n")
       : JSON.stringify(crawlRes.data);
 
-    const parsed = parseProductsGenericFromMarkdown(md);
+    const html = typeof crawlRes?.data?.[0]?.html === "string"
+      ? crawlRes.data.map((p: any) => p.html).join("\n\n")
+      : "";
+
+    const parsedMd = parseProductsGenericFromMarkdown(md);
+    const parsedHtml = html ? parseProductsGenericFromHtml(html) : [];
+    const mergedMap = new Map<string, { name: string; image: string }>();
+    for (const it of [...parsedHtml, ...parsedMd]) {
+      const key = it.name.toLowerCase();
+      if (!mergedMap.has(key)) mergedMap.set(key, it);
+    }
+    const parsed = Array.from(mergedMap.values());
 
     if (clearExisting) {
       await supabase
@@ -234,7 +282,7 @@ Deno.serve(async (req) => {
             const contentType = resp.headers.get("content-type") || "image/png";
             const arrayBuffer = await resp.arrayBuffer();
 
-            const ext = contentType.includes("jpeg") ? "jpg" : contentType.includes("webp") ? "webp" : contentType.includes("png") ? "png" : "bin";
+            const ext = contentType.includes("jpeg") ? "jpg" : contentType.includes("webp") ? "webp" : contentType.includes("png") ? "png" : "jpg";
             const path = `${slugify(supplier)}/${slugify(category)}/${(item as any).slug}.${ext}`;
 
             const { error: upErr } = await supabase.storage
