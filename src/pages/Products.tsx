@@ -17,6 +17,7 @@ import { categorySlides } from '@/data/categorySlides';
 
 // SEAPRO SAS Product Images - using public folder paths
 import seafoodHeroImg from '@/assets/seafood-hero.jpg';
+import BulkSupplierImport from '@/components/products/BulkSupplierImport';
 
 const Products = () => {
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
@@ -365,6 +366,13 @@ const Products = () => {
 
       {/* Small white space after hero */}
       <div className="py-8 bg-background"></div>
+
+      {/* Supplier Imports Admin */}
+      <section className="py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <BulkSupplierImport />
+        </div>
+      </section>
 
       {/* Category Transition Section */}
       <section className="relative h-[80vh] overflow-hidden">
