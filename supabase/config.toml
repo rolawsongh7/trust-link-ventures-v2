@@ -37,3 +37,6 @@ verify_jwt = false
 
 [functions.import-jmarr-seafood]
 verify_jwt = false
+
+[functions.import-supplier-catalog]
+verify_jwt = false
