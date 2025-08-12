@@ -34,3 +34,6 @@ port = 54324
 
 [functions.generate-title-page]
 verify_jwt = false
+
+[functions.import-jmarr-seafood]
+verify_jwt = false

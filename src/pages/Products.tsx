@@ -38,9 +38,56 @@ const Products = () => {
     quantity: string;
     notes: string;
   }>>([]);
-
   const { toast } = useToast();
 
+  // J. Marr seafood items (imported from supplier)
+  const [jmarrItems, setJmarrItems] = useState<Array<{ id: string; name: string; image: string; source_url: string | null }>>([]);
+  const [jmarrLoading, setJmarrLoading] = useState(false);
+
+  const loadJmarrItems = async () => {
+    setJmarrLoading(true);
+    const { data, error } = await (supabase as any)
+      .from('supplier_products')
+      .select('id, name, image_public_url, remote_image_url, source_url, category, supplier, is_active')
+      .eq('supplier', 'J. Marr')
+      .eq('category', 'Seafood')
+      .eq('is_active', true)
+      .order('name', { ascending: true });
+    if (!error && data) {
+      setJmarrItems(
+        data.map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          image: d.image_public_url || d.remote_image_url,
+          source_url: d.source_url ?? null,
+        }))
+      );
+    }
+    setJmarrLoading(false);
+  };
+
+  const importJmarr = async (download = true) => {
+    setJmarrLoading(true);
+    const { data, error } = await supabase.functions.invoke('import-jmarr-seafood', {
+      body: { download },
+    });
+    if (error) {
+      console.error(error);
+      toast({ title: 'Import failed', description: error.message, variant: 'destructive' });
+    } else {
+      toast({
+        title: 'Import started',
+        description: data?.summary?.downloadStarted
+          ? 'Images are downloading in the background.'
+          : 'Imported items successfully.',
+      });
+      // Give the DB a moment then refresh the list
+      setTimeout(() => {
+        loadJmarrItems();
+      }, 1000);
+    }
+    setJmarrLoading(false);
+  };
   // Filter categories
   const filterCategories = [
     { name: 'All Products', icon: Package },
@@ -247,6 +294,11 @@ const Products = () => {
     }, 4000);
     return () => clearInterval(categoryTimer);
   }, [categorySlides.length]);
+
+  // Load supplier items (J. Marr Seafood) on mount
+  useEffect(() => {
+    loadJmarrItems();
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -542,6 +594,74 @@ const Products = () => {
               </Card>
             ))}
           </div>
+
+          {/* J. Marr Seafood (Imported) */}
+          {(activeFilter === 'All Products' || activeFilter === 'Fish' || activeFilter === 'Seafood') && (
+            <div className="mt-16">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-poppins font-bold">J. Marr Seafood</h3>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => importJmarr(true)} disabled={jmarrLoading}>
+                    {jmarrLoading ? 'Importing…' : 'Re-import from source'}
+                  </Button>
+                </div>
+              </div>
+
+              {jmarrLoading ? (
+                <p className="text-muted-foreground">Loading supplier items…</p>
+              ) : jmarrItems.length === 0 ? (
+                <div className="rounded-lg border p-6 text-sm text-muted-foreground">
+                  No J. Marr seafood items yet. Click “Re-import from source” to fetch them.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {jmarrItems.map((item) => (
+                    <Card key={item.id} className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                      <div className="relative h-64 overflow-hidden bg-accent">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.parentElement?.classList.add('bg-gradient-to-br','from-primary/20','to-primary/10','flex','items-center','justify-center');
+                            if (e.currentTarget.parentElement) {
+                              (e.currentTarget.parentElement as HTMLElement).innerHTML = `<span class='text-6xl'>🐟</span>`;
+                            }
+                          }}
+                          loading="lazy"
+                        />
+                        <div className="absolute top-4 left-4">
+                          <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">Supplier</span>
+                        </div>
+                      </div>
+                      <CardContent className="p-6">
+                        <h3 className="text-lg font-poppins font-bold mb-2">{item.name}</h3>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setFormData((prev) => ({ ...prev, productName: item.name }));
+                              setQuoteItems([{ productName: item.name, quantity: '', notes: '' }]);
+                              setShowQuoteForm(true);
+                            }}
+                          >
+                            Request Quote
+                          </Button>
+                          <AddToCartButton
+                            productName={item.name}
+                            productDescription={''}
+                            imageUrl={item.image}
+                            data-product-name={item.name}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
