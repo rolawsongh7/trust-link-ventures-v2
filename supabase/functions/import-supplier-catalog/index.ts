@@ -243,15 +243,17 @@ Deno.serve(async (req) => {
       is_active: true,
     }));
 
-    // Insert in chunks
+    // Upsert in chunks to avoid duplicate slug failures
     const chunkSize = 100;
     for (let i = 0; i < rows.length; i += chunkSize) {
       const chunk = rows.slice(i, i + chunkSize);
-      const { error } = await supabase.from("supplier_products").insert(chunk);
+      const { error } = await supabase
+        .from("supplier_products")
+        .upsert(chunk, { onConflict: "slug" });
       if (error) {
-        console.error("Insert error", error);
+        console.error("Upsert error", error);
         return new Response(
-          JSON.stringify({ error: "Insert failed", details: error }),
+          JSON.stringify({ error: "Upsert failed", details: error }),
           { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }

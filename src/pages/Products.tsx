@@ -69,8 +69,15 @@ const Products = () => {
 
   const importJmarr = async (download = true) => {
     setJmarrLoading(true);
-    const { data, error } = await supabase.functions.invoke('import-jmarr-seafood', {
-      body: { download },
+    const { data, error } = await supabase.functions.invoke('import-supplier-catalog', {
+      body: { 
+        supplier: 'J. Marr',
+        category: 'Seafood',
+        url: 'https://marsea.co.uk/fish',
+        brand: 'J. Marr',
+        download,
+        clearExisting: true,
+      },
     });
     if (error) {
       console.error(error);
@@ -82,10 +89,9 @@ const Products = () => {
           ? 'Images are downloading in the background.'
           : 'Imported items successfully.',
       });
-      // Give the DB a moment then refresh the list
       setTimeout(() => {
         loadJmarrItems();
-      }, 1000);
+      }, 1200);
     }
     setJmarrLoading(false);
   };
