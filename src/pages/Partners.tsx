@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, MapPin, Globe, Users, Truck, Shield } from 'lucide-react';
+import SupplierWorldMap from '@/components/SupplierWorldMap';
 
 const Partners = () => {
   const [hoveredSupplier, setHoveredSupplier] = useState<string | null>(null);
@@ -67,6 +68,17 @@ const Partners = () => {
     ]
   };
 
+  const getCountryFlag = (location: string) => {
+    const flagMap: { [key: string]: string } = {
+      'United Kingdom': '🇬🇧',
+      'Argentina': '🇦🇷',
+      'Netherlands': '🇳🇱',
+      'United States': '🇺🇸',
+      'France': '🇫🇷'
+    };
+    return flagMap[location] || '🌍';
+  };
+
   const globalPartners = [
     {
       name: "Niah Foods UK",
@@ -87,14 +99,9 @@ const Partners = () => {
       name: "NOWACO",
       location: "Netherlands",
       website: "https://nowaco.com",
-      description: "Professional food merchant dedicated to providing and selling frozen food on a global scale. With over 50 years of passion in the food trading business, operating 23 offices worldwide.",
+      description: "Professional food merchant dedicated to providing and selling frozen food on a global scale. With over 50 years of passion in the food trading business.",
       specialties: ["Frozen Meats", "Fish & Seafood", "Vegetables", "Global Trading"],
-      established: "1970+",
-      stats: {
-        turnover: "€432M",
-        offices: "23 Worldwide",
-        containers: "10,000 Yearly"
-      }
+      established: "1970+"
     },
     {
       name: "AJC International",
@@ -219,13 +226,21 @@ const Partners = () => {
             </p>
           </div>
 
+          {/* Interactive World Map */}
+          <div className="mb-16">
+            <SupplierWorldMap />
+          </div>
+
           {/* Partners Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {globalPartners.map((partner, index) => (
               <Card key={index} className="h-full hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between mb-2">
-                    <CardTitle className="text-lg">{partner.name}</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <span className="text-2xl">{getCountryFlag(partner.location)}</span>
+                      {partner.name}
+                    </CardTitle>
                     <Badge variant="outline" className="flex items-center space-x-1">
                       <span className="text-xs">{partner.location}</span>
                     </Badge>
@@ -254,22 +269,6 @@ const Partners = () => {
                     )}
                   </div>
                   
-                  {partner.stats && (
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="p-2 bg-primary/5 rounded">
-                        <div className="text-sm font-bold text-primary">{partner.stats.turnover}</div>
-                        <div className="text-xs text-muted-foreground">Turnover</div>
-                      </div>
-                      <div className="p-2 bg-primary/5 rounded">
-                        <div className="text-sm font-bold text-primary">{partner.stats.offices}</div>
-                        <div className="text-xs text-muted-foreground">Offices</div>
-                      </div>
-                      <div className="p-2 bg-primary/5 rounded">
-                        <div className="text-sm font-bold text-primary">{partner.stats.containers}</div>
-                        <div className="text-xs text-muted-foreground">Containers</div>
-                      </div>
-                    </div>
-                  )}
                   
                   {partner.website && (
                     <Button variant="outline" size="sm" asChild className="w-full">
