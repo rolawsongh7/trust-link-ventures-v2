@@ -8,6 +8,11 @@ import coldChainBg from '@/assets/cold-chain-bg.jpg';
 import distributionBg from '@/assets/distribution-bg.jpg';
 import globalSourcingBg from '@/assets/global-sourcing-bg.jpg';
 import partnershipBg from '@/assets/partnership-bg.jpg';
+import incorporation2006 from '@/assets/timeline/2006-incorporation.jpg';
+import temaExpansion2010 from '@/assets/timeline/2010-tema-expansion.jpg';
+import coldStorage2015 from '@/assets/timeline/2015-cold-storage.jpg';
+import globalPartnerships2020 from '@/assets/timeline/2020-global-partnerships.jpg';
+import tonnes2024 from '@/assets/timeline/2024-1200-tonnes.jpg';
 import { useCounterAnimation } from '@/hooks/useCounterAnimation';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 
@@ -30,35 +35,40 @@ const About = () => {
       icon: Flag,
       title: 'Company Incorporated',
       description: 'Trust Link Ventures Limited officially established under Ghana Companies Code of 1963 (Act 179).',
-      gradient: 'from-blue-500 to-blue-700'
+      gradient: 'from-blue-500 to-blue-700',
+      image: incorporation2006
     },
     {
       year: '2010',
       icon: Navigation,
       title: 'Expanded to Tema Industrial Hub',
       description: 'Established our main operations center at Tema Port to optimize import and distribution capabilities.',
-      gradient: 'from-green-500 to-green-700'
+      gradient: 'from-green-500 to-green-700',
+      image: temaExpansion2010
     },
     {
       year: '2015',
       icon: Thermometer,
       title: 'Nationwide Cold-Store Partnerships',
       description: 'Launched comprehensive cold storage partnerships across Ghana, ensuring nationwide reach.',
-      gradient: 'from-purple-500 to-purple-700'
+      gradient: 'from-purple-500 to-purple-700',
+      image: coldStorage2015
     },
     {
       year: '2020',
       icon: Globe,
       title: 'Cross-Border Partnerships Initiated',
       description: 'Expanded international partnerships to enhance global sourcing and supply chain efficiency.',
-      gradient: 'from-orange-500 to-orange-700'
+      gradient: 'from-orange-500 to-orange-700',
+      image: globalPartnerships2020
     },
     {
       year: '2024',
       icon: TrendingUp,
       title: 'Monthly Throughput Exceeds 1,200 Tonnes',
       description: 'Achieved major milestone with monthly imports exceeding 1,200 tonnes of frozen products.',
-      gradient: 'from-emerald-500 to-emerald-700'
+      gradient: 'from-emerald-500 to-emerald-700',
+      image: tonnes2024
     }
   ];
 
@@ -529,25 +539,33 @@ const About = () => {
                       : 'opacity-0 translate-y-full'
                   }`}
                 >
-                  <div className="flex items-center justify-center h-full p-12">
+                  {/* Background Image */}
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${event.image})` }}
+                  />
+                  <div className={`absolute inset-0 bg-gradient-to-br ${event.gradient} opacity-80`} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
+                  
+                  <div className="relative z-10 flex items-center justify-center h-full p-12">
                     <div className="text-center">
                       {/* Year Badge */}
-                      <div className={`inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br ${event.gradient} rounded-full mb-8 shadow-2xl`}>
-                        <span className="text-white text-2xl font-bold">{event.year}</span>
+                      <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full mb-8 shadow-2xl border border-white/30">
+                        <span className="text-white text-2xl font-bold drop-shadow-lg">{event.year}</span>
                       </div>
                       
                       {/* Icon */}
                       <div className="flex justify-center mb-6">
-                        <div className={`w-16 h-16 bg-gradient-to-br ${event.gradient} rounded-2xl flex items-center justify-center shadow-xl`}>
-                          <event.icon className="w-8 h-8 text-white" />
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl border border-white/30">
+                          <event.icon className="w-8 h-8 text-white drop-shadow-lg" />
                         </div>
                       </div>
                       
                       {/* Content */}
-                      <h3 className="text-2xl lg:text-3xl font-poppins font-bold text-white mb-4">
+                      <h3 className="text-2xl lg:text-3xl font-poppins font-bold text-white mb-4 drop-shadow-lg">
                         {event.title}
                       </h3>
-                      <p className="text-slate-300 text-lg leading-relaxed max-w-2xl mx-auto">
+                      <p className="text-white/90 text-lg leading-relaxed max-w-2xl mx-auto drop-shadow-md">
                         {event.description}
                       </p>
                     </div>
