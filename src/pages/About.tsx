@@ -13,7 +13,7 @@ import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 
 const About = () => {
   const impactRef = useRef<HTMLDivElement>(null);
-  const { isVisible: isImpactVisible } = useIntersectionObserver({ threshold: 0.3 });
+  const [isImpactVisible, setIsImpactVisible] = React.useState(false);
 
   // Counter animations for impact stats - using simple state for now
   const [tonnagesCount, setTonnagesCount] = React.useState(0);
@@ -21,28 +21,55 @@ const About = () => {
   const [yearsCount, setYearsCount] = React.useState(0);
   const [successRate, setSuccessRate] = React.useState(0);
 
+  // Set up intersection observer
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsImpactVisible(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (impactRef.current) {
+      observer.observe(impactRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   // Animate counters when visible
   React.useEffect(() => {
     if (!isImpactVisible) return;
 
-    const animateCounter = (target: number, setter: (val: number) => void) => {
+    const animateCounter = (target: number, setter: (val: number) => void, duration = 2000) => {
       let start = 0;
-      const increment = target / 100;
-      const timer = setInterval(() => {
-        start += increment;
-        if (start >= target) {
-          setter(target);
-          clearInterval(timer);
-        } else {
-          setter(Math.floor(start));
+      const startTime = Date.now();
+      
+      const animate = () => {
+        const now = Date.now();
+        const progress = Math.min((now - startTime) / duration, 1);
+        
+        // Easing function for smooth animation
+        const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+        const currentValue = Math.floor(easeOutCubic * target);
+        
+        setter(currentValue);
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate);
         }
-      }, 20);
+      };
+      
+      requestAnimationFrame(animate);
     };
 
-    animateCounter(1200, setTonnagesCount);
-    animateCounter(20, setCitiesCount);
-    animateCounter(17, setYearsCount);
-    animateCounter(98, setSuccessRate);
+    // Start animations with slight delays
+    setTimeout(() => animateCounter(1200, setTonnagesCount), 0);
+    setTimeout(() => animateCounter(20, setCitiesCount), 200);
+    setTimeout(() => animateCounter(17, setYearsCount), 400);
+    setTimeout(() => animateCounter(98, setSuccessRate), 600);
   }, [isImpactVisible]);
 
   const impactStats = [
@@ -378,7 +405,7 @@ const About = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div ref={impactRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {impactStats.map((stat, index) => (
               <Card 
                 key={index} 
