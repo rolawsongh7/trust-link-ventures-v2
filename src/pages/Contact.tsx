@@ -1,28 +1,18 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Clock, Send, MessageSquare, CheckCircle, Shield, Globe, Users, Package, Star, Quote, ShoppingCart, Handshake, TrendingUp, MessageCircle, ArrowRight, Verified, Award } from 'lucide-react';
+import { Mail, MapPin, Quote, ShoppingCart, Handshake, TrendingUp, MessageCircle, ArrowRight } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import contactHeroBg from '@/assets/contact-hero-bg.jpg';
+import ContactForm from '@/components/contact/ContactForm';
+import ContactFAQ from '@/components/contact/ContactFAQ';
+import PartnerLogos from '@/components/contact/PartnerLogos';
 
 const Contact = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    company: '',
-    email: '',
-    country: '',
-    inquiryType: '',
-    message: ''
-  });
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+  const [selectedInquiryType, setSelectedInquiryType] = useState('');
 
   const ctaOptions = [
     {
@@ -82,37 +72,9 @@ const Contact = () => {
     return () => clearInterval(interval);
   }, [ctaOptions.length]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate form submission
-    setTimeout(() => {
-      toast.success('Thank you! We\'ve received your inquiry and will be in touch shortly.');
-      setIsSubmitted(true);
-      setIsLoading(false);
-    }, 1000);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-  };
 
   const handleCtaClick = (option: typeof ctaOptions[0]) => {
-    setFormData({
-      ...formData,
-      inquiryType: option.title
-    });
+    setSelectedInquiryType(option.title);
     toast.info(`Selected: ${option.title}. Please fill out the form below.`);
     // Smooth scroll to form
     document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' });
@@ -203,6 +165,14 @@ const Contact = () => {
         </div>
       </section>
 
+      {/* Elegant Section Divider */}
+      <div className="py-16 bg-gradient-to-r from-primary/5 via-accent/5 to-secondary/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <Separator className="mb-8" />
+          <div className="w-20 h-1 bg-gradient-to-r from-primary via-accent to-secondary rounded-full mx-auto" />
+        </div>
+      </div>
+
       {/* Contact Form Section */}
       <section id="contact-form" className="py-24 bg-background">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -213,105 +183,14 @@ const Contact = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <Card className="card-elevated">
-              <CardContent className="p-8">
-                {isSubmitted ? (
-                  <div className="text-center py-12 space-y-6">
-                    <CheckCircle className="h-20 w-20 text-green-500 mx-auto" />
-                    <h3 className="text-2xl font-bold text-green-600">✅ Thank you!</h3>
-                    <p className="text-muted-foreground text-lg leading-relaxed">
-                      We've received your inquiry and will be in touch shortly.<br />
-                      Meanwhile, you can explore our <Link to="/ventures" className="text-primary font-medium hover:underline">Ventures Portfolio</Link> or <Link to="/about" className="text-primary font-medium hover:underline">Sustainability Commitments</Link>.
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Full Name *</Label>
-                        <Input
-                          id="name"
-                          name="name"
-                          value={formData.name}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="company">Company</Label>
-                        <Input
-                          id="company"
-                          name="company"
-                          value={formData.company}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email *</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="country">Country *</Label>
-                        <Input
-                          id="country"
-                          name="country"
-                          value={formData.country}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="inquiryType">Inquiry Type</Label>
-                      <Select value={formData.inquiryType} onValueChange={(value) => handleSelectChange('inquiryType', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select inquiry type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Buyer">Buyer</SelectItem>
-                          <SelectItem value="Partner">Partner</SelectItem>
-                          <SelectItem value="Investor">Investor</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="message">Message</Label>
-                      <Textarea
-                        id="message"
-                        name="message"
-                        value={formData.message}
-                        onChange={handleInputChange}
-                        rows={6}
-                        placeholder="Tell us about your inquiry..."
-                      />
-                    </div>
-
-                    <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                      <Send className="h-5 w-5 mr-2" />
-                      {isLoading ? 'Submitting...' : 'Send My Message'}
-                    </Button>
-                  </form>
-                )}
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-2">
+              <ContactForm initialInquiryType={selectedInquiryType} />
+            </div>
 
             <div className="space-y-8">
               {/* Contact Information */}
-              <Card className="card-elevated">
+              <Card className="card-elevated hover:shadow-lg transition-all duration-300">
                 <CardHeader>
                   <CardTitle>Contact Information</CardTitle>
                 </CardHeader>
@@ -336,8 +215,11 @@ const Contact = () => {
                 </CardContent>
               </Card>
 
+              {/* Partner Logos & Stats */}
+              <PartnerLogos />
+
               {/* Testimonials */}
-              <Card className="card-elevated">
+              <Card className="card-elevated hover:shadow-lg transition-all duration-300">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Quote className="w-5 h-5" />
@@ -346,19 +228,35 @@ const Contact = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {testimonials.map((testimonial, index) => (
-                    <div key={index} className="space-y-3">
+                    <div 
+                      key={index} 
+                      className="space-y-3 p-4 rounded-lg bg-accent/5 hover:bg-accent/10 transition-colors duration-300 cursor-pointer"
+                    >
                       <p className="text-sm italic leading-relaxed">"{testimonial.text}"</p>
                       <div className="text-xs text-muted-foreground">
                         <span className="font-medium">— {testimonial.author}</span>
                         <span className="block">{testimonial.role}</span>
                       </div>
-                      {index < testimonials.length - 1 && <hr className="border-border" />}
+                      {index < testimonials.length - 1 && <hr className="border-border mt-4" />}
                     </div>
                   ))}
                 </CardContent>
               </Card>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-24 bg-gradient-to-br from-accent/5 to-secondary/5">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
+            <p className="text-muted-foreground text-lg">
+              Get instant answers to common questions about our services and processes.
+            </p>
+          </div>
+          <ContactFAQ />
         </div>
       </section>
 

@@ -26,21 +26,21 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-sidebar border-t border-border mt-auto">
+    <footer className="bg-blue-900 border-t border-blue-800 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Newsletter Section - Compact */}
-        <div className="bg-sidebar-accent/30 rounded-lg p-6 mb-8">
+        <div className="bg-blue-800/40 rounded-lg p-6 mb-8">
           <div className="text-center max-w-xl mx-auto">
-            <h3 className="text-lg font-semibold text-sidebar-foreground mb-2">
+            <h3 className="text-lg font-semibold text-blue-100 mb-2">
               Stay Connected
             </h3>
-            <p className="text-sidebar-foreground/70 text-sm mb-4">
+            <p className="text-blue-200 text-sm mb-4">
               Get updates on our premium seafood products and export opportunities.
             </p>
             
             {isSubscribed ? (
               <div className="text-center py-2">
-                <p className="text-sidebar-foreground font-medium text-sm">✅ Thank you for subscribing!</p>
+                <p className="text-blue-100 font-medium text-sm">✅ Thank you for subscribing!</p>
               </div>
             ) : (
               <form onSubmit={handleSubscribe} className="flex gap-2 max-w-sm mx-auto">
@@ -50,7 +50,7 @@ const Footer = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="flex-1 bg-background/50 border-border text-sidebar-foreground placeholder:text-sidebar-foreground/50 text-sm h-9"
+                  className="flex-1 bg-blue-800/30 border-blue-700 text-blue-100 placeholder:text-blue-300 text-sm h-9"
                 />
                 <Button 
                   type="submit"
@@ -76,18 +76,18 @@ const Footer = () => {
                 />
               </div>
               <div className="font-semibold">
-                <div className="text-lg font-bold text-sidebar-foreground">Trust Link</div>
-                <div className="text-xs text-sidebar-foreground/70 -mt-1">Ventures</div>
+                <div className="text-lg font-bold text-blue-100">Trust Link</div>
+                <div className="text-xs text-blue-200 -mt-1">Ventures</div>
               </div>
             </div>
-            <p className="text-sidebar-foreground/70 text-sm leading-relaxed">
+            <p className="text-blue-200 text-sm leading-relaxed">
               Empowering trusted food exports worldwide through ethical sourcing, innovative partnerships, and sustainable supply chain solutions.
             </p>
           </div>
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-sidebar-foreground">Quick Links</h3>
+            <h3 className="font-semibold text-blue-100">Quick Links</h3>
             <div className="space-y-2">
               {[
                 { name: 'About', href: '/about' },
@@ -98,7 +98,7 @@ const Footer = () => {
                 <Link
                   key={link.name}
                   to={link.href}
-                  className="block text-sidebar-foreground/70 hover:text-sidebar-foreground transition-colors text-sm"
+                  className="block text-blue-200 hover:text-blue-100 transition-colors text-sm"
                 >
                   {link.name}
                 </Link>
@@ -108,16 +108,16 @@ const Footer = () => {
 
           {/* Contact Info */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-sidebar-foreground">Contact</h3>
+            <h3 className="font-semibold text-blue-100">Contact</h3>
             <div className="space-y-3">
               <div className="text-sm">
                 <div className="flex items-center space-x-3 mb-2">
-                  <Mail className="h-4 w-4 text-sidebar-foreground/70" />
-                  <span className="text-sidebar-foreground/70">info@trustlinkventures.com</span>
+                  <Mail className="h-4 w-4 text-blue-300" />
+                  <span className="text-blue-200">info@trustlinkventures.com</span>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <MapPin className="h-4 w-4 text-sidebar-foreground/70 mt-0.5" />
-                  <div className="text-sidebar-foreground/70">
+                  <MapPin className="h-4 w-4 text-blue-300 mt-0.5" />
+                  <div className="text-blue-200">
                     <div className="font-medium">Trust Link Ventures Limited</div>
                     <div>P. O. Box 709</div>
                     <div>Adabraka</div>
@@ -131,27 +131,27 @@ const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sidebar-foreground/70 text-sm">
+            <p className="text-blue-200 text-sm">
               © 2025 Trust Link Ventures Ltd. All Rights Reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <TermsDialog 
                 trigger={
-                  <button className="text-sidebar-foreground/70 hover:text-sidebar-foreground text-sm transition-colors">
+                  <button className="text-blue-200 hover:text-blue-100 text-sm transition-colors">
                     Terms of Service
                   </button>
                 }
               />
               <PrivacyDialog 
                 trigger={
-                  <button className="text-sidebar-foreground/70 hover:text-sidebar-foreground text-sm transition-colors">
+                  <button className="text-blue-200 hover:text-blue-100 text-sm transition-colors">
                     Privacy Policy
                   </button>
                 }
               />
               <CookiesDialog 
                 trigger={
-                  <button className="text-sidebar-foreground/70 hover:text-sidebar-foreground text-sm transition-colors">
+                  <button className="text-blue-200 hover:text-blue-100 text-sm transition-colors">
                     Cookie Policy
                   </button>
                 }
