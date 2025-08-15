@@ -542,8 +542,8 @@ const About = () => {
                      className="absolute inset-0 bg-cover bg-center"
                      style={{ backgroundImage: `url(${event.image})` }}
                    />
-                   <div className={`absolute inset-0 bg-gradient-to-br ${event.gradient} opacity-20`} />
-                   <div className="absolute inset-0 bg-white/10" />
+                   <div className={`absolute inset-0 bg-gradient-to-br ${event.gradient} opacity-30`} />
+                   <div className="absolute inset-0 bg-background/20" />
                    
                    <div className="relative z-10 flex items-center justify-center h-full p-12">
                      <div className="text-center">
