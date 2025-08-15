@@ -58,20 +58,39 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="py-24 bg-gradient-to-b from-accent/20 to-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section 
+        className="relative py-24 bg-cover bg-center bg-no-repeat overflow-hidden"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4)), url('/lovable-uploads/8dcec24d-de94-4fe2-a0dd-a4e3c4c4ff98.png')`
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center animate-fade-in">
-            <Badge variant="outline" className="mb-6 px-4 py-2">
+            <Badge variant="outline" className="mb-6 px-4 py-2 bg-white/10 text-white border-white/20">
               <Globe className="w-4 h-4 mr-2" />
               About Trust Link Ventures
             </Badge>
-            <h1 className="text-4xl lg:text-6xl font-poppins font-bold mb-6">
-              Connecting <span className="gradient-text">Global Markets</span>
+            <h1 className="text-4xl lg:text-6xl font-poppins font-bold mb-6 text-white">
+              Powering Cold Chain Logistics. <span className="text-yellow-400">Delivering Trust.</span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              We are a leading global trade and venture development company, specializing in connecting 
-              businesses across continents and creating sustainable partnerships that drive growth and innovation.
+            <p className="text-xl text-white/90 max-w-3xl mx-auto leading-relaxed">
+              From humble beginnings to 1,200 tonnes monthly, Trust Link Ventures connects 
+              Ghana to the world's most reliable cold-chain food supply.
             </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-white/80">
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                Operating from Tema Port
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                Cold Chain Excellence
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></div>
+                Nationwide Distribution
+              </div>
+            </div>
           </div>
         </div>
       </section>
