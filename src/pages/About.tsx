@@ -56,7 +56,7 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" key="about-page">
       {/* Hero Section */}
       <section 
         className="relative py-24 bg-cover bg-center bg-no-repeat overflow-hidden"
