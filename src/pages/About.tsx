@@ -70,14 +70,18 @@ const About = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/30 to-background/50" />
         
         {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in">
-          <h1 className="text-4xl lg:text-6xl font-poppins font-bold mb-8 text-white drop-shadow-lg">
-            Powering Cold Chain Logistics. <br />
-            <span className="gradient-text">Delivering Trust.</span>
-          </h1>
-          <p className="text-xl text-white/90 max-w-4xl mx-auto leading-relaxed drop-shadow-md">
-            From humble beginnings to 1,200 tonnes monthly, Trust Link Ventures connects Ghana to the world's most reliable cold-chain food supply.
-          </p>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-center animate-fade-in">
+          <div className="text-center mb-16">
+            <h1 className="text-4xl lg:text-6xl font-poppins font-bold text-white drop-shadow-lg">
+              Powering Cold Chain Logistics. <br />
+              <span className="gradient-text">Delivering Trust.</span>
+            </h1>
+          </div>
+          <div className="text-center mt-auto mb-12">
+            <p className="text-xl text-white/90 max-w-4xl mx-auto leading-relaxed drop-shadow-md">
+              From humble beginnings to 1,200 tonnes monthly, Trust Link Ventures connects Ghana to the world's most reliable cold-chain food supply.
+            </p>
+          </div>
         </div>
       </section>
 
