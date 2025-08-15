@@ -611,44 +611,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Mission & Vision */}
-      <section className="py-24 bg-accent/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <Card className="card-elevated animate-fade-in">
-              <CardHeader>
-                <CardTitle className="text-2xl font-poppins flex items-center">
-                  <TrendingUp className="w-6 h-6 mr-3 text-primary" />
-                  Our Mission
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed">
-                  To facilitate meaningful global trade connections that create value for businesses, 
-                  communities, and economies worldwide. We believe in building bridges between markets, 
-                  fostering innovation, and driving sustainable growth through strategic partnerships.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="card-elevated animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <CardHeader>
-                <CardTitle className="text-2xl font-poppins flex items-center">
-                  <Award className="w-6 h-6 mr-3 text-primary" />
-                  Our Vision
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed">
-                  To be the world's most trusted platform for global trade and venture development, 
-                  where businesses of all sizes can discover opportunities, build partnerships, 
-                  and achieve sustainable success in the international marketplace.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
 
       {/* Values Section */}
       <section className="py-24 bg-background">
