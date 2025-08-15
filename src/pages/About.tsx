@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Users, TrendingUp, Award, Shield, Heart, Truck, MapPin, Calendar, Building2, Package, Thermometer, BarChart3, MapPinIcon, Clock, CheckCircle, Target, Lightbulb } from 'lucide-react';
+import { Globe, Users, TrendingUp, Award, Shield, Heart, Truck, MapPin, Calendar, Building2, Package, Thermometer, BarChart3, MapPinIcon, Clock, CheckCircle, Target, Lightbulb, Flag, Navigation } from 'lucide-react';
 import temaPortTrucks from '@/assets/tema-port-trucks.jpg';
 import ghanaColdStorageTeam from '@/assets/ghana-cold-storage-team.jpg';
 import coldChainBg from '@/assets/cold-chain-bg.jpg';
@@ -20,6 +20,47 @@ const About = () => {
   const [citiesCount, setCitiesCount] = React.useState(0);
   const [yearsCount, setYearsCount] = React.useState(0);
   const [successRate, setSuccessRate] = React.useState(0);
+  
+  // Timeline carousel state
+  const [currentTimelineIndex, setCurrentTimelineIndex] = React.useState(0);
+  
+  const timelineEvents = [
+    {
+      year: '2006',
+      icon: Flag,
+      title: 'Company Incorporated',
+      description: 'Trust Link Ventures Limited officially established under Ghana Companies Code of 1963 (Act 179).',
+      gradient: 'from-blue-500 to-blue-700'
+    },
+    {
+      year: '2010',
+      icon: Navigation,
+      title: 'Expanded to Tema Industrial Hub',
+      description: 'Established our main operations center at Tema Port to optimize import and distribution capabilities.',
+      gradient: 'from-green-500 to-green-700'
+    },
+    {
+      year: '2015',
+      icon: Thermometer,
+      title: 'Nationwide Cold-Store Partnerships',
+      description: 'Launched comprehensive cold storage partnerships across Ghana, ensuring nationwide reach.',
+      gradient: 'from-purple-500 to-purple-700'
+    },
+    {
+      year: '2020',
+      icon: Globe,
+      title: 'Cross-Border Partnerships Initiated',
+      description: 'Expanded international partnerships to enhance global sourcing and supply chain efficiency.',
+      gradient: 'from-orange-500 to-orange-700'
+    },
+    {
+      year: '2024',
+      icon: TrendingUp,
+      title: 'Monthly Throughput Exceeds 1,200 Tonnes',
+      description: 'Achieved major milestone with monthly imports exceeding 1,200 tonnes of frozen products.',
+      gradient: 'from-emerald-500 to-emerald-700'
+    }
+  ];
 
   // Set up intersection observer
   React.useEffect(() => {
@@ -71,6 +112,15 @@ const About = () => {
     setTimeout(() => animateCounter(17, setYearsCount), 400);
     setTimeout(() => animateCounter(98, setSuccessRate), 600);
   }, [isImpactVisible]);
+
+  // Timeline carousel auto-advance
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTimelineIndex((prev) => (prev + 1) % timelineEvents.length);
+    }, 4000);
+    
+    return () => clearInterval(interval);
+  }, [timelineEvents.length]);
 
   const impactStats = [
     {
@@ -436,6 +486,100 @@ const About = () => {
                 </p>
               </div>
             </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Our Journey Timeline Section */}
+      <section className="py-24 bg-gradient-to-br from-slate-800 via-slate-900 to-black relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <pattern id="timeline-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="0.5"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#timeline-grid)" className="text-white"/>
+          </svg>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-3xl lg:text-5xl font-poppins font-bold mb-6 text-white">
+              Our <span className="bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">Journey</span>
+            </h2>
+            <div className="w-32 h-1 bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 mx-auto mb-6 rounded-full" />
+            <p className="text-slate-300 text-lg max-w-2xl mx-auto">
+              From incorporation to becoming Ghana's trusted frozen food distribution leader.
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            {/* Timeline Container */}
+            <div className="relative h-96 overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/30">
+              {timelineEvents.map((event, index) => (
+                <div
+                  key={index}
+                  className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+                    index === currentTimelineIndex
+                      ? 'opacity-100 translate-y-0'
+                      : index < currentTimelineIndex
+                      ? 'opacity-0 -translate-y-full'
+                      : 'opacity-0 translate-y-full'
+                  }`}
+                >
+                  <div className="flex items-center justify-center h-full p-12">
+                    <div className="text-center">
+                      {/* Year Badge */}
+                      <div className={`inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br ${event.gradient} rounded-full mb-8 shadow-2xl`}>
+                        <span className="text-white text-2xl font-bold">{event.year}</span>
+                      </div>
+                      
+                      {/* Icon */}
+                      <div className="flex justify-center mb-6">
+                        <div className={`w-16 h-16 bg-gradient-to-br ${event.gradient} rounded-2xl flex items-center justify-center shadow-xl`}>
+                          <event.icon className="w-8 h-8 text-white" />
+                        </div>
+                      </div>
+                      
+                      {/* Content */}
+                      <h3 className="text-2xl lg:text-3xl font-poppins font-bold text-white mb-4">
+                        {event.title}
+                      </h3>
+                      <p className="text-slate-300 text-lg leading-relaxed max-w-2xl mx-auto">
+                        {event.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Progress Indicators */}
+            <div className="flex justify-center mt-8 space-x-3">
+              {timelineEvents.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentTimelineIndex(index)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    index === currentTimelineIndex
+                      ? 'bg-gradient-to-r from-emerald-400 to-blue-400 scale-125'
+                      : 'bg-slate-600 hover:bg-slate-500'
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Timeline Progress Bar */}
+            <div className="mt-8 relative">
+              <div className="w-full bg-slate-700 rounded-full h-2">
+                <div 
+                  className="bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 h-2 rounded-full transition-all duration-4000 ease-linear"
+                  style={{ width: `${((currentTimelineIndex + 1) / timelineEvents.length) * 100}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
