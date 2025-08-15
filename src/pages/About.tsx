@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Globe, Users, TrendingUp, Award, Shield, Heart, Truck } from 'lucide-react';
-import coldStorageHero from '@/assets/cold-storage-hero.jpg';
+import temaPortTrucks from '@/assets/tema-port-trucks.jpg';
 
 const About = () => {
   const values = [
@@ -63,7 +63,7 @@ const About = () => {
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${coldStorageHero})` }}
+          style={{ backgroundImage: `url(${temaPortTrucks})` }}
         />
         
         {/* Overlay */}
