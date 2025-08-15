@@ -501,26 +501,14 @@ const About = () => {
       </section>
 
       {/* Our Journey Timeline Section */}
-      <section className="py-24 bg-gradient-to-br from-slate-800 via-slate-900 to-black relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <pattern id="timeline-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="0.5"/>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#timeline-grid)" className="text-white"/>
-          </svg>
-        </div>
-        
+      <section className="py-24 bg-background relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16 animate-fade-in">
-            <h2 className="text-3xl lg:text-5xl font-poppins font-bold mb-6 text-white">
+            <h2 className="text-3xl lg:text-5xl font-poppins font-bold mb-6 text-foreground">
               Our <span className="bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">Journey</span>
             </h2>
             <div className="w-32 h-1 bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 mx-auto mb-6 rounded-full" />
-            <p className="text-slate-300 text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               From incorporation to becoming Ghana's trusted frozen food distribution leader.
             </p>
           </div>
