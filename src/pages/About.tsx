@@ -204,10 +204,10 @@ const About = () => {
             {/* Certified Cold-Chain Logistics */}
             <Card className="card-elevated text-center p-6 hover-lift animate-fade-in relative overflow-hidden group">
               <div 
-                className="absolute inset-0 bg-cover bg-center opacity-15 group-hover:opacity-20 transition-opacity duration-300"
+                className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-50 transition-opacity duration-300"
                 style={{ backgroundImage: `url(${coldChainBg})` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-teal-500/30 to-teal-600/60" />
+              <div className="absolute inset-0 bg-gradient-to-b from-teal-900/60 via-teal-800/40 to-teal-700/70" />
               <div className="relative z-10">
                 <div className="w-16 h-16 bg-teal-700/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
                   <Thermometer className="w-8 h-8 text-teal-50" />
@@ -224,10 +224,10 @@ const About = () => {
             {/* Nationwide Distribution */}
             <Card className="card-elevated text-center p-6 hover-lift animate-fade-in relative overflow-hidden group" style={{ animationDelay: '0.1s' }}>
               <div 
-                className="absolute inset-0 bg-cover bg-center opacity-15 group-hover:opacity-20 transition-opacity duration-300"
+                className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-50 transition-opacity duration-300"
                 style={{ backgroundImage: `url(${distributionBg})` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-green-500/30 to-green-600/60" />
+              <div className="absolute inset-0 bg-gradient-to-b from-green-900/60 via-green-800/40 to-green-700/70" />
               <div className="relative z-10">
                 <div className="w-16 h-16 bg-green-700/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
                   <Truck className="w-8 h-8 text-green-50" />
@@ -244,10 +244,10 @@ const About = () => {
             {/* Global Sourcing at Scale */}
             <Card className="card-elevated text-center p-6 hover-lift animate-fade-in relative overflow-hidden group" style={{ animationDelay: '0.2s' }}>
               <div 
-                className="absolute inset-0 bg-cover bg-center opacity-15 group-hover:opacity-20 transition-opacity duration-300"
+                className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-50 transition-opacity duration-300"
                 style={{ backgroundImage: `url(${globalSourcingBg})` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-purple-500/30 to-purple-600/60" />
+              <div className="absolute inset-0 bg-gradient-to-b from-purple-900/60 via-purple-800/40 to-purple-700/70" />
               <div className="relative z-10">
                 <div className="w-16 h-16 bg-purple-700/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
                   <Globe className="w-8 h-8 text-purple-50" />
@@ -264,10 +264,10 @@ const About = () => {
             {/* Customer-Centric Partnership */}
             <Card className="card-elevated text-center p-6 hover-lift animate-fade-in relative overflow-hidden group" style={{ animationDelay: '0.3s' }}>
               <div 
-                className="absolute inset-0 bg-cover bg-center opacity-15 group-hover:opacity-20 transition-opacity duration-300"
+                className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-50 transition-opacity duration-300"
                 style={{ backgroundImage: `url(${partnershipBg})` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-orange-500/30 to-orange-600/60" />
+              <div className="absolute inset-0 bg-gradient-to-b from-orange-900/60 via-orange-800/40 to-orange-700/70" />
               <div className="relative z-10">
                 <div className="w-16 h-16 bg-orange-700/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
                   <Shield className="w-8 h-8 text-orange-50" />
