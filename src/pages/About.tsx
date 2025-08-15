@@ -4,6 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Globe, Users, TrendingUp, Award, Shield, Heart, Truck, MapPin, Calendar, Building2, Package, Thermometer } from 'lucide-react';
 import temaPortTrucks from '@/assets/tema-port-trucks.jpg';
 import ghanaColdStorageTeam from '@/assets/ghana-cold-storage-team.jpg';
+import coldChainBg from '@/assets/cold-chain-bg.jpg';
+import distributionBg from '@/assets/distribution-bg.jpg';
+import globalSourcingBg from '@/assets/global-sourcing-bg.jpg';
+import partnershipBg from '@/assets/partnership-bg.jpg';
 
 const About = () => {
   const values = [
@@ -185,7 +189,7 @@ const About = () => {
       </section>
 
       {/* Our Key Differentiators Section */}
-      <section className="py-24 bg-accent/10">
+      <section className="py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16 animate-fade-in">
             <h2 className="text-3xl lg:text-4xl font-poppins font-bold mb-4">
@@ -198,55 +202,83 @@ const About = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Certified Cold-Chain Logistics */}
-            <Card className="card-elevated text-center p-6 hover-lift animate-fade-in bg-gradient-to-br from-teal-500/10 to-teal-600/5 border-teal-200/20">
-              <div className="w-16 h-16 bg-teal-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Thermometer className="w-8 h-8 text-teal-600" />
+            <Card className="card-elevated text-center p-6 hover-lift animate-fade-in relative overflow-hidden group">
+              <div 
+                className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+                style={{ backgroundImage: `url(${coldChainBg})` }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-teal-500/20 to-teal-600/40" />
+              <div className="relative z-10">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Thermometer className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-poppins font-bold text-lg mb-4 text-white">
+                  Certified Cold-Chain Logistics
+                </h3>
+                <p className="text-sm text-white/90 leading-relaxed">
+                  Consistent sub-zero preservation from port to plate with state-of-the-art refrigeration systems.
+                </p>
               </div>
-              <h3 className="font-poppins font-bold text-lg mb-4 text-teal-800 dark:text-teal-200">
-                Certified Cold-Chain Logistics
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Consistent sub-zero preservation from port to plate with state-of-the-art refrigeration systems.
-              </p>
             </Card>
 
             {/* Nationwide Distribution */}
-            <Card className="card-elevated text-center p-6 hover-lift animate-fade-in bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-200/20" style={{ animationDelay: '0.1s' }}>
-              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Truck className="w-8 h-8 text-green-600" />
+            <Card className="card-elevated text-center p-6 hover-lift animate-fade-in relative overflow-hidden group" style={{ animationDelay: '0.1s' }}>
+              <div 
+                className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+                style={{ backgroundImage: `url(${distributionBg})` }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-green-500/20 to-green-600/40" />
+              <div className="relative z-10">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Truck className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-poppins font-bold text-lg mb-4 text-white">
+                  Nationwide Distribution
+                </h3>
+                <p className="text-sm text-white/90 leading-relaxed">
+                  Fast and reliable delivery to all major markets in Ghana through our comprehensive logistics network.
+                </p>
               </div>
-              <h3 className="font-poppins font-bold text-lg mb-4 text-green-800 dark:text-green-200">
-                Nationwide Distribution
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Fast and reliable delivery to all major markets in Ghana through our comprehensive logistics network.
-              </p>
             </Card>
 
             {/* Global Sourcing at Scale */}
-            <Card className="card-elevated text-center p-6 hover-lift animate-fade-in bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-200/20" style={{ animationDelay: '0.2s' }}>
-              <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Globe className="w-8 h-8 text-purple-600" />
+            <Card className="card-elevated text-center p-6 hover-lift animate-fade-in relative overflow-hidden group" style={{ animationDelay: '0.2s' }}>
+              <div 
+                className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+                style={{ backgroundImage: `url(${globalSourcingBg})` }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-purple-500/20 to-purple-600/40" />
+              <div className="relative z-10">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Globe className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-poppins font-bold text-lg mb-4 text-white">
+                  Global Sourcing at Scale
+                </h3>
+                <p className="text-sm text-white/90 leading-relaxed">
+                  Frozen foods sourced through verified global suppliers ensuring quality and reliability.
+                </p>
               </div>
-              <h3 className="font-poppins font-bold text-lg mb-4 text-purple-800 dark:text-purple-200">
-                Global Sourcing at Scale
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Frozen foods sourced through verified global suppliers ensuring quality and reliability.
-              </p>
             </Card>
 
             {/* Customer-Centric Partnership */}
-            <Card className="card-elevated text-center p-6 hover-lift animate-fade-in bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-200/20" style={{ animationDelay: '0.3s' }}>
-              <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Shield className="w-8 h-8 text-orange-600" />
+            <Card className="card-elevated text-center p-6 hover-lift animate-fade-in relative overflow-hidden group" style={{ animationDelay: '0.3s' }}>
+              <div 
+                className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+                style={{ backgroundImage: `url(${partnershipBg})` }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-orange-500/20 to-orange-600/40" />
+              <div className="relative z-10">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Shield className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-poppins font-bold text-lg mb-4 text-white">
+                  Customer-Centric Partnership
+                </h3>
+                <p className="text-sm text-white/90 leading-relaxed">
+                  Built on transparency, service excellence, and respect with our valued partners.
+                </p>
               </div>
-              <h3 className="font-poppins font-bold text-lg mb-4 text-orange-800 dark:text-orange-200">
-                Customer-Centric Partnership
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Built on transparency, service excellence, and respect with our valued partners.
-              </p>
             </Card>
           </div>
         </div>
