@@ -132,7 +132,7 @@ const Partners = () => {
       
       <div className="min-h-screen bg-background">
         {/* Hero Section */}
-        <section ref={heroRef} className="px-4 sm:px-6 lg:px-8 pt-12 pb-16">
+        <section ref={heroRef as React.RefObject<HTMLElement>} className="px-4 sm:px-6 lg:px-8 pt-12 pb-16">
           <div className="max-w-7xl mx-auto text-center">
             <div className={`transform transition-all duration-1000 ${
               heroVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
@@ -220,7 +220,7 @@ const Partners = () => {
           </section>
 
           {/* Global Partners Section */}
-          <section ref={partnersRef} className="mb-20">
+          <section ref={partnersRef as React.RefObject<HTMLElement>} className="mb-20">
             <div className="text-center mb-16">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
                 Our Trusted Suppliers
