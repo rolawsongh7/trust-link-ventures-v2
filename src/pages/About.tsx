@@ -202,6 +202,50 @@ const About = () => {
         </div>
       </section>
 
+      {/* Mission & Vision Statement Section */}
+      <section className="py-24 bg-accent/10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Our Mission */}
+            <Card className="card-elevated animate-fade-in hover-lift">
+              <CardHeader className="text-center pb-6">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Target className="w-8 h-8 text-primary" />
+                </div>
+                <CardTitle className="text-2xl font-poppins font-bold">
+                  Our Mission
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed text-center">
+                  To meet and exceed consumer demand by consistently importing and exporting high-quality 
+                  frozen foods that adhere to global standards of freshness, safety, and reliability.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Our Vision */}
+            <Card className="card-elevated animate-fade-in hover-lift" style={{ animationDelay: '0.2s' }}>
+              <CardHeader className="text-center pb-6">
+                <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Lightbulb className="w-8 h-8 text-secondary" />
+                </div>
+                <CardTitle className="text-2xl font-poppins font-bold">
+                  Our Vision
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed text-center">
+                  To become a national leader in the delivery of premium frozen food products in Ghana by fulfilling 
+                  customer expectations in quality and service, while advancing the growth of Ghana's local fishing 
+                  industry through internationally benchmarked practices.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Our Story Section */}
       <section className="py-24 bg-background relative overflow-hidden">
         {/* Decorative background elements */}
@@ -391,50 +435,6 @@ const About = () => {
                   Built on transparency, service excellence, and respect with our valued partners.
                 </p>
               </div>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Mission & Vision Statement Section */}
-      <section className="py-24 bg-background">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Our Mission */}
-            <Card className="card-elevated animate-fade-in hover-lift">
-              <CardHeader className="text-center pb-6">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Target className="w-8 h-8 text-primary" />
-                </div>
-                <CardTitle className="text-2xl font-poppins font-bold">
-                  Our Mission
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed text-center">
-                  To meet and exceed consumer demand by consistently importing and exporting high-quality 
-                  frozen foods that adhere to global standards of freshness, safety, and reliability.
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Our Vision */}
-            <Card className="card-elevated animate-fade-in hover-lift" style={{ animationDelay: '0.2s' }}>
-              <CardHeader className="text-center pb-6">
-                <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Lightbulb className="w-8 h-8 text-secondary" />
-                </div>
-                <CardTitle className="text-2xl font-poppins font-bold">
-                  Our Vision
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed text-center">
-                  To become a national leader in the delivery of premium frozen food products in Ghana by fulfilling 
-                  customer expectations in quality and service, while advancing the growth of Ghana's local fishing 
-                  industry through internationally benchmarked practices.
-                </p>
-              </CardContent>
             </Card>
           </div>
         </div>
