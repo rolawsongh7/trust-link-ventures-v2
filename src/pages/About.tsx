@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Globe, Users, TrendingUp, Award, Shield, Heart, Truck, MapPin } from 'lucide-react';
 import temaPortTrucks from '@/assets/tema-port-trucks.jpg';
-import logisticsTeam from '@/assets/logistics-team-ghana.jpg';
+import ghanaColdStorageTeam from '@/assets/ghana-cold-storage-team.jpg';
 
 const About = () => {
   const values = [
@@ -119,16 +119,16 @@ const About = () => {
               <Card className="card-elevated overflow-hidden">
                 <div className="aspect-[4/3] relative">
                   <img 
-                    src={logisticsTeam} 
-                    alt="Trust Link Ventures logistics team in Ghana"
+                    src={ghanaColdStorageTeam} 
+                    alt="Ghanaian team working at Trust Link Ventures cold storage facility"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent" />
                 </div>
                 <CardContent className="p-6">
-                  <h3 className="font-poppins font-semibold mb-2">Our Team in Action</h3>
+                  <h3 className="font-poppins font-semibold mb-2">Our Cold Storage Team</h3>
                   <p className="text-sm text-muted-foreground">
-                    Professional logistics operations across Ghana, ensuring quality and reliability in every delivery.
+                    Dedicated Ghanaian professionals ensuring quality preservation and safe handling of frozen foods in our state-of-the-art facilities.
                   </p>
                 </CardContent>
               </Card>
