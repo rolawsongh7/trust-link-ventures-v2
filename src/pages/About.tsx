@@ -527,49 +527,42 @@ const About = () => {
 
           <div className="max-w-4xl mx-auto">
             {/* Timeline Container */}
-            <div className="relative h-96 overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/30">
-              {timelineEvents.map((event, index) => (
-                <div
-                  key={index}
-                  className={`absolute inset-0 transition-all duration-800 ease-out ${
-                    index === currentTimelineIndex
-                      ? 'opacity-100 scale-100'
-                      : 'opacity-0 scale-95'
-                  }`}
-                >
-                  {/* Background Image */}
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${event.image})` }}
-                  />
-                  <div className={`absolute inset-0 bg-gradient-to-br ${event.gradient} opacity-80`} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
-                  
-                  <div className="relative z-10 flex items-center justify-center h-full p-12">
-                    <div className="text-center">
-                      {/* Year Badge */}
-                      <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full mb-8 shadow-2xl border border-white/30">
-                        <span className="text-white text-2xl font-bold drop-shadow-lg">{event.year}</span>
-                      </div>
-                      
-                      {/* Icon */}
-                      <div className="flex justify-center mb-6">
-                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl border border-white/30">
-                          <event.icon className="w-8 h-8 text-white drop-shadow-lg" />
-                        </div>
-                      </div>
-                      
-                      {/* Content */}
-                      <h3 className="text-2xl lg:text-3xl font-poppins font-bold text-white mb-4 drop-shadow-lg">
-                        {event.title}
-                      </h3>
-                      <p className="text-white/90 text-lg leading-relaxed max-w-2xl mx-auto drop-shadow-md">
-                        {event.description}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+             <div className="relative h-96 overflow-hidden rounded-2xl backdrop-blur-sm border border-border/30">
+               {timelineEvents.map((event, index) => (
+                 <div
+                   key={index}
+                   className={`absolute inset-0 transition-all duration-800 ease-out ${
+                     index === currentTimelineIndex
+                       ? 'opacity-100 scale-100'
+                       : 'opacity-0 scale-95'
+                   }`}
+                 >
+                   {/* Background Image */}
+                   <div 
+                     className="absolute inset-0 bg-cover bg-center"
+                     style={{ backgroundImage: `url(${event.image})` }}
+                   />
+                   <div className={`absolute inset-0 bg-gradient-to-br ${event.gradient} opacity-20`} />
+                   <div className="absolute inset-0 bg-white/10" />
+                   
+                   <div className="relative z-10 flex items-center justify-center h-full p-12">
+                     <div className="text-center">
+                       {/* Year Badge */}
+                       <div className="inline-flex items-center justify-center w-20 h-20 bg-background/80 backdrop-blur-sm rounded-full mb-8 shadow-2xl border border-border">
+                         <span className="text-foreground text-2xl font-bold drop-shadow-lg">{event.year}</span>
+                       </div>
+                       
+                       {/* Content */}
+                       <h3 className="text-2xl lg:text-3xl font-poppins font-bold text-foreground mb-4 drop-shadow-lg">
+                         {event.title}
+                       </h3>
+                       <p className="text-foreground/80 text-lg leading-relaxed max-w-2xl mx-auto drop-shadow-md">
+                         {event.description}
+                       </p>
+                     </div>
+                   </div>
+                 </div>
+               ))}
             </div>
 
             {/* Progress Indicators */}
