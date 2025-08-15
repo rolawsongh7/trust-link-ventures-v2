@@ -734,119 +734,65 @@ const About = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <Card key={index} className="card-elevated text-center p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="text-3xl font-poppins font-bold gradient-text mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {stat.label}
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-
-      {/* Values Section */}
-      <section className="py-24 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-poppins font-bold mb-4">
-              Our <span className="gradient-text">Values</span>
+      {/* Our Journey Timeline Section */}
+      <section className="py-24 bg-background relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-3xl lg:text-5xl font-poppins font-bold mb-6 text-foreground">
+              Our <span className="bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">Journey</span>
             </h2>
+            <div className="w-32 h-1 bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 mx-auto mb-6 rounded-full" />
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              The principles that guide our decisions and shape our relationships with partners worldwide.
+              From incorporation to becoming Ghana's trusted frozen food distribution leader.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {values.map((value, index) => (
-              <Card key={index} className="card-elevated text-center p-6 hover-lift animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <value.icon className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="font-poppins font-semibold mb-3">{value.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {value.description}
-                </p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Team Section */}
-      <section className="py-24 bg-accent/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-poppins font-bold mb-4">
-              Meet Our <span className="gradient-text">Leadership Team</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Experienced professionals dedicated to driving global trade innovation and excellence.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {team.map((member, index) => (
-              <Card key={index} className="card-elevated hover-lift animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <CardHeader>
-                  <div className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="w-10 h-10 text-white" />
+          <div className="relative max-w-4xl mx-auto">
+            {/* Timeline content */}
+            <div className="relative overflow-hidden rounded-3xl shadow-2xl">
+              {timelineEvents.map((event, index) => (
+                <div
+                  key={event.year}
+                  className={`${
+                    index === currentTimelineIndex ? 'block' : 'hidden'
+                  } relative min-h-[600px] flex items-center justify-center text-white transition-all duration-500`}
+                  style={{
+                    backgroundImage: `url(${event.image})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                >
+                  <div className="absolute inset-0 bg-black/30 opacity-30" />
+                  <div className="relative z-10 text-center px-8 py-16 max-w-2xl">
+                    <div className="text-6xl lg:text-8xl font-bold mb-4 opacity-90">
+                      {event.year}
+                    </div>
+                    <h3 className="text-2xl lg:text-4xl font-bold mb-6 leading-tight">
+                      {event.title}
+                    </h3>
+                    <p className="text-lg lg:text-xl leading-relaxed opacity-95">
+                      {event.description}
+                    </p>
                   </div>
-                  <CardTitle className="text-center font-poppins">{member.name}</CardTitle>
-                  <Badge variant="secondary" className="mx-auto w-fit">{member.role}</Badge>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <p className="text-sm text-primary font-medium mb-3">{member.expertise}</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {member.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+                </div>
+              ))}
+            </div>
 
-      {/* Company Story */}
-      <section className="py-24 bg-background">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="card-elevated animate-fade-in">
-            <CardHeader>
-              <CardTitle className="text-3xl font-poppins font-bold text-center mb-4">
-                Our <span className="gradient-text">Story</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="prose prose-lg max-w-none">
-              <div className="space-y-6 text-muted-foreground">
-                <p>
-                  Founded in 2009, Trust Link Ventures began as a vision to simplify global trade 
-                  and create meaningful connections between businesses across different continents. 
-                  What started as a small trading company has evolved into a comprehensive platform 
-                  that facilitates international partnerships and drives innovation in global commerce.
-                </p>
-                <p>
-                  Over the years, we have successfully connected thousands of businesses, facilitated 
-                  trade worth millions of dollars, and helped companies enter new markets with confidence. 
-                  Our expertise spans multiple industries, from food and agriculture to technology and 
-                  sustainable solutions.
-                </p>
-                <p>
-                  Today, we continue to innovate and adapt to the changing needs of global trade, 
-                  leveraging technology to create more efficient, transparent, and sustainable 
-                  business relationships. Our commitment to excellence and customer success remains 
-                  at the heart of everything we do.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Timeline Navigation */}
+            <div className="flex justify-center mt-8 space-x-3">
+              {timelineEvents.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentTimelineIndex(index)}
+                  className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                    index === currentTimelineIndex
+                      ? 'bg-primary scale-125 shadow-lg'
+                      : 'bg-muted-foreground/40 hover:bg-muted-foreground/60'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
     </div>
