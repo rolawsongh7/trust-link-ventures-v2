@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, MapPin, Globe, Users, Truck, Shield } from 'lucide-react';
-import SupplierWorldMap from '@/components/SupplierWorldMap';
+import SimpleWorldMap from '@/components/SimpleWorldMap';
 import portFleetAerial from '@/assets/port-fleet-aerial.jpg';
 
 const Partners = () => {
@@ -227,9 +227,9 @@ const Partners = () => {
             </p>
           </div>
 
-          {/* Interactive World Map */}
+          {/* Simple World Map */}
           <div className="mb-16">
-            <SupplierWorldMap />
+            <SimpleWorldMap />
           </div>
 
           {/* Partners Grid */}
