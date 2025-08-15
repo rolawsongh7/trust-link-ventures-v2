@@ -59,17 +59,6 @@ const Contact = () => {
     }
   ];
 
-  const certifications = [
-    { name: 'HACCP Certified', icon: Verified },
-    { name: 'Halal Compliance', icon: Award },
-    { name: 'ISO 22000 Food Safety', icon: Shield }
-  ];
-
-  const miniStats = [
-    { label: 'Tons Delivered', value: '1,200+', icon: Package },
-    { label: 'Global Markets', value: '10+', icon: Globe },
-    { label: 'Partner Retention Rate', value: '98%', icon: Users },
-  ];
 
   const testimonials = [
     {
@@ -373,34 +362,6 @@ const Contact = () => {
         </div>
       </section>
 
-      {/* Trust Indicators Section */}
-      <section className="py-16 bg-accent/10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Certifications */}
-          <div className="text-center mb-12">
-            <h3 className="text-2xl font-bold mb-8">Trusted & Certified</h3>
-            <div className="flex justify-center flex-wrap gap-6">
-              {certifications.map((cert, index) => (
-                <Badge key={index} variant="outline" className="px-4 py-2 text-sm">
-                  <cert.icon className="w-4 h-4 mr-2" />
-                  {cert.name}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {/* Mini Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {miniStats.map((stat, index) => (
-              <Card key={index} className="text-center p-6 card-elevated">
-                <stat.icon className="w-8 h-8 text-primary mx-auto mb-3" />
-                <div className="text-2xl font-bold text-primary mb-1">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
     </div>
   );
 };

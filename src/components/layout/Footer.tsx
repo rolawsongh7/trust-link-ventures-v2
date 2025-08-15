@@ -29,7 +29,7 @@ const Footer = () => {
     <footer className="bg-sidebar border-t border-border mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Newsletter Section - Compact */}
-        <div className="bg-sidebar-accent/20 rounded-lg p-6 mb-8">
+        <div className="bg-sidebar-accent/30 rounded-lg p-6 mb-8">
           <div className="text-center max-w-xl mx-auto">
             <h3 className="text-lg font-semibold text-sidebar-foreground mb-2">
               Stay Connected
