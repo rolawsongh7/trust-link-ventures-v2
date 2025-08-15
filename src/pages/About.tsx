@@ -77,7 +77,7 @@ const About = () => {
               <span className="gradient-text">Delivering Trust.</span>
             </h1>
           </div>
-          <div className="text-center mt-auto mb-12">
+          <div className="text-center mt-auto mb-4">
             <p className="text-xl text-white/90 max-w-4xl mx-auto leading-relaxed drop-shadow-md">
               From humble beginnings to 1,200 tonnes monthly, Trust Link Ventures connects Ghana to the world's most reliable cold-chain food supply.
             </p>
