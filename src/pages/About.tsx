@@ -88,50 +88,29 @@ const About = () => {
 
       {/* Our Story Section */}
       <section className="py-24 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="animate-fade-in">
-              <Badge variant="outline" className="mb-4 px-4 py-2">
-                <MapPin className="w-4 h-4 mr-2" />
-                Our Foundation
-              </Badge>
-              <h2 className="text-3xl lg:text-4xl font-poppins font-bold mb-6">
-                Rooted in <span className="gradient-text">Ghana</span>. <br />
-                Built for the <span className="gradient-text">World</span>.
-              </h2>
-              <div className="space-y-4 text-muted-foreground leading-relaxed">
-                <p>
-                  Trust Link Ventures Limited (TLVL) is a privately held company established under the Ghana Companies Code of 1963 (Act 179), with official certification granted on December 20, 2006.
-                </p>
-                <p>
-                  Originally founded as a small-scale frozen food trading company, TLVL has grown into one of Ghana's leading importers and distributors of frozen foods, including fish, poultry, and beef.
-                </p>
-                <p>
-                  Operating from Tema, we now handle over 1,200 tonnes of imports per month, with a nationwide cold-chain distribution network that ensures goods reach consumers swiftly and safely.
-                </p>
-                <p className="text-primary font-medium">
-                  Our story is one of resilience, local innovation, and international standards. We believe that trusted logistics and quality food distribution can transform economies, improve lives, and build long-term prosperity.
-                </p>
-              </div>
-            </div>
-            
-            <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <Card className="card-elevated overflow-hidden">
-                <div className="aspect-[4/3] relative">
-                  <img 
-                    src={ghanaColdStorageTeam} 
-                    alt="Ghanaian team working at Trust Link Ventures cold storage facility"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent" />
-                </div>
-                <CardContent className="p-6">
-                  <h3 className="font-poppins font-semibold mb-2">Our Cold Storage Team</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Dedicated Ghanaian professionals ensuring quality preservation and safe handling of frozen foods in our state-of-the-art facilities.
-                  </p>
-                </CardContent>
-              </Card>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="animate-fade-in">
+            <Badge variant="outline" className="mb-4 px-4 py-2">
+              <MapPin className="w-4 h-4 mr-2" />
+              Our Foundation
+            </Badge>
+            <h2 className="text-3xl lg:text-4xl font-poppins font-bold mb-6">
+              Rooted in <span className="gradient-text">Ghana</span>. <br />
+              Built for the <span className="gradient-text">World</span>.
+            </h2>
+            <div className="space-y-4 text-muted-foreground leading-relaxed text-left max-w-3xl mx-auto">
+              <p>
+                Trust Link Ventures Limited (TLVL) is a privately held company established under the Ghana Companies Code of 1963 (Act 179), with official certification granted on December 20, 2006.
+              </p>
+              <p>
+                Originally founded as a small-scale frozen food trading company, TLVL has grown into one of Ghana's leading importers and distributors of frozen foods, including fish, poultry, and beef.
+              </p>
+              <p>
+                Operating from Tema, we now handle over 1,200 tonnes of imports per month, with a nationwide cold-chain distribution network that ensures goods reach consumers swiftly and safely.
+              </p>
+              <p className="text-primary font-medium">
+                Our story is one of resilience, local innovation, and international standards. We believe that trusted logistics and quality food distribution can transform economies, improve lives, and build long-term prosperity.
+              </p>
             </div>
           </div>
         </div>
