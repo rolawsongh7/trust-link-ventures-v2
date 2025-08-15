@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, MapPin, Globe, Users, Truck, Shield } from 'lucide-react';
 import SupplierWorldMap from '@/components/SupplierWorldMap';
+import portFleetAerial from '@/assets/port-fleet-aerial.jpg';
 
 const Partners = () => {
   const [hoveredSupplier, setHoveredSupplier] = useState<string | null>(null);
@@ -334,11 +335,20 @@ const Partners = () => {
               </div>
             </div>
             
-            <div className="bg-muted rounded-lg p-8 text-center">
-              <h3 className="text-2xl font-bold mb-4">Global Supply Chain</h3>
-              <p className="text-muted-foreground">
-                Placeholder for supply chain visualization
-              </p>
+            <div className="relative overflow-hidden rounded-lg">
+              <img 
+                src={portFleetAerial} 
+                alt="Aerial view of cargo ships docking at commercial port"
+                className="w-full h-80 object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                <div className="p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-2">Global Supply Chain</h3>
+                  <p className="text-white/90">
+                    Strategic port operations ensuring seamless global distribution
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
