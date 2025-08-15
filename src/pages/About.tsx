@@ -79,7 +79,10 @@ const About = () => {
       suffix: '+',
       label: 'Tonnes/Month Imports',
       description: 'Imports of frozen products',
-      color: 'from-yellow-400 to-orange-500',
+      color: 'from-amber-400 via-yellow-400 to-orange-500',
+      bgColor: 'from-amber-500/20 via-yellow-500/15 to-orange-600/25',
+      shadowColor: 'shadow-amber-500/30',
+      iconBg: 'bg-gradient-to-br from-amber-400 to-orange-500',
       progress: (tonnagesCount / 1200) * 100
     },
     {
@@ -88,7 +91,10 @@ const About = () => {
       suffix: '+',
       label: 'Cities Served',
       description: 'Nationwide logistics reach',
-      color: 'from-yellow-400 to-yellow-500',
+      color: 'from-emerald-400 via-green-400 to-teal-500',
+      bgColor: 'from-emerald-500/20 via-green-500/15 to-teal-600/25',
+      shadowColor: 'shadow-emerald-500/30',
+      iconBg: 'bg-gradient-to-br from-emerald-400 to-teal-500',
       progress: (citiesCount / 20) * 100
     },
     {
@@ -97,7 +103,10 @@ const About = () => {
       suffix: '+',
       label: 'Years in Operation',
       description: 'Established 2006',
-      color: 'from-yellow-300 to-yellow-400',
+      color: 'from-blue-400 via-cyan-400 to-indigo-500',
+      bgColor: 'from-blue-500/20 via-cyan-500/15 to-indigo-600/25',
+      shadowColor: 'shadow-blue-500/30',
+      iconBg: 'bg-gradient-to-br from-blue-400 to-indigo-500',
       progress: (yearsCount / 17) * 100
     },
     {
@@ -106,7 +115,10 @@ const About = () => {
       suffix: '%',
       label: 'Delivery Success Rate',
       description: 'On-time, safe arrivals',
-      color: 'from-yellow-400 to-amber-400',
+      color: 'from-rose-400 via-pink-400 to-purple-500',
+      bgColor: 'from-rose-500/20 via-pink-500/15 to-purple-600/25',
+      shadowColor: 'shadow-rose-500/30',
+      iconBg: 'bg-gradient-to-br from-rose-400 to-purple-500',
       progress: successRate
     }
   ];
@@ -385,22 +397,55 @@ const About = () => {
       </section>
 
       {/* Impact Snapshot Section */}
-      <section className="py-24 bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 relative overflow-hidden">
-        {/* Decorative background elements */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-32 h-32 rounded-full border-2 border-yellow-400" />
-          <div className="absolute bottom-10 right-10 w-40 h-40 rounded-full border border-yellow-300" />
-          <div className="absolute top-1/2 left-1/4 w-24 h-24 rounded-full border border-yellow-500" />
-          <div className="absolute bottom-1/4 left-3/4 w-36 h-36 rounded-full border-2 border-yellow-400" />
+      <section className="py-24 bg-gradient-to-br from-slate-900 via-green-900 to-emerald-900 relative overflow-hidden">
+        {/* Complex Background Pattern */}
+        <div className="absolute inset-0">
+          {/* Geometric Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <defs>
+                <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                  <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5"/>
+                </pattern>
+                <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <circle cx="10" cy="10" r="1" fill="currentColor"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" className="text-emerald-400"/>
+              <rect width="100%" height="100%" fill="url(#dots)" className="text-green-300"/>
+            </svg>
+          </div>
+          
+          {/* Floating Circles */}
+          <div className="absolute top-10 left-10 w-32 h-32 rounded-full border-2 border-emerald-400/30 animate-pulse" />
+          <div className="absolute bottom-10 right-10 w-40 h-40 rounded-full border border-green-300/20 animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/2 left-1/4 w-24 h-24 rounded-full border border-teal-400/40 animate-pulse" style={{ animationDelay: '2s' }} />
+          <div className="absolute bottom-1/4 left-3/4 w-36 h-36 rounded-full border-2 border-cyan-400/25 animate-pulse" style={{ animationDelay: '3s' }} />
+          
+          {/* Hexagonal Pattern */}
+          <div className="absolute top-20 right-20 w-20 h-20 opacity-20">
+            <svg viewBox="0 0 100 100" className="w-full h-full text-yellow-400">
+              <polygon points="50,5 85,25 85,75 50,95 15,75 15,25" fill="none" stroke="currentColor" strokeWidth="2"/>
+            </svg>
+          </div>
+          <div className="absolute bottom-32 left-32 w-16 h-16 opacity-15">
+            <svg viewBox="0 0 100 100" className="w-full h-full text-orange-400">
+              <polygon points="50,5 85,25 85,75 50,95 15,75 15,25" fill="none" stroke="currentColor" strokeWidth="2"/>
+            </svg>
+          </div>
+          
+          {/* Gradient Orbs */}
+          <div className="absolute top-1/4 right-1/3 w-64 h-64 bg-gradient-radial from-emerald-500/20 to-transparent rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/3 left-1/4 w-48 h-48 bg-gradient-radial from-teal-500/25 to-transparent rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16 animate-fade-in">
             <h2 className="text-3xl lg:text-5xl font-poppins font-bold mb-6 text-white">
-              Our Impact in <span className="bg-gradient-to-r from-yellow-300 to-yellow-500 bg-clip-text text-transparent">Numbers</span>
+              Our Impact in <span className="bg-gradient-to-r from-emerald-300 via-yellow-300 to-orange-400 bg-clip-text text-transparent">Numbers</span>
             </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-yellow-400 to-yellow-500 mx-auto mb-6 rounded-full" />
-            <p className="text-green-100 text-lg max-w-2xl mx-auto">
+            <div className="w-32 h-1 bg-gradient-to-r from-emerald-400 via-yellow-400 to-orange-500 mx-auto mb-6 rounded-full" />
+            <p className="text-emerald-100 text-lg max-w-2xl mx-auto">
               Delivering excellence across Ghana's frozen food supply chain.
             </p>
           </div>
@@ -409,55 +454,96 @@ const About = () => {
             {impactStats.map((stat, index) => (
               <Card 
                 key={index} 
-                className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/15 transition-all duration-500 group hover:scale-105 hover:shadow-2xl hover:shadow-yellow-400/20 animate-fade-in overflow-hidden"
+                className={`relative overflow-hidden group hover:scale-105 transition-all duration-500 hover:shadow-2xl ${stat.shadowColor} animate-fade-in border-0`}
                 style={{ animationDelay: `${index * 0.2}s` }}
               >
-                <CardContent className="p-8 text-center relative">
-                  {/* Icon with animated background */}
+                {/* Card Background with Pattern */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgColor}`} />
+                <div className="absolute inset-0 backdrop-blur-sm bg-white/5" />
+                
+                {/* Pattern Overlay */}
+                <div className="absolute inset-0 opacity-20">
+                  <svg className="w-full h-full" viewBox="0 0 60 60" preserveAspectRatio="none">
+                    <defs>
+                      <pattern id={`pattern-${index}`} width="30" height="30" patternUnits="userSpaceOnUse">
+                        <circle cx="15" cy="15" r="2" fill="currentColor" className="text-white"/>
+                        <path d="M0,15 Q15,0 30,15 T60,15" stroke="currentColor" strokeWidth="0.5" fill="none" className="text-white"/>
+                      </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill={`url(#pattern-${index})`} />
+                  </svg>
+                </div>
+
+                <CardContent className="p-8 text-center relative z-10">
+                  {/* Icon with enhanced styling */}
                   <div className="relative mb-6">
-                    <div className={`w-16 h-16 bg-gradient-to-br ${stat.color} rounded-full flex items-center justify-center mx-auto group-hover:rotate-12 transition-transform duration-300 shadow-lg`}>
-                      <stat.icon className="w-8 h-8 text-white" />
+                    <div className={`w-20 h-20 ${stat.iconBg} rounded-2xl flex items-center justify-center mx-auto group-hover:rotate-12 transition-all duration-500 shadow-2xl ${stat.shadowColor} group-hover:shadow-3xl`}>
+                      <stat.icon className="w-10 h-10 text-white drop-shadow-lg" />
                     </div>
-                    <div className="absolute inset-0 w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-yellow-400/20 to-transparent animate-pulse" />
+                    <div className="absolute inset-0 w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-white/20 to-transparent animate-pulse opacity-50" />
+                    
+                    {/* Floating particles effect */}
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-white/40 rounded-full animate-ping" />
+                    <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-white/30 rounded-full animate-ping" style={{ animationDelay: '1s' }} />
                   </div>
 
-                  {/* Animated counter */}
-                  <div className="mb-4">
-                    <div className={`text-4xl lg:text-5xl font-poppins font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300`}>
+                  {/* Enhanced counter display */}
+                  <div className="mb-6">
+                    <div className={`text-5xl lg:text-6xl font-poppins font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform duration-300 drop-shadow-lg`}>
                       {stat.value}{stat.suffix}
                     </div>
                     
-                    {/* Progress bar */}
-                    <div className="w-full bg-white/20 rounded-full h-2 mb-3 overflow-hidden">
+                    {/* Enhanced Progress bar */}
+                    <div className="relative w-full bg-black/20 rounded-full h-3 mb-4 overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
                       <div 
-                        className={`h-full bg-gradient-to-r ${stat.color} rounded-full transition-all duration-2000 ease-out`}
+                        className={`h-full bg-gradient-to-r ${stat.color} rounded-full transition-all duration-2000 ease-out relative overflow-hidden`}
                         style={{ 
                           width: `${Math.min(stat.progress, 100)}%`,
                           transform: isImpactVisible ? 'translateX(0)' : 'translateX(-100%)'
                         }}
-                      />
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="text-white font-semibold text-lg mb-2">
+                  {/* Enhanced text styling */}
+                  <div className="text-white font-bold text-lg mb-3 drop-shadow-md">
                     {stat.label}
                   </div>
-                  <div className="text-green-100 text-sm leading-relaxed">
+                  <div className="text-white/80 text-sm leading-relaxed">
                     {stat.description}
                   </div>
 
-                  {/* Decorative corner accent */}
-                  <div className="absolute top-0 right-0 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-yellow-400/20 group-hover:border-t-yellow-400/40 transition-colors duration-300" />
+                  {/* Enhanced decorative corner accent */}
+                  <div className={`absolute top-0 right-0 w-0 h-0 border-l-[40px] border-l-transparent border-t-[40px] transition-all duration-300 ${
+                    index % 4 === 0 ? 'border-t-amber-400/30 group-hover:border-t-amber-400/60' :
+                    index % 4 === 1 ? 'border-t-emerald-400/30 group-hover:border-t-emerald-400/60' :
+                    index % 4 === 2 ? 'border-t-blue-400/30 group-hover:border-t-blue-400/60' :
+                    'border-t-rose-400/30 group-hover:border-t-rose-400/60'
+                  }`} />
+                  
+                  {/* Glowing border effect */}
+                  <div className={`absolute inset-0 rounded-lg border-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                    index % 4 === 0 ? 'border-amber-400/50' :
+                    index % 4 === 1 ? 'border-emerald-400/50' :
+                    index % 4 === 2 ? 'border-blue-400/50' :
+                    'border-rose-400/50'
+                  }`} />
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          {/* Additional visual elements */}
-          <div className="mt-16 text-center">
-            <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 text-white">
-              <BarChart3 className="w-5 h-5 text-yellow-400" />
-              <span className="text-sm font-medium">Growing stronger every year since 2006</span>
+          {/* Enhanced bottom section */}
+          <div className="mt-20 text-center">
+            <div className="inline-flex items-center space-x-3 bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm rounded-2xl px-8 py-4 text-white border border-white/10 shadow-2xl">
+              <BarChart3 className="w-6 h-6 text-emerald-400 animate-pulse" />
+              <span className="text-lg font-medium bg-gradient-to-r from-emerald-200 to-teal-200 bg-clip-text text-transparent">
+                Growing stronger every year since 2006
+              </span>
+              <div className="w-2 h-2 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full animate-pulse" />
             </div>
           </div>
         </div>
