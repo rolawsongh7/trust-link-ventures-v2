@@ -56,26 +56,22 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background" key="about-page">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section 
-        className="relative py-24 bg-center bg-no-repeat overflow-hidden"
-        style={{
-          backgroundImage: `url('/lovable-uploads/8dcec24d-de94-4fe2-a0dd-a4e3c4c4ff98.png')`,
-          backgroundSize: 'cover'
-        }}
-      >
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/60 z-0"></div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center">
-            <Badge variant="outline" className="mb-6 px-4 py-2 bg-white/10 text-white border-white/20">
+      <section className="py-24 bg-gradient-to-b from-accent/20 to-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center animate-fade-in">
+            <Badge variant="outline" className="mb-6 px-4 py-2">
               <Globe className="w-4 h-4 mr-2" />
               About Trust Link Ventures
             </Badge>
-            {/* Text is already in the background image, so we just add spacing */}
-            <div className="h-32 lg:h-40"></div>
+            <h1 className="text-4xl lg:text-6xl font-poppins font-bold mb-6">
+              Connecting <span className="gradient-text">Global Markets</span>
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              We are a leading global trade and venture development company, specializing in connecting 
+              businesses across continents and creating sustainable partnerships that drive growth and innovation.
+            </p>
           </div>
         </div>
       </section>
