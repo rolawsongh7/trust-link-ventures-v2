@@ -67,15 +67,11 @@ const About = () => {
         />
         
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/30 to-background/50" />
         
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in">
-          <Badge variant="outline" className="mb-6 px-4 py-2 bg-background/20 backdrop-blur-sm border-white/20">
-            <Truck className="w-4 h-4 mr-2" />
-            Cold Chain Logistics
-          </Badge>
-          <h1 className="text-4xl lg:text-6xl font-poppins font-bold mb-6 text-white drop-shadow-lg">
+          <h1 className="text-4xl lg:text-6xl font-poppins font-bold mb-8 text-white drop-shadow-lg">
             Powering Cold Chain Logistics. <br />
             <span className="gradient-text">Delivering Trust.</span>
           </h1>
