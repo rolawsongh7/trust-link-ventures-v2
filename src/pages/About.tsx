@@ -1,15 +1,88 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Users, TrendingUp, Award, Shield, Heart, Truck, MapPin, Calendar, Building2, Package, Thermometer } from 'lucide-react';
+import { Globe, Users, TrendingUp, Award, Shield, Heart, Truck, MapPin, Calendar, Building2, Package, Thermometer, BarChart3, MapPinIcon, Clock, CheckCircle } from 'lucide-react';
 import temaPortTrucks from '@/assets/tema-port-trucks.jpg';
 import ghanaColdStorageTeam from '@/assets/ghana-cold-storage-team.jpg';
 import coldChainBg from '@/assets/cold-chain-bg.jpg';
 import distributionBg from '@/assets/distribution-bg.jpg';
 import globalSourcingBg from '@/assets/global-sourcing-bg.jpg';
 import partnershipBg from '@/assets/partnership-bg.jpg';
+import { useCounterAnimation } from '@/hooks/useCounterAnimation';
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 
 const About = () => {
+  const impactRef = useRef<HTMLDivElement>(null);
+  const { isVisible: isImpactVisible } = useIntersectionObserver({ threshold: 0.3 });
+
+  // Counter animations for impact stats - using simple state for now
+  const [tonnagesCount, setTonnagesCount] = React.useState(0);
+  const [citiesCount, setCitiesCount] = React.useState(0);
+  const [yearsCount, setYearsCount] = React.useState(0);
+  const [successRate, setSuccessRate] = React.useState(0);
+
+  // Animate counters when visible
+  React.useEffect(() => {
+    if (!isImpactVisible) return;
+
+    const animateCounter = (target: number, setter: (val: number) => void) => {
+      let start = 0;
+      const increment = target / 100;
+      const timer = setInterval(() => {
+        start += increment;
+        if (start >= target) {
+          setter(target);
+          clearInterval(timer);
+        } else {
+          setter(Math.floor(start));
+        }
+      }, 20);
+    };
+
+    animateCounter(1200, setTonnagesCount);
+    animateCounter(20, setCitiesCount);
+    animateCounter(17, setYearsCount);
+    animateCounter(98, setSuccessRate);
+  }, [isImpactVisible]);
+
+  const impactStats = [
+    {
+      icon: Package,
+      value: tonnagesCount,
+      suffix: '+',
+      label: 'Tonnes/Month Imports',
+      description: 'Imports of frozen products',
+      color: 'from-yellow-400 to-orange-500',
+      progress: (tonnagesCount / 1200) * 100
+    },
+    {
+      icon: MapPinIcon,
+      value: citiesCount,
+      suffix: '+',
+      label: 'Cities Served',
+      description: 'Nationwide logistics reach',
+      color: 'from-yellow-400 to-yellow-500',
+      progress: (citiesCount / 20) * 100
+    },
+    {
+      icon: Clock,
+      value: yearsCount,
+      suffix: '+',
+      label: 'Years in Operation',
+      description: 'Established 2006',
+      color: 'from-yellow-300 to-yellow-400',
+      progress: (yearsCount / 17) * 100
+    },
+    {
+      icon: CheckCircle,
+      value: successRate,
+      suffix: '%',
+      label: 'Delivery Success Rate',
+      description: 'On-time, safe arrivals',
+      color: 'from-yellow-400 to-amber-400',
+      progress: successRate
+    }
+  ];
   const values = [
     {
       icon: Shield,
@@ -285,68 +358,79 @@ const About = () => {
       </section>
 
       {/* Impact Snapshot Section */}
-      <section className="py-24 bg-gradient-to-r from-green-600 to-green-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-24 bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-32 h-32 rounded-full border-2 border-yellow-400" />
+          <div className="absolute bottom-10 right-10 w-40 h-40 rounded-full border border-yellow-300" />
+          <div className="absolute top-1/2 left-1/4 w-24 h-24 rounded-full border border-yellow-500" />
+          <div className="absolute bottom-1/4 left-3/4 w-36 h-36 rounded-full border-2 border-yellow-400" />
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16 animate-fade-in">
-            <h2 className="text-3xl lg:text-4xl font-poppins font-bold mb-4 text-white">
-              Our Impact in Numbers
+            <h2 className="text-3xl lg:text-5xl font-poppins font-bold mb-6 text-white">
+              Our Impact in <span className="bg-gradient-to-r from-yellow-300 to-yellow-500 bg-clip-text text-transparent">Numbers</span>
             </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-yellow-400 to-yellow-500 mx-auto mb-6 rounded-full" />
             <p className="text-green-100 text-lg max-w-2xl mx-auto">
               Delivering excellence across Ghana's frozen food supply chain.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {/* Tonnes/Month Imports */}
-            <div className="text-center animate-fade-in">
-              <div className="text-4xl lg:text-6xl font-poppins font-bold text-yellow-400 mb-2">
-                1200+
-              </div>
-              <div className="text-white font-medium">
-                Tonnes/Month Imports
-              </div>
-              <div className="text-green-100 text-sm mt-1">
-                Imports of frozen products
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {impactStats.map((stat, index) => (
+              <Card 
+                key={index} 
+                className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/15 transition-all duration-500 group hover:scale-105 hover:shadow-2xl hover:shadow-yellow-400/20 animate-fade-in overflow-hidden"
+                style={{ animationDelay: `${index * 0.2}s` }}
+              >
+                <CardContent className="p-8 text-center relative">
+                  {/* Icon with animated background */}
+                  <div className="relative mb-6">
+                    <div className={`w-16 h-16 bg-gradient-to-br ${stat.color} rounded-full flex items-center justify-center mx-auto group-hover:rotate-12 transition-transform duration-300 shadow-lg`}>
+                      <stat.icon className="w-8 h-8 text-white" />
+                    </div>
+                    <div className="absolute inset-0 w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-yellow-400/20 to-transparent animate-pulse" />
+                  </div>
 
-            {/* Cities Served */}
-            <div className="text-center animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              <div className="text-4xl lg:text-6xl font-poppins font-bold text-yellow-400 mb-2">
-                20+
-              </div>
-              <div className="text-white font-medium">
-                Cities Served
-              </div>
-              <div className="text-green-100 text-sm mt-1">
-                Nationwide logistics reach
-              </div>
-            </div>
+                  {/* Animated counter */}
+                  <div className="mb-4">
+                    <div className={`text-4xl lg:text-5xl font-poppins font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300`}>
+                      {stat.value}{stat.suffix}
+                    </div>
+                    
+                    {/* Progress bar */}
+                    <div className="w-full bg-white/20 rounded-full h-2 mb-3 overflow-hidden">
+                      <div 
+                        className={`h-full bg-gradient-to-r ${stat.color} rounded-full transition-all duration-2000 ease-out`}
+                        style={{ 
+                          width: `${Math.min(stat.progress, 100)}%`,
+                          transform: isImpactVisible ? 'translateX(0)' : 'translateX(-100%)'
+                        }}
+                      />
+                    </div>
+                  </div>
 
-            {/* Years in Operation */}
-            <div className="text-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <div className="text-4xl lg:text-6xl font-poppins font-bold text-yellow-400 mb-2">
-                17+
-              </div>
-              <div className="text-white font-medium">
-                Years in Operation
-              </div>
-              <div className="text-green-100 text-sm mt-1">
-                Established 2006
-              </div>
-            </div>
+                  <div className="text-white font-semibold text-lg mb-2">
+                    {stat.label}
+                  </div>
+                  <div className="text-green-100 text-sm leading-relaxed">
+                    {stat.description}
+                  </div>
 
-            {/* Delivery Success Rate */}
-            <div className="text-center animate-fade-in" style={{ animationDelay: '0.3s' }}>
-              <div className="text-4xl lg:text-6xl font-poppins font-bold text-yellow-400 mb-2">
-                98%
-              </div>
-              <div className="text-white font-medium">
-                Delivery Success Rate
-              </div>
-              <div className="text-green-100 text-sm mt-1">
-                On-time, safe arrivals
-              </div>
+                  {/* Decorative corner accent */}
+                  <div className="absolute top-0 right-0 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-yellow-400/20 group-hover:border-t-yellow-400/40 transition-colors duration-300" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Additional visual elements */}
+          <div className="mt-16 text-center">
+            <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 text-white">
+              <BarChart3 className="w-5 h-5 text-yellow-400" />
+              <span className="text-sm font-medium">Growing stronger every year since 2006</span>
             </div>
           </div>
         </div>
