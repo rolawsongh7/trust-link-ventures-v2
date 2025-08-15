@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Users, TrendingUp, Award, Shield, Heart } from 'lucide-react';
+import { Globe, Users, TrendingUp, Award, Shield, Heart, Truck } from 'lucide-react';
+import coldStorageHero from '@/assets/cold-storage-hero.jpg';
 
 const About = () => {
   const values = [
@@ -58,21 +59,29 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="py-24 bg-gradient-to-b from-accent/20 to-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center animate-fade-in">
-            <Badge variant="outline" className="mb-6 px-4 py-2">
-              <Globe className="w-4 h-4 mr-2" />
-              About Trust Link Ventures
-            </Badge>
-            <h1 className="text-4xl lg:text-6xl font-poppins font-bold mb-6">
-              Connecting <span className="gradient-text">Global Markets</span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              We are a leading global trade and venture development company, specializing in connecting 
-              businesses across continents and creating sustainable partnerships that drive growth and innovation.
-            </p>
-          </div>
+      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${coldStorageHero})` }}
+        />
+        
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background/80" />
+        
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in">
+          <Badge variant="outline" className="mb-6 px-4 py-2 bg-background/20 backdrop-blur-sm border-white/20">
+            <Truck className="w-4 h-4 mr-2" />
+            Cold Chain Logistics
+          </Badge>
+          <h1 className="text-4xl lg:text-6xl font-poppins font-bold mb-6 text-white drop-shadow-lg">
+            Powering Cold Chain Logistics. <br />
+            <span className="gradient-text">Delivering Trust.</span>
+          </h1>
+          <p className="text-xl text-white/90 max-w-4xl mx-auto leading-relaxed drop-shadow-md">
+            From humble beginnings to 1,200 tonnes monthly, Trust Link Ventures connects Ghana to the world's most reliable cold-chain food supply.
+          </p>
         </div>
       </section>
 
