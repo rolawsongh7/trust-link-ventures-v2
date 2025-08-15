@@ -204,18 +204,18 @@ const About = () => {
             {/* Certified Cold-Chain Logistics */}
             <Card className="card-elevated text-center p-6 hover-lift animate-fade-in relative overflow-hidden group">
               <div 
-                className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+                className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity duration-300"
                 style={{ backgroundImage: `url(${coldChainBg})` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-teal-500/20 to-teal-600/40" />
+              <div className="absolute inset-0 bg-gradient-to-b from-teal-500/10 to-teal-600/30" />
               <div className="relative z-10">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Thermometer className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 bg-teal-500/30 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Thermometer className="w-8 h-8 text-teal-100" />
                 </div>
-                <h3 className="font-poppins font-bold text-lg mb-4 text-white">
+                <h3 className="font-poppins font-bold text-lg mb-4 text-teal-50">
                   Certified Cold-Chain Logistics
                 </h3>
-                <p className="text-sm text-white/90 leading-relaxed">
+                <p className="text-sm text-teal-100/90 leading-relaxed">
                   Consistent sub-zero preservation from port to plate with state-of-the-art refrigeration systems.
                 </p>
               </div>
@@ -224,18 +224,18 @@ const About = () => {
             {/* Nationwide Distribution */}
             <Card className="card-elevated text-center p-6 hover-lift animate-fade-in relative overflow-hidden group" style={{ animationDelay: '0.1s' }}>
               <div 
-                className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+                className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity duration-300"
                 style={{ backgroundImage: `url(${distributionBg})` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-green-500/20 to-green-600/40" />
+              <div className="absolute inset-0 bg-gradient-to-b from-green-500/10 to-green-600/30" />
               <div className="relative z-10">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Truck className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 bg-green-500/30 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Truck className="w-8 h-8 text-green-100" />
                 </div>
-                <h3 className="font-poppins font-bold text-lg mb-4 text-white">
+                <h3 className="font-poppins font-bold text-lg mb-4 text-green-50">
                   Nationwide Distribution
                 </h3>
-                <p className="text-sm text-white/90 leading-relaxed">
+                <p className="text-sm text-green-100/90 leading-relaxed">
                   Fast and reliable delivery to all major markets in Ghana through our comprehensive logistics network.
                 </p>
               </div>
@@ -244,18 +244,18 @@ const About = () => {
             {/* Global Sourcing at Scale */}
             <Card className="card-elevated text-center p-6 hover-lift animate-fade-in relative overflow-hidden group" style={{ animationDelay: '0.2s' }}>
               <div 
-                className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+                className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity duration-300"
                 style={{ backgroundImage: `url(${globalSourcingBg})` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-purple-500/20 to-purple-600/40" />
+              <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 to-purple-600/30" />
               <div className="relative z-10">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Globe className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 bg-purple-500/30 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Globe className="w-8 h-8 text-purple-100" />
                 </div>
-                <h3 className="font-poppins font-bold text-lg mb-4 text-white">
+                <h3 className="font-poppins font-bold text-lg mb-4 text-purple-50">
                   Global Sourcing at Scale
                 </h3>
-                <p className="text-sm text-white/90 leading-relaxed">
+                <p className="text-sm text-purple-100/90 leading-relaxed">
                   Frozen foods sourced through verified global suppliers ensuring quality and reliability.
                 </p>
               </div>
@@ -264,18 +264,18 @@ const About = () => {
             {/* Customer-Centric Partnership */}
             <Card className="card-elevated text-center p-6 hover-lift animate-fade-in relative overflow-hidden group" style={{ animationDelay: '0.3s' }}>
               <div 
-                className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+                className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity duration-300"
                 style={{ backgroundImage: `url(${partnershipBg})` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-orange-500/20 to-orange-600/40" />
+              <div className="absolute inset-0 bg-gradient-to-b from-orange-500/10 to-orange-600/30" />
               <div className="relative z-10">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Shield className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 bg-orange-500/30 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Shield className="w-8 h-8 text-orange-100" />
                 </div>
-                <h3 className="font-poppins font-bold text-lg mb-4 text-white">
+                <h3 className="font-poppins font-bold text-lg mb-4 text-orange-50">
                   Customer-Centric Partnership
                 </h3>
-                <p className="text-sm text-white/90 leading-relaxed">
+                <p className="text-sm text-orange-100/90 leading-relaxed">
                   Built on transparency, service excellence, and respect with our valued partners.
                 </p>
               </div>
