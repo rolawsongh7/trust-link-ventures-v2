@@ -284,6 +284,74 @@ const About = () => {
         </div>
       </section>
 
+      {/* Impact Snapshot Section */}
+      <section className="py-24 bg-gradient-to-r from-green-600 to-green-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-3xl lg:text-4xl font-poppins font-bold mb-4 text-white">
+              Our Impact in Numbers
+            </h2>
+            <p className="text-green-100 text-lg max-w-2xl mx-auto">
+              Delivering excellence across Ghana's frozen food supply chain.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {/* Tonnes/Month Imports */}
+            <div className="text-center animate-fade-in">
+              <div className="text-4xl lg:text-6xl font-poppins font-bold text-yellow-400 mb-2">
+                1200+
+              </div>
+              <div className="text-white font-medium">
+                Tonnes/Month Imports
+              </div>
+              <div className="text-green-100 text-sm mt-1">
+                Imports of frozen products
+              </div>
+            </div>
+
+            {/* Cities Served */}
+            <div className="text-center animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              <div className="text-4xl lg:text-6xl font-poppins font-bold text-yellow-400 mb-2">
+                20+
+              </div>
+              <div className="text-white font-medium">
+                Cities Served
+              </div>
+              <div className="text-green-100 text-sm mt-1">
+                Nationwide logistics reach
+              </div>
+            </div>
+
+            {/* Years in Operation */}
+            <div className="text-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <div className="text-4xl lg:text-6xl font-poppins font-bold text-yellow-400 mb-2">
+                17+
+              </div>
+              <div className="text-white font-medium">
+                Years in Operation
+              </div>
+              <div className="text-green-100 text-sm mt-1">
+                Established 2006
+              </div>
+            </div>
+
+            {/* Delivery Success Rate */}
+            <div className="text-center animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <div className="text-4xl lg:text-6xl font-poppins font-bold text-yellow-400 mb-2">
+                98%
+              </div>
+              <div className="text-white font-medium">
+                Delivery Success Rate
+              </div>
+              <div className="text-green-100 text-sm mt-1">
+                On-time, safe arrivals
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Stats Section */}
       <section className="py-16 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
