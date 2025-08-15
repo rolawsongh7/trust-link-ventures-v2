@@ -74,27 +74,8 @@ const About = () => {
               <Globe className="w-4 h-4 mr-2" />
               About Trust Link Ventures
             </Badge>
-            <h1 className="text-4xl lg:text-6xl font-poppins font-bold mb-6 text-white">
-              Powering Cold Chain Logistics. <span className="text-yellow-400">Delivering Trust.</span>
-            </h1>
-            <p className="text-xl text-white/90 max-w-3xl mx-auto leading-relaxed">
-              From humble beginnings to 1,200 tonnes monthly, Trust Link Ventures connects 
-              Ghana to the world's most reliable cold-chain food supply.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-white/80">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-                Operating from Tema Port
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                Cold Chain Excellence
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></div>
-                Nationwide Distribution
-              </div>
-            </div>
+            {/* Text is already in the background image, so we just add spacing */}
+            <div className="h-32 lg:h-40"></div>
           </div>
         </div>
       </section>
