@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Users, TrendingUp, Award, Shield, Heart, Truck, MapPin } from 'lucide-react';
+import { Globe, Users, TrendingUp, Award, Shield, Heart, Truck, MapPin, Calendar, Building2, Package } from 'lucide-react';
 import temaPortTrucks from '@/assets/tema-port-trucks.jpg';
 import ghanaColdStorageTeam from '@/assets/ghana-cold-storage-team.jpg';
 
@@ -87,30 +87,98 @@ const About = () => {
       </section>
 
       {/* Our Story Section */}
-      <section className="py-24 bg-background">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="animate-fade-in">
-            <Badge variant="outline" className="mb-4 px-4 py-2">
+      <section className="py-24 bg-background relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-20 left-10 w-32 h-32 border-2 border-primary rounded-full" />
+          <div className="absolute bottom-20 right-10 w-24 h-24 border-2 border-secondary rounded-full" />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 border border-accent rounded-full" />
+        </div>
+        
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-16 animate-fade-in">
+            <Badge variant="outline" className="mb-6 px-6 py-3 text-sm font-medium">
               <MapPin className="w-4 h-4 mr-2" />
               Our Foundation
             </Badge>
-            <h2 className="text-3xl lg:text-4xl font-poppins font-bold mb-6">
-              Rooted in <span className="gradient-text">Ghana</span>. <br />
-              Built for the <span className="gradient-text">World</span>.
+            <h2 className="text-3xl lg:text-5xl font-poppins font-bold mb-8 leading-tight">
+              Rooted in <span className="gradient-text relative">
+                Ghana
+                <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-primary to-secondary opacity-30 rounded-full" />
+              </span>. <br />
+              Built for the <span className="gradient-text relative">
+                World
+                <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-secondary to-primary opacity-30 rounded-full" />
+              </span>.
             </h2>
-            <div className="space-y-4 text-muted-foreground leading-relaxed text-left max-w-3xl mx-auto">
-              <p>
-                Trust Link Ventures Limited (TLVL) is a privately held company established under the Ghana Companies Code of 1963 (Act 179), with official certification granted on December 20, 2006.
-              </p>
-              <p>
-                Originally founded as a small-scale frozen food trading company, TLVL has grown into one of Ghana's leading importers and distributors of frozen foods, including fish, poultry, and beef.
-              </p>
-              <p>
-                Operating from Tema, we now handle over 1,200 tonnes of imports per month, with a nationwide cold-chain distribution network that ensures goods reach consumers swiftly and safely.
-              </p>
-              <p className="text-primary font-medium">
-                Our story is one of resilience, local innovation, and international standards. We believe that trusted logistics and quality food distribution can transform economies, improve lives, and build long-term prosperity.
-              </p>
+          </div>
+
+          <div className="space-y-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            {/* Company Establishment */}
+            <div className="flex items-start gap-6 p-6 rounded-2xl border border-border/50 bg-gradient-to-r from-accent/5 to-secondary/5 hover:shadow-lg transition-all duration-300">
+              <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <Building2 className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-lg leading-relaxed text-foreground">
+                  <span className="font-semibold text-primary">Trust Link Ventures Limited (TLVL)</span> is a privately held company established under the 
+                  <span className="font-medium text-accent-foreground"> Ghana Companies Code of 1963 (Act 179)</span>, with official certification granted on 
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary font-semibold rounded-md ml-1">
+                    <Calendar className="w-4 h-4" />
+                    December 20, 2006
+                  </span>.
+                </p>
+              </div>
+            </div>
+
+            {/* Growth Story */}
+            <div className="flex items-start gap-6 p-6 rounded-2xl border border-border/50 bg-gradient-to-r from-secondary/5 to-accent/5 hover:shadow-lg transition-all duration-300">
+              <div className="flex-shrink-0 w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-secondary" />
+              </div>
+              <div>
+                <p className="text-lg leading-relaxed text-foreground">
+                  Originally founded as a <span className="font-medium text-muted-foreground">small-scale frozen food trading company</span>, TLVL has grown into 
+                  <span className="font-semibold text-secondary"> one of Ghana's leading importers and distributors</span> of frozen foods, including 
+                  <span className="font-medium text-primary">fish, poultry, and beef</span>.
+                </p>
+              </div>
+            </div>
+
+            {/* Current Operations */}
+            <div className="flex items-start gap-6 p-6 rounded-2xl border border-border/50 bg-gradient-to-r from-primary/5 to-secondary/5 hover:shadow-lg transition-all duration-300">
+              <div className="flex-shrink-0 w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center">
+                <Package className="w-6 h-6 text-accent" />
+              </div>
+              <div>
+                <p className="text-lg leading-relaxed text-foreground">
+                  Operating from <span className="font-semibold text-primary">Tema</span>, we now handle over 
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-accent/10 text-accent font-bold rounded-md mx-1 text-xl">
+                    1,200 tonnes
+                  </span> 
+                  of imports per month, with a <span className="font-medium text-secondary">nationwide cold-chain distribution network</span> that ensures goods reach consumers 
+                  <span className="font-medium text-accent">swiftly and safely</span>.
+                </p>
+              </div>
+            </div>
+
+            {/* Mission Statement - Pull Quote Style */}
+            <div className="relative my-12">
+              <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-primary to-secondary rounded-full" />
+              <blockquote className="pl-8 py-4">
+                <p className="text-xl lg:text-2xl font-medium leading-relaxed text-foreground italic">
+                  "Our story is one of <span className="text-primary font-semibold not-italic">resilience</span>, 
+                  <span className="text-secondary font-semibold not-italic"> local innovation</span>, and 
+                  <span className="text-accent font-semibold not-italic"> international standards</span>."
+                </p>
+                <div className="mt-4 h-px bg-gradient-to-r from-primary via-secondary to-accent w-32" />
+                <p className="mt-4 text-lg text-muted-foreground font-medium">
+                  We believe that trusted logistics and quality food distribution can 
+                  <span className="text-primary font-semibold"> transform economies</span>, 
+                  <span className="text-secondary font-semibold"> improve lives</span>, and 
+                  <span className="text-accent font-semibold"> build long-term prosperity</span>.
+                </p>
+              </blockquote>
             </div>
           </div>
         </div>
