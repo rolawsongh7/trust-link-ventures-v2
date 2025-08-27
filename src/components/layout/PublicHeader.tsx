@@ -52,7 +52,7 @@ export const PublicHeader = () => {
               </Button>
             ) : (
               <Button asChild>
-                <Link to="/customer-auth">Customer Portal</Link>
+                <Link to="/customer-portal">Customer Portal</Link>
               </Button>
             )}
             
