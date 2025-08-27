@@ -29,7 +29,16 @@ interface DashboardStats {
 
 const CustomerPortalMain = () => {
   const { profile, signOut } = useCustomerAuth();
-  const { totalItems } = useShoppingCart();
+  
+  // Add try-catch for the shopping cart hook
+  let totalItems = 0;
+  try {
+    const cart = useShoppingCart();
+    totalItems = cart.totalItems;
+  } catch (error) {
+    console.error('Error loading shopping cart:', error);
+  }
+  
   const [stats, setStats] = useState<DashboardStats>({
     totalQuotes: 0,
     pendingQuotes: 0,
