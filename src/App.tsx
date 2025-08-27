@@ -19,6 +19,7 @@ import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 import CRM from "./pages/CRM";
 import CustomerPortal from "./pages/CustomerPortal";
+import CustomerPortalMain from "./pages/CustomerPortalMain";
 import AdminLogin from "./pages/AdminLogin";
 import Cookies from "./pages/Cookies";
 import Products from "./pages/Products";
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/customer-portal" element={<CustomerPortal />} />
+            <Route path="/customer-portal-main" element={<CustomerPortalMain />} />
             <Route path="/admin-login" element={<AdminLogin />} />
             
             {/* Protected routes */}
