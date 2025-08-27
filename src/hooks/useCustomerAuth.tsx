@@ -81,11 +81,16 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const fetchProfile = async (userId: string, userEmail: string) => {
     try {
-      const { data: existingCustomer } = await supabase
+      const { data: existingCustomer, error } = await supabase
         .from('customers')
         .select('*')
         .eq('email', userEmail)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching customer profile:', error);
+        return;
+      }
 
       if (existingCustomer) {
         setProfile({
@@ -97,9 +102,33 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           country: existingCustomer.country,
           industry: existingCustomer.industry,
         });
+      } else {
+        // No customer record found, create a basic profile from auth metadata
+        const { data: { user } } = await supabase.auth.getUser();
+        const userData = user?.user_metadata;
+        
+        setProfile({
+          id: userId,
+          email: userEmail,
+          full_name: userData?.full_name || userData?.company_name || 'Customer',
+          company_name: userData?.company_name || 'Company',
+          phone: null,
+          country: null,
+          industry: null,
+        });
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+      // Set a basic profile to prevent infinite loading
+      setProfile({
+        id: userId,
+        email: userEmail,
+        full_name: 'Customer',
+        company_name: 'Company',
+        phone: null,
+        country: null,
+        industry: null,
+      });
     }
   };
 
