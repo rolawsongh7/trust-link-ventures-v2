@@ -51,17 +51,9 @@ export const PublicHeader = () => {
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
             ) : (
-              <>
-                <Button asChild variant="ghost">
-                  <Link to="/auth">Sign In</Link>
-                </Button>
-                <Button asChild>
-                  <Link to="/quote-request">
-                    <span className="hidden sm:inline">Get Quote</span>
-                    <span className="sm:hidden">Quote</span>
-                  </Link>
-                </Button>
-              </>
+              <Button asChild>
+                <Link to="/customer-auth">Customer Portal</Link>
+              </Button>
             )}
             
             {/* Mobile menu button */}
