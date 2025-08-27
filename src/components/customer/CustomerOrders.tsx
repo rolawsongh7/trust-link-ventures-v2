@@ -8,7 +8,6 @@ import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign } from 'lu
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerLayout } from '@/components/customer/CustomerLayout';
-import { useToast } from '@/hooks/use-toast';
 
 // Placeholder interface for orders - this would be expanded based on actual order schema
 interface Order {

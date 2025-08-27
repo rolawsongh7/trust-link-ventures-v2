@@ -9,7 +9,6 @@ import { User, Building2, Mail, Phone, MapPin, Save, Shield, Lock } from 'lucide
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerLayout } from '@/components/customer/CustomerLayout';
-import { useToast } from '@/hooks/use-toast';
 
 export const CustomerProfile: React.FC = () => {
   const { profile, updateProfile, signOut } = useCustomerAuth();
@@ -82,7 +81,7 @@ export const CustomerProfile: React.FC = () => {
   return (
     <CustomerLayout>
       <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div>
+        <div>
         <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
           Profile Settings
         </h1>
@@ -288,6 +287,7 @@ export const CustomerProfile: React.FC = () => {
             </CardContent>
           </Card>
         </div>
+      </div>
       </div>
     </CustomerLayout>
   );
