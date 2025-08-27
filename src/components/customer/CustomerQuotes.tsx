@@ -8,6 +8,7 @@ import { FileText, Search, Download, Eye, Calendar, DollarSign, Clock } from 'lu
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CustomerLayout } from '@/components/customer/CustomerLayout';
 
 interface Quote {
   id: string;
@@ -89,21 +90,24 @@ export const CustomerQuotes: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-muted rounded w-64"></div>
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-32 bg-muted rounded"></div>
-            ))}
+      <CustomerLayout>
+        <div className="max-w-6xl mx-auto p-6">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-muted rounded w-64"></div>
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-32 bg-muted rounded"></div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </CustomerLayout>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <CustomerLayout>
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
@@ -258,6 +262,7 @@ export const CustomerQuotes: React.FC = () => {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </CustomerLayout>
   );
 };
