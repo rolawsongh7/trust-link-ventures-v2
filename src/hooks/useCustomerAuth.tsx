@@ -50,7 +50,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          await fetchProfile(session.user.id, session.user.email);
         }
         setLoading(false);
       } catch (error) {
@@ -68,7 +68,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          await fetchProfile(session.user.id, session.user.email);
         } else {
           setProfile(null);
         }
@@ -79,12 +79,12 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, userEmail: string) => {
     try {
       const { data: existingCustomer } = await supabase
         .from('customers')
         .select('*')
-        .eq('email', user?.email)
+        .eq('email', userEmail)
         .single();
 
       if (existingCustomer) {
