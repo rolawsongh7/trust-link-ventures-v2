@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CustomerAuthProvider } from "@/hooks/useCustomerAuth";
+import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import Home from "./pages/Home";
@@ -33,7 +35,8 @@ const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
+        <CustomerAuthProvider>
+          <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -55,7 +58,11 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/customer-portal" element={<CustomerPortal />} />
-            <Route path="/customer-portal-main" element={<CustomerPortalMain />} />
+            <Route path="/customer-portal-main" element={
+              <CustomerProtectedRoute>
+                <CustomerPortalMain />
+              </CustomerProtectedRoute>
+            } />
             <Route path="/admin-login" element={<AdminLogin />} />
             
             {/* Protected routes */}
@@ -74,7 +81,8 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-        </TooltipProvider>
+          </TooltipProvider>
+        </CustomerAuthProvider>
       </AuthProvider>
     </QueryClientProvider>
   </HelmetProvider>
