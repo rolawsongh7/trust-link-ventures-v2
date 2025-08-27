@@ -83,7 +83,7 @@ const Auth = () => {
     setIsLoading(true);
     setError('');
 
-    const { error } = await signUp(signUpData.email, signUpData.password);
+    const { error } = await signUp(signUpData.email, signUpData.password, signUpData.fullName);
 
     if (error) {
       if (error.message.includes('User already registered')) {
