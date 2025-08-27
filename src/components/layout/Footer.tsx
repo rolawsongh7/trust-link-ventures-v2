@@ -77,7 +77,7 @@ const Footer = () => {
               </div>
               <div className="font-semibold">
                 <div className="text-lg font-bold text-blue-100">Trust Link</div>
-                <div className="text-xs text-blue-200 -mt-1">Ventures</div>
+                
               </div>
             </div>
             <p className="text-blue-200 text-sm leading-relaxed">

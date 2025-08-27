@@ -117,7 +117,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
             <h3 className="text-2xl font-bold text-green-600">✅ Thank you!</h3>
             <p className="text-muted-foreground text-lg leading-relaxed">
               We've received your inquiry and will be in touch shortly.<br />
-              Meanwhile, you can explore our <a href="/ventures" className="text-primary font-medium hover:underline">Ventures Portfolio</a> or <a href="/about" className="text-primary font-medium hover:underline">Sustainability Commitments</a>.
+              Meanwhile, you can explore our <a href="/about" className="text-primary font-medium hover:underline">Sustainability Commitments</a> or <a href="/partners" className="text-primary font-medium hover:underline">Partner Network</a>.
             </p>
           </div>
         </CardContent>

@@ -102,14 +102,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       action: () => navigate('/partners'),
     },
     {
-      id: 'nav-ventures',
-      title: 'Ventures',
-      description: 'Explore ventures',
-      type: 'page',
-      icon: TrendingUp,
-      action: () => navigate('/ventures'),
-    },
-    {
       id: 'nav-contact',
       title: 'Contact',
       description: 'Contact information',

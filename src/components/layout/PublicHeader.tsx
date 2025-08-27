@@ -14,7 +14,7 @@ export const PublicHeader = () => {
     { name: 'Home', href: '/' },
     { name: 'About', href: '/about' },
     { name: 'Products', href: '/products' },
-    { name: 'Ventures', href: '/ventures' },
+    
     { name: 'Partners', href: '/partners' },
     { name: 'Contact', href: '/contact' },
   ];

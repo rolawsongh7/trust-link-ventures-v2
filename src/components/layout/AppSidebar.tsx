@@ -39,7 +39,7 @@ const navigationItems = [
 
 const businessItems = [
   { title: 'Partners', url: '/partners', icon: Building2 },
-  { title: 'Ventures', url: '/ventures', icon: TrendingUp },
+  
   { title: 'Contact', url: '/contact', icon: Contact },
   { title: 'About', url: '/about', icon: Globe },
 ];
@@ -71,7 +71,7 @@ export function AppSidebar() {
           {isExpanded && (
             <div className="font-semibold text-sidebar-foreground">
               <div className="text-sm font-bold">Trust Link</div>
-              <div className="text-xs text-sidebar-foreground/70 -mt-1">Ventures</div>
+              
             </div>
           )}
         </div>
