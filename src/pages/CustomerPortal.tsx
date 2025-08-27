@@ -65,115 +65,139 @@ const CustomerPortal = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Back to Home Button */}
-        <Link 
-          to="/" 
-          className="flex items-center text-slate-600 hover:text-slate-800 mb-8 transition-colors"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
-        </Link>
+    <div className="min-h-screen flex">
+      {/* Left Side - Welcome Section */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-800 text-white p-12 flex-col justify-center">
+        <div className="max-w-md">
+          <h1 className="text-4xl font-bold mb-6">
+            Welcome to<br />Trust Link Ventures
+          </h1>
+          <p className="text-blue-100 mb-8 text-lg">
+            Your premium seafood and marine products partner
+          </p>
+          
+          <div className="space-y-6">
+            <div className="flex items-start space-x-4">
+              <div className="w-2 h-2 bg-blue-300 rounded-full mt-2"></div>
+              <div>
+                <h3 className="font-semibold mb-1">Easy Ordering</h3>
+                <p className="text-blue-100 text-sm">Browse and order premium products with ease</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start space-x-4">
+              <div className="w-2 h-2 bg-blue-300 rounded-full mt-2"></div>
+              <div>
+                <h3 className="font-semibold mb-1">Premium Quality</h3>
+                <p className="text-blue-100 text-sm">Highest quality seafood guarantee from trusted sources</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start space-x-4">
+              <div className="w-2 h-2 bg-blue-300 rounded-full mt-2"></div>
+              <div>
+                <h3 className="font-semibold mb-1">Trusted Partner</h3>
+                <p className="text-blue-100 text-sm">Global network of suppliers and logistics expertise</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <Card className="w-full shadow-xl border-0 bg-white/90 backdrop-blur-sm">
-          <CardHeader className="text-center pb-6">
-            <CardTitle className="text-3xl font-bold mb-4">
-              <span className="text-blue-600">Customer</span>{" "}
-              <span className="text-slate-600">Portal</span>
-            </CardTitle>
-            <p className="text-slate-600 text-lg">
+      {/* Right Side - Login Form */}
+      <div className="w-full lg:w-1/2 bg-white flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          {/* Back to Home Button - Only on mobile */}
+          <Link 
+            to="/" 
+            className="lg:hidden flex items-center text-slate-600 hover:text-slate-800 mb-8 transition-colors"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Home
+          </Link>
+
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-slate-900 mb-2">Customer Portal</h2>
+            <p className="text-slate-600">
               Create an account or sign in to manage your orders and quotes
             </p>
-          </CardHeader>
+          </div>
           
-          <CardContent className="px-8 pb-8">
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6 bg-slate-100">
-                <TabsTrigger 
-                  value="signin" 
-                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+          <Tabs defaultValue="signin" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Create Account</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="signin" className="space-y-4">
+              <form onSubmit={handleSignIn} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Email</label>
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="h-12 text-base"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Password</label>
+                  <Input
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="h-12 text-base"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 text-base" 
+                  disabled={loading}
                 >
-                  Sign In
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="signup"
-                  className="data-[state=active]:bg-slate-600 data-[state=active]:text-white"
-                >
-                  Create Account
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="signin" className="space-y-4">
-                <form onSubmit={handleSignIn} className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Email</label>
-                    <Input
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="h-12 text-base"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Password</label>
-                    <Input
-                      type="password"
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="h-12 text-base"
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 text-base bg-blue-600 hover:bg-blue-700" 
-                    disabled={loading}
-                  >
-                    {loading ? "Signing in..." : "Sign In"}
-                  </Button>
-                </form>
-              </TabsContent>
+                  {loading ? "Signing in..." : "Sign In"}
+                </Button>
+              </form>
+            </TabsContent>
 
-              <TabsContent value="signup" className="space-y-4">
-                <form onSubmit={handleSignUp} className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Email</label>
-                    <Input
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="h-12 text-base"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Password</label>
-                    <Input
-                      type="password"
-                      placeholder="Create a password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="h-12 text-base"
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 text-base bg-slate-600 hover:bg-slate-700" 
-                    disabled={loading}
-                  >
-                    {loading ? "Creating account..." : "Create Account"}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+            <TabsContent value="signup" className="space-y-4">
+              <form onSubmit={handleSignUp} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Email</label>
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="h-12 text-base"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Password</label>
+                  <Input
+                    type="password"
+                    placeholder="Create a password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="h-12 text-base"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 text-base" 
+                  disabled={loading}
+                >
+                  {loading ? "Creating account..." : "Create Account"}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
