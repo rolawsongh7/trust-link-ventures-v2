@@ -65,8 +65,20 @@ const CustomerPortal = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Side - Welcome Section */}
+    <div className="min-h-screen flex flex-col">
+      {/* Back to Home Button - Top of page */}
+      <div className="absolute top-4 left-4 z-10">
+        <Link 
+          to="/" 
+          className="flex items-center text-white lg:text-slate-600 hover:text-white/80 lg:hover:text-slate-800 transition-colors bg-black/20 lg:bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Home
+        </Link>
+      </div>
+      
+      <div className="flex flex-1">
+        {/* Left Side - Welcome Section */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-800 text-white p-12 flex-col justify-center">
         <div className="max-w-md">
           <h1 className="text-4xl font-bold mb-6">
@@ -198,6 +210,7 @@ const CustomerPortal = () => {
             </TabsContent>
           </Tabs>
         </div>
+      </div>
       </div>
     </div>
   );
