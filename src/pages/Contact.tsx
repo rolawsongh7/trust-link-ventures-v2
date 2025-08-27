@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, MapPin, Quote, ShoppingCart, Handshake, TrendingUp, MessageCircle, ArrowRight } from 'lucide-react';
+import { Quote, ShoppingCart, Handshake, TrendingUp, MessageCircle, ArrowRight, Smartphone, Apple, Download, Star } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { toast } from 'sonner';
 import contactHeroBg from '@/assets/contact-hero-bg.jpg';
 import ContactForm from '@/components/contact/ContactForm';
 import ContactFAQ from '@/components/contact/ContactFAQ';
-import PartnerLogos from '@/components/contact/PartnerLogos';
 
 const Contact = () => {
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
@@ -54,12 +54,32 @@ const Contact = () => {
     {
       text: "Trust Link Ventures made sourcing in West Africa seamless—from sourcing to final-mile delivery, we knew we had the right partner.",
       author: "Mariam B.",
-      role: "Regional Buyer, Lagos"
+      role: "Regional Buyer, Lagos",
+      rating: 5
     },
     {
       text: "Their attention to temperature control and export compliance is unmatched. Highly recommended for any serious buyer.",
       author: "Kwame O.",
-      role: "Logistics Director, Accra"
+      role: "Logistics Director, Accra",
+      rating: 5
+    },
+    {
+      text: "Working with Trust Link has transformed our supply chain. Their reliability and quality standards are exceptional.",
+      author: "Sarah M.",
+      role: "Procurement Manager, Tema",
+      rating: 5
+    },
+    {
+      text: "The professionalism and efficiency of their logistics team is outstanding. They consistently deliver on time and in perfect condition.",
+      author: "David K.",
+      role: "Operations Director, Kumasi",
+      rating: 5
+    },
+    {
+      text: "Trust Link's comprehensive service from sourcing to delivery has made our operations much more efficient. Excellent partnership.",
+      author: "Fatima A.",
+      role: "Supply Chain Head, Takoradi",
+      rating: 5
     }
   ];
 
@@ -183,65 +203,127 @@ const Contact = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2">
-              <ContactForm initialInquiryType={selectedInquiryType} />
-            </div>
+          <div className="max-w-3xl mx-auto">
+            <ContactForm initialInquiryType={selectedInquiryType} />
+          </div>
+        </div>
+      </section>
 
-            <div className="space-y-8">
-              {/* Contact Information */}
-              <Card className="card-elevated hover:shadow-lg transition-all duration-300">
-                <CardHeader>
-                  <CardTitle>Contact Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <Mail className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-medium">info@trustlinkventures.com</p>
-                      <p className="text-sm text-muted-foreground">General inquiries</p>
-                    </div>
+      {/* Testimonials Carousel Section */}
+      <section className="py-24 bg-gradient-to-br from-accent/5 to-secondary/5">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4 flex items-center justify-center gap-3">
+              <Quote className="w-8 h-8 text-primary" />
+              What Our Partners Say
+            </h2>
+            <p className="text-muted-foreground text-lg">
+              Hear from businesses that trust us with their supply chain needs
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            <Carousel className="w-full">
+              <CarouselContent>
+                {testimonials.map((testimonial, index) => (
+                  <CarouselItem key={index}>
+                    <Card className="card-elevated">
+                      <CardContent className="p-8 text-center">
+                        <div className="flex justify-center mb-4">
+                          {[...Array(testimonial.rating)].map((_, i) => (
+                            <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                          ))}
+                        </div>
+                        <blockquote className="text-lg italic leading-relaxed mb-6">
+                          "{testimonial.text}"
+                        </blockquote>
+                        <div className="border-t pt-4">
+                          <p className="font-semibold text-primary">{testimonial.author}</p>
+                          <p className="text-muted-foreground text-sm">{testimonial.role}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </div>
+        </div>
+      </section>
+
+      {/* Download Apps Section */}
+      <section className="py-24 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-900">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Download Our Apps</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Take Trust Link Ventures with you wherever you go. Manage orders, track shipments, and stay connected on the move.
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              {/* App Preview */}
+              <div className="relative">
+                <div className="bg-gradient-to-br from-blue-600 to-purple-700 rounded-3xl p-8 text-white text-center">
+                  <Smartphone className="w-24 h-24 mx-auto mb-6 opacity-90" />
+                  <h3 className="text-2xl font-bold mb-4">Trust Link Mobile</h3>
+                  <p className="text-blue-100 mb-6">
+                    Order management, real-time tracking, and instant communication - all in your pocket.
+                  </p>
+                  <div className="flex justify-center space-x-4 text-sm">
+                    <div className="bg-white/20 px-3 py-1 rounded-full">📱 iOS & Android</div>
+                    <div className="bg-white/20 px-3 py-1 rounded-full">🔒 Secure</div>
+                    <div className="bg-white/20 px-3 py-1 rounded-full">⚡ Fast</div>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <MapPin className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
-                      <p className="font-medium">Trust Link Ventures Limited</p>
-                      <div className="text-sm text-muted-foreground">
-                        <div>P. O. Box 709</div>
-                        <div>Adabraka, Accra, Ghana</div>
-                      </div>
+                </div>
+              </div>
+
+              {/* Download Buttons */}
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  {/* App Store Button */}
+                  <Button 
+                    size="lg" 
+                    className="w-full h-16 bg-black hover:bg-gray-800 text-white rounded-2xl flex items-center justify-start px-6 gap-4"
+                  >
+                    <Apple className="w-8 h-8" />
+                    <div className="text-left">
+                      <div className="text-xs text-gray-300">Download on the</div>
+                      <div className="text-lg font-semibold">App Store</div>
                     </div>
+                  </Button>
+
+                  {/* Google Play Button */}
+                  <Button 
+                    size="lg" 
+                    className="w-full h-16 bg-green-600 hover:bg-green-700 text-white rounded-2xl flex items-center justify-start px-6 gap-4"
+                  >
+                    <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                      <Download className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xs text-green-100">Get it on</div>
+                      <div className="text-lg font-semibold">Google Play</div>
+                    </div>
+                  </Button>
+                </div>
+
+                <div className="text-center pt-4">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Join thousands of satisfied customers who manage their supply chain on the go
+                  </p>
+                  <div className="flex justify-center items-center space-x-6 text-sm text-muted-foreground">
+                    <div className="flex items-center space-x-1">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span>4.8/5 Rating</span>
+                    </div>
+                    <div>50K+ Downloads</div>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Partner Logos & Stats */}
-              <PartnerLogos />
-
-              {/* Testimonials */}
-              <Card className="card-elevated hover:shadow-lg transition-all duration-300">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Quote className="w-5 h-5" />
-                    What Our Partners Say
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {testimonials.map((testimonial, index) => (
-                    <div 
-                      key={index} 
-                      className="space-y-3 p-4 rounded-lg bg-accent/5 hover:bg-accent/10 transition-colors duration-300 cursor-pointer"
-                    >
-                      <p className="text-sm italic leading-relaxed">"{testimonial.text}"</p>
-                      <div className="text-xs text-muted-foreground">
-                        <span className="font-medium">— {testimonial.author}</span>
-                        <span className="block">{testimonial.role}</span>
-                      </div>
-                      {index < testimonials.length - 1 && <hr className="border-border mt-4" />}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           </div>
         </div>
