@@ -25,7 +25,6 @@ import Products from "./pages/Products";
 import QuoteRequest from "./pages/QuoteRequest";
 import QuoteSystem from "./pages/QuoteSystem";
 import Terms from "./pages/Terms";
-import Ventures from "./pages/Ventures";
 
 const queryClient = new QueryClient();
 
@@ -45,7 +44,6 @@ const App = () => (
               <Route path="/contact" element={<Contact />} />
               <Route path="/products" element={<Products />} />
               <Route path="/partners" element={<Partners />} />
-              <Route path="/ventures" element={<Ventures />} />
               <Route path="/quote-request" element={<QuoteRequest />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
