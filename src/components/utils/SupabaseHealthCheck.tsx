@@ -68,7 +68,7 @@ export const SupabaseHealthCheck = () => {
               <div><strong>Project ID:</strong> {connectionDetails?.projectId}</div>
               <div><strong>Project URL:</strong> {connectionDetails?.url}</div>
               <div><strong>Last Verified:</strong> {connectionDetails?.timestamp}</div>
-              <div><strong>Status:</strong> ✅ Separate from New Gen Link</div>
+              <div><strong>Status:</strong> ✅ Separate from Trust Link Ventures</div>
             </div>
           </AlertDescription>
         </Alert>

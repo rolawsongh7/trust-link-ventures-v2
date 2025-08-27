@@ -83,15 +83,15 @@ const CustomerPortalMain = () => {
 
   const quickActions = [
     {
-      title: 'Browse Catalog',
-      description: 'Explore our product catalog',
+      title: 'Browse Products',
+      description: 'Explore our premium product catalog',
       icon: Grid3X3,
       href: '/customer/catalog',
       color: 'from-blue-500 to-blue-600'
     },
     {
-      title: 'Shopping Cart',
-      description: `${totalItems} items ready for quote`,
+      title: 'My Cart',
+      description: `Review items and request quotes`,
       icon: ShoppingCart,
       href: '/customer/cart',
       color: 'from-green-500 to-green-600',
@@ -99,28 +99,28 @@ const CustomerPortalMain = () => {
     },
     {
       title: 'My Quotes',
-      description: 'View and manage quote requests',
+      description: 'View requested and generated quotes',
       icon: FileText,
       href: '/customer/quotes',
       color: 'from-purple-500 to-purple-600'
     },
     {
       title: 'My Orders',
-      description: 'Track order status and history',
+      description: 'Track shipments and order history',
       icon: Package,
       href: '/customer/orders',
       color: 'from-orange-500 to-orange-600'
     },
     {
-      title: 'Messages',
-      description: 'Communicate with our team',
+      title: 'Communications',
+      description: 'Send messages to our team',
       icon: MessageSquare,
       href: '/customer/communications',
       color: 'from-pink-500 to-pink-600'
     },
     {
-      title: 'Profile Settings',
-      description: 'Manage account information',
+      title: 'Profile',
+      description: 'Manage your account settings',
       icon: User,
       href: '/customer/profile',
       color: 'from-gray-500 to-gray-600'
@@ -156,10 +156,10 @@ const CustomerPortalMain = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold">
-                  Welcome back, {profile?.full_name}
+                  Trust Link Ventures Customer Portal
                 </h1>
                 <p className="text-primary-foreground/80">
-                  {profile?.company_name} • Customer Portal
+                  Your gateway to premium global products
                 </p>
               </div>
             </div>
@@ -174,7 +174,19 @@ const CustomerPortalMain = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
+      {/* Welcome Section */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold mb-2">
+            Welcome to Trust Link Ventures
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Hello, {profile?.full_name} from {profile?.company_name}
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 space-y-8">
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">

@@ -21,10 +21,10 @@ const Partners = () => {
   const { elementRef: partnersRef, isVisible: partnersVisible } = useScrollAnimation({ threshold: 0.1 });
 
   const strategicPartner = {
-    name: "New Gen Link",
-    location: "California, USA",
-    website: "https://nglglobalmarkets.com",
-    description: "New Gen Link (NGL) is our strategic partner and your trusted global gateway to premium frozen products. Specializing in premium-quality seafood and meat delivered fresh from Europe and America to West Africa, NGL ensures seamless supply chain management with ISO 22000 certification and complete cold chain excellence.",
+    name: "Trust Link Ventures",
+    location: "California, USA", 
+    website: "https://trustlinkventures.com",
+    description: "Trust Link Ventures (TLV) is our strategic partner and your trusted global gateway to premium frozen products. Specializing in premium-quality seafood and meat delivered fresh from Europe and America to West Africa, TLV ensures seamless supply chain management with ISO 22000 certification and complete cold chain excellence.",
     services: [
       "Global sourcing at competitive market prices",
       "Professional packaging and shipping",
