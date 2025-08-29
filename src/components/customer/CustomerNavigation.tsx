@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
@@ -20,8 +20,7 @@ import {
   Package,
   MessageSquare,
   Grid3X3,
-  ChevronDown,
-  ArrowLeft
+  ChevronDown
 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
@@ -31,10 +30,6 @@ export const CustomerNavigation: React.FC = () => {
   const { profile, signOut } = useCustomerAuth();
   const { totalItems } = useShoppingCart();
   const location = useLocation();
-  const navigate = useNavigate();
-  
-  // Check if we're not on the main dashboard
-  const isOnDashboard = location.pathname === '/customer';
 
   const navigationItems = [
     {
@@ -103,19 +98,6 @@ export const CustomerNavigation: React.FC = () => {
                 </div>
               </div>
             </Link>
-            
-            {/* Back to Dashboard Button - only show when not on dashboard */}
-            {!isOnDashboard && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/customer')}
-                className="ml-4 flex items-center gap-2 hover-scale"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Dashboard
-              </Button>
-            )}
           </div>
 
           {/* Navigation Links */}
@@ -202,19 +184,6 @@ export const CustomerNavigation: React.FC = () => {
       {/* Mobile Navigation */}
       <div className="md:hidden border-t border-border/10">
         <div className="px-2 pt-2 pb-3 space-y-1">
-          {/* Mobile Back to Dashboard Button */}
-          {!isOnDashboard && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/customer')}
-              className="w-full justify-start mb-2 animate-fade-in"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          )}
-          
           {navigationItems.map((item) => {
             const isActive = location.pathname === item.href;
             const Icon = item.icon;
