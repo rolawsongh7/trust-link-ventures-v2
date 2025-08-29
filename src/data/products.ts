@@ -1588,5 +1588,73 @@ export const productData = [
     origin: 'Mauritania',
     certifications: ['Sea Frozen Quality'],
     specifications: 'Contact for specific requirements'
+  },
+
+  // Additional J. Marr Seafood Products
+  {
+    id: 'JMARR-SF-019',
+    name: 'Bogue',
+    category: 'Seafood',
+    image: '/products/jmarr-bogue.png',
+    description: 'Shore frozen bogue from Morocco. Small pelagic fish with delicate flavor, excellent for Mediterranean cuisine.',
+    packaging: ['Shore Frozen'],
+    origin: 'Morocco',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-020',
+    name: 'Catfish',
+    category: 'Seafood',
+    image: '/products/jmarr-catfish.png',
+    description: 'Premium catfish from aquaculture farms. Known for its mild flavor and firm white meat.',
+    packaging: ['Shore Frozen'],
+    origin: 'Vietnam',
+    certifications: ['Aquaculture Certified'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-021',
+    name: 'Alaskan Pollock',
+    category: 'Seafood',
+    image: '/products/jmarr-alaskan-pollock.png',
+    description: 'Premium Alaskan pollock from North Pacific. Sustainable wild-caught fish with excellent flaking properties.',
+    packaging: ['Sea Frozen'],
+    origin: 'Alaska',
+    certifications: ['MSC Certified', 'Wild-Caught'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-022',
+    name: 'Pacific Herring',
+    category: 'Seafood',
+    image: '/products/jmarr-pacific-herring.png',
+    description: 'Premium Pacific herring from North Pacific waters. Rich in omega-3 fatty acids and essential nutrients.',
+    packaging: ['Sea Frozen'],
+    origin: 'North Pacific',
+    certifications: ['Wild-Caught Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-023',
+    name: 'Atlantic Mackerel',
+    category: 'Seafood',
+    image: '/products/jmarr-blue-mackerel.png',
+    description: 'Premium Atlantic mackerel (Scomber scombrus) from North Atlantic. Rich oily fish perfect for smoking and grilling.',
+    packaging: ['Sea Frozen'],
+    origin: 'North Atlantic',
+    certifications: ['MSC Certified'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-024',
+    name: 'Rock Fish',
+    category: 'Seafood',
+    image: '/products/jmarr-reef-cod.png',
+    description: 'Premium rock fish from deep sea waters. Firm white meat with excellent cooking properties.',
+    packaging: ['Sea Frozen'],
+    origin: 'North Atlantic',
+    certifications: ['Deep Sea Caught'],
+    specifications: 'Contact for specific requirements'
   }
 ];

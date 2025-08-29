@@ -608,11 +608,6 @@ const Products = () => {
             <div className="mt-16">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-poppins font-bold">J. Marr Seafood</h3>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => importJmarr(true)} disabled={jmarrLoading}>
-                    {jmarrLoading ? 'Importing…' : 'Re-import from source'}
-                  </Button>
-                </div>
               </div>
 
               {jmarrLoading ? (
