@@ -333,7 +333,7 @@ const Products = () => {
           </h1>
           
           <p className="text-xl text-white/90 max-w-4xl mx-auto leading-relaxed mb-12">
-            Explore our premium selection of export-quality seafood products sourced from SEAPRO SAS trusted suppliers. Available for wholesale distribution with custom packaging options.
+            Explore our premium selection of export-quality seafood products sourced from credible global suppliers. Available for wholesale distribution with custom packaging options.
           </p>
 
           {/* Feature Cards */}
