@@ -4,7 +4,7 @@ export const productData = [
     id: 'SEAPRO-001',
     name: 'Black Tilapia',
     category: 'Seafood',
-    image: '/products/black-tilapia.png',
+    image: '/products/seapro-black-tilapia.png',
     description: 'Premium black tilapia sourced from SEAPRO SAS sustainable aquaculture farms. Known for its mild flavor and firm texture, perfect for various culinary applications.',
     packaging: ['Different sizes and cuts available'],
     origin: 'Southeast Asia',
@@ -15,7 +15,7 @@ export const productData = [
     id: 'SEAPRO-002',
     name: 'Red Tilapia',
     category: 'Seafood',
-    image: '/products/red-tilapia.png',
+    image: '/products/seapro-red-tilapia.png',
     description: 'High-quality red tilapia from SEAPRO SAS with excellent taste and nutritional value. This premium variety offers superior meat quality.',
     packaging: ['Different sizes and cuts available'],
     origin: 'Southeast Asia',
@@ -26,7 +26,7 @@ export const productData = [
     id: 'SEAPRO-003',
     name: 'Panga',
     category: 'Seafood',
-    image: '/products/panga.png',
+    image: '/products/seapro-panga.png',
     description: 'Fresh and frozen panga fish from SEAPRO SAS responsible farming practices. Known for its white meat and versatile cooking applications.',
     packaging: ['Different sizes and cuts available'],
     origin: 'Vietnam',
@@ -37,7 +37,7 @@ export const productData = [
     id: 'SEAPRO-004',
     name: 'Mackerel',
     category: 'Seafood',
-    image: '/products/mackerel.png',
+    image: '/products/seapro-mackerel.png',
     description: 'Premium mackerel from SEAPRO SAS rich in omega-3 fatty acids and essential nutrients. Sustainably sourced with full traceability.',
     packaging: ['Different sizes and cuts available'],
     origin: 'North Atlantic',
@@ -48,7 +48,7 @@ export const productData = [
     id: 'SEAPRO-005',
     name: 'Catfish',
     category: 'Seafood',
-    image: '/products/catfish.png',
+    image: '/products/seapro-catfish.png',
     description: 'Premium farm-raised catfish from SEAPRO SAS with excellent flavor profile and texture. Sustainably produced using modern aquaculture techniques.',
     packaging: ['Different sizes and cuts available'],
     origin: 'Southeast Asia',
@@ -59,7 +59,7 @@ export const productData = [
     id: 'SEAPRO-006',
     name: 'Horse Mackerel',
     category: 'Seafood',
-    image: '/products/horse-mackerel.png',
+    image: '/products/seapro-horse-mackerel.png',
     description: 'High-quality horse mackerel from SEAPRO SAS caught using sustainable fishing methods. Rich in protein and omega-3 oils.',
     packaging: ['Different sizes and cuts available'],
     origin: 'Pacific Ocean',
@@ -70,7 +70,7 @@ export const productData = [
     id: 'SEAPRO-007',
     name: 'Tuna',
     category: 'Seafood',
-    image: '/products/tuna.png',
+    image: '/products/seapro-tuna.png',
     description: 'Premium tuna from SEAPRO SAS caught using sustainable methods for maximum freshness. Ideal for various culinary applications.',
     packaging: ['Different sizes and cuts available'],
     origin: 'Pacific Ocean',
@@ -81,17 +81,105 @@ export const productData = [
     id: 'SEAPRO-008',
     name: 'Bream',
     category: 'Seafood',
-    image: '/products/bream.png',
+    image: '/products/seapro-bream.png',
     description: 'Mediterranean bream from SEAPRO SAS farmed using sustainable aquaculture practices. Known for its delicate flavor and firm white meat.',
     packaging: ['Different sizes and cuts available'],
     origin: 'Mediterranean',
     certifications: ['Organic Aquaculture', 'HACCP'],
     specifications: 'Contact for specific requirements'
   },
+  {
+    id: 'SEAPRO-009',
+    name: 'Marlin',
+    category: 'Seafood',
+    image: '/products/seapro-marlin.png',
+    description: 'Premium marlin from SEAPRO SAS caught using sustainable fishing methods. Known for its firm texture and rich flavor profile.',
+    packaging: ['Different sizes and cuts available'],
+    origin: 'Pacific Ocean',
+    certifications: ['Sustainable Fisheries', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'SEAPRO-010',
+    name: 'Snapper',
+    category: 'Seafood',
+    image: '/products/seapro-snapper.png',
+    description: 'High-quality snapper from SEAPRO SAS with excellent taste and firm white meat. Perfect for various culinary preparations.',
+    packaging: ['Different sizes and cuts available'],
+    origin: 'Pacific Ocean',
+    certifications: ['Sustainable Fisheries', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'SEAPRO-011',
+    name: 'Parrotfish',
+    category: 'Seafood',
+    image: '/products/seapro-parrotfish.png',
+    description: 'Premium parrotfish from SEAPRO SAS sustainably caught with excellent flavor and texture. Known for its colorful appearance and delicate taste.',
+    packaging: ['Different sizes and cuts available'],
+    origin: 'Pacific Ocean',
+    certifications: ['Sustainable Fisheries', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'SEAPRO-012',
+    name: 'Melva',
+    category: 'Seafood',
+    image: '/products/seapro-melva.png',
+    description: 'Premium melva from SEAPRO SAS with rich omega-3 content and excellent flavor. Sustainably sourced for maximum freshness.',
+    packaging: ['Different sizes and cuts available'],
+    origin: 'Atlantic Ocean',
+    certifications: ['Sustainable Fisheries', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'SEAPRO-013',
+    name: 'Prawns',
+    category: 'Seafood',
+    image: '/products/seapro-prawns.png',
+    description: 'Premium prawns from SEAPRO SAS with excellent taste and texture. Sustainably farmed using responsible aquaculture practices.',
+    packaging: ['Different sizes and cuts available'],
+    origin: 'Southeast Asia',
+    certifications: ['Aquaculture Certified', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'SEAPRO-014',
+    name: 'Crabs',
+    category: 'Seafood',
+    image: '/products/seapro-crabs.png',
+    description: 'Fresh and frozen crabs from SEAPRO SAS with sweet, tender meat. Sustainably sourced and carefully processed for optimal quality.',
+    packaging: ['Different sizes and cuts available'],
+    origin: 'Pacific Ocean',
+    certifications: ['Sustainable Fisheries', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'SEAPRO-015',
+    name: 'Mussels',
+    category: 'Seafood',
+    image: '/products/seapro-mussels.png',
+    description: 'Premium mussels from SEAPRO SAS farmed using sustainable aquaculture methods. Known for their sweet flavor and tender texture.',
+    packaging: ['Different sizes and cuts available'],
+    origin: 'European Waters',
+    certifications: ['Organic Aquaculture', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'SEAPRO-016',
+    name: 'Octopus',
+    category: 'Seafood',
+    image: '/products/seapro-octopus.png',
+    description: 'High-quality octopus from SEAPRO SAS with tender texture and rich flavor. Sustainably caught and expertly processed.',
+    packaging: ['Different sizes and cuts available'],
+    origin: 'Mediterranean Sea',
+    certifications: ['Sustainable Fisheries', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
 
   // SEAPRO SAS Meat Products - Poultry
   {
-    id: 'SEAPRO-009',
+    id: 'SEAPRO-017',
     name: 'Chicken',
     category: 'Poultry',
     image: '/products/chicken.png',
@@ -102,7 +190,7 @@ export const productData = [
     specifications: 'Contact for specific requirements'
   },
   {
-    id: 'SEAPRO-010',
+    id: 'SEAPRO-018',
     name: 'Turkey',
     category: 'Poultry',
     image: '/products/turkey.png',
@@ -113,7 +201,7 @@ export const productData = [
     specifications: 'Contact for specific requirements'
   },
   {
-    id: 'SEAPRO-011',
+    id: 'SEAPRO-019',
     name: 'Duck',
     category: 'Poultry',
     image: '/products/duck.png',
@@ -124,7 +212,7 @@ export const productData = [
     specifications: 'Contact for specific requirements'
   },
   {
-    id: 'SEAPRO-012',
+    id: 'SEAPRO-020',
     name: 'Hen',
     category: 'Poultry',
     image: '/products/hen.png',
@@ -137,7 +225,7 @@ export const productData = [
 
   // SEAPRO SAS Meat Products - Beef
   {
-    id: 'SEAPRO-013',
+    id: 'SEAPRO-021',
     name: 'Flank Steak',
     category: 'Beef',
     image: '/products/flank-steak.png',
@@ -148,7 +236,7 @@ export const productData = [
     specifications: 'Contact for specific requirements'
   },
   {
-    id: 'SEAPRO-014',
+    id: 'SEAPRO-022',
     name: 'Entrecôte',
     category: 'Beef',
     image: '/products/entrecote.png',
@@ -159,7 +247,7 @@ export const productData = [
     specifications: 'Contact for specific requirements'
   },
   {
-    id: 'SEAPRO-015',
+    id: 'SEAPRO-023',
     name: 'Beef Strips',
     category: 'Beef',
     image: '/products/beef-strips.png',
@@ -172,7 +260,7 @@ export const productData = [
 
   // SEAPRO SAS Meat Products - Pork
   {
-    id: 'SEAPRO-016',
+    id: 'SEAPRO-024',
     name: 'Pork Fillet',
     category: 'Pork',
     image: '/products/pork-fillet.png',
