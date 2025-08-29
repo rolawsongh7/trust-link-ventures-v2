@@ -1388,5 +1388,205 @@ export const productData = [
     origin: 'Europe',
     certifications: ['Export Quality', 'HACCP'],
     specifications: 'Contact for specific requirements'
+  },
+
+  // J. Marr Seafood Products
+  {
+    id: 'JMARR-SF-001',
+    name: 'Hake (Pescada)',
+    category: 'Seafood',
+    image: '/products/jmarr-hake.png',
+    description: 'Premium shore frozen hake (Merluccius hubbsi) from Argentina. High-quality white fish with excellent texture and flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'Argentina',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-002',
+    name: 'Sea Trout (Pescadilla)',
+    category: 'Seafood',
+    image: '/products/jmarr-sea-trout.png',
+    description: 'Premium sea trout (Cynoscion striatus) from Argentina. Known for its delicate flavor and firm texture.',
+    packaging: ['Shore Frozen'],
+    origin: 'Argentina',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-003',
+    name: 'White Croaker (Pargo Blanco)',
+    category: 'Seafood',
+    image: '/products/jmarr-white-croaker.png',
+    description: 'Shore frozen white croaker (Umbrina canosai) from Argentina. Premium quality fish with excellent taste.',
+    packaging: ['Shore Frozen'],
+    origin: 'Argentina',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-004',
+    name: 'Yellow Croaker (Corvina)',
+    category: 'Seafood',
+    image: '/products/jmarr-yellow-croaker.png',
+    description: 'Premium yellow croaker (Micropogonias furnieri) from Argentina. High-quality fish with firm white meat.',
+    packaging: ['Shore Frozen'],
+    origin: 'Argentina',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-005',
+    name: 'Red Bellied Pacu (Red Pomphret)',
+    category: 'Seafood',
+    image: '/products/jmarr-red-bellied-pacu.png',
+    description: 'Shore frozen red bellied pacu (Colossoma brachypomus) from China. Premium quality fish with excellent flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'China',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-006',
+    name: 'Tilapia',
+    category: 'Seafood',
+    image: '/products/jmarr-tilapia.png',
+    description: 'Premium shore frozen tilapia (Oreochromis niloticus) from China. High-quality white fish with mild flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'China',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-007',
+    name: 'Bullet Tuna',
+    category: 'Seafood',
+    image: '/products/jmarr-bullet-tuna.png',
+    description: 'Shore frozen bullet tuna (Auxis rochei) from Ecuador. Premium tuna with rich flavor and firm texture.',
+    packaging: ['Shore Frozen'],
+    origin: 'Ecuador',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-008',
+    name: 'Hake Ecuador (Pescada)',
+    category: 'Seafood',
+    image: '/products/jmarr-hake-ecuador.png',
+    description: 'Premium shore frozen hake (Merluccius gayi) from Ecuador. High-quality white fish with excellent texture.',
+    packaging: ['Shore Frozen'],
+    origin: 'Ecuador',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-009',
+    name: 'Horse Mackerel (Jack Mackerel)',
+    category: 'Seafood',
+    image: '/products/jmarr-horse-mackerel.png',
+    description: 'Shore frozen horse mackerel (Trachurus murphyi) from Ecuador. Rich in omega-3 with excellent flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'Ecuador',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-010',
+    name: 'Mackerel (Caballa)',
+    category: 'Seafood',
+    image: '/products/jmarr-mackerel.png',
+    description: 'Shore frozen mackerel (Scomber japonicus) from Ecuador. Premium quality fish rich in omega-3 fatty acids.',
+    packaging: ['Shore Frozen'],
+    origin: 'Ecuador',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-011',
+    name: 'Barracuda',
+    category: 'Seafood',
+    image: '/products/jmarr-barracuda.png',
+    description: 'Shore frozen barracuda (Sphyraena spp) from India. Premium predatory fish with firm white meat.',
+    packaging: ['Shore Frozen'],
+    origin: 'India',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-012',
+    name: 'Reef Cod',
+    category: 'Seafood',
+    image: '/products/jmarr-reef-cod.png',
+    description: 'Shore frozen reef cod (Epinephelus diacanthus) from India. Premium grouper family fish with excellent flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'India',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-013',
+    name: 'Blue Whiting (Merlan Bleu)',
+    category: 'Seafood',
+    image: '/products/jmarr-blue-whiting.png',
+    description: 'Shore frozen blue whiting (Micromesistius poutassou) from Ireland. Premium white fish with delicate flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'Ireland',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-014',
+    name: 'Herring',
+    category: 'Seafood',
+    image: '/products/jmarr-herring.png',
+    description: 'Shore frozen herring (Clupea harengus) from Ireland. Premium oily fish rich in omega-3 fatty acids.',
+    packaging: ['Shore Frozen'],
+    origin: 'Ireland',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-015',
+    name: 'Blue Mackerel (Caballa)',
+    category: 'Seafood',
+    image: '/products/jmarr-blue-mackerel.png',
+    description: 'Shore frozen blue mackerel (Scomber scombrus) from Ireland. Premium quality fish with rich flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'Ireland',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-016',
+    name: 'Sardine',
+    category: 'Seafood',
+    image: '/products/jmarr-sardine.png',
+    description: 'Shore frozen sardine (Sardinops melanostictus) from Japan. Premium small pelagic fish rich in nutrients.',
+    packaging: ['Shore Frozen'],
+    origin: 'Japan',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-017',
+    name: 'Yellow Tail / Amberjack',
+    category: 'Seafood',
+    image: '/products/jmarr-amberjack.png',
+    description: 'Shore frozen yellow tail amberjack (Seriola quinqueradiata) from Japan. Premium sashimi-grade fish.',
+    packaging: ['Shore Frozen'],
+    origin: 'Japan',
+    certifications: ['Shore Frozen Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-018',
+    name: 'Mullet',
+    category: 'Seafood',
+    image: '/products/jmarr-mullet.png',
+    description: 'Sea frozen mullet (Mugil cephalus) from Mauritania. Premium fish with firm texture and mild flavor.',
+    packaging: ['Sea Frozen'],
+    origin: 'Mauritania',
+    certifications: ['Sea Frozen Quality'],
+    specifications: 'Contact for specific requirements'
   }
 ];

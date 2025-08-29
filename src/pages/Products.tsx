@@ -487,7 +487,7 @@ const Products = () => {
                   className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 ${
                     activeFilter === filter.name
                       ? 'bg-primary text-primary-foreground shadow-lg scale-105'
-                      : 'bg-accent hover:bg-accent/80 text-accent-foreground hover:scale-105'
+                      : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:scale-105'
                   }`}
                 >
                   <IconComponent className="h-4 w-4" />
@@ -564,7 +564,7 @@ const Products = () => {
                       <h4 className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-1">Certifications</h4>
                       <div className="flex flex-wrap gap-1">
                         {product.certifications.slice(0, 2).map((cert, idx) => (
-                          <span key={idx} className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">
+                          <span key={idx} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
                             {cert}
                           </span>
                         ))}
@@ -625,7 +625,7 @@ const Products = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {jmarrItems.map((item) => (
                     <Card key={item.id} className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-                      <div className="relative h-64 overflow-hidden bg-accent">
+                      <div className="relative h-64 overflow-hidden bg-neutral-100 dark:bg-neutral-800">
                         <img
                           src={item.image}
                           alt={item.name}
