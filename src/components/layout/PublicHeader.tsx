@@ -51,9 +51,14 @@ export const PublicHeader = () => {
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
             ) : (
-              <Button asChild>
-                <Link to="/customer-portal">Customer Portal</Link>
-              </Button>
+              <div className="flex flex-col space-y-2">
+                <Button asChild>
+                  <Link to="/customer-portal">Customer Portal</Link>
+                </Button>
+                <Button asChild variant="secondary">
+                  <Link to="/admin-login">Admin</Link>
+                </Button>
+              </div>
             )}
             
             {/* Mobile menu button */}
