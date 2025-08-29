@@ -1656,5 +1656,227 @@ export const productData = [
     origin: 'North Atlantic',
     certifications: ['Deep Sea Caught'],
     specifications: 'Contact for specific requirements'
+  },
+
+  // Extended J. Marr Seafood Collection
+  {
+    id: 'JMARR-SF-025',
+    name: 'Pangasius',
+    category: 'Seafood',
+    image: '/products/jmarr-pangasius.png',
+    description: 'Premium pangasius from Vietnam aquaculture. Mild flavored white fish excellent for frying and steaming.',
+    packaging: ['Shore Frozen'],
+    origin: 'Vietnam',
+    certifications: ['Aquaculture Certified', 'BAP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-026',
+    name: 'Norwegian Mackerel',
+    category: 'Seafood',
+    image: '/products/jmarr-mackerel.png',
+    description: 'Premium Norwegian mackerel from cold North Atlantic waters. Rich in omega-3 with exceptional flavor.',
+    packaging: ['Sea Frozen'],
+    origin: 'Norway',
+    certifications: ['MSC Certified', 'Norwegian Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-027',
+    name: 'Spanish Horse Mackerel',
+    category: 'Seafood',
+    image: '/products/jmarr-horse-mackerel.png',
+    description: 'Shore frozen horse mackerel from Spanish waters. Premium quality with firm texture and rich flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'Spain',
+    certifications: ['EU Quality Standards'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-028',
+    name: 'South African Hake',
+    category: 'Seafood',
+    image: '/products/jmarr-hake.png',
+    description: 'Premium hake from South African waters. Deep water caught with excellent white meat quality.',
+    packaging: ['Sea Frozen'],
+    origin: 'South Africa',
+    certifications: ['Deep Sea Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-029',
+    name: 'Moroccan Sardine',
+    category: 'Seafood',
+    image: '/products/jmarr-sardine.png',
+    description: 'Traditional Moroccan sardine from Atlantic waters. Small pelagic fish rich in nutrients.',
+    packaging: ['Shore Frozen'],
+    origin: 'Morocco',
+    certifications: ['Atlantic Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-030',
+    name: 'Chilean Sea Bass',
+    category: 'Seafood',
+    image: '/products/jmarr-hake-ecuador.png',
+    description: 'Premium Chilean sea bass from deep Antarctic waters. Luxury white fish with buttery texture.',
+    packaging: ['Sea Frozen'],
+    origin: 'Chile',
+    certifications: ['Antarctic Caught', 'MSC Certified'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-031',
+    name: 'Namibian Hake',
+    category: 'Seafood',
+    image: '/products/jmarr-hake.png',
+    description: 'Shore frozen hake from Namibian waters. Sustainable caught with excellent cooking properties.',
+    packaging: ['Shore Frozen'],
+    origin: 'Namibia',
+    certifications: ['Sustainable Fishing'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-032',
+    name: 'Peruvian Anchovy',
+    category: 'Seafood',
+    image: '/products/jmarr-sardine.png',
+    description: 'Premium Peruvian anchovy from Pacific waters. Small pelagic fish perfect for Mediterranean cuisine.',
+    packaging: ['Shore Frozen'],
+    origin: 'Peru',
+    certifications: ['Pacific Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-033',
+    name: 'Korean Pollock',
+    category: 'Seafood',
+    image: '/products/jmarr-alaskan-pollock.png',
+    description: 'Premium pollock from Korean waters. Clean white fish excellent for surimi and fish cakes.',
+    packaging: ['Sea Frozen'],
+    origin: 'Korea',
+    certifications: ['Korean Quality Standards'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-034',
+    name: 'New Zealand Blue Mackerel',
+    category: 'Seafood',
+    image: '/products/jmarr-mackerel-blue.png',
+    description: 'Premium blue mackerel from New Zealand waters. Southern hemisphere quality with rich flavor.',
+    packaging: ['Sea Frozen'],
+    origin: 'New Zealand',
+    certifications: ['New Zealand Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-035',
+    name: 'Scottish Herring',
+    category: 'Seafood',
+    image: '/products/jmarr-herring.png',
+    description: 'Traditional Scottish herring from North Sea. Premium oily fish with exceptional flavor.',
+    packaging: ['Sea Frozen'],
+    origin: 'Scotland',
+    certifications: ['Scottish Quality', 'North Sea'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-036',
+    name: 'Senegalese Grouper',
+    category: 'Seafood',
+    image: '/products/jmarr-reef-cod.png',
+    description: 'Premium grouper from Senegalese waters. Tropical reef fish with firm white meat.',
+    packaging: ['Shore Frozen'],
+    origin: 'Senegal',
+    certifications: ['Tropical Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-037',
+    name: 'Uruguayan Croaker',
+    category: 'Seafood',
+    image: '/products/jmarr-white-croaker.png',
+    description: 'Shore frozen croaker from Uruguayan waters. South Atlantic quality with delicate flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'Uruguay',
+    certifications: ['South Atlantic Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-038',
+    name: 'USA Pacific Sardine',
+    category: 'Seafood',
+    image: '/products/jmarr-sardine.png',
+    description: 'Premium Pacific sardine from USA waters. West coast quality with rich nutritional profile.',
+    packaging: ['Sea Frozen'],
+    origin: 'USA',
+    certifications: ['Pacific Coast Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-039',
+    name: 'Omani Barracuda',
+    category: 'Seafood',
+    image: '/products/jmarr-barracuda.png',
+    description: 'Premium barracuda from Omani waters. Arabian Sea quality with firm predatory fish meat.',
+    packaging: ['Shore Frozen'],
+    origin: 'Oman',
+    certifications: ['Arabian Sea Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-040',
+    name: 'Icelandic Blue Whiting',
+    category: 'Seafood',
+    image: '/products/jmarr-blue-whiting.png',
+    description: 'Premium blue whiting from Icelandic waters. North Atlantic cold water quality.',
+    packaging: ['Sea Frozen'],
+    origin: 'Iceland',
+    certifications: ['Icelandic Quality', 'Cold Water'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-041',
+    name: 'Brazilian Sea Trout',
+    category: 'Seafood',
+    image: '/products/jmarr-sea-trout.png',
+    description: 'Premium sea trout from Brazilian waters. South Atlantic quality with delicate texture.',
+    packaging: ['Shore Frozen'],
+    origin: 'Brazil',
+    certifications: ['Brazilian Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-042',
+    name: 'Turkish Anchovy',
+    category: 'Seafood',
+    image: '/products/jmarr-sardine.png',
+    description: 'Traditional Turkish anchovy from Black Sea. Premium small pelagic fish with intense flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'Turkey',
+    certifications: ['Black Sea Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-043',
+    name: 'Canadian Herring',
+    category: 'Seafood',
+    image: '/products/jmarr-pacific-herring.png',
+    description: 'Premium herring from Canadian Pacific waters. Cold water quality with rich omega-3 content.',
+    packaging: ['Sea Frozen'],
+    origin: 'Canada',
+    certifications: ['Canadian Quality', 'Pacific'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-044',
+    name: 'Mediterranean Bogue',
+    category: 'Seafood',
+    image: '/products/jmarr-bogue.png',
+    description: 'Traditional Mediterranean bogue from Greek waters. Small pelagic fish perfect for grilling.',
+    packaging: ['Shore Frozen'],
+    origin: 'Greece',
+    certifications: ['Mediterranean Quality'],
+    specifications: 'Contact for specific requirements'
   }
 ];
