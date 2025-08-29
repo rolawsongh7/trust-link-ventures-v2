@@ -717,7 +717,7 @@ const About = () => {
       </section>
 
       {/* Trusted & Certified Section */}
-      <section className="py-16 bg-accent/10">
+      <section className="py-16 bg-muted/20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Certifications */}
           <div className="text-center mb-12">
