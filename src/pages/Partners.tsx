@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ExternalLink, MapPin, Globe, Users, Truck, Shield } from 'lucide-react';
 import PartnerGrid from '@/components/partners/PartnerGrid';
 import portFleetAerial from '@/assets/port-fleet-aerial.jpg';
+import partnershipsHeroBg from '@/assets/partnerships-hero-bg.jpg';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { Helmet } from 'react-helmet-async';
 
@@ -132,35 +133,55 @@ const Partners = () => {
       
       <div className="min-h-screen bg-background">
         {/* Hero Section */}
-        <section ref={heroRef as React.RefObject<HTMLElement>} className="px-4 sm:px-6 lg:px-8 pt-12 pb-16">
-          <div className="max-w-7xl mx-auto text-center">
+        <section 
+          ref={heroRef as React.RefObject<HTMLElement>} 
+          className="relative min-h-[80vh] flex items-center justify-center overflow-hidden"
+        >
+          {/* Background Image */}
+          <div 
+            className="absolute inset-0 z-0"
+            style={{
+              backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.5)), url(${partnershipsHeroBg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat'
+            }}
+          />
+          
+          {/* Content */}
+          <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className={`transform transition-all duration-1000 ${
               heroVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
             }`}>
-              <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-6">
+              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 text-white">
                 Our Global <span className="text-primary">Partners</span>
               </h1>
-              <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+              <p className="text-xl sm:text-2xl text-white/90 max-w-4xl mx-auto mb-12 leading-relaxed">
                 Building strong partnerships across continents to deliver premium frozen products 
                 with excellence, reliability, and innovation at every step of the supply chain.
               </p>
             </div>
+            
+            {/* Feature Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-12">
-              <div className="flex items-center justify-center space-x-3 p-4 rounded-lg bg-primary/5">
-                <Globe className="h-8 w-8 text-primary" />
-                <span className="text-lg font-semibold">6 Continents</span>
+              <div className="flex items-center justify-center space-x-3 p-6 rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
+                <Globe className="h-8 w-8 text-white" />
+                <span className="text-lg font-semibold text-white">6 Continents</span>
               </div>
-              <div className="flex items-center justify-center space-x-3 p-4 rounded-lg bg-primary/5">
-                <Users className="h-8 w-8 text-primary" />
-                <span className="text-lg font-semibold">Trusted Network</span>
+              <div className="flex items-center justify-center space-x-3 p-6 rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
+                <Users className="h-8 w-8 text-white" />
+                <span className="text-lg font-semibold text-white">Trusted Network</span>
               </div>
-              <div className="flex items-center justify-center space-x-3 p-4 rounded-lg bg-primary/5">
-                <Shield className="h-8 w-8 text-primary" />
-                <span className="text-lg font-semibold">Quality Assured</span>
+              <div className="flex items-center justify-center space-x-3 p-6 rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
+                <Shield className="h-8 w-8 text-white" />
+                <span className="text-lg font-semibold text-white">Quality Assured</span>
               </div>
             </div>
           </div>
         </section>
+
+        {/* White space after hero */}
+        <div className="py-12 bg-background"></div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Strategic Partner Section */}
