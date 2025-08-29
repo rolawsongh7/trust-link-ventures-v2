@@ -617,6 +617,140 @@ export const productData = [
     certifications: ['Export Quality', 'HACCP'],
     specifications: 'Contact for specific requirements'
   },
+
+  // JAB Brothers Pork Products
+  {
+    id: 'JAB-027',
+    name: 'Pork Head',
+    category: 'Pork',
+    image: '/products/jab-pork-head.jpg',
+    description: 'Premium pork head from JAB Brothers Argentina. Traditional cut perfect for specialty preparations and traditional recipes.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-028',
+    name: 'Pork Snout',
+    category: 'Pork',
+    image: '/products/jab-pork-snout.jpg',
+    description: 'Fresh pork snout from JAB Brothers with unique texture, perfect for traditional cuisine applications.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-029',
+    name: 'Pork Mask',
+    category: 'Pork',
+    image: '/products/jab-pork-mask.jpg',
+    description: 'Premium pork mask from JAB Brothers, specialty cut for traditional cooking methods.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-030',
+    name: 'Pork Ears',
+    category: 'Pork',
+    image: '/products/jab-pork-ears.jpg',
+    description: 'Fresh pork ears from JAB Brothers with tender cartilage, perfect for slow-cooking and braising.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-031',
+    name: 'Pork Tongues',
+    category: 'Pork',
+    image: '/products/jab-pork-tongues.jpg',
+    description: 'Premium pork tongues from JAB Brothers with tender texture and rich flavor.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-032',
+    name: 'Pork Feet',
+    category: 'Pork',
+    image: '/products/jab-pork-feet.jpg',
+    description: 'Fresh pork feet from JAB Brothers with gelatinous texture, perfect for traditional stews and soups.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-033',
+    name: 'Pork Loin Bone-In',
+    category: 'Pork',
+    image: '/products/jab-pork-loin-bone-in.jpg',
+    description: 'Premium pork loin with bone from JAB Brothers with excellent marbling and flavor.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-034',
+    name: 'Pork Ribs',
+    category: 'Pork',
+    image: '/products/jab-pork-ribs.jpg',
+    description: 'Premium pork ribs from JAB Brothers perfect for grilling, smoking, and slow-cooking.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-035',
+    name: 'Pork Tenderloins',
+    category: 'Pork',
+    image: '/products/jab-pork-tenderloins.jpg',
+    description: 'Premium pork tenderloins from JAB Brothers with exceptional tenderness and mild flavor.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-036',
+    name: 'Pork Collars',
+    category: 'Pork',
+    image: '/products/jab-pork-collars.jpg',
+    description: 'Premium pork collar (neck) from JAB Brothers with marbled meat perfect for roasting.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-037',
+    name: 'Pork Hock',
+    category: 'Pork',
+    image: '/products/jab-pork-hock.jpg',
+    description: 'Premium pork hock from JAB Brothers perfect for slow braising and traditional preparations.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-038',
+    name: 'Pork Fat',
+    category: 'Pork',
+    image: '/products/jab-pork-fat.jpg',
+    description: 'Premium pork fat from JAB Brothers perfect for rendering and traditional cooking applications.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
   {
     id: 'JMARR-002',
     name: 'Sea Trout',
