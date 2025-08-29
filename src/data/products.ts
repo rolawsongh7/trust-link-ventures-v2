@@ -2210,5 +2210,227 @@ export const productData = [
     origin: 'Brazil',
     certifications: ['Brazilian Quality', 'Tropical'],
     specifications: 'Contact for specific requirements'
+  },
+
+  // Extended Premium J. Marr Seafood Collection (20 more unique products)
+  {
+    id: 'JMARR-SF-075',
+    name: 'Greenland Halibut',
+    category: 'Seafood',
+    image: '/products/jmarr-tilapia.png',
+    description: 'Premium Greenland halibut from Arctic waters. Large flatfish with rich, buttery meat and exceptional flavor.',
+    packaging: ['Sea Frozen'],
+    origin: 'Greenland',
+    certifications: ['Arctic Quality', 'Cold Water'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-076',
+    name: 'Namibian Anchovy',
+    category: 'Seafood',
+    image: '/products/jmarr-sardine.png',
+    description: 'Premium anchovy from Namibian waters. Small pelagic fish with intense flavor perfect for Mediterranean cuisine.',
+    packaging: ['Shore Frozen'],
+    origin: 'Namibia',
+    certifications: ['Namibian Quality', 'Sustainable'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-077',
+    name: 'Turkish Black Sea Anchovy',
+    category: 'Seafood',
+    image: '/products/jmarr-sardine.png',
+    description: 'Traditional Turkish anchovy from Black Sea waters. Premium small fish with rich flavor and high oil content.',
+    packaging: ['Shore Frozen'],
+    origin: 'Turkey',
+    certifications: ['Black Sea Quality', 'Traditional'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-078',
+    name: 'Russian Pollock',
+    category: 'Seafood',
+    image: '/products/jmarr-alaskan-pollock.png',
+    description: 'Premium pollock from Russian Pacific waters. Clean white fish with excellent flaking properties.',
+    packaging: ['Sea Frozen'],
+    origin: 'Russia',
+    certifications: ['Russian Quality', 'Pacific'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-079',
+    name: 'Portuguese Sardine',
+    category: 'Seafood',
+    image: '/products/jmarr-sardine.png',
+    description: 'Traditional Portuguese sardine from Atlantic waters. Premium quality with rich flavor and firm texture.',
+    packaging: ['Shore Frozen'],
+    origin: 'Portugal',
+    certifications: ['Portuguese Quality', 'Atlantic'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-080',
+    name: 'Mauritanian Octopus',
+    category: 'Seafood',
+    image: '/products/jmarr-mullet.png',
+    description: 'Premium octopus from Mauritanian waters. High-quality cephalopod with tender meat and rich flavor.',
+    packaging: ['Sea Frozen'],
+    origin: 'Mauritania',
+    certifications: ['West African Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-081',
+    name: 'Egyptian Mullet',
+    category: 'Seafood',
+    image: '/products/jmarr-mullet.png',
+    description: 'Premium mullet from Egyptian Mediterranean waters. Traditional fish with firm texture and mild flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'Egypt',
+    certifications: ['Mediterranean Quality'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-082',
+    name: 'Chilean Horse Mackerel',
+    category: 'Seafood',
+    image: '/products/jmarr-horse-mackerel.png',
+    description: 'Premium horse mackerel from Chilean Pacific waters. Southern hemisphere quality with rich omega-3 content.',
+    packaging: ['Sea Frozen'],
+    origin: 'Chile',
+    certifications: ['Chilean Quality', 'Pacific'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-083',
+    name: 'Moroccan Horse Mackerel',
+    category: 'Seafood',
+    image: '/products/jmarr-horse-mackerel.png',
+    description: 'Premium horse mackerel from Moroccan Atlantic waters. North African quality with excellent flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'Morocco',
+    certifications: ['Moroccan Quality', 'Atlantic'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-084',
+    name: 'French Sea Bream',
+    category: 'Seafood',
+    image: '/products/jmarr-bogue.png',
+    description: 'Premium sea bream from French Mediterranean waters. Traditional European fish with delicate sweet flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'France',
+    certifications: ['French Quality', 'Mediterranean'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-085',
+    name: 'Italian Anchovy',
+    category: 'Seafood',
+    image: '/products/jmarr-sardine.png',
+    description: 'Traditional Italian anchovy from Mediterranean waters. Premium small fish perfect for authentic cuisine.',
+    packaging: ['Shore Frozen'],
+    origin: 'Italy',
+    certifications: ['Italian Quality', 'Mediterranean'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-086',
+    name: 'Greek Sea Bass',
+    category: 'Seafood',
+    image: '/products/jmarr-hake-ecuador.png',
+    description: 'Premium sea bass from Greek Mediterranean waters. Traditional aquaculture with excellent white meat.',
+    packaging: ['Shore Frozen'],
+    origin: 'Greece',
+    certifications: ['Greek Quality', 'Mediterranean'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-087',
+    name: 'Estonian Herring',
+    category: 'Seafood',
+    image: '/products/jmarr-herring.png',
+    description: 'Premium herring from Estonian Baltic waters. Northern European quality with delicate flavor.',
+    packaging: ['Sea Frozen'],
+    origin: 'Estonia',
+    certifications: ['Baltic Quality', 'Estonian'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-088',
+    name: 'Finnish Perch',
+    category: 'Seafood',
+    image: '/products/jmarr-reef-cod.png',
+    description: 'Premium perch from Finnish lake waters. Freshwater quality with firm white meat and mild flavor.',
+    packaging: ['Shore Frozen'],
+    origin: 'Finland',
+    certifications: ['Finnish Quality', 'Freshwater'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-089',
+    name: 'Swedish Mackerel',
+    category: 'Seafood',
+    image: '/products/jmarr-blue-mackerel.png',
+    description: 'Premium mackerel from Swedish waters. Scandinavian quality with rich flavor and high oil content.',
+    packaging: ['Sea Frozen'],
+    origin: 'Sweden',
+    certifications: ['Swedish Quality', 'Scandinavian'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-090',
+    name: 'Polish Carp',
+    category: 'Seafood',
+    image: '/products/jmarr-catfish.png',
+    description: 'Premium carp from Polish freshwater farms. Traditional European freshwater fish with firm meat.',
+    packaging: ['Shore Frozen'],
+    origin: 'Poland',
+    certifications: ['Polish Quality', 'Freshwater'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-091',
+    name: 'German Pike-Perch',
+    category: 'Seafood',
+    image: '/products/jmarr-reef-cod.png',
+    description: 'Premium pike-perch from German waters. Central European freshwater fish with excellent white meat.',
+    packaging: ['Shore Frozen'],
+    origin: 'Germany',
+    certifications: ['German Quality', 'Freshwater'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-092',
+    name: 'Belgian North Sea Sole',
+    category: 'Seafood',
+    image: '/products/jmarr-tilapia.png',
+    description: 'Premium sole from Belgian North Sea waters. Traditional flatfish with delicate flavor and firm texture.',
+    packaging: ['Sea Frozen'],
+    origin: 'Belgium',
+    certifications: ['Belgian Quality', 'North Sea'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-093',
+    name: 'Dutch Plaice',
+    category: 'Seafood',
+    image: '/products/jmarr-tilapia.png',
+    description: 'Premium plaice from Dutch North Sea waters. Traditional European flatfish with sweet white meat.',
+    packaging: ['Sea Frozen'],
+    origin: 'Netherlands',
+    certifications: ['Dutch Quality', 'North Sea'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JMARR-SF-094',
+    name: 'Austrian Trout',
+    category: 'Seafood',
+    image: '/products/jmarr-sea-trout.png',
+    description: 'Premium trout from Austrian alpine waters. Mountain freshwater fish with excellent flavor and texture.',
+    packaging: ['Shore Frozen'],
+    origin: 'Austria',
+    certifications: ['Austrian Quality', 'Alpine'],
+    specifications: 'Contact for specific requirements'
   }
 ];
