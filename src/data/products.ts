@@ -451,16 +451,170 @@ export const productData = [
     specifications: 'Contact for specific requirements'
   },
 
-  // J. Marr (Marsea) Products
+  // JAB Brothers Beef Products
   {
-    id: 'JMARR-001',
-    name: 'Hake',
-    category: 'Seafood',
-    image: '/products/marsea-hake.png',
-    description: 'Premium hake (Merluccius hubbsi) from J. Marr. Shore frozen for optimal quality and freshness.',
+    id: 'JAB-012',
+    name: 'Mondongo',
+    category: 'Beef',
+    image: '/products/jab-mondongo.jpg',
+    description: 'Premium beef tripe (mondongo) from JAB Brothers Argentina. Traditional cut perfect for slow-cooked dishes and stews.',
     packaging: ['Contact for pricing'],
     origin: 'Argentina',
-    certifications: ['Shore Frozen', 'Export Quality'],
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-013',
+    name: 'Higado',
+    category: 'Beef',
+    image: '/products/jab-higado.jpg',
+    description: 'Fresh beef liver (higado) from JAB Brothers with excellent nutritional value and rich flavor.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-014',
+    name: 'Rabo',
+    category: 'Beef',
+    image: '/products/jab-rabo.jpg',
+    description: 'Premium beef tail (rabo) from JAB Brothers, perfect for braising and slow-cooking applications.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-015',
+    name: 'Beef Kidneys',
+    category: 'Beef',
+    image: '/products/jab-beef-kidneys.jpg',
+    description: 'Fresh beef kidneys from JAB Brothers with distinctive flavor, perfect for traditional recipes.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-016',
+    name: 'Tortuguita',
+    category: 'Beef',
+    image: '/products/jab-tortuguita.jpg',
+    description: 'Premium beef cut tortuguita from JAB Brothers, a specialty Argentine cut with excellent marbling.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-017',
+    name: 'Lengua',
+    category: 'Beef',
+    image: '/products/jab-lengua.jpg',
+    description: 'Premium beef tongue (lengua) from JAB Brothers with tender texture and rich flavor.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-018',
+    name: 'Corazón',
+    category: 'Beef',
+    image: '/products/jab-corazon.jpg',
+    description: 'Fresh beef heart (corazón) from JAB Brothers with lean meat and distinctive flavor.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-019',
+    name: 'Pulmones',
+    category: 'Beef',
+    image: '/products/jab-pulmones.jpg',
+    description: 'Beef lungs (pulmones) from JAB Brothers, traditional organ meat for specialty preparations.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-020',
+    name: 'Carne Quijada',
+    category: 'Beef',
+    image: '/products/jab-carne-quijada.jpg',
+    description: 'Premium beef jaw meat (carne quijada) from JAB Brothers, perfect for slow braising and stews.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-021',
+    name: 'Librillo',
+    category: 'Beef',
+    image: '/products/jab-librillo.jpg',
+    description: 'Premium beef omasum (librillo) from JAB Brothers, traditional organ meat with unique texture.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-022',
+    name: 'Lomo',
+    category: 'Beef',
+    image: '/products/jab-lomo.jpg',
+    description: 'Premium beef tenderloin (lomo) from JAB Brothers with exceptional tenderness and flavor.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-023',
+    name: 'Bife Ancho',
+    category: 'Beef',
+    image: '/products/jab-bife-ancho.jpg',
+    description: 'Premium ribeye steak (bife ancho) from JAB Brothers with excellent marbling and flavor.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-024',
+    name: 'Bife Angosto',
+    category: 'Beef',
+    image: '/products/jab-bife-angosto.jpg',
+    description: 'Premium strip steak (bife angosto) from JAB Brothers with lean meat and excellent flavor.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-025',
+    name: 'Ojo Bife Ancho',
+    category: 'Beef',
+    image: '/products/jab-ojo-bife-ancho.jpg',
+    description: 'Premium ribeye eye (ojo bife ancho) from JAB Brothers with exceptional marbling and tenderness.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
+    specifications: 'Contact for specific requirements'
+  },
+  {
+    id: 'JAB-026',
+    name: 'Colita de Cuadril',
+    category: 'Beef',
+    image: '/products/jab-colita-de-cuadril.jpg',
+    description: 'Premium rump tail (colita de cuadril) from JAB Brothers with lean meat and excellent flavor.',
+    packaging: ['Contact for pricing'],
+    origin: 'Argentina',
+    certifications: ['Export Quality', 'HACCP'],
     specifications: 'Contact for specific requirements'
   },
   {
