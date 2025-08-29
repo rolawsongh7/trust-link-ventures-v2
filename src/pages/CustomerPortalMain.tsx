@@ -141,44 +141,37 @@ const CustomerPortalMain = () => {
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary-foreground/20 rounded-full flex items-center justify-center">
-                <Building2 className="w-6 h-6" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary-foreground/20 rounded-full flex items-center justify-center">
+                  <Building2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold">
+                    Trust Link Ventures Customer Portal
+                  </h1>
+                  <p className="text-primary-foreground/80">
+                    Your gateway to premium global products
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold">
-                  Trust Link Ventures Customer Portal
-                </h1>
-                <p className="text-primary-foreground/80">
-                  Your gateway to premium global products
+              <div className="flex items-center gap-4">
+                <p className="text-primary-foreground text-lg">
+                  Welcome {profile?.full_name}
                 </p>
+                <Button 
+                  variant="secondary" 
+                  onClick={() => signOut()}
+                  className="bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-primary-foreground/20"
+                >
+                  Sign Out
+                </Button>
               </div>
             </div>
-            <Button 
-              variant="secondary" 
-              onClick={() => signOut()}
-              className="bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-primary-foreground/20"
-            >
-              Sign Out
-            </Button>
-          </div>
         </div>
       </div>
 
-      {/* Welcome Section */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-2">
-            Welcome to Trust Link Ventures
-          </h2>
-          <p className="text-lg text-muted-foreground">
-            Hello, {profile?.full_name} from {profile?.company_name}
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 space-y-8">
+      <div className="max-w-7xl mx-auto px-6 pt-8 space-y-8">
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
