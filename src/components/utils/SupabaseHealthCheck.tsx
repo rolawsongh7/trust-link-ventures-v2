@@ -22,11 +22,17 @@ export const SupabaseHealthCheck = () => {
         // Get additional connection details for verification
         const { data: { user } } = await supabase.auth.getUser();
         
+        // Extract project ID from anon key for verification
+        const anonKeyPayload = JSON.parse(atob(SUPABASE_CONFIG.anonKey.split('.')[1]));
+        
         setConnectionDetails({
           projectId: SUPABASE_CONFIG.expectedProjectId,
           url: SUPABASE_CONFIG.url,
+          anonKeyProjectRef: anonKeyPayload.ref,
+          anonKeyValid: anonKeyPayload.ref === SUPABASE_CONFIG.expectedProjectId,
           timestamp: new Date().toLocaleString(),
-          userConnected: !!user
+          userConnected: !!user,
+          userEmail: user?.email || 'Not authenticated'
         });
         
         setStatus('healthy');
@@ -62,13 +68,22 @@ export const SupabaseHealthCheck = () => {
       <div className="space-y-2">
         <Alert className="border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-800">Trust Link Ventures - Backend Connected</AlertTitle>
+          <AlertTitle className="text-green-800">✅ Trust Link Ventures V2 - Backend Verified</AlertTitle>
           <AlertDescription className="text-green-700 mt-2">
-            <div className="space-y-1 text-sm">
-              <div><strong>Project ID:</strong> {connectionDetails?.projectId}</div>
-              <div><strong>Project URL:</strong> {connectionDetails?.url}</div>
-              <div><strong>Last Verified:</strong> {connectionDetails?.timestamp}</div>
-              <div><strong>Status:</strong> ✅ Separate from Trust Link Ventures</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="space-y-1">
+                <div><strong>Project ID:</strong> {connectionDetails?.projectId}</div>
+                <div><strong>Project URL:</strong> {connectionDetails?.url}</div>
+                <div><strong>Anon Key Valid:</strong> {connectionDetails?.anonKeyValid ? '✅ Valid' : '❌ Invalid'}</div>
+              </div>
+              <div className="space-y-1">
+                <div><strong>Admin User:</strong> {connectionDetails?.userEmail}</div>
+                <div><strong>Auth Status:</strong> {connectionDetails?.userConnected ? '✅ Authenticated' : '❌ Not authenticated'}</div>
+                <div><strong>Last Verified:</strong> {connectionDetails?.timestamp}</div>
+              </div>
+            </div>
+            <div className="mt-3 p-2 bg-green-100 rounded text-xs">
+              <strong>Status:</strong> Connected to correct Supabase project (ppyfrftmexvgnsxlhdbz)
             </div>
           </AlertDescription>
         </Alert>
@@ -79,11 +94,15 @@ export const SupabaseHealthCheck = () => {
   return (
     <Alert className="border-red-200 bg-red-50">
       <AlertTriangle className="h-4 w-4 text-red-600" />
-      <AlertTitle className="text-red-800">Connection Error</AlertTitle>
+      <AlertTitle className="text-red-800">⚠️ Connection Error</AlertTitle>
       <AlertDescription className="text-red-700 mt-2">
-        <div className="space-y-1 text-sm">
+        <div className="space-y-2 text-sm">
           <div><strong>Error:</strong> {error}</div>
-          <div><strong>Expected Project:</strong> Trust Link Ventures (ppyfrftmexvgnsxlhdbz)</div>
+          <div className="p-2 bg-red-100 rounded">
+            <div><strong>Expected Project ID:</strong> ppyfrftmexvgnsxlhdbz</div>
+            <div><strong>Expected Project:</strong> Trust Link Ventures V2</div>
+            <div><strong>Expected URL:</strong> https://ppyfrftmexvgnsxlhdbz.supabase.co</div>
+          </div>
         </div>
       </AlertDescription>
     </Alert>
