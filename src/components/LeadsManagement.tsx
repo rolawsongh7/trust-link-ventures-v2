@@ -16,17 +16,19 @@ import { useForm } from 'react-hook-form';
 
 interface Lead {
   id: string;
-  contact_name: string;
-  email: string;
-  phone: string;
-  company_name: string;
-  status: string;
-  lead_score: number;
-  source: string | null;
-  notes: string | null;
-  last_activity_date: string | null;
-  next_follow_up_date: string | null;
+  customer_id?: string;
+  title?: string;
+  description?: string;
+  status: 'new' | 'contacted' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
+  value?: number;
+  currency?: string;
+  probability?: number;
+  expected_close_date?: string;
+  assigned_to?: string;
+  source?: string;
+  lead_score?: number;
   created_at: string;
+  updated_at: string;
 }
 
 const LeadsManagement = () => {
@@ -40,15 +42,16 @@ const LeadsManagement = () => {
 
   const form = useForm({
     defaultValues: {
-      contact_name: '',
-      email: '',
-      phone: '',
-      company_name: '',
-      status: 'new',
-      lead_score: 50,
+      title: '',
+      description: '',
+      customer_id: '',
+      status: 'new' as const,
+      value: '',
+      currency: 'USD',
+      probability: 50,
+      expected_close_date: '',
       source: '',
-      notes: '',
-      next_follow_up_date: ''
+      lead_score: 50
     }
   });
 
@@ -94,15 +97,16 @@ const LeadsManagement = () => {
   useEffect(() => {
     if (editingLead) {
       form.reset({
-        contact_name: editingLead.contact_name || '',
-        email: editingLead.email || '',
-        phone: editingLead.phone || '',
-        company_name: editingLead.company_name || '',
-        status: editingLead.status || 'new',
-        lead_score: editingLead.lead_score || 50,
+        title: editingLead.title || '',
+        description: editingLead.description || '',
+        customer_id: editingLead.customer_id || '',
+        status: editingLead.status,
+        value: editingLead.value?.toString() || '',
+        currency: editingLead.currency || 'USD',
+        probability: editingLead.probability || 50,
+        expected_close_date: editingLead.expected_close_date || '',
         source: editingLead.source || '',
-        notes: editingLead.notes || '',
-        next_follow_up_date: editingLead.next_follow_up_date || ''
+        lead_score: editingLead.lead_score || 50
       });
     }
   }, [editingLead, form]);
@@ -171,9 +175,9 @@ const LeadsManagement = () => {
   };
 
   const filteredLeads = leads.filter(lead => {
-    const matchesSearch = lead.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (lead.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (lead.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (lead.source?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
     
     const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
     
@@ -182,16 +186,16 @@ const LeadsManagement = () => {
 
   // Calculate metrics
   const totalLeads = leads.length;
-  const activeLeads = leads.filter(lead => !['closed_lost', 'converted'].includes(lead.status)).length;
+  const activeLeads = leads.filter(lead => !['closed_lost', 'closed_won'].includes(lead.status)).length;
   const avgLeadScore = leads.length > 0 ? Math.round(leads.reduce((sum, lead) => sum + (lead.lead_score || 0), 0) / leads.length) : 0;
-  const convertedLeads = leads.filter(lead => lead.status === 'converted').length;
+  const convertedLeads = leads.filter(lead => lead.status === 'closed_won').length;
 
   // Pipeline overview data
   const pipelineStages = [
     { name: 'New', count: leads.filter(l => l.status === 'new').length, color: 'bg-blue-500' },
     { name: 'Contacted', count: leads.filter(l => l.status === 'contacted').length, color: 'bg-green-500' },
     { name: 'Qualified', count: leads.filter(l => l.status === 'qualified').length, color: 'bg-yellow-500' },
-    { name: 'Converted', count: leads.filter(l => l.status === 'converted').length, color: 'bg-emerald-500' },
+    { name: 'Closed Won', count: leads.filter(l => l.status === 'closed_won').length, color: 'bg-emerald-500' },
     { name: 'Closed Lost', count: leads.filter(l => l.status === 'closed_lost').length, color: 'bg-red-500' }
   ];
 
@@ -200,7 +204,7 @@ const LeadsManagement = () => {
       case 'new': return 'default';
       case 'contacted': return 'secondary';
       case 'qualified': return 'outline';
-      case 'converted': return 'default';
+      case 'closed_won': return 'default';
       case 'closed_lost': return 'destructive';
       default: return 'default';
     }

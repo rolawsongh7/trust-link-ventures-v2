@@ -82,9 +82,9 @@ const AnalyticsReports = () => {
         .select('status');
 
       const leadsWonLost = leadsData?.reduce((acc, lead) => {
-        if (lead.status === 'won' || lead.status === 'converted') {
+        if (lead.status === 'closed_won') {
           acc.won += 1;
-        } else if (lead.status === 'lost' || lead.status === 'closed_lost') {
+        } else if (lead.status === 'closed_lost') {
           acc.lost += 1;
         } else {
           acc.pending += 1;

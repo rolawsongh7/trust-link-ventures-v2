@@ -23,7 +23,7 @@ interface Communication {
     company_name: string;
   };
   leads?: {
-    contact_name: string;
+    title: string;
   };
 }
 
@@ -34,7 +34,7 @@ interface Customer {
 
 interface Lead {
   id: string;
-  contact_name: string;
+  title: string;
 }
 
 const CommunicationsManagement = () => {
@@ -127,7 +127,7 @@ const CommunicationsManagement = () => {
           ),
           leads(
             id,
-            contact_name
+            title
           )
         `)
         .order('created_at', { ascending: false });
@@ -164,8 +164,8 @@ const CommunicationsManagement = () => {
     try {
       const { data, error } = await supabase
         .from('leads')
-        .select('id, contact_name')
-        .order('contact_name');
+        .select('id, title')
+        .order('title');
 
       if (error) throw error;
       setLeads(data || []);
@@ -219,7 +219,7 @@ const CommunicationsManagement = () => {
     comm.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     comm.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     comm.customers?.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    comm.leads?.contact_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    comm.leads?.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getTypeIcon = (type: string) => {
@@ -366,7 +366,7 @@ const CommunicationsManagement = () => {
                           <SelectContent>
                             {leads.map((lead) => (
                               <SelectItem key={lead.id} value={lead.id}>
-                                {lead.contact_name}
+                                {lead.title}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -448,9 +448,9 @@ const CommunicationsManagement = () => {
                       {comm.subject}
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                      {(comm.customers?.company_name || comm.leads?.contact_name) && (
+                      {(comm.customers?.company_name || comm.leads?.title) && (
                         <CardDescription>
-                          {comm.customers?.company_name || comm.leads?.contact_name}
+                          {comm.customers?.company_name || comm.leads?.title}
                         </CardDescription>
                       )}
                     </div>

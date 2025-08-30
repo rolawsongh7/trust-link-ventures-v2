@@ -140,37 +140,58 @@ export type Database = {
       communications: {
         Row: {
           communication_date: string
-          communication_type: string
+          communication_type:
+            | Database["public"]["Enums"]["communication_type"]
+            | null
+          completed_date: string | null
+          contact_person: string | null
           content: string | null
           created_at: string
           created_by: string | null
           customer_id: string | null
+          direction: string | null
           id: string
           lead_id: string | null
+          order_id: string | null
+          scheduled_date: string | null
           subject: string | null
           updated_at: string
         }
         Insert: {
           communication_date?: string
-          communication_type: string
+          communication_type?:
+            | Database["public"]["Enums"]["communication_type"]
+            | null
+          completed_date?: string | null
+          contact_person?: string | null
           content?: string | null
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          direction?: string | null
           id?: string
           lead_id?: string | null
+          order_id?: string | null
+          scheduled_date?: string | null
           subject?: string | null
           updated_at?: string
         }
         Update: {
           communication_date?: string
-          communication_type?: string
+          communication_type?:
+            | Database["public"]["Enums"]["communication_type"]
+            | null
+          completed_date?: string | null
+          contact_person?: string | null
           content?: string | null
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          direction?: string | null
           id?: string
           lead_id?: string | null
+          order_id?: string | null
+          scheduled_date?: string | null
           subject?: string | null
           updated_at?: string
         }
@@ -187,6 +208,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -273,6 +301,7 @@ export type Database = {
           contact_name: string | null
           country: string | null
           created_at: string
+          created_by: string | null
           customer_status: string | null
           email: string | null
           id: string
@@ -294,6 +323,7 @@ export type Database = {
           contact_name?: string | null
           country?: string | null
           created_at?: string
+          created_by?: string | null
           customer_status?: string | null
           email?: string | null
           id?: string
@@ -315,6 +345,7 @@ export type Database = {
           contact_name?: string | null
           country?: string | null
           created_at?: string
+          created_by?: string | null
           customer_status?: string | null
           email?: string | null
           id?: string
@@ -505,53 +536,64 @@ export type Database = {
       leads: {
         Row: {
           assigned_to: string | null
-          company_name: string | null
-          contact_name: string
           created_at: string
-          email: string | null
+          currency: string | null
+          customer_id: string | null
+          description: string | null
+          expected_close_date: string | null
           id: string
-          last_activity_date: string | null
           lead_score: number | null
-          next_follow_up_date: string | null
           notes: string | null
-          phone: string | null
+          probability: number | null
           source: string | null
-          status: string | null
+          status: Database["public"]["Enums"]["lead_status"] | null
+          title: string | null
           updated_at: string
+          value: number | null
         }
         Insert: {
           assigned_to?: string | null
-          company_name?: string | null
-          contact_name: string
           created_at?: string
-          email?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          description?: string | null
+          expected_close_date?: string | null
           id?: string
-          last_activity_date?: string | null
           lead_score?: number | null
-          next_follow_up_date?: string | null
           notes?: string | null
-          phone?: string | null
+          probability?: number | null
           source?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["lead_status"] | null
+          title?: string | null
           updated_at?: string
+          value?: number | null
         }
         Update: {
           assigned_to?: string | null
-          company_name?: string | null
-          contact_name?: string
           created_at?: string
-          email?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          description?: string | null
+          expected_close_date?: string | null
           id?: string
-          last_activity_date?: string | null
           lead_score?: number | null
-          next_follow_up_date?: string | null
           notes?: string | null
-          phone?: string | null
+          probability?: number | null
           source?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["lead_status"] | null
+          title?: string | null
           updated_at?: string
+          value?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       network_security_settings: {
         Row: {
@@ -674,6 +716,63 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          customer_id: string | null
+          id: string
+          notes: string | null
+          order_number: string
+          quote_id: string | null
+          status: string | null
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          notes?: string | null
+          order_number: string
+          quote_id?: string | null
+          status?: string | null
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string
+          quote_id?: string | null
+          status?: string | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
             referencedColumns: ["id"]
           },
         ]
@@ -1032,10 +1131,12 @@ export type Database = {
           file_url: string | null
           final_file_url: string | null
           id: string
+          lead_id: string | null
           notes: string | null
           quote_number: string
           status: string | null
           supplier_id: string | null
+          terms: string | null
           title: string
           total_amount: number | null
           updated_at: string
@@ -1050,10 +1151,12 @@ export type Database = {
           file_url?: string | null
           final_file_url?: string | null
           id?: string
+          lead_id?: string | null
           notes?: string | null
           quote_number: string
           status?: string | null
           supplier_id?: string | null
+          terms?: string | null
           title: string
           total_amount?: number | null
           updated_at?: string
@@ -1068,10 +1171,12 @@ export type Database = {
           file_url?: string | null
           final_file_url?: string | null
           id?: string
+          lead_id?: string | null
           notes?: string | null
           quote_number?: string
           status?: string | null
           supplier_id?: string | null
+          terms?: string | null
           title?: string
           total_amount?: number | null
           updated_at?: string
@@ -1083,6 +1188,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
           {

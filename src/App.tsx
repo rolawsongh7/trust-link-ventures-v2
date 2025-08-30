@@ -28,6 +28,13 @@ import Products from "./pages/Products";
 import QuoteRequest from "./pages/QuoteRequest";
 import QuoteSystem from "./pages/QuoteSystem";
 import Terms from "./pages/Terms";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import CustomersPage from "./pages/CustomersPage";
+import LeadsPage from "./pages/LeadsPage";
+import OrdersPage from "./pages/OrdersPage";
+import QuotesPage from "./pages/QuotesPage";
+import CommunicationPage from "./pages/CommunicationPage";
+import AccountingPage from "./pages/AccountingPage";
 
 const queryClient = new QueryClient();
 
@@ -69,8 +76,14 @@ const App = () => (
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/crm" element={<CRM />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/customers" element={<div>Customers Page</div>} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/customers" element={<CustomersPage />} />
+              <Route path="/leads" element={<LeadsPage />} />
+              <Route path="/orders" element={<OrdersPage />} />
+              <Route path="/quotes" element={<QuotesPage />} />
+              <Route path="/quote-inquiries" element={<div>Quote Inquiries Page</div>} />
+              <Route path="/communication" element={<CommunicationPage />} />
+              <Route path="/accounting" element={<AccountingPage />} />
               <Route path="/quote-requests" element={<div>Quote Requests Page</div>} />
               <Route path="/quote-system" element={<QuoteSystem />} />
               <Route path="/settings" element={<div>Settings Page</div>} />

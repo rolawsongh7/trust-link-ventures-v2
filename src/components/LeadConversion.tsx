@@ -68,7 +68,7 @@ const LeadConversion: React.FC<LeadConversionProps> = ({ lead, onConversionCompl
       const { error: leadError } = await supabase
         .from('leads')
         .update({
-          status: 'converted'
+          status: 'closed_won'
         })
         .eq('id', lead.id);
 
@@ -120,7 +120,7 @@ const LeadConversion: React.FC<LeadConversionProps> = ({ lead, onConversionCompl
     }
   };
 
-  if (lead.status === 'converted') {
+  if (lead.status === 'closed_won') {
     return (
       <Badge variant="outline" className="text-green-600 border-green-600">
         <UserCheck className="h-3 w-3 mr-1" />
