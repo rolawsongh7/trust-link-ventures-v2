@@ -2,15 +2,22 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+export type UserRole = 'admin' | 'sales_rep' | 'user';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  userRole: UserRole | null;
+  roleLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
   signInWithProvider: (provider: 'google' | 'github') => Promise<{ error: any }>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  hasRole: (role: UserRole) => boolean;
+  hasAdminAccess: boolean;
+  hasSalesAccess: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,6 +34,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [roleLoading, setRoleLoading] = useState(false);
+
+  // Fetch user role when user changes
+  const fetchUserRole = async (userId: string) => {
+    if (!userId) {
+      setUserRole(null);
+      return;
+    }
+
+    try {
+      setRoleLoading(true);
+      
+      // Check for admin role first
+      const { data: isAdmin } = await supabase.rpc('check_user_role', {
+        check_user_id: userId,
+        required_role: 'admin'
+      });
+
+      if (isAdmin) {
+        setUserRole('admin');
+        return;
+      }
+
+      // Check for sales rep role
+      const { data: isSalesRep } = await supabase.rpc('check_user_role', {
+        check_user_id: userId,
+        required_role: 'sales_rep'
+      });
+
+      if (isSalesRep) {
+        setUserRole('sales_rep');
+        return;
+      }
+
+      // Default to user role
+      setUserRole('user');
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+      setUserRole('user'); // Default to user role on error
+    } finally {
+      setRoleLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Get the session immediately first
@@ -36,6 +87,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Fetch role if user exists
+        if (session?.user) {
+          await fetchUserRole(session.user.id);
+        }
       } catch (error) {
         console.error('Error getting initial session:', error);
         setLoading(false);
@@ -46,10 +102,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Then set up the listener for future changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Fetch role when user signs in or changes
+        if (session?.user) {
+          await fetchUserRole(session.user.id);
+        } else {
+          setUserRole(null);
+        }
       }
     );
 
@@ -115,15 +178,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
+  // Role checking functions
+  const hasRole = (role: UserRole): boolean => {
+    if (!userRole) return false;
+    
+    // Admin can access everything
+    if (userRole === 'admin') return true;
+    
+    // Sales rep can access sales-related features
+    if (userRole === 'sales_rep' && (role === 'sales_rep' || role === 'user')) {
+      return true;
+    }
+    
+    // Exact role match
+    return userRole === role;
+  };
+
+  const hasAdminAccess = userRole === 'admin';
+  const hasSalesAccess = userRole === 'admin' || userRole === 'sales_rep';
+
   const value = {
     user,
     session,
     loading,
+    userRole,
+    roleLoading,
     signIn,
     signUp,
     signOut,
     signInWithProvider,
     resetPassword,
+    hasRole,
+    hasAdminAccess,
+    hasSalesAccess,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

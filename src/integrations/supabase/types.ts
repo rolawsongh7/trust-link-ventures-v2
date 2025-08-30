@@ -1675,6 +1675,10 @@ export type Database = {
         Args: { user_id: string }
         Returns: string
       }
+      is_allowed_admin_email: {
+        Args: { user_email: string }
+        Returns: boolean
+      }
       log_security_event: {
         Args: {
           p_event_data?: Json
