@@ -30,7 +30,10 @@ const Auth = () => {
 
   // Redirect authenticated users
   if (user && !loading) {
-    return <Navigate to="/" replace />;
+    // Check if user is admin and redirect to dashboard, otherwise to home
+    const ADMIN_EMAIL = 'admin@rustlinkvnts.com';
+    const isAdmin = user.email === ADMIN_EMAIL;
+    return <Navigate to={isAdmin ? "/dashboard" : "/"} replace />;
   }
 
   const handleSignIn = async (e: React.FormEvent) => {
