@@ -22,7 +22,7 @@ const AdminLogin = () => {
     if (user) {
       // Check if user is admin
       if (user.email === ADMIN_EMAIL) {
-        navigate('/dashboard');
+        navigate('/crm');
       } else {
         navigate('/');
       }
