@@ -170,7 +170,7 @@ const QuotesManagement = () => {
         .order('contact_name');
 
       if (error) throw error;
-      setLeads(data || []);
+      setLeads((data || []) as any);
     } catch (error: any) {
       console.error('Error fetching leads:', error);
     }

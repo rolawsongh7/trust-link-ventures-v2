@@ -114,7 +114,7 @@ const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({ customer, onBac
         .order('created_at', { ascending: false });
 
       setActivities(activitiesData || []);
-      setLeads(leadsData || []);
+      setLeads((leadsData || []) as any);
       setQuotes(quotesData || []);
     } catch (error) {
       console.error('Error fetching customer data:', error);

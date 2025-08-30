@@ -13,15 +13,20 @@ import { UserCheck, Building2, DollarSign, Calendar, Briefcase } from 'lucide-re
 
 interface Lead {
   id: string;
-  contact_name: string;
-  email: string;
-  phone: string;
-  company_name: string;
-  status: string;
-  lead_score: number;
-  source: string | null;
-  notes: string | null;
+  customer_id?: string;
+  title?: string;
+  description?: string;
+  status: 'new' | 'contacted' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
+  value?: number;
+  currency?: string;
+  probability?: number;
+  expected_close_date?: string;
+  assigned_to?: string;
+  source?: string;
+  lead_score?: number;
+  notes?: string;
   created_at: string;
+  updated_at: string;
 }
 
 interface LeadConversionProps {
@@ -33,11 +38,8 @@ const LeadConversion: React.FC<LeadConversionProps> = ({ lead, onConversionCompl
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [conversionData, setConversionData] = useState({
-    orderValue: '',
-    industry: '',
-    priority: 'medium',
-    notes: `Converted from lead: ${lead.contact_name}`,
-    expectedCloseDate: ''
+    orderValue: lead.value?.toString() || '',
+    expectedCloseDate: lead.expected_close_date || ''
   });
   const { toast } = useToast();
 
@@ -45,65 +47,49 @@ const LeadConversion: React.FC<LeadConversionProps> = ({ lead, onConversionCompl
     setLoading(true);
 
     try {
-      // 1. Create customer from lead data
-      const { data: customer, error: customerError } = await supabase
-        .from('customers')
-        .insert([{
-          company_name: lead.company_name,
-          contact_name: lead.contact_name,
-          email: lead.email,
-          phone: lead.phone,
-          customer_status: 'active',
-          priority: conversionData.priority,
-          industry: conversionData.industry || null,
-          annual_revenue: conversionData.orderValue ? Number(conversionData.orderValue) : null,
-          notes: conversionData.notes
-        }])
-        .select()
-        .single();
+      // 1. Get existing customer or create one if not linked
+      let customerId = lead.customer_id;
+      
+      if (!customerId) {
+        // If lead is not linked to a customer, we need customer info
+        toast({
+          title: "Error",
+          description: "Lead must be linked to a customer before conversion",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
 
-      if (customerError) throw customerError;
-
-      // 2. Update the lead status to converted
+      // 2. Update lead status to closed_won
       const { error: leadError } = await supabase
         .from('leads')
-        .update({
-          status: 'closed_won'
-        })
+        .update({ status: 'closed_won' })
         .eq('id', lead.id);
 
       if (leadError) throw leadError;
 
-      // 3. Create conversion activity
-      await supabase
-        .from('activities')
-        .insert([{
-          customer_id: customer.id,
-          activity_type: 'conversion',
-          subject: `Lead converted to customer`,
-          description: `Lead "${lead.contact_name}" from "${lead.company_name}" successfully converted to active customer.\n\nConversion Details:\n- Order Value: ${conversionData.orderValue ? `$${Number(conversionData.orderValue).toLocaleString()}` : 'Not specified'}\n- Industry: ${conversionData.industry || 'Not specified'}\n- Priority: ${conversionData.priority}\n- Notes: ${conversionData.notes}`,
-          status: 'completed'
-        }]);
-
-      // 4. Create an opportunity if order value is specified
-      if (conversionData.orderValue) {
-        await supabase
-          .from('opportunities')
-          .insert([{
-            customer_id: customer.id,
-            name: `Sales Opportunity - ${lead.company_name}`,
-            description: `Opportunity created from converted lead: ${lead.contact_name}`,
-            value: Number(conversionData.orderValue),
+      // 3. Create opportunity record
+      const { error: opportunityError } = await supabase
+        .from('opportunities')
+        .insert([
+          {
+            name: `Opportunity from ${lead.title || 'Lead'}`,
+            customer_id: customerId,
             stage: 'qualification',
-            probability: 70,
-            expected_close_date: conversionData.expectedCloseDate || null,
-            source: 'lead_conversion'
-          }]);
-      }
+            value: parseFloat(conversionData.orderValue) || lead.value || 0,
+            probability: 75,
+            expected_close_date: conversionData.expectedCloseDate || lead.expected_close_date || null,
+            description: `Converted from lead ${lead.id}`,
+            source: lead.source
+          }
+        ]);
+
+      if (opportunityError) throw opportunityError;
 
       toast({
         title: "Success",
-        description: "Lead successfully converted to customer!",
+        description: "Lead successfully converted to opportunity!",
       });
       setIsOpen(false);
       onConversionComplete();
@@ -134,17 +120,17 @@ const LeadConversion: React.FC<LeadConversionProps> = ({ lead, onConversionCompl
       <DialogTrigger asChild>
         <Button size="sm" className="gap-2">
           <UserCheck className="h-4 w-4" />
-          Convert to Customer
+          Convert to Opportunity
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserCheck className="h-5 w-5" />
-            Convert Lead to Customer
+            Convert Lead to Opportunity
           </DialogTitle>
           <DialogDescription>
-            Convert "{lead.contact_name}" to an active customer. This will create a customer record and update the lead status.
+            Convert this lead to an opportunity in the sales pipeline.
           </DialogDescription>
         </DialogHeader>
 
@@ -156,16 +142,16 @@ const LeadConversion: React.FC<LeadConversionProps> = ({ lead, onConversionCompl
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Company:</span>
-                <span>{lead.company_name || 'Unknown'}</span>
+                <span className="text-muted-foreground">Title:</span>
+                <span>{lead.title || '-'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Contact:</span>
-                <span>{lead.contact_name || 'Unknown'}</span>
+                <span className="text-muted-foreground">Description:</span>
+                <span>{lead.description || '-'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Email:</span>
-                <span>{lead.email || 'Unknown'}</span>
+                <span className="text-muted-foreground">Current Value:</span>
+                <span>{lead.value ? `${lead.currency || 'USD'} ${lead.value}` : '-'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Source:</span>
@@ -184,12 +170,12 @@ const LeadConversion: React.FC<LeadConversionProps> = ({ lead, onConversionCompl
               <div className="space-y-2">
                 <Label htmlFor="orderValue" className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4" />
-                  Expected Order Value
+                  Opportunity Value
                 </Label>
                 <Input
                   id="orderValue"
                   type="number"
-                  placeholder="Expected order value"
+                  placeholder="Expected value"
                   value={conversionData.orderValue}
                   onChange={(e) => setConversionData({...conversionData, orderValue: e.target.value})}
                 />
@@ -206,48 +192,6 @@ const LeadConversion: React.FC<LeadConversionProps> = ({ lead, onConversionCompl
                   onChange={(e) => setConversionData({...conversionData, expectedCloseDate: e.target.value})}
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="industry" className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4" />
-                  Industry
-                </Label>
-                <Input
-                  id="industry"
-                  placeholder="e.g., Food & Beverage"
-                  value={conversionData.industry}
-                  onChange={(e) => setConversionData({...conversionData, industry: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="priority">Customer Priority</Label>
-                <Select
-                  value={conversionData.priority}
-                  onValueChange={(value) => setConversionData({...conversionData, priority: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Conversion Notes</Label>
-              <Textarea
-                id="notes"
-                placeholder="Additional notes about the conversion..."
-                value={conversionData.notes}
-                onChange={(e) => setConversionData({...conversionData, notes: e.target.value})}
-                rows={3}
-              />
             </div>
           </div>
 

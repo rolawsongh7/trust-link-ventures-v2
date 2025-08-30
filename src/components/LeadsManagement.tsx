@@ -27,8 +27,17 @@ interface Lead {
   assigned_to?: string;
   source?: string;
   lead_score?: number;
+  notes?: string;
   created_at: string;
   updated_at: string;
+}
+
+interface Customer {
+  id: string;
+  company_name: string;
+  contact_name?: string;
+  email?: string;
+  phone?: string;
 }
 
 const LeadsManagement = () => {
@@ -39,6 +48,8 @@ const LeadsManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const { toast } = useToast();
+
+  const [customers, setCustomers] = useState<Customer[]>([]);
 
   const form = useForm({
     defaultValues: {
@@ -51,12 +62,14 @@ const LeadsManagement = () => {
       probability: 50,
       expected_close_date: '',
       source: '',
-      lead_score: 50
+      lead_score: 50,
+      notes: ''
     }
   });
 
   useEffect(() => {
     fetchLeads();
+    fetchCustomers();
 
     // Set up real-time subscription for leads
     const channel = supabase
@@ -100,13 +113,14 @@ const LeadsManagement = () => {
         title: editingLead.title || '',
         description: editingLead.description || '',
         customer_id: editingLead.customer_id || '',
-        status: editingLead.status,
+        status: editingLead.status as 'new',
         value: editingLead.value?.toString() || '',
         currency: editingLead.currency || 'USD',
         probability: editingLead.probability || 50,
         expected_close_date: editingLead.expected_close_date || '',
         source: editingLead.source || '',
-        lead_score: editingLead.lead_score || 50
+        lead_score: editingLead.lead_score || 50,
+        notes: editingLead.notes || ''
       });
     }
   }, [editingLead, form]);
@@ -130,6 +144,20 @@ const LeadsManagement = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('id, company_name, contact_name, email, phone')
+        .order('company_name');
+
+      if (error) throw error;
+      setCustomers(data || []);
+    } catch (error: any) {
+      console.error('Error fetching customers:', error);
     }
   };
 
@@ -201,12 +229,14 @@ const LeadsManagement = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new': return 'default';
-      case 'contacted': return 'secondary';
-      case 'qualified': return 'outline';
+      case 'new': return 'secondary';
+      case 'contacted': return 'outline';
+      case 'qualified': return 'default';
+      case 'proposal': return 'default';
+      case 'negotiation': return 'default';
       case 'closed_won': return 'default';
       case 'closed_lost': return 'destructive';
-      default: return 'default';
+      default: return 'secondary';
     }
   };
 
@@ -268,12 +298,12 @@ const LeadsManagement = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="contact_name"
+                    name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contact Name</FormLabel>
+                        <FormLabel>Title</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter contact name" {...field} />
+                          <Input placeholder="Enter lead title" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -281,49 +311,45 @@ const LeadsManagement = () => {
                   />
                   <FormField
                     control={form.control}
-                    name="company_name"
+                    name="customer_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Company Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter company name" {...field} />
-                        </FormControl>
+                        <FormLabel>Customer</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select customer" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {customers.map((customer) => (
+                              <SelectItem key={customer.id} value={customer.id}>
+                                {customer.company_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="Enter email" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter phone number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Lead description..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-4">
                   <FormField
                     control={form.control}
                     name="status"
@@ -340,7 +366,9 @@ const LeadsManagement = () => {
                             <SelectItem value="new">New</SelectItem>
                             <SelectItem value="contacted">Contacted</SelectItem>
                             <SelectItem value="qualified">Qualified</SelectItem>
-                            <SelectItem value="converted">Converted</SelectItem>
+                            <SelectItem value="proposal">Proposal</SelectItem>
+                            <SelectItem value="negotiation">Negotiation</SelectItem>
+                            <SelectItem value="closed_won">Closed Won</SelectItem>
                             <SelectItem value="closed_lost">Closed Lost</SelectItem>
                           </SelectContent>
                         </Select>
@@ -370,6 +398,19 @@ const LeadsManagement = () => {
                   />
                   <FormField
                     control={form.control}
+                    name="value"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Value</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Lead value" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="source"
                     render={({ field }) => (
                       <FormItem>
@@ -383,19 +424,41 @@ const LeadsManagement = () => {
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="next_follow_up_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Next Follow Up Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="expected_close_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expected Close Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="probability"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Probability (%)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            max="100" 
+                            placeholder="50" 
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
@@ -525,84 +588,61 @@ const LeadsManagement = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Contact</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead>Customer</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Value</TableHead>
                 <TableHead>Lead Score</TableHead>
                 <TableHead>Source</TableHead>
-                <TableHead>Next Follow Up</TableHead>
+                <TableHead>Expected Close</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredLeads.map((lead) => (
-                <TableRow key={lead.id}>
-                  <TableCell className="font-medium">{lead.contact_name}</TableCell>
-                  <TableCell>{lead.company_name}</TableCell>
-                  <TableCell>{lead.email}</TableCell>
-                  <TableCell>
-                    <Select 
-                      value={lead.status} 
-                      onValueChange={async (newStatus) => {
-                        try {
-                          const { error } = await supabase
-                            .from('leads')
-                            .update({ status: newStatus })
-                            .eq('id', lead.id);
-                          
-                          if (error) throw error;
-                          fetchLeads();
-                        } catch (error) {
-                          toast({
-                            title: "Error",
-                            description: "Failed to update status",
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="contacted">Contacted</SelectItem>
-                        <SelectItem value="qualified">Qualified</SelectItem>
-                        <SelectItem value="converted">Converted</SelectItem>
-                        <SelectItem value="closed_lost">Closed Lost</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getScoreColor(lead.lead_score)}>
-                      {lead.lead_score}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{lead.source || '-'}</TableCell>
-                  <TableCell>
-                    {lead.next_follow_up_date ? new Date(lead.next_follow_up_date).toLocaleDateString() : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <LeadConversion 
-                        lead={lead} 
-                        onConversionComplete={fetchLeads}
-                      />
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => {
-                          setEditingLead(lead);
-                          setIsDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filteredLeads.map((lead) => {
+                const customer = customers.find(c => c.id === lead.customer_id);
+                return (
+                  <TableRow key={lead.id}>
+                    <TableCell className="font-medium">{lead.title || '-'}</TableCell>
+                    <TableCell>{customer?.company_name || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusColor(lead.status)}>
+                        {lead.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {lead.value ? `${lead.currency || 'USD'} ${lead.value}` : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getScoreColor(lead.lead_score || 0)}>
+                        {lead.lead_score || 0}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{lead.source || '-'}</TableCell>
+                    <TableCell>
+                      {lead.expected_close_date ? new Date(lead.expected_close_date).toLocaleDateString() : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <LeadConversion 
+                          lead={lead} 
+                          onConversionComplete={fetchLeads}
+                        />
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            setEditingLead(lead);
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
 
