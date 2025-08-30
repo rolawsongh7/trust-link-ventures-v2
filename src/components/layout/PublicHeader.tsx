@@ -55,17 +55,13 @@ export const PublicHeader = () => {
           <div className="ml-6 flex items-center space-x-4">
             {customerUser ? (
               <div className="flex flex-col space-y-2">
-                <Button asChild variant="outline">
-                  <Link to="/customer-portal-main">Customer Portal</Link>
-                </Button>
-                <Button onClick={handleCustomerSignOut} variant="secondary">
+                <Button onClick={handleCustomerSignOut} variant="outline">
                   Sign Out
                 </Button>
+                <Button asChild variant="secondary">
+                  <Link to="/admin-login">Admin</Link>
+                </Button>
               </div>
-            ) : user ? (
-              <Button asChild variant="outline">
-                <Link to="/dashboard">Dashboard</Link>
-              </Button>
             ) : (
               <div className="flex flex-col space-y-2">
                 <Button asChild>
