@@ -63,12 +63,16 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     // Then set up the listener for future changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        console.log('🔄 Auth state changed:', event, session?.user?.email || 'no user');
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await fetchProfile(session.user.id, session.user.email);
+          // Use setTimeout to avoid blocking the auth state change
+          setTimeout(() => {
+            fetchProfile(session.user.id, session.user.email);
+          }, 0);
         } else {
           setProfile(null);
         }
