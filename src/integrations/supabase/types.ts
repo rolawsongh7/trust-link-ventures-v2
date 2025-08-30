@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -1196,6 +1196,57 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_products: {
+        Row: {
+          brand: string | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image_path: string | null
+          image_public_url: string | null
+          is_active: boolean
+          name: string
+          remote_image_url: string | null
+          slug: string
+          source_url: string | null
+          supplier: string
+          updated_at: string
+        }
+        Insert: {
+          brand?: string | null
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_path?: string | null
+          image_public_url?: string | null
+          is_active?: boolean
+          name: string
+          remote_image_url?: string | null
+          slug: string
+          source_url?: string | null
+          supplier: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_path?: string | null
+          image_public_url?: string | null
+          is_active?: boolean
+          name?: string
+          remote_image_url?: string | null
+          slug?: string
+          source_url?: string | null
+          supplier?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -1474,8 +1525,8 @@ export type Database = {
         Args: {
           p_company_name: string
           p_contact_name: string
-          p_email: string
           p_country: string
+          p_email: string
           p_industry?: string
           p_notes?: string
         }
@@ -1484,23 +1535,23 @@ export type Database = {
       create_lead_for_quote: {
         Args: {
           p_customer_id: string
-          p_title: string
           p_description: string
-          p_source?: string
           p_lead_score?: number
+          p_source?: string
+          p_title: string
         }
         Returns: string
       }
       enhanced_audit_log: {
         Args: {
           p_action: string
-          p_table_name?: string
-          p_record_id?: string
-          p_old_data?: Json
-          p_new_data?: Json
           p_ip_address?: unknown
-          p_user_agent?: string
+          p_new_data?: Json
+          p_old_data?: Json
+          p_record_id?: string
           p_risk_level?: string
+          p_table_name?: string
+          p_user_agent?: string
         }
         Returns: undefined
       }
@@ -1514,20 +1565,20 @@ export type Database = {
       }
       log_security_event: {
         Args: {
-          p_event_type: string
-          p_user_id?: string
           p_event_data?: Json
+          p_event_type: string
           p_ip_address?: unknown
-          p_user_agent?: string
           p_severity?: string
+          p_user_agent?: string
+          p_user_id?: string
         }
         Returns: undefined
       }
       validate_file_upload: {
         Args: {
+          p_file_size: number
           p_filename: string
           p_mime_type: string
-          p_file_size: number
           p_user_id: string
         }
         Returns: Json
