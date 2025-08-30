@@ -8,6 +8,7 @@ export const SupabaseHealthCheck = () => {
   const [status, setStatus] = useState<'checking' | 'healthy' | 'error'>('checking');
   const [error, setError] = useState<string | null>(null);
   const [connectionDetails, setConnectionDetails] = useState<any>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
     const checkConnection = async () => {
@@ -37,6 +38,11 @@ export const SupabaseHealthCheck = () => {
         
         setStatus('healthy');
         setError(null);
+        
+        // Show confirmation after successful health check
+        if (!showConfirmation) {
+          setShowConfirmation(true);
+        }
       } catch (err) {
         setStatus('error');
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -65,7 +71,7 @@ export const SupabaseHealthCheck = () => {
 
   if (status === 'healthy') {
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Alert className="border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertTitle className="text-green-800">✅ Trust Link Ventures V2 - Backend Verified</AlertTitle>
@@ -87,6 +93,21 @@ export const SupabaseHealthCheck = () => {
             </div>
           </AlertDescription>
         </Alert>
+        
+        {/* Health Check Confirmation */}
+        {showConfirmation && (
+          <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-lg p-3">
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span className="font-medium text-foreground">System Status:</span>
+              <span className="text-green-600">All systems operational</span>
+              <span className="text-muted-foreground">•</span>
+              <span className="text-muted-foreground">Health check completed successfully</span>
+              <span className="text-muted-foreground">•</span>
+              <span className="text-muted-foreground">CRM ready for use</span>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
