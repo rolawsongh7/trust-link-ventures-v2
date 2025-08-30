@@ -4,15 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 
 const CustomerPortal = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -47,7 +49,7 @@ const CustomerPortal = () => {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await signUp(email, password);
+    const { error } = await signUp(email, password, companyName, fullName);
     
     if (error) {
       toast({
@@ -177,6 +179,28 @@ const CustomerPortal = () => {
 
             <TabsContent value="signup" className="space-y-4">
               <form onSubmit={handleSignUp} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Full Name</label>
+                  <Input
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    className="h-12 text-base"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Company Name</label>
+                  <Input
+                    type="text"
+                    placeholder="Enter your company name"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    required
+                    className="h-12 text-base"
+                  />
+                </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700">Email</label>
                   <Input
