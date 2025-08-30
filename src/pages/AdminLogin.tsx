@@ -13,8 +13,10 @@ const ADMIN_EMAIL = 'trustlinkventureslimitedghana@gmail.com';
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, user } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -22,7 +24,7 @@ const AdminLogin = () => {
     if (user) {
       // Check if user is admin
       if (user.email === ADMIN_EMAIL) {
-        navigate('/crm');
+        navigate('/dashboard');
       } else {
         navigate('/');
       }
@@ -44,7 +46,6 @@ const AdminLogin = () => {
       return;
     }
     
-    
     const { error } = await signIn(email, password);
     
     if (error) {
@@ -57,6 +58,38 @@ const AdminLogin = () => {
       toast({
         title: "Welcome Back, Leader!",
         description: "Successfully logged into admin portal.",
+      });
+    }
+    setLoading(false);
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    // Check if email is the admin email
+    if (signUpEmail !== ADMIN_EMAIL) {
+      toast({
+        title: "Access Denied",
+        description: "Only the authorized admin email can create an account.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+    
+    const { error } = await signUp(signUpEmail, signUpPassword);
+    
+    if (error) {
+      toast({
+        title: "Sign Up Failed",
+        description: error.message || "Failed to create admin account.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Admin Account Created!",
+        description: "Please check your email to verify your account.",
       });
     }
     setLoading(false);
@@ -102,7 +135,6 @@ const AdminLogin = () => {
                 <TabsTrigger 
                   value="signup"
                   className="data-[state=active]:bg-slate-600 data-[state=active]:text-white"
-                  disabled
                 >
                   Sign Up
                 </TabsTrigger>
@@ -143,8 +175,39 @@ const AdminLogin = () => {
               </TabsContent>
 
               <TabsContent value="signup" className="space-y-4">
-                <div className="text-center text-slate-600 py-8">
-                  Admin accounts are invitation-only.
+                <form onSubmit={handleSignUp} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Email</label>
+                    <Input
+                      type="email"
+                      placeholder="Enter admin email"
+                      value={signUpEmail}
+                      onChange={(e) => setSignUpEmail(e.target.value)}
+                      required
+                      className="h-12 text-base"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Password</label>
+                    <Input
+                      type="password"
+                      placeholder="Create a password"
+                      value={signUpPassword}
+                      onChange={(e) => setSignUpPassword(e.target.value)}
+                      required
+                      className="h-12 text-base"
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 text-base bg-slate-600 hover:bg-slate-700" 
+                    disabled={loading}
+                  >
+                    {loading ? "Creating Account..." : "Create Admin Account"}
+                  </Button>
+                </form>
+                <div className="text-center text-sm text-slate-500 mt-4">
+                  Only the authorized admin email can create an account
                 </div>
               </TabsContent>
             </Tabs>
