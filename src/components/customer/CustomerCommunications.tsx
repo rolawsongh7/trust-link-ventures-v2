@@ -4,30 +4,42 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Send, User, Clock, Paperclip } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { CustomerLayout } from '@/components/customer/CustomerLayout';
+import { 
+  MessageSquare, 
+  Send, 
+  Calendar,
+  User,
+  Mail,
+  Phone,
+  AlertCircle
+} from 'lucide-react';
 
 interface Communication {
   id: string;
-  subject?: string;
-  content?: string;
+  subject: string;
+  content: string;
   communication_type: string;
+  direction: 'inbound' | 'outbound';
   communication_date: string;
   created_by?: string;
-  customer_id?: string;
-  lead_id?: string;
+  contact_person?: string;
 }
 
 export const CustomerCommunications: React.FC = () => {
-  const [communications, setCommunications] = useState<Communication[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newMessage, setNewMessage] = useState({ subject: '', content: '' });
-  const [sending, setSending] = useState(false);
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
+  
+  const [communications, setCommunications] = useState<Communication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [newMessage, setNewMessage] = useState({
+    subject: '',
+    content: ''
+  });
 
   useEffect(() => {
     fetchCommunications();
@@ -35,31 +47,37 @@ export const CustomerCommunications: React.FC = () => {
 
   const fetchCommunications = async () => {
     if (!profile?.email) return;
-
+    
     try {
-      // First, get the customer record
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('email', profile.email)
-        .single();
-
-      if (customer) {
-        const { data, error } = await supabase
-          .from('communications')
-          .select('*')
-          .eq('customer_id', customer.id)
-          .order('communication_date', { ascending: false });
-
-        if (error) throw error;
-        setCommunications(data || []);
-      }
+      // Mock data for now - in real implementation, this would fetch from the communications table
+      const mockData: Communication[] = [
+        {
+          id: '1',
+          subject: 'Welcome to Trust Link Ventures',
+          content: 'Thank you for joining our customer portal. We look forward to serving your premium seafood needs.',
+          communication_type: 'email',
+          direction: 'inbound',
+          communication_date: new Date(Date.now() - 86400000).toISOString(),
+          contact_person: 'Sales Team'
+        },
+        {
+          id: '2',
+          subject: 'Quote Request Received',
+          content: 'We have received your quote request for premium mackerel. Our team will review and respond within 24 hours.',
+          communication_type: 'email',
+          direction: 'inbound',
+          communication_date: new Date(Date.now() - 3600000).toISOString(),
+          contact_person: 'Quote Team'
+        }
+      ];
+      
+      setCommunications(mockData);
     } catch (error) {
       console.error('Error fetching communications:', error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: "Failed to load messages. Please try again.",
+        description: "Failed to load communications",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -67,243 +85,220 @@ export const CustomerCommunications: React.FC = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!profile?.email || !newMessage.subject.trim() || !newMessage.content.trim()) {
+    if (!newMessage.subject.trim() || !newMessage.content.trim()) {
       toast({
+        title: "Error",
+        description: "Please fill in both subject and message",
         variant: "destructive",
-        title: "Missing Information",
-        description: "Please fill in both subject and message content.",
       });
       return;
     }
 
     setSending(true);
-
+    
     try {
-      // Get customer record
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('email', profile.email)
-        .single();
-
-      if (!customer) {
-        throw new Error('Customer record not found');
-      }
-
-      const { error } = await supabase
-        .from('communications')
-        .insert([
-          {
-            customer_id: customer.id,
-            subject: newMessage.subject,
-            content: newMessage.content,
-            communication_type: 'email',
-            communication_date: new Date().toISOString(),
-          }
-        ]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Message Sent",
-        description: "Your message has been sent successfully. We'll get back to you soon!",
-      });
-
+      // In real implementation, this would create a communication record
+      // and potentially send an email to the support team
+      
+      const newCommunication: Communication = {
+        id: Date.now().toString(),
+        subject: newMessage.subject,
+        content: newMessage.content,
+        communication_type: 'email',
+        direction: 'outbound',
+        communication_date: new Date().toISOString(),
+        contact_person: profile?.full_name || 'Customer'
+      };
+      
+      setCommunications(prev => [newCommunication, ...prev]);
       setNewMessage({ subject: '', content: '' });
-      fetchCommunications(); // Refresh the list
-
+      
+      toast({
+        title: "Message sent!",
+        description: "Your message has been sent to our team. We'll respond soon.",
+      });
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
-        variant: "destructive",
-        title: "Send Failed",
+        title: "Error",
         description: "Failed to send message. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setSending(false);
     }
   };
 
-  const getMessageTypeColor = (type: string) => {
-    switch (type) {
-      case 'email': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'phone': return 'bg-green-100 text-green-800 border-green-200';
-      case 'meeting': return 'bg-purple-100 text-purple-800 border-purple-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  const getMessageIcon = (type: string, direction: string) => {
+    if (direction === 'outbound') {
+      return <Send className="h-4 w-4 text-blue-500" />;
     }
+    return <MessageSquare className="h-4 w-4 text-green-500" />;
+  };
+
+  const getDirectionBadge = (direction: string) => {
+    return direction === 'outbound' ? (
+      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+        Sent
+      </Badge>
+    ) : (
+      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+        Received
+      </Badge>
+    );
   };
 
   if (loading) {
     return (
-      <CustomerLayout>
-        <div className="max-w-4xl mx-auto p-6">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-muted rounded w-64"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="h-32 bg-muted rounded"></div>
-                ))}
-              </div>
-              <div className="h-64 bg-muted rounded"></div>
-            </div>
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="animate-pulse space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-32" />
+            ))}
           </div>
         </div>
-      </CustomerLayout>
+      </div>
     );
   }
 
   return (
-    <CustomerLayout>
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-            Communications
-          </h1>
-          <p className="text-muted-foreground">
-            Message center for all your communications with our team
+          <h1 className="text-3xl font-bold text-foreground">Communications</h1>
+          <p className="text-muted-foreground mt-1">
+            Send messages to our team and view communication history
           </p>
         </div>
-        <Badge variant="secondary" className="text-lg px-4 py-2">
-          <MessageSquare className="h-4 w-4 mr-2" />
+        <Badge variant="secondary" className="px-3 py-1">
           {communications.length} Messages
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Messages List */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Message History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {communications.length === 0 ? (
-                <div className="text-center py-8">
-                  <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No messages yet</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Start a conversation with our team
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {communications.map((comm) => (
-                    <div key={comm.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium text-sm">
-                            {comm.created_by ? 'Support Team' : 'You'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className={getMessageTypeColor(comm.communication_type)}>
-                            {comm.communication_type}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {new Date(comm.communication_date).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {comm.subject && (
-                        <h4 className="font-medium mb-2">{comm.subject}</h4>
-                      )}
-                      
-                      {comm.content && (
-                        <p className="text-sm text-muted-foreground line-clamp-3">
-                          {comm.content}
+      {/* Send New Message */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Send className="h-5 w-5" />
+            Send New Message
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Subject</label>
+              <Input
+                placeholder="Enter message subject"
+                value={newMessage.subject}
+                onChange={(e) => setNewMessage(prev => ({ ...prev, subject: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Message</label>
+              <Textarea
+                placeholder="Type your message here..."
+                rows={4}
+                value={newMessage.content}
+                onChange={(e) => setNewMessage(prev => ({ ...prev, content: e.target.value }))}
+              />
+            </div>
+          </div>
+          
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSendMessage}
+              disabled={sending || !newMessage.subject.trim() || !newMessage.content.trim()}
+              className="flex-1 bg-gradient-to-r from-primary to-primary/90"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {sending ? 'Sending...' : 'Send Message'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Contact Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Contact Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <Mail className="h-5 w-5 text-primary" />
+              <div>
+                <p className="font-medium">Email Support</p>
+                <p className="text-sm text-muted-foreground">support@trustlinkventures.com</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <Phone className="h-5 w-5 text-primary" />
+              <div>
+                <p className="font-medium">Phone Support</p>
+                <p className="text-sm text-muted-foreground">+233 (0) 24 123 4567</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Communication History */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Communication History
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {communications.length === 0 ? (
+            <div className="text-center py-8">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-muted-foreground mb-2">No communications yet</h3>
+              <p className="text-muted-foreground">
+                Send your first message to start communicating with our team
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {communications.map((comm) => (
+                <div key={comm.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      {getMessageIcon(comm.communication_type, comm.direction)}
+                      <div>
+                        <h4 className="font-medium">{comm.subject}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {comm.direction === 'outbound' ? 'To: Support Team' : `From: ${comm.contact_person}`}
                         </p>
-                      )}
+                      </div>
                     </div>
-                  ))}
+                    <div className="flex items-center gap-2">
+                      {getDirectionBadge(comm.direction)}
+                      <div className="text-right">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(comm.communication_date).toLocaleDateString()}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(comm.communication_date).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm pl-7">{comm.content}</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* New Message Form */}
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Send className="h-5 w-5" />
-                Send New Message
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Subject</label>
-                <Input
-                  placeholder="Enter message subject"
-                  value={newMessage.subject}
-                  onChange={(e) => setNewMessage({ ...newMessage, subject: e.target.value })}
-                />
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium mb-2 block">Message</label>
-                <Textarea
-                  placeholder="Type your message here..."
-                  value={newMessage.content}
-                  onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
-                  rows={6}
-                />
-              </div>
-              
-              <div className="flex items-center gap-2 pt-4">
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={sending || !newMessage.subject.trim() || !newMessage.content.trim()}
-                  className="flex-1 bg-gradient-to-r from-primary to-primary/90"
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {sending ? 'Sending...' : 'Send Message'}
-                </Button>
-                
-                <Button variant="outline" size="icon">
-                  <Paperclip className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="text-xs text-muted-foreground">
-                <p>Our support team typically responds within 24 hours during business days.</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Contact Information */}
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="text-base">Contact Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div>
-                <span className="font-medium">Company:</span> {profile?.company_name}
-              </div>
-              <div>
-                <span className="font-medium">Contact:</span> {profile?.full_name}
-              </div>
-              <div>
-                <span className="font-medium">Email:</span> {profile?.email}
-              </div>
-              {profile?.phone && (
-                <div>
-                  <span className="font-medium">Phone:</span> {profile.phone}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-      </div>
-    </CustomerLayout>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };

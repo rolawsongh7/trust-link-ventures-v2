@@ -20,7 +20,7 @@ const CustomerPortal = () => {
 
   useEffect(() => {
     if (user) {
-      navigate('/customer-portal-main');
+      navigate('/customer');
     }
   }, [user, navigate]);
 

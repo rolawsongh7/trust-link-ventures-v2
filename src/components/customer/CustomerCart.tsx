@@ -9,7 +9,7 @@ import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { CustomerLayout } from '@/components/customer/CustomerLayout';
+
 
 export const CustomerCart: React.FC = () => {
   const { items, totalItems, updateQuantity, removeItem, clearCart } = useShoppingCart();
@@ -108,8 +108,7 @@ export const CustomerCart: React.FC = () => {
 
   if (items.length === 0) {
     return (
-      <CustomerLayout>
-        <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto p-6">
           <Card className="text-center py-12">
             <CardContent>
               <ShoppingCart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -123,13 +122,11 @@ export const CustomerCart: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-      </CustomerLayout>
     );
   }
 
   return (
-    <CustomerLayout>
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
@@ -285,7 +282,6 @@ export const CustomerCart: React.FC = () => {
           )}
         </div>
       </div>
-      </div>
-    </CustomerLayout>
+    </div>
   );
 };

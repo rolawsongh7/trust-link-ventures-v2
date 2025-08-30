@@ -11,7 +11,7 @@ import { Search, Filter, Package, Plus, ShoppingCart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { useToast } from '@/hooks/use-toast';
-import { CustomerLayout } from '@/components/customer/CustomerLayout';
+
 
 interface Product {
   id: string;
@@ -164,8 +164,7 @@ export const CustomerCatalog: React.FC = () => {
 
   if (loading) {
     return (
-      <CustomerLayout>
-        <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-muted rounded w-64"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -175,13 +174,11 @@ export const CustomerCatalog: React.FC = () => {
             </div>
           </div>
         </div>
-      </CustomerLayout>
     );
   }
 
   return (
-    <CustomerLayout>
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
@@ -388,7 +385,6 @@ export const CustomerCatalog: React.FC = () => {
           ))}
         </div>
       )}
-      </div>
-    </CustomerLayout>
+    </div>
   );
 };

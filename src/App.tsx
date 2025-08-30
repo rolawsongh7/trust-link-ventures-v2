@@ -7,6 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CustomerAuthProvider } from "@/hooks/useCustomerAuth";
 import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedRoute";
+import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import Home from "./pages/Home";
@@ -22,6 +23,12 @@ import NotFound from "./pages/NotFound";
 import CRM from "./pages/CRM";
 import CustomerPortal from "./pages/CustomerPortal";
 import CustomerPortalMain from "./pages/CustomerPortalMain";
+import { CustomerCatalog } from "@/components/customer/CustomerCatalog";
+import { CustomerCart } from "@/components/customer/CustomerCart";
+import { CustomerQuotes } from "@/components/customer/CustomerQuotes";
+import { CustomerOrders } from "@/components/customer/CustomerOrders";
+import { CustomerProfile } from "@/components/customer/CustomerProfile";
+import { CustomerCommunications } from "@/components/customer/CustomerCommunications";
 import AdminLogin from "./pages/AdminLogin";
 import Cookies from "./pages/Cookies";
 import Products from "./pages/Products";
@@ -65,11 +72,21 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/customer-portal" element={<CustomerPortal />} />
-            <Route path="/customer-portal-main" element={
+            
+            {/* Customer Portal Protected Routes */}
+            <Route path="/customer" element={
               <CustomerProtectedRoute>
-                <CustomerPortalMain />
+                <CustomerLayout />
               </CustomerProtectedRoute>
-            } />
+            }>
+              <Route index element={<CustomerPortalMain />} />
+              <Route path="catalog" element={<CustomerCatalog />} />
+              <Route path="cart" element={<CustomerCart />} />
+              <Route path="quotes" element={<CustomerQuotes />} />
+              <Route path="orders" element={<CustomerOrders />} />
+              <Route path="communications" element={<CustomerCommunications />} />
+              <Route path="profile" element={<CustomerProfile />} />
+            </Route>
             <Route path="/admin-login" element={<AdminLogin />} />
             
             {/* Protected routes */}

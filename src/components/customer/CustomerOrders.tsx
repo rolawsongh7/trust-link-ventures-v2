@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
-import { CustomerLayout } from '@/components/customer/CustomerLayout';
+
 
 // Placeholder interface for orders - this would be expanded based on actual order schema
 interface Order {
@@ -130,8 +130,7 @@ export const CustomerOrders: React.FC = () => {
   }
 
   return (
-    <CustomerLayout>
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
@@ -296,7 +295,6 @@ export const CustomerOrders: React.FC = () => {
           })}
         </div>
       )}
-      </div>
-    </CustomerLayout>
+    </div>
   );
 };
