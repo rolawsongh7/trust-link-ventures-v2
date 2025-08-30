@@ -195,17 +195,29 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    console.log('🔄 Starting customer sign out process...');
     
-    if (!error) {
-      setProfile(null);
-      toast({
-        title: "Signed out",
-        description: "You have been successfully signed out.",
-      });
+    try {
+      const { error } = await supabase.auth.signOut();
+      console.log('✅ Supabase auth.signOut completed:', { error });
+      
+      if (!error) {
+        console.log('🔄 Clearing profile state...');
+        setProfile(null);
+        toast({
+          title: "Signed out",
+          description: "You have been successfully signed out.",
+        });
+        console.log('✅ Customer sign out completed successfully');
+      } else {
+        console.error('❌ Sign out error from Supabase:', error);
+      }
+      
+      return { error };
+    } catch (err) {
+      console.error('❌ Exception during sign out:', err);
+      return { error: err };
     }
-    
-    return { error };
   };
 
   const updateProfile = async (updates: Partial<CustomerProfile>) => {
