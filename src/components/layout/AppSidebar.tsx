@@ -1,14 +1,16 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  Home,
-  Package,
-  Users,
-  FileText,
   BarChart3,
+  Users,
+  Target,
+  ShoppingCart,
+  FileText,
+  MessageSquare,
+  Phone,
+  Calculator,
   Settings,
-  Bell,
-  MessageSquare
+  Bell
 } from 'lucide-react';
 
 import {
@@ -25,11 +27,14 @@ import {
 } from '@/components/ui/sidebar';
 
 const navigationItems = [
-  { title: 'Dashboard', url: '/', icon: Home },
-  { title: 'Customers', url: '/customers', icon: Users },
-  { title: 'CRM', url: '/crm', icon: MessageSquare },
   { title: 'Analytics', url: '/analytics', icon: BarChart3 },
-  { title: 'Quote Requests', url: '/quote-requests', icon: FileText },
+  { title: 'Customers', url: '/customers', icon: Users },
+  { title: 'Leads', url: '/leads', icon: Target },
+  { title: 'Orders', url: '/orders', icon: ShoppingCart },
+  { title: 'Quotes', url: '/quotes', icon: FileText },
+  { title: 'Customer Quote Inquiries', url: '/quote-inquiries', icon: MessageSquare },
+  { title: 'Communication', url: '/communication', icon: Phone },
+  { title: 'Accounting', url: '/accounting', icon: Calculator },
 ];
 
 
