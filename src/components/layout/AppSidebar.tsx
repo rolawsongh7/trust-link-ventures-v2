@@ -26,7 +26,6 @@ import {
 
 const navigationItems = [
   { title: 'Dashboard', url: '/', icon: Home },
-  { title: 'Products', url: '/products', icon: Package },
   { title: 'Customers', url: '/customers', icon: Users },
   { title: 'CRM', url: '/crm', icon: MessageSquare },
   { title: 'Analytics', url: '/analytics', icon: BarChart3 },
