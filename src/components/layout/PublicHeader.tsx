@@ -12,16 +12,22 @@ export const PublicHeader = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  console.log('🔍 PublicHeader render - customerUser:', customerUser ? 'logged in' : 'not logged in');
+
   const handleCustomerSignOut = async () => {
+    console.log('🔄 Sign out button clicked');
+    console.log('Customer user before sign out:', customerUser);
     try {
       const { error } = await customerSignOut();
+      console.log('Sign out result:', { error });
       if (!error) {
+        console.log('✅ Sign out successful, navigating to home');
         navigate('/');
       } else {
-        console.error('Sign out error:', error);
+        console.error('❌ Sign out error:', error);
       }
     } catch (err) {
-      console.error('Sign out failed:', err);
+      console.error('❌ Sign out failed:', err);
     }
   };
 
