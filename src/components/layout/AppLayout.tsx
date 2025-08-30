@@ -28,6 +28,8 @@ export const AppLayout = () => {
 
   // Don't show sidebar on auth pages
   const isAuthPage = location.pathname.startsWith('/auth');
+  const isCRMPage = location.pathname === '/crm';
+  
   if (isAuthPage) {
     return <Outlet />;
   }
@@ -45,7 +47,7 @@ export const AppLayout = () => {
               <Outlet />
             </main>
             
-            <Footer />
+            {!isCRMPage && <Footer />}
           </div>
         </SidebarInset>
         
