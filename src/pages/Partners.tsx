@@ -22,23 +22,16 @@ const Partners = () => {
   const { elementRef: partnersRef, isVisible: partnersVisible } = useScrollAnimation({ threshold: 0.1 });
 
   const strategicPartner = {
-    name: "Trust Link Ventures",
-    location: "California, USA", 
-    website: "https://trustlinkventures.com",
-    description: "Trust Link Ventures (TLV) is our strategic partner and your trusted global gateway to premium frozen products. Specializing in premium-quality seafood and meat delivered fresh from Europe and America to West Africa, TLV ensures seamless supply chain management with ISO 22000 certification and complete cold chain excellence.",
+    name: "New Gen Link",
+    location: "Global Operations", 
+    website: "https://nglglobamarkets.com",
+    description: "New Gen Link serves as a vital bridge between premium seafood and meat exporters in Europe and the U.S. and the rapidly expanding food distribution networks across West Africa. With proven expertise in international trade, cold-chain logistics, and regulatory compliance, the company has become a trusted partner for businesses seeking reliable access to world-class products.",
     services: [
-      "Global sourcing at competitive market prices",
-      "Professional packaging and shipping",
-      "Cold chain integrity throughout transit",
-      "Certified cold storage facilities in Ghana",
-      "Real-time tracking and quality guarantees",
-      "Streamlined ordering platform"
-    ],
-    stats: [
-      { label: "Global Partners", value: "50+" },
-      { label: "Tons Exported", value: "10,000+" },
-      { label: "Inspection Rate", value: "100%" },
-      { label: "Avg Processing", value: "24hrs" }
+      "Premium Sourcing – Direct partnerships with certified suppliers of frozen seafood, premium beef, and specialty meats",
+      "Cold-Chain Excellence – End-to-end integrity from source to destination, ensuring consistent freshness and quality",
+      "Trusted Network – A growing reputation among wholesalers, retailers, and food service providers across Ghana and the wider region",
+      "Regulatory Expertise – Skilled in navigating complex international trade rules while meeting global food safety standards",
+      "Commitment to Sustainability – Originally founded on sustainable sourcing, and still driven by transparency and responsibility"
     ]
   };
 
@@ -222,14 +215,6 @@ const Partners = () => {
                   </ul>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  {strategicPartner.stats.map((stat, index) => (
-                    <div key={index} className="text-center p-3 bg-primary/5 rounded-lg">
-                      <div className="text-xl font-bold text-primary">{stat.value}</div>
-                      <div className="text-xs text-muted-foreground">{stat.label}</div>
-                    </div>
-                  ))}
-                </div>
                 
                 <Button asChild className="w-full">
                   <a href={strategicPartner.website} target="_blank" rel="noopener noreferrer">
