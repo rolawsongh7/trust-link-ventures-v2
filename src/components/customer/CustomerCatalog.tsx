@@ -63,40 +63,27 @@ export const CustomerCatalog: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      // Simulate product data since supplier_products table structure isn't available
-      const mockProducts = [
-        {
-          id: '1',
-          name: 'Premium Beef Cuts',
-          description: 'High-quality beef cuts from certified suppliers',
-          category: 'Meat',
-          supplier: 'Premium Meats Ltd',
-          brand: 'Prime Cut',
-          image_public_url: '/products/beef-strips.png',
-          slug: 'premium-beef-cuts'
-        },
-        {
-          id: '2',
-          name: 'Fresh Salmon Fillets',
-          description: 'Wild-caught salmon fillets, fresh daily',
-          category: 'Seafood',
-          supplier: 'Ocean Fresh',
-          brand: 'Wild Catch',
-          image_public_url: '/products/marsea-sea-trout.png',
-          slug: 'fresh-salmon-fillets'
-        }
-      ];
+      // Fetch real products from the database
+      const { data: products, error } = await supabase
+        .from('supplier_products')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
 
-      const products = mockProducts;
+      if (error) {
+        throw error;
+      }
 
-      setProducts(products);
-      
-      // Extract unique categories and suppliers
-      const uniqueCategories = [...new Set(products.map(p => p.category))];
-      const uniqueSuppliers = [...new Set(products.map(p => p.supplier))];
-      
-      setCategories(uniqueCategories);
-      setSuppliers(uniqueSuppliers);
+      if (products) {
+        setProducts(products);
+        
+        // Extract unique categories and suppliers
+        const uniqueCategories = [...new Set(products.map(p => p.category))];
+        const uniqueSuppliers = [...new Set(products.map(p => p.supplier))];
+        
+        setCategories(uniqueCategories);
+        setSuppliers(uniqueSuppliers);
+      }
     } catch (error) {
       console.error('Error fetching products:', error);
       toast({
