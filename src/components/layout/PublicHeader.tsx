@@ -13,8 +13,16 @@ export const PublicHeader = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleCustomerSignOut = async () => {
-    await customerSignOut();
-    navigate('/');
+    try {
+      const { error } = await customerSignOut();
+      if (!error) {
+        navigate('/');
+      } else {
+        console.error('Sign out error:', error);
+      }
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    }
   };
 
   const navigation = [
