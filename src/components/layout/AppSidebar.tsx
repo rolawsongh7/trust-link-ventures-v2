@@ -8,11 +8,7 @@ import {
   BarChart3,
   Settings,
   Bell,
-  MessageSquare,
-  TrendingUp,
-  Building2,
-  Contact,
-  Globe
+  MessageSquare
 } from 'lucide-react';
 
 import {
@@ -37,12 +33,6 @@ const navigationItems = [
   { title: 'Quote Requests', url: '/quote-requests', icon: FileText },
 ];
 
-const businessItems = [
-  { title: 'Partners', url: '/partners', icon: Building2 },
-  
-  { title: 'Contact', url: '/contact', icon: Contact },
-  { title: 'About', url: '/about', icon: Globe },
-];
 
 const systemItems = [
   { title: 'Settings', url: '/settings', icon: Settings },
@@ -109,35 +99,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Business Section */}
-        <SidebarGroup>
-          <SidebarGroupLabel className={isExpanded ? 'block' : 'sr-only'}>
-            Business
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {businessItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
-                          isActive
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                            : 'hover:bg-sidebar-accent/50 text-sidebar-foreground hover:text-sidebar-accent-foreground'
-                        }`
-                      }
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {isExpanded && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
 
         {/* System Section */}
         <SidebarGroup>
