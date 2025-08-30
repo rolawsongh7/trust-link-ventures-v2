@@ -12,8 +12,8 @@ export const SupabaseHealthCheck = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        // Test connection with a simple query and get additional details
-        const { data, error } = await supabase.from('user_roles').select('count').limit(1);
+        // Test connection with a simple query that doesn't have RLS issues
+        const { data, error } = await supabase.from('profiles').select('count').limit(1);
         
         if (error) {
           throw new Error(`Database connection failed: ${error.message}`);
