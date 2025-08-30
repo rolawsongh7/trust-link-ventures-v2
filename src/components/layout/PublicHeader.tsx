@@ -2,13 +2,20 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { LogIn, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 export const PublicHeader = () => {
   const { user } = useAuth();
+  const { user: customerUser, signOut: customerSignOut } = useCustomerAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleCustomerSignOut = async () => {
+    await customerSignOut();
+    navigate('/');
+  };
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -50,6 +57,15 @@ export const PublicHeader = () => {
               <Button asChild variant="outline">
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
+            ) : customerUser ? (
+              <div className="flex flex-col space-y-2">
+                <Button asChild variant="outline">
+                  <Link to="/customer-portal-main">Customer Portal</Link>
+                </Button>
+                <Button onClick={handleCustomerSignOut} variant="secondary">
+                  Sign Out
+                </Button>
+              </div>
             ) : (
               <div className="flex flex-col space-y-2">
                 <Button asChild>
