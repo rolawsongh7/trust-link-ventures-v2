@@ -265,10 +265,38 @@ const Home = () => {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4">
+                <Button asChild size="lg" className="btn-hero text-lg px-8 py-4">
+                  <Link to="/quote-request">
+                    Get Quote
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                  </Link>
+                </Button>
                 <Button asChild variant="outline" className="btn-outline text-lg px-8 py-4">
                   <Link to="/products">
                     View Products
                     <ArrowRight className="h-5 w-5 ml-2" />
+                  </Link>
+                </Button>
+              </div>
+              
+              {/* Portal Access Links */}
+              <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t border-border/20">
+                <Button asChild variant="secondary" size="sm">
+                  <Link to="/customer-portal">
+                    <Users className="h-4 w-4 mr-2" />
+                    Customer Portal
+                  </Link>
+                </Button>
+                <Button asChild variant="secondary" size="sm">
+                  <Link to="/supplier">
+                    <Factory className="h-4 w-4 mr-2" />
+                    Supplier Portal
+                  </Link>
+                </Button>
+                <Button asChild variant="secondary" size="sm">
+                  <Link to="/admin-login">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Admin Access
                   </Link>
                 </Button>
               </div>

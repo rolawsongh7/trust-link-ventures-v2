@@ -32,6 +32,10 @@ import { CustomerCommunications } from "@/components/customer/CustomerCommunicat
 import { SupplierLayout } from "@/components/supplier/SupplierLayout";
 import { SupplierProtectedRoute } from "@/components/supplier/SupplierProtectedRoute";
 import SupplierPortalMain from "./pages/SupplierPortalMain";
+import SupplierProducts from "@/components/supplier/SupplierProducts";
+import SupplierOrders from "@/components/supplier/SupplierOrders";
+import SupplierQuotes from "@/components/supplier/SupplierQuotes";
+import SupplierCustomers from "@/components/supplier/SupplierCustomers";
 import AdminLogin from "./pages/AdminLogin";
 import Cookies from "./pages/Cookies";
 import Products from "./pages/Products";
@@ -98,10 +102,10 @@ const App = () => (
               </SupplierProtectedRoute>
             }>
               <Route index element={<SupplierPortalMain />} />
-              <Route path="products" element={<div>Supplier Products Page</div>} />
-              <Route path="orders" element={<div>Supplier Orders Page</div>} />
-              <Route path="quotes" element={<div>Supplier Quotes Page</div>} />
-              <Route path="customers" element={<div>Supplier Customers Page</div>} />
+              <Route path="products" element={<SupplierProducts />} />
+              <Route path="orders" element={<SupplierOrders />} />
+              <Route path="quotes" element={<SupplierQuotes />} />
+              <Route path="customers" element={<SupplierCustomers />} />
               <Route path="analytics" element={<div>Supplier Analytics Page</div>} />
               <Route path="profile" element={<div>Supplier Profile Page</div>} />
               <Route path="settings" element={<div>Supplier Settings Page</div>} />
