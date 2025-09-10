@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { CustomerNavigation } from '@/components/customer/CustomerNavigation';
 import { FloatingLoginButton } from '@/components/ui/FloatingLoginButton';
+import { FloatingNotificationButton } from '@/components/ui/FloatingNotificationButton';
 
 export const CustomerLayout: React.FC = () => {
   return (
@@ -11,6 +12,7 @@ export const CustomerLayout: React.FC = () => {
         <Outlet />
       </main>
       <FloatingLoginButton />
+      <FloatingNotificationButton />
     </div>
   );
 };
