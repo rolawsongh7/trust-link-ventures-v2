@@ -279,24 +279,6 @@ const Home = () => {
                 </Button>
               </div>
               
-              {/* Discrete Portal Access */}
-              <div className="flex items-center gap-4 mt-6 pt-6 border-t border-border/20">
-                <Button asChild variant="outline" size="sm" className="text-sm">
-                  <Link to="/login">
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Portal Access
-                  </Link>
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  Customer • Supplier • Admin
-                </span>
-                <Button asChild variant="ghost" size="sm" className="text-xs">
-                  <Link to="/notifications">
-                    <Bell className="h-3 w-3 mr-1" />
-                    Mobile Notifications
-                  </Link>
-                </Button>
-              </div>
             </div>
 
             {/* Enhanced Stats Card with World-Class Metrics */}
