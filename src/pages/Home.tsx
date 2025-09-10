@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Globe, TrendingUp, Users, Zap, Package, Leaf, Star, Ship, Truck, Target, Search, Shield, Factory, MapPin, CheckCircle, Clock, Thermometer } from 'lucide-react';
+import { ArrowRight, Globe, TrendingUp, Users, Zap, Package, Leaf, Star, Ship, Truck, Target, Search, Shield, Factory, MapPin, CheckCircle, Clock, Thermometer, LogIn } from 'lucide-react';
 import { useCounterAnimation } from '@/hooks/useCounterAnimation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -279,26 +279,17 @@ const Home = () => {
                 </Button>
               </div>
               
-              {/* Portal Access Links */}
-              <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t border-border/20">
-                <Button asChild variant="secondary" size="sm">
-                  <Link to="/customer-portal">
-                    <Users className="h-4 w-4 mr-2" />
-                    Customer Portal
+              {/* Discrete Portal Access */}
+              <div className="flex items-center gap-4 mt-6 pt-6 border-t border-border/20">
+                <Button asChild variant="outline" size="sm" className="text-sm">
+                  <Link to="/login">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Portal Access
                   </Link>
                 </Button>
-                <Button asChild variant="secondary" size="sm">
-                  <Link to="/supplier">
-                    <Factory className="h-4 w-4 mr-2" />
-                    Supplier Portal
-                  </Link>
-                </Button>
-                <Button asChild variant="secondary" size="sm">
-                  <Link to="/admin-login">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Admin Access
-                  </Link>
-                </Button>
+                <span className="text-xs text-muted-foreground">
+                  Customer • Supplier • Admin
+                </span>
               </div>
             </div>
 

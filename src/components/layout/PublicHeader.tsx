@@ -68,23 +68,16 @@ export const PublicHeader = () => {
           {/* Auth Actions */}
           <div className="ml-6 flex items-center space-x-4">
             {customerUser ? (
-              <div className="flex flex-col space-y-2">
-                <Button onClick={handleCustomerSignOut} variant="outline">
-                  Sign Out
-                </Button>
-                <Button asChild variant="secondary">
-                  <Link to="/admin-login">Admin</Link>
-                </Button>
-              </div>
+              <Button onClick={handleCustomerSignOut} variant="outline" size="sm">
+                Sign Out
+              </Button>
             ) : (
-              <div className="flex flex-col space-y-2">
-                <Button asChild>
-                  <Link to="/customer-portal">Customer Portal</Link>
-                </Button>
-                <Button asChild variant="secondary">
-                  <Link to="/admin-login">Admin</Link>
-                </Button>
-              </div>
+              <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <Link to="/login">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In
+                </Link>
+              </Button>
             )}
             
             {/* Mobile menu button */}

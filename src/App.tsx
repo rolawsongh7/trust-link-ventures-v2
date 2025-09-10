@@ -49,6 +49,7 @@ import OrdersPage from "./pages/OrdersPage";
 import QuotesPage from "./pages/QuotesPage";
 import CommunicationPage from "./pages/CommunicationPage";
 import AccountingPage from "./pages/AccountingPage";
+import UnifiedAuth from "./pages/UnifiedAuth";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,7 @@ const App = () => (
             {/* Auth routes (standalone) */}
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+            <Route path="/login" element={<UnifiedAuth />} />
             <Route path="/customer-portal" element={<CustomerPortal />} />
             
             {/* Customer Portal Protected Routes */}
