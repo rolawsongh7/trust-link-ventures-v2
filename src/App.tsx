@@ -29,6 +29,9 @@ import { CustomerQuotes } from "@/components/customer/CustomerQuotes";
 import { CustomerOrders } from "@/components/customer/CustomerOrders";
 import { CustomerProfile } from "@/components/customer/CustomerProfile";
 import { CustomerCommunications } from "@/components/customer/CustomerCommunications";
+import { SupplierLayout } from "@/components/supplier/SupplierLayout";
+import { SupplierProtectedRoute } from "@/components/supplier/SupplierProtectedRoute";
+import SupplierPortalMain from "./pages/SupplierPortalMain";
 import AdminLogin from "./pages/AdminLogin";
 import Cookies from "./pages/Cookies";
 import Products from "./pages/Products";
@@ -87,6 +90,23 @@ const App = () => (
               <Route path="communications" element={<CustomerCommunications />} />
               <Route path="profile" element={<CustomerProfile />} />
             </Route>
+
+            {/* Supplier Portal Protected Routes */}
+            <Route path="/supplier" element={
+              <SupplierProtectedRoute>
+                <SupplierLayout />
+              </SupplierProtectedRoute>
+            }>
+              <Route index element={<SupplierPortalMain />} />
+              <Route path="products" element={<div>Supplier Products Page</div>} />
+              <Route path="orders" element={<div>Supplier Orders Page</div>} />
+              <Route path="quotes" element={<div>Supplier Quotes Page</div>} />
+              <Route path="customers" element={<div>Supplier Customers Page</div>} />
+              <Route path="analytics" element={<div>Supplier Analytics Page</div>} />
+              <Route path="profile" element={<div>Supplier Profile Page</div>} />
+              <Route path="settings" element={<div>Supplier Settings Page</div>} />
+            </Route>
+            
             <Route path="/admin-login" element={<AdminLogin />} />
             
             {/* Protected routes */}

@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-export type UserRole = 'admin' | 'sales_rep' | 'user';
+export type UserRole = 'admin' | 'sales_rep' | 'user' | 'supplier';
 
 interface UseRoleAuthReturn {
   role: UserRole | null;
   loading: boolean;
   hasAdminAccess: boolean;
   hasSalesAccess: boolean;
+  hasSupplierAccess: boolean;
   checkRole: (requiredRole: UserRole) => boolean;
   refetchRole: () => Promise<void>;
 }
@@ -39,10 +40,17 @@ export const useRoleAuth = (): UseRoleAuthReturn => {
         required_role: 'sales_rep'
       });
 
+      const { data: isSupplier } = await supabase.rpc('check_user_role', {
+        check_user_id: user.id,
+        required_role: 'supplier'
+      });
+
       if (isAdmin) {
         setRole('admin');
       } else if (isSalesRep) {
         setRole('sales_rep');
+      } else if (isSupplier) {
+        setRole('supplier');
       } else {
         setRole('user');
       }
@@ -60,6 +68,7 @@ export const useRoleAuth = (): UseRoleAuthReturn => {
 
   const hasAdminAccess = role === 'admin';
   const hasSalesAccess = role === 'admin' || role === 'sales_rep';
+  const hasSupplierAccess = role === 'admin' || role === 'supplier';
 
   const checkRole = (requiredRole: UserRole): boolean => {
     if (!role) return false;
@@ -69,6 +78,11 @@ export const useRoleAuth = (): UseRoleAuthReturn => {
     
     // Sales rep can access sales-related features
     if (role === 'sales_rep' && (requiredRole === 'sales_rep' || requiredRole === 'user')) {
+      return true;
+    }
+    
+    // Supplier can access supplier features
+    if (role === 'supplier' && (requiredRole === 'supplier' || requiredRole === 'user')) {
       return true;
     }
     
@@ -85,6 +99,7 @@ export const useRoleAuth = (): UseRoleAuthReturn => {
     loading,
     hasAdminAccess,
     hasSalesAccess,
+    hasSupplierAccess,
     checkRole,
     refetchRole
   };
