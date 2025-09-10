@@ -50,6 +50,7 @@ import QuotesPage from "./pages/QuotesPage";
 import CommunicationPage from "./pages/CommunicationPage";
 import AccountingPage from "./pages/AccountingPage";
 import UnifiedAuth from "./pages/UnifiedAuth";
+import NotificationDemo from "./pages/NotificationDemo";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/cookies" element={<Cookies />} />
+              <Route path="/notifications" element={<NotificationDemo />} />
             </Route>
             
             {/* Auth routes (standalone) */}

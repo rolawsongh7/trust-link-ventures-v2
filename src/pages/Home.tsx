@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Globe, TrendingUp, Users, Zap, Package, Leaf, Star, Ship, Truck, Target, Search, Shield, Factory, MapPin, CheckCircle, Clock, Thermometer, LogIn } from 'lucide-react';
+import { ArrowRight, Globe, TrendingUp, Users, Zap, Package, Leaf, Star, Ship, Truck, Target, Search, Shield, Factory, MapPin, CheckCircle, Clock, Thermometer, LogIn, Bell } from 'lucide-react';
 import { useCounterAnimation } from '@/hooks/useCounterAnimation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -290,6 +290,12 @@ const Home = () => {
                 <span className="text-xs text-muted-foreground">
                   Customer • Supplier • Admin
                 </span>
+                <Button asChild variant="ghost" size="sm" className="text-xs">
+                  <Link to="/notifications">
+                    <Bell className="h-3 w-3 mr-1" />
+                    Mobile Notifications
+                  </Link>
+                </Button>
               </div>
             </div>
 
