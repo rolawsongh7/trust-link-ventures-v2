@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { CustomerNavigation } from '@/components/customer/CustomerNavigation';
+import { FloatingLoginButton } from '@/components/ui/FloatingLoginButton';
 
 export const CustomerLayout: React.FC = () => {
   return (
@@ -9,6 +10,7 @@ export const CustomerLayout: React.FC = () => {
       <main className="py-6">
         <Outlet />
       </main>
+      <FloatingLoginButton />
     </div>
   );
 };
