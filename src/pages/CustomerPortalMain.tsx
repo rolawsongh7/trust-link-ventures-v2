@@ -75,36 +75,7 @@ const CustomerPortalMain = () => {
 
   const quickActions = [
     {
-      title: 'Browse Products',
-      description: 'Explore our premium product catalog',
-      icon: Grid3X3,
-      href: '/customer/catalog',
-      color: 'from-blue-500 to-blue-600'
-    },
-    {
-      title: 'My Cart',
-      description: `Review items and request quotes`,
-      icon: ShoppingCart,
-      href: '/customer/cart',
-      color: 'from-green-500 to-green-600',
-      badge: totalItems > 0 ? totalItems : undefined
-    },
-    {
-      title: 'My Quotes',
-      description: 'View requested and generated quotes',
-      icon: FileText,
-      href: '/customer/quotes',
-      color: 'from-purple-500 to-purple-600'
-    },
-    {
-      title: 'My Orders',
-      description: 'Track shipments and order history',
-      icon: Package,
-      href: '/customer/orders',
-      color: 'from-orange-500 to-orange-600'
-    },
-    {
-      title: 'Communications',
+      title: 'Messages',
       description: 'Send messages to our team',
       icon: MessageSquare,
       href: '/customer/communications',
@@ -139,7 +110,7 @@ const CustomerPortalMain = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -163,30 +134,6 @@ const CustomerPortalMain = () => {
               </div>
             </CardContent>
           </Card>
-
-          <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Cart Items</p>
-                  <p className="text-2xl font-bold text-green-600">{totalItems}</p>
-                </div>
-                <ShoppingCart className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Orders</p>
-                  <p className="text-2xl font-bold text-blue-600">{stats.totalOrders}</p>
-                </div>
-                <Package className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Quick Actions */}
@@ -201,9 +148,6 @@ const CustomerPortalMain = () => {
                       <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${action.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                         <action.icon className="w-6 h-6 text-white" />
                       </div>
-                      {action.badge && (
-                        <Badge variant="secondary">{action.badge}</Badge>
-                      )}
                     </div>
                     <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
                       {action.title}

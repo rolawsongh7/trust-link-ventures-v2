@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -35,6 +36,7 @@ export const useCustomerAuth = () => {
 };
 
 export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
@@ -213,6 +215,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           description: "You have been successfully signed out.",
         });
         console.log('✅ Customer sign out completed successfully');
+        // Redirect to home page after successful sign out
+        navigate('/', { replace: true });
       } else {
         console.error('❌ Sign out error from Supabase:', error);
       }
