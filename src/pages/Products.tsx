@@ -14,12 +14,22 @@ import { MultiItemQuoteRequest } from '@/components/products/MultiItemQuoteReque
 import { FloatingCart } from '@/components/products/FloatingCart';
 import { CartModal } from '@/components/products/CartModal';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
-import { productData } from '@/data/products';
 import { categorySlides } from '@/data/categorySlides';
 
 // SEAPRO SAS Product Images - using public folder paths
 import seafoodHeroImg from '@/assets/seafood-hero.jpg';
 
+
+interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  category: string;
+  supplier: string;
+  brand?: string;
+  image_public_url?: string;
+  slug: string;
+}
 
 const Products = () => {
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
@@ -28,6 +38,8 @@ const Products = () => {
   const [showCartModal, setShowCartModal] = useState(false);
   const [currentCategory, setCurrentCategory] = useState(0);
   const [activeFilter, setActiveFilter] = useState('All Products');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const { addItem } = useShoppingCart();
   const [formData, setFormData] = useState({
     productName: '',
@@ -56,8 +68,40 @@ const Products = () => {
     { name: 'Other Meat', icon: Beef }
   ];
 
+  // Fetch products from database
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data: products, error } = await supabase
+        .from('supplier_products')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) {
+        throw error;
+      }
+
+      if (products) {
+        setProducts(products);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load products. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter products based on active filter
-  const filteredProducts = productData.filter(product => {
+  const filteredProducts = products.filter(product => {
     if (activeFilter === 'All Products') return true;
     if (activeFilter === 'Fish' || activeFilter === 'Seafood') return product.category === 'Seafood';
     if (activeFilter === 'Meat' || activeFilter === 'Other Meat') return product.category === 'Meat Products';
@@ -66,7 +110,7 @@ const Products = () => {
     return true;
   });
 
-  const handleQuoteRequest = (product: typeof productData[0]) => {
+  const handleQuoteRequest = (product: Product) => {
     setSelectedProduct(product.id);
     setFormData(prev => ({ ...prev, productName: product.name }));
     
@@ -444,8 +488,37 @@ const Products = () => {
           </div>
 
           {/* Product Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredProducts.map((product, index) => (
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(9)].map((_, i) => (
+                <Card key={i} className="overflow-hidden animate-pulse">
+                  <div className="h-64 bg-muted"></div>
+                  <CardContent className="p-6">
+                    <div className="h-4 bg-muted rounded mb-2"></div>
+                    <div className="h-3 bg-muted rounded mb-4 w-2/3"></div>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-muted rounded"></div>
+                      <div className="h-3 bg-muted rounded w-3/4"></div>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <div className="h-8 bg-muted rounded"></div>
+                      <div className="h-8 bg-muted rounded"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-12">
+              <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No products found</h3>
+              <p className="text-muted-foreground">
+                Try adjusting your search criteria or filters
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredProducts.map((product, index) => (
               <Card 
                 key={product.id} 
                 className="group overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
@@ -453,13 +526,13 @@ const Products = () => {
               >
                 {/* Product Image */}
                 <div className="relative h-64 overflow-hidden">
-                  {typeof product.image === 'string' && product.image.startsWith('/') ? (
+                  {product.image_public_url ? (
                     <img 
-                      src={product.image} 
+                      src={product.image_public_url} 
                       alt={product.name} 
                       className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
                       onError={(e) => {
-                        console.error(`Failed to load image: ${product.image} for product: ${product.name}`);
+                        console.error(`Failed to load image: ${product.image_public_url} for product: ${product.name}`);
                         e.currentTarget.style.display = 'none';
                         e.currentTarget.parentElement?.classList.add('bg-gradient-to-br', 'from-primary/20', 'to-primary/10', 'flex', 'items-center', 'justify-center');
                         if (e.currentTarget.parentElement) {
@@ -469,7 +542,7 @@ const Products = () => {
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                      <span className="text-6xl">{product.image}</span>
+                      <span className="text-6xl">🐟</span>
                     </div>
                   )}
                   
@@ -502,20 +575,20 @@ const Products = () => {
                   {/* Product Details */}
                   <div className="space-y-3 mb-6">
                     <div>
-                      <h4 className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-1">Origin</h4>
-                      <p className="text-sm">{product.origin}</p>
+                      <h4 className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-1">Supplier</h4>
+                      <p className="text-sm">{product.supplier}</p>
                     </div>
                     
-                    <div>
-                      <h4 className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-1">Certifications</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {product.certifications.slice(0, 2).map((cert, idx) => (
-                          <span key={idx} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                            {cert}
+                    {product.brand && (
+                      <div>
+                        <h4 className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-1">Brand</h4>
+                        <div className="flex flex-wrap gap-1">
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                            {product.brand}
                           </span>
-                        ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Action Buttons */}
@@ -534,7 +607,7 @@ const Products = () => {
                       <AddToCartButton
                         productName={product.name}
                         productDescription={product.description}
-                        imageUrl={product.image}
+                        imageUrl={product.image_public_url}
                         data-product-name={product.name}
                       />
                     </div>
@@ -546,8 +619,9 @@ const Products = () => {
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
         </div>
       </section>
@@ -656,7 +730,7 @@ const Products = () => {
                         className="w-full p-2 border rounded-md bg-background"
                       >
                         <option value="">Select a product...</option>
-                        {productData.map((product) => (
+                        {products.map((product) => (
                           <option key={product.id} value={product.name}>
                             {product.name}
                           </option>
