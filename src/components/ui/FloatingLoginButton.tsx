@@ -15,7 +15,7 @@ export const FloatingLoginButton: React.FC = () => {
   }
 
   const handleLoginClick = () => {
-    navigate('/auth');
+    navigate('/login');
   };
 
   return (
