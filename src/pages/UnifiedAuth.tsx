@@ -62,6 +62,8 @@ const UnifiedAuth = () => {
             title: "Welcome back!",
             description: "Redirecting to customer portal...",
           });
+          // Directly navigate to customer portal since auth state change might be delayed
+          navigate('/customer');
           return;
         }
 
