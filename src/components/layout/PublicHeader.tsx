@@ -1,35 +1,13 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { LogIn, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 export const PublicHeader = () => {
   const { user } = useAuth();
-  const { user: customerUser, signOut: customerSignOut } = useCustomerAuth();
-  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  console.log('🔍 PublicHeader render - customerUser:', customerUser ? 'logged in' : 'not logged in');
-
-  const handleCustomerSignOut = async () => {
-    console.log('🔄 Sign out button clicked');
-    console.log('Customer user before sign out:', customerUser);
-    try {
-      const { error } = await customerSignOut();
-      console.log('Sign out result:', { error });
-      if (!error) {
-        console.log('✅ Sign out successful, navigating to home');
-        navigate('/');
-      } else {
-        console.error('❌ Sign out error:', error);
-      }
-    } catch (err) {
-      console.error('❌ Sign out failed:', err);
-    }
-  };
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -67,18 +45,12 @@ export const PublicHeader = () => {
           
           {/* Auth Actions */}
           <div className="ml-6 flex items-center space-x-4">
-            {customerUser ? (
-              <Button onClick={handleCustomerSignOut} variant="outline" size="sm">
-                Sign Out
-              </Button>
-            ) : (
-              <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                <Link to="/login">
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Sign In
-                </Link>
-              </Button>
-            )}
+            <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+              <Link to="/login">
+                <LogIn className="h-4 w-4 mr-2" />
+                Sign In
+              </Link>
+            </Button>
             
             {/* Mobile menu button */}
             <div className="flex lg:hidden">
