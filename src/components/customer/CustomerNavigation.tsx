@@ -38,27 +38,6 @@ export const CustomerNavigation: React.FC = () => {
       icon: Grid3X3
     },
     {
-      title: 'Catalog',
-      href: '/customer/catalog',
-      icon: Package
-    },
-    {
-      title: 'Cart',
-      href: '/customer/cart',
-      icon: ShoppingCart,
-      badge: totalItems > 0 ? totalItems : undefined
-    },
-    {
-      title: 'Quotes',
-      href: '/customer/quotes',
-      icon: FileText
-    },
-    {
-      title: 'Orders',
-      href: '/customer/orders',
-      icon: Package
-    },
-    {
       title: 'Messages',
       href: '/customer/communications',
       icon: MessageSquare
@@ -115,14 +94,6 @@ export const CustomerNavigation: React.FC = () => {
                   >
                     <Icon className="h-4 w-4 mr-2" />
                     {item.title}
-                    {item.badge && (
-                      <Badge 
-                        variant="destructive" 
-                        className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs"
-                      >
-                        {item.badge}
-                      </Badge>
-                    )}
                   </Button>
                 </Link>
               );
@@ -197,14 +168,6 @@ export const CustomerNavigation: React.FC = () => {
                 >
                   <Icon className="h-4 w-4 mr-2" />
                   {item.title}
-                  {item.badge && (
-                    <Badge 
-                      variant="destructive" 
-                      className="ml-auto h-5 w-5 p-0 text-xs"
-                    >
-                      {item.badge}
-                    </Badge>
-                  )}
                 </Button>
               </Link>
             );
