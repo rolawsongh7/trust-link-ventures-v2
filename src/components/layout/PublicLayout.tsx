@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { PublicHeader } from './PublicHeader';
 import Footer from './Footer';
+import { FloatingLoginButton } from '@/components/ui/FloatingLoginButton';
 
 export const PublicLayout = () => {
   return (
@@ -13,6 +14,7 @@ export const PublicLayout = () => {
       </main>
       
       <Footer />
+      <FloatingLoginButton />
     </div>
   );
 };
