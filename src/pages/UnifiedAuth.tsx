@@ -74,7 +74,28 @@ if (!adminResult.error) {
   // Not an admin — continue to try customer login below
 }
 
-        // If admin login fails, try customer login
+        // If admin login failed, handle specific cases
+        if (adminResult.error) {
+          const msg = String(adminResult.error.message || '').toLowerCase();
+          if (msg.includes('email not confirmed')) {
+            try {
+              await supabase.auth.resend({
+                type: 'signup',
+                email,
+                options: { emailRedirectTo: `${window.location.origin}/login` },
+              });
+              toast({
+                title: 'Email not confirmed',
+                description: 'We resent a verification link. Please verify, then sign in.',
+              });
+            } catch (_) {
+              // ignore resend failures
+            }
+            return;
+          }
+        }
+
+        // If admin login fails, try customer login (same auth, but keeps UX consistent)
         const customerResult = await customerSignIn(email, password);
         
         if (!customerResult.error) {
@@ -87,10 +108,31 @@ if (!adminResult.error) {
           return;
         }
 
+        // Handle unconfirmed email for customer sign in
+        if (customerResult.error) {
+          const msg = String(customerResult.error.message || '').toLowerCase();
+          if (msg.includes('email not confirmed')) {
+            try {
+              await supabase.auth.resend({
+                type: 'signup',
+                email,
+                options: { emailRedirectTo: `${window.location.origin}/login` },
+              });
+              toast({
+                title: 'Email not confirmed',
+                description: 'We resent a verification link. Please verify, then sign in.',
+              });
+              return;
+            } catch (_) {
+              // ignore resend failures
+            }
+          }
+        }
+
         // Both failed
         toast({
           title: "Login failed",
-          description: "Invalid email or password. Please try again.",
+          description: customerResult.error?.message || adminResult.error?.message || "Invalid email or password. Please try again.",
           variant: "destructive",
         });
       } else {
