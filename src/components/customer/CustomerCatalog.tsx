@@ -11,6 +11,8 @@ import { Search, Filter, Package, Plus, ShoppingCart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { useToast } from '@/hooks/use-toast';
+import { CartModal } from '@/components/products/CartModal';
+import { FloatingCart } from '@/components/products/FloatingCart';
 
 
 interface Product {
@@ -47,6 +49,7 @@ export const CustomerCatalog: React.FC = () => {
 
   // Add to cart dialog state
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showCartModal, setShowCartModal] = useState(false);
   const [cartData, setCartData] = useState<CartItemData>({
     productName: '',
     productDescription: '',
@@ -372,6 +375,15 @@ export const CustomerCatalog: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Cart Modal */}
+      <CartModal 
+        open={showCartModal} 
+        onOpenChange={setShowCartModal} 
+      />
+
+      {/* Floating Cart */}
+      <FloatingCart onRequestQuote={() => setShowCartModal(true)} />
     </div>
   );
 };

@@ -12,6 +12,8 @@ import { ShoppingCart as CartComponent } from '@/components/products/ShoppingCar
 import { AddToCartButton } from '@/components/products/AddToCartButton';
 import { MultiItemQuoteRequest } from '@/components/products/MultiItemQuoteRequest';
 import { FloatingCart } from '@/components/products/FloatingCart';
+import { CartModal } from '@/components/products/CartModal';
+import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { productData } from '@/data/products';
 import { categorySlides } from '@/data/categorySlides';
 
@@ -23,8 +25,10 @@ const Products = () => {
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [showMultiItemQuote, setShowMultiItemQuote] = useState(false);
+  const [showCartModal, setShowCartModal] = useState(false);
   const [currentCategory, setCurrentCategory] = useState(0);
   const [activeFilter, setActiveFilter] = useState('All Products');
+  const { addItem } = useShoppingCart();
   const [formData, setFormData] = useState({
     productName: '',
     buyerName: '',
@@ -751,7 +755,13 @@ const Products = () => {
       </section>
 
       {/* Floating Cart */}
-      <FloatingCart onRequestQuote={() => setShowMultiItemQuote(true)} />
+      <FloatingCart onRequestQuote={() => setShowCartModal(true)} />
+
+      {/* Cart Modal */}
+      <CartModal 
+        open={showCartModal} 
+        onOpenChange={setShowCartModal} 
+      />
 
       {/* Multi-Item Quote Request Dialog */}
       {showMultiItemQuote && (
