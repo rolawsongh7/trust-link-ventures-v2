@@ -19,7 +19,7 @@ export const FloatingLoginButton: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="absolute top-6 right-6 z-50">
       <button
         onClick={handleLoginClick}
         className="group relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-md

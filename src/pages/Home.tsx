@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Globe, TrendingUp, Users, Zap, Package, Leaf, Star, Ship, Truck, Target, Search, Shield, Factory, MapPin, CheckCircle, Clock, Thermometer, LogIn, Bell } from 'lucide-react';
+import { FloatingLoginButton } from '@/components/ui/FloatingLoginButton';
 import { useCounterAnimation } from '@/hooks/useCounterAnimation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -214,6 +215,7 @@ const Home = () => {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <FloatingLoginButton />
         <div 
           className="absolute inset-0 z-0"
           style={{
