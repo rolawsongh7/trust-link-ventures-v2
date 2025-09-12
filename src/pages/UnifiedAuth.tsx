@@ -9,6 +9,7 @@ import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, LogIn } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const UnifiedAuth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -24,18 +25,26 @@ const UnifiedAuth = () => {
   const { signIn: customerSignIn, signUp: customerSignUp, user: customerUser } = useCustomerAuth();
   const { role, loading: roleLoading } = useRoleAuth();
 
-  // Route authenticated users to their appropriate portal
-  useEffect(() => {
-    if (adminUser && !roleLoading && role) {
-      if (role === 'admin' || role === 'sales_rep') {
-        navigate('/dashboard');
-      } else if (role === 'supplier') {
-        navigate('/supplier');
-      }
+// Route authenticated users to their appropriate portal
+useEffect(() => {
+  // Wait until role has been resolved to avoid misrouting to customer portal
+  if (roleLoading) return;
+
+  if (adminUser) {
+    if (role === 'admin' || role === 'sales_rep') {
+      navigate('/dashboard');
+    } else if (role === 'supplier') {
+      navigate('/supplier');
     } else if (customerUser) {
       navigate('/customer');
     }
-  }, [adminUser, customerUser, role, roleLoading, navigate]);
+    return;
+  }
+
+  if (customerUser) {
+    navigate('/customer');
+  }
+}, [adminUser, customerUser, role, roleLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,13 +55,24 @@ const UnifiedAuth = () => {
         // Try admin login first
         const adminResult = await adminSignIn(email, password);
         
-        if (!adminResult.error) {
-          toast({
-            title: "Welcome back!",
-            description: "Redirecting to your dashboard...",
-          });
-          return;
-        }
+if (!adminResult.error) {
+  // If email is on the admin whitelist, route directly to dashboard
+  try {
+    const { data: isAllowed } = await supabase.rpc('is_allowed_admin_email', {
+      user_email: email,
+    });
+
+    if (isAllowed) {
+      toast({ title: 'Welcome back!', description: 'Redirecting to your dashboard...' });
+      navigate('/dashboard');
+      return;
+    }
+  } catch (_) {
+    // If whitelist check fails, fall back to role-based redirect via effect
+  }
+
+  // Not an admin — continue to try customer login below
+}
 
         // If admin login fails, try customer login
         const customerResult = await customerSignIn(email, password);
