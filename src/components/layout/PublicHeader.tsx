@@ -8,6 +8,8 @@ import { useState } from 'react';
 export const PublicHeader = () => {
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Component refreshed to fix caching issue
 
   const navigation = [
     { name: 'Home', href: '/' },
