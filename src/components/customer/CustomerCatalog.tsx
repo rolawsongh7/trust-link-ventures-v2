@@ -99,15 +99,14 @@ export const CustomerCatalog: React.FC = () => {
     }
   };
 
-  // Apply the same filtering logic as the frontend Products page
+  // Apply the EXACT same filtering logic as the frontend Products page
   const filteredProducts = products.filter(product => {
-    // First apply the same category filtering logic as Products.tsx
-    let passesProductPageFilters = false;
+    // First apply the same category filtering logic as Products.tsx (lines 104-111)
+    // The frontend Products page ONLY shows products with these categories:
+    // - 'Seafood' (for Fish/Seafood filters)
+    // - 'Meat Products' (for Meat/Other Meat/Beef/Pork filters)
     
-    // Check if product would appear on Products page with any filter
-    if (product.category === 'Seafood') passesProductPageFilters = true;
-    if (product.category === 'Meat Products') passesProductPageFilters = true;
-    if (product.category === 'Meat' || product.category === 'Meat & Poultry') passesProductPageFilters = true;
+    const passesProductPageFilters = product.category === 'Seafood' || product.category === 'Meat Products';
     
     // Only show products that would appear on the frontend Products page
     if (!passesProductPageFilters) return false;
