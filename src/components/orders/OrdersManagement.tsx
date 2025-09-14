@@ -60,13 +60,28 @@ const OrdersManagement = () => {
         .select(`
           *,
           quotes(quote_number, title),
-          customers(company_name, contact_name),
-          order_items(*)
+          customers(company_name, contact_name)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOrders((data || []) as Order[]);
+
+      // Fetch order items separately to avoid join issues
+      const ordersWithItems = await Promise.all(
+        (data || []).map(async (order) => {
+          const { data: items } = await supabase
+            .from('order_items')
+            .select('*')
+            .eq('order_id', order.id);
+          
+          return {
+            ...order,
+            order_items: items || []
+          };
+        })
+      );
+
+      setOrders(ordersWithItems as Order[]);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
@@ -249,7 +264,7 @@ const OrdersManagement = () => {
                     <div className="flex items-center justify-between pt-4 border-t">
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">
-                          Order Date: {new Date(order.order_date).toLocaleDateString()}
+                          Created: {new Date(order.created_at).toLocaleDateString()}
                         </p>
                         {order.expected_delivery_date && (
                           <p className="text-sm text-muted-foreground">
