@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Eye, Edit, CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
+import { Search, Plus, Eye, Edit, CheckCircle, XCircle, Clock, FileText, FileImage } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 
@@ -186,6 +186,35 @@ const UnifiedQuoteManagement = () => {
       toast({
         title: "Error",
         description: "Failed to update quote status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const generateTitlePage = async (quoteId: string) => {
+    try {
+      toast({
+        title: "Generating title page...",
+        description: "Please wait while we create the title page for your quote.",
+      });
+
+      const { data, error } = await supabase.functions.invoke('generate-quote-title-page', {
+        body: { quoteId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Title page generated and merged with quote successfully",
+      });
+
+      fetchQuotes();
+    } catch (error: any) {
+      console.error('Error generating title page:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate title page",
         variant: "destructive",
       });
     }
@@ -518,6 +547,17 @@ const UnifiedQuoteManagement = () => {
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                       </Button>
+                      {(quote.status === 'draft' || quote.status === 'sent') && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => generateTitlePage(quote.id)}
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          <FileImage className="mr-2 h-4 w-4" />
+                          Generate Title Page
+                        </Button>
+                      )}
                       {quote.status === 'sent' && (
                         <>
                           <Button 
