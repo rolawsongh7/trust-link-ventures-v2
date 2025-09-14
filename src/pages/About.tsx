@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { FlippingBook } from '@/components/ui/flipping-book';
 import { Globe, Users, TrendingUp, Award, Shield, Heart, Truck, MapPin, Calendar, Building2, Package, Thermometer, BarChart3, MapPinIcon, Clock, CheckCircle, Target, Lightbulb, Flag, Navigation, Verified } from 'lucide-react';
 import temaPortTrucks from '@/assets/tema-port-trucks.jpg';
 import ghanaColdStorageTeam from '@/assets/ghana-cold-storage-team.jpg';
@@ -262,7 +263,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Mission & Vision Statement Section */}
+      {/* Our Foundation - Flipping Book Section */}
       <section className="py-24 relative overflow-hidden bg-gradient-to-br from-background via-accent/5 to-primary/5">
         {/* Animated background elements */}
         <div className="absolute inset-0">
@@ -276,100 +277,62 @@ const About = () => {
           <div className="text-center mb-20 animate-fade-in">
             <Badge variant="outline" className="mb-6 px-6 py-3 text-sm font-medium border-primary/20 bg-primary/5">
               <Target className="w-4 h-4 mr-2" />
-              Our Purpose
+              Our Foundation
             </Badge>
             <h2 className="text-4xl lg:text-6xl font-poppins font-bold mb-6 leading-tight">
-              Driven by <span className="gradient-text relative">
-                Purpose
+              Written in <span className="gradient-text relative">
+                History
                 <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-primary to-secondary opacity-30 rounded-full" />
               </span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              Our mission and vision guide every decision we make, from sourcing to delivery
+              Our mission, vision, and values guide every decision we make, from sourcing to delivery
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
-            {/* Our Mission */}
-            <div className="group animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-card to-card/80 backdrop-blur-sm border border-border/50 shadow-xl hover:shadow-2xl transition-all duration-500 group-hover:scale-[1.02] group-hover:rotate-1">
-                {/* Decorative top gradient */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
-                
-                {/* Content */}
-                <div className="relative p-8 lg:p-10">
-                  {/* Icon with animated background */}
-                  <div className="relative mb-8 flex justify-center">
-                    <div className="relative">
-                      <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary-foreground rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-                        <Target className="w-10 h-10 text-primary-foreground" />
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary to-secondary rounded-2xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-300" />
-                    </div>
-                  </div>
-
-                  <h3 className="text-3xl lg:text-4xl font-poppins font-bold text-center mb-6 group-hover:text-primary transition-colors duration-300">
-                    Our Mission
-                  </h3>
-                  
-                  <div className="relative">
-                    <p className="text-lg leading-relaxed text-center text-muted-foreground group-hover:text-foreground transition-colors duration-300">
-                      To meet and exceed consumer demand by consistently importing and exporting 
-                      <span className="font-semibold text-primary"> high-quality frozen foods</span> that adhere to 
-                      <span className="font-semibold text-secondary"> global standards</span> of freshness, safety, and reliability.
-                    </p>
-                    
-                    {/* Animated underline */}
-                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-all duration-500" />
-                  </div>
-                </div>
-
-                {/* Floating elements */}
-                <div className="absolute top-4 right-4 w-3 h-3 bg-primary/30 rounded-full animate-bounce" />
-                <div className="absolute bottom-4 left-4 w-2 h-2 bg-secondary/30 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }} />
-              </div>
-            </div>
-
-            {/* Our Vision */}
-            <div className="group animate-fade-in" style={{ animationDelay: '0.3s' }}>
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-card to-card/80 backdrop-blur-sm border border-border/50 shadow-xl hover:shadow-2xl transition-all duration-500 group-hover:scale-[1.02] group-hover:-rotate-1">
-                {/* Decorative top gradient */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary via-accent to-secondary" />
-                
-                {/* Content */}
-                <div className="relative p-8 lg:p-10">
-                  {/* Icon with animated background */}
-                  <div className="relative mb-8 flex justify-center">
-                    <div className="relative">
-                      <div className="w-20 h-20 bg-gradient-to-br from-secondary to-secondary-foreground rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-                        <Lightbulb className="w-10 h-10 text-secondary-foreground" />
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-br from-secondary to-accent rounded-2xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-300" />
-                    </div>
-                  </div>
-
-                  <h3 className="text-3xl lg:text-4xl font-poppins font-bold text-center mb-6 group-hover:text-secondary transition-colors duration-300">
-                    Our Vision
-                  </h3>
-                  
-                  <div className="relative">
-                    <p className="text-lg leading-relaxed text-center text-muted-foreground group-hover:text-foreground transition-colors duration-300">
-                      To become a <span className="font-semibold text-secondary">national leader</span> in the delivery of 
-                      <span className="font-semibold text-accent"> premium frozen food products</span> in Ghana by fulfilling 
-                      customer expectations in quality and service, while advancing Ghana's 
-                      <span className="font-semibold text-primary"> local fishing industry</span>.
-                    </p>
-                    
-                    {/* Animated underline */}
-                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-secondary to-accent group-hover:w-full transition-all duration-500" />
-                  </div>
-                </div>
-
-                {/* Floating elements */}
-                <div className="absolute top-4 left-4 w-3 h-3 bg-secondary/30 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                <div className="absolute bottom-4 right-4 w-2 h-2 bg-accent/30 rounded-full animate-bounce" style={{ animationDelay: '0.7s' }} />
-              </div>
-            </div>
+          {/* Flipping Book */}
+          <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <FlippingBook 
+              pages={[
+                {
+                  icon: Target,
+                  title: "Our Mission",
+                  content: "To meet and exceed consumer demand by consistently importing and exporting high-quality frozen foods that adhere to global standards of freshness, safety, and reliability.",
+                  gradient: "bg-gradient-to-br from-primary to-primary-foreground"
+                },
+                {
+                  icon: Lightbulb,
+                  title: "Our Vision",
+                  content: "To become a national leader in the delivery of premium frozen food products in Ghana by fulfilling customer expectations in quality and service, while advancing Ghana's local fishing industry.",
+                  gradient: "bg-gradient-to-br from-secondary to-secondary-foreground"
+                },
+                {
+                  icon: Shield,
+                  title: "Trust & Reliability",
+                  content: "Building lasting partnerships through transparent and reliable business practices. Every commitment we make is a promise we keep.",
+                  gradient: "bg-gradient-to-br from-blue-500 to-blue-600"
+                },
+                {
+                  icon: Heart,
+                  title: "Customer First",
+                  content: "Putting our clients' needs at the center of everything we do. Your success is our success, and we're committed to exceeding your expectations.",
+                  gradient: "bg-gradient-to-br from-rose-500 to-rose-600"
+                },
+                {
+                  icon: TrendingUp,
+                  title: "Innovation",
+                  content: "Continuously improving our services and embracing new technologies to provide the most efficient and effective logistics solutions.",
+                  gradient: "bg-gradient-to-br from-green-500 to-green-600"
+                },
+                {
+                  icon: Globe,
+                  title: "Global Impact",
+                  content: "Creating sustainable connections that benefit communities worldwide, from local Ghanaian fishermen to international suppliers.",
+                  gradient: "bg-gradient-to-br from-purple-500 to-purple-600"
+                }
+              ]}
+              className="w-full"
+            />
           </div>
 
           {/* Bottom decorative element */}
