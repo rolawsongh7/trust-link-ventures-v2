@@ -104,9 +104,9 @@ const Products = () => {
   const filteredProducts = products.filter(product => {
     if (activeFilter === 'All Products') return true;
     if (activeFilter === 'Fish' || activeFilter === 'Seafood') return product.category === 'Seafood';
-    if (activeFilter === 'Meat' || activeFilter === 'Other Meat') return product.category === 'Meat Products';
-    if (activeFilter === 'Beef') return product.category === 'Meat Products' && (product.name.toLowerCase().includes('beef') || product.name.toLowerCase().includes('entrecôte') || product.name.toLowerCase().includes('flank') || product.name.toLowerCase().includes('hamburger'));
-    if (activeFilter === 'Pork') return product.category === 'Meat Products' && product.name.toLowerCase().includes('pork');
+    if (activeFilter === 'Meat' || activeFilter === 'Other Meat') return product.category === 'Meat' || product.category === 'Meat & Poultry';
+    if (activeFilter === 'Beef') return (product.category === 'Meat' || product.category === 'Meat & Poultry') && (product.name.toLowerCase().includes('beef') || product.name.toLowerCase().includes('entrecôte') || product.name.toLowerCase().includes('flank') || product.name.toLowerCase().includes('hamburger'));
+    if (activeFilter === 'Pork') return (product.category === 'Meat' || product.category === 'Meat & Poultry') && product.name.toLowerCase().includes('pork');
     return true;
   });
 
