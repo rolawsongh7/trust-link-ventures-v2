@@ -1133,6 +1133,7 @@ export type Database = {
           id: string
           lead_id: string | null
           notes: string | null
+          origin_type: string | null
           quote_number: string
           status: string | null
           supplier_id: string | null
@@ -1153,6 +1154,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           notes?: string | null
+          origin_type?: string | null
           quote_number: string
           status?: string | null
           supplier_id?: string | null
@@ -1173,6 +1175,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           notes?: string | null
+          origin_type?: string | null
           quote_number?: string
           status?: string | null
           supplier_id?: string | null
@@ -1232,6 +1235,107 @@ export type Database = {
           window_start?: string
         }
         Relationships: []
+      }
+      rfq_responses: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          response_data: Json
+          reviewed_at: string | null
+          reviewed_by: string | null
+          rfq_id: string
+          status: string | null
+          submitted_at: string | null
+          supplier_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          response_data?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rfq_id: string
+          status?: string | null
+          submitted_at?: string | null
+          supplier_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          response_data?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rfq_id?: string
+          status?: string | null
+          submitted_at?: string | null
+          supplier_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rfq_responses_rfq_id_fkey"
+            columns: ["rfq_id"]
+            isOneToOne: false
+            referencedRelation: "rfqs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfq_responses_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rfqs: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          deadline: string | null
+          description: string | null
+          id: string
+          quote_id: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          quote_id: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          quote_id?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rfqs_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_alerts: {
         Row: {
@@ -1666,6 +1770,10 @@ export type Database = {
           p_user_agent?: string
         }
         Returns: undefined
+      }
+      generate_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_password_policy: {
         Args: Record<PropertyKey, never>

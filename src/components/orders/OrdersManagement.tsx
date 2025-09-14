@@ -1,0 +1,310 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search, Package, Truck, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+interface Order {
+  id: string;
+  order_number: string;
+  total_amount: number;
+  currency: string;
+  status: string;
+  order_date?: string;
+  expected_delivery_date?: string;
+  notes?: string;
+  created_at: string;
+  quotes: {
+    quote_number: string;
+    title: string;
+  };
+  customers: {
+    company_name: string;
+    contact_name?: string;
+  };
+  order_items: any[];
+}
+
+const OrdersManagement = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTab, setSelectedTab] = useState('all');
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchOrders();
+    
+    // Set up real-time subscription
+    const subscription = supabase
+      .channel('orders-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'orders' },
+        () => fetchOrders()
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          quotes(quote_number, title),
+          customers(company_name, contact_name),
+          order_items(*)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setOrders((data || []) as Order[]);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch orders",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateOrderStatus = async (orderId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Order status updated to ${status}`,
+      });
+
+      fetchOrders();
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update order status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'confirmed': return 'bg-blue-100 text-blue-800';
+      case 'processing': return 'bg-purple-100 text-purple-800';
+      case 'shipped': return 'bg-orange-100 text-orange-800';
+      case 'delivered': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending': return <Clock className="h-4 w-4" />;
+      case 'confirmed': return <CheckCircle className="h-4 w-4" />;
+      case 'processing': return <Package className="h-4 w-4" />;
+      case 'shipped': return <Truck className="h-4 w-4" />;
+      case 'delivered': return <CheckCircle className="h-4 w-4" />;
+      case 'cancelled': return <AlertCircle className="h-4 w-4" />;
+      default: return <Clock className="h-4 w-4" />;
+    }
+  };
+
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.customers.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.quotes.title.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesTab = selectedTab === 'all' || order.status === selectedTab;
+    
+    return matchesSearch && matchesTab;
+  });
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map(i => (
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-6">
+              <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Orders Management</h1>
+          <p className="text-muted-foreground">
+            Track and manage orders converted from accepted quotes
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search orders..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
+      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+        <TabsList>
+          <TabsTrigger value="all">All ({orders.length})</TabsTrigger>
+          <TabsTrigger value="pending">Pending ({orders.filter(o => o.status === 'pending').length})</TabsTrigger>
+          <TabsTrigger value="confirmed">Confirmed ({orders.filter(o => o.status === 'confirmed').length})</TabsTrigger>
+          <TabsTrigger value="processing">Processing ({orders.filter(o => o.status === 'processing').length})</TabsTrigger>
+          <TabsTrigger value="shipped">Shipped ({orders.filter(o => o.status === 'shipped').length})</TabsTrigger>
+          <TabsTrigger value="delivered">Delivered ({orders.filter(o => o.status === 'delivered').length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={selectedTab} className="space-y-4">
+          {filteredOrders.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
+                <p className="text-gray-500">
+                  Orders are automatically created when quotes are accepted by customers.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            filteredOrders.map(order => (
+              <Card key={order.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {getStatusIcon(order.status)}
+                        {order.order_number}
+                      </CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <Badge className={getStatusColor(order.status)}>
+                          {order.status}
+                        </Badge>
+                        <Badge variant="outline">
+                          From Quote: {order.quotes.quote_number}
+                        </Badge>
+                        <Badge variant="outline">
+                          {order.order_items.length} Item(s)
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold">
+                        {order.currency} {order.total_amount.toLocaleString()}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {order.customers.company_name}
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium mb-2">Order Items:</h4>
+                      <div className="space-y-1">
+                        {order.order_items.map(item => (
+                          <div key={item.id} className="flex justify-between text-sm">
+                            <span>{item.product_name}</span>
+                            <span>
+                              {item.quantity} {item.unit} × {order.currency} {item.unit_price} = 
+                              {order.currency} {item.total_price.toLocaleString()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">
+                          Order Date: {new Date(order.order_date).toLocaleDateString()}
+                        </p>
+                        {order.expected_delivery_date && (
+                          <p className="text-sm text-muted-foreground">
+                            Expected Delivery: {new Date(order.expected_delivery_date).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex space-x-2">
+                        {order.status === 'pending' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => updateOrderStatus(order.id, 'confirmed')}
+                          >
+                            Confirm Order
+                          </Button>
+                        )}
+                        {order.status === 'confirmed' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => updateOrderStatus(order.id, 'processing')}
+                          >
+                            Start Processing
+                          </Button>
+                        )}
+                        {order.status === 'processing' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => updateOrderStatus(order.id, 'shipped')}
+                          >
+                            Mark as Shipped
+                          </Button>
+                        )}
+                        {order.status === 'shipped' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => updateOrderStatus(order.id, 'delivered')}
+                          >
+                            Mark as Delivered
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default OrdersManagement;
