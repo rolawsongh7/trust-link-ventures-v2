@@ -280,7 +280,6 @@ if (!adminResult.error) {
               <div className="text-center text-sm text-muted-foreground">
                 <p>Access is automatically routed based on your credentials:</p>
                 <p className="mt-1">• Admin/Sales → Dashboard</p>
-                <p>• Supplier → Supplier Portal</p>
                 <p>• Customer → Customer Portal</p>
               </div>
             )}
