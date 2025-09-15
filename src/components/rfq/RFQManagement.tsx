@@ -27,41 +27,11 @@ interface RFQ {
       company_name: string;
     };
   };
-  rfq_responses: {
-    id: string;
-    supplier_id: string;
-    response_data: any;
-    notes?: string;
-    status: string;
-    submitted_at: string;
-    suppliers: {
-      name: string;
-    };
-  }[];
 }
 
-interface RFQResponse {
-  supplier_id: string;
-  response_data: {
-    items: Array<{
-      product_name: string;
-      quantity: number;
-      unit_price: number;
-      unit: string;
-      specifications?: string;
-    }>;
-    total_amount: number;
-    currency: string;
-    delivery_terms?: string;
-    payment_terms?: string;
-    validity_period?: string;
-  };
-  notes: string;
-}
 
 const RFQManagement = () => {
   const [rfqs, setRfqs] = useState<RFQ[]>([]);
-  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRFQ, setSelectedRFQ] = useState<RFQ | null>(null);
@@ -72,7 +42,6 @@ const RFQManagement = () => {
 
   useEffect(() => {
     fetchRFQs();
-    fetchSuppliers();
   }, []);
 
   const fetchRFQs = async () => {
@@ -84,10 +53,6 @@ const RFQManagement = () => {
           quotes(
             id, quote_number, total_amount, currency,
             customers(company_name)
-          ),
-          rfq_responses(
-            id, supplier_id, response_data, notes, status, submitted_at,
-            suppliers(name)
           )
         `)
         .order('created_at', { ascending: false });
@@ -106,19 +71,6 @@ const RFQManagement = () => {
     }
   };
 
-  const fetchSuppliers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('suppliers')
-        .select('id, name, contact_person, email')
-        .eq('is_active', true);
-
-      if (error) throw error;
-      setSuppliers(data || []);
-    } catch (error) {
-      console.error('Error fetching suppliers:', error);
-    }
-  };
 
   const sendMagicLinks = async (rfq: RFQ) => {
     try {
@@ -170,81 +122,11 @@ const RFQManagement = () => {
     }
   };
 
-  const acceptRFQResponse = async (responseId: string, rfqId: string) => {
-    try {
-      // Mark response as accepted
-      const { error: responseError } = await supabase
-        .from('rfq_responses')
-        .update({ 
-          status: 'accepted',
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: (await supabase.auth.getUser()).data.user?.id 
-        })
-        .eq('id', responseId);
-
-      if (responseError) throw responseError;
-
-      // Get the response data to update the quote
-      const { data: response, error: fetchError } = await supabase
-        .from('rfq_responses')
-        .select('response_data, rfq_id')
-        .eq('id', responseId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      // Get the quote associated with this RFQ
-      const { data: rfq, error: rfqError } = await supabase
-        .from('rfqs')
-        .select('quote_id')
-        .eq('id', rfqId)
-        .single();
-
-      if (rfqError) throw rfqError;
-
-      // Update the quote with the accepted response data
-      const responseData = response.response_data as any;
-      const { error: quoteError } = await supabase
-        .from('quotes')
-        .update({
-          total_amount: responseData.total_amount || 0,
-          currency: responseData.currency || 'USD',
-          status: 'sent' // Ready to send to customer
-        })
-        .eq('id', rfq.quote_id);
-
-      if (quoteError) throw quoteError;
-
-      toast({
-        title: "Success",
-        description: "RFQ response accepted and quote updated",
-      });
-
-      fetchRFQs();
-    } catch (error) {
-      console.error('Error accepting RFQ response:', error);
-      toast({
-        title: "Error",
-        description: "Failed to accept RFQ response",
-        variant: "destructive",
-      });
-    }
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open': return 'bg-green-100 text-green-800';
       case 'closed': return 'bg-gray-100 text-gray-800';
       case 'expired': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getResponseStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'accepted': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -325,9 +207,6 @@ const RFQManagement = () => {
                       <Badge variant="outline">
                         Quote: {rfq.quotes.quote_number}
                       </Badge>
-                      <Badge variant="outline">
-                        {rfq.rfq_responses.length} Response(s)
-                      </Badge>
                     </div>
                   </div>
                   <div className="text-right">
@@ -352,51 +231,6 @@ const RFQManagement = () => {
                     </p>
                   )}
 
-                  {rfq.rfq_responses.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="font-medium">Supplier Responses:</h4>
-                      {rfq.rfq_responses.map(response => (
-                        <div key={response.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <span className="font-medium">{response.suppliers.name}</span>
-                            <Badge className={getResponseStatusColor(response.status)}>
-                              {response.status}
-                            </Badge>
-                            <span className="text-sm text-muted-foreground">
-                              {(response.response_data as any)?.currency || 'USD'} {((response.response_data as any)?.total_amount || 0).toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="flex space-x-2">
-                            <Button variant="outline" size="sm">
-                              <Eye className="mr-2 h-4 w-4" />
-                              View
-                            </Button>
-                            {response.status === 'pending' && (
-                              <>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => acceptRFQResponse(response.id, rfq.id)}
-                                  className="text-green-600 hover:text-green-700"
-                                >
-                                  <CheckCircle className="mr-2 h-4 w-4" />
-                                  Accept
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <XCircle className="mr-2 h-4 w-4" />
-                                  Reject
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
 
                   <div className="flex justify-between items-center pt-4 border-t">
                     <div className="text-sm text-muted-foreground">

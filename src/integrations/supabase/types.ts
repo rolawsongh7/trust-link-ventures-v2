@@ -979,7 +979,6 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
-          supplier_id: string | null
           unit: string | null
           unit_price: number | null
           updated_at: string
@@ -991,7 +990,6 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
-          supplier_id?: string | null
           unit?: string | null
           unit_price?: number | null
           updated_at?: string
@@ -1003,20 +1001,11 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
-          supplier_id?: string | null
           unit?: string | null
           unit_price?: number | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "products_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -1279,7 +1268,6 @@ export type Database = {
           origin_type: string | null
           quote_number: string
           status: string | null
-          supplier_id: string | null
           terms: string | null
           title: string
           total_amount: number | null
@@ -1300,7 +1288,6 @@ export type Database = {
           origin_type?: string | null
           quote_number: string
           status?: string | null
-          supplier_id?: string | null
           terms?: string | null
           title: string
           total_amount?: number | null
@@ -1321,7 +1308,6 @@ export type Database = {
           origin_type?: string | null
           quote_number?: string
           status?: string | null
-          supplier_id?: string | null
           terms?: string | null
           title?: string
           total_amount?: number | null
@@ -1341,13 +1327,6 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "quotes_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -1378,63 +1357,6 @@ export type Database = {
           window_start?: string
         }
         Relationships: []
-      }
-      rfq_responses: {
-        Row: {
-          created_at: string | null
-          id: string
-          notes: string | null
-          response_data: Json
-          reviewed_at: string | null
-          reviewed_by: string | null
-          rfq_id: string
-          status: string | null
-          submitted_at: string | null
-          supplier_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          response_data?: Json
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          rfq_id: string
-          status?: string | null
-          submitted_at?: string | null
-          supplier_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          response_data?: Json
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          rfq_id?: string
-          status?: string | null
-          submitted_at?: string | null
-          supplier_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "rfq_responses_rfq_id_fkey"
-            columns: ["rfq_id"]
-            isOneToOne: false
-            referencedRelation: "rfqs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "rfq_responses_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       rfqs: {
         Row: {
@@ -1603,54 +1525,6 @@ export type Database = {
           source_url?: string | null
           supplier?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      suppliers: {
-        Row: {
-          address: string | null
-          contact_person: string | null
-          country: string | null
-          created_at: string
-          email: string | null
-          id: string
-          is_active: boolean | null
-          logo_url: string | null
-          name: string
-          notes: string | null
-          phone: string | null
-          updated_at: string
-          website: string | null
-        }
-        Insert: {
-          address?: string | null
-          contact_person?: string | null
-          country?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          is_active?: boolean | null
-          logo_url?: string | null
-          name: string
-          notes?: string | null
-          phone?: string | null
-          updated_at?: string
-          website?: string | null
-        }
-        Update: {
-          address?: string | null
-          contact_person?: string | null
-          country?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          is_active?: boolean | null
-          logo_url?: string | null
-          name?: string
-          notes?: string | null
-          phone?: string | null
-          updated_at?: string
-          website?: string | null
         }
         Relationships: []
       }

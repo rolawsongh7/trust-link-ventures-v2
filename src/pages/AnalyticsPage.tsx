@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import AnalyticsReports from '@/components/AnalyticsReports';
 import { CustomerAnalytics } from '@/components/analytics/CustomerAnalytics';
-import { SupplierAnalytics } from '@/components/analytics/SupplierAnalytics';
+
 import { BusinessIntelligence } from '@/components/analytics/BusinessIntelligence';
 import { Users, Factory, TrendingUp, BarChart3, Download, RefreshCw } from 'lucide-react';
 
@@ -64,7 +64,7 @@ const AnalyticsPage = () => {
 
         {/* Analytics Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Overview
@@ -72,10 +72,6 @@ const AnalyticsPage = () => {
             <TabsTrigger value="customers" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Customer Analytics
-            </TabsTrigger>
-            <TabsTrigger value="suppliers" className="flex items-center gap-2">
-              <Factory className="h-4 w-4" />
-              Supplier Analytics
             </TabsTrigger>
             <TabsTrigger value="business" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
@@ -98,18 +94,6 @@ const AnalyticsPage = () => {
                 </CardContent>
               </Card>
               
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Suppliers</CardTitle>
-                  <Factory className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">87</div>
-                  <p className="text-xs text-muted-foreground">
-                    +5 new this month
-                  </p>
-                </CardContent>
-              </Card>
               
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -143,10 +127,6 @@ const AnalyticsPage = () => {
 
           <TabsContent value="customers">
             <CustomerAnalytics />
-          </TabsContent>
-
-          <TabsContent value="suppliers">
-            <SupplierAnalytics />
           </TabsContent>
 
           <TabsContent value="business">
