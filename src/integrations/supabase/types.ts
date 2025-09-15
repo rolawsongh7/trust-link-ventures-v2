@@ -595,6 +595,39 @@ export type Database = {
           },
         ]
       }
+      magic_link_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          metadata: Json | null
+          rfq_id: string
+          supplier_email: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          metadata?: Json | null
+          rfq_id: string
+          supplier_email: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          metadata?: Json | null
+          rfq_id?: string
+          supplier_email?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       network_security_settings: {
         Row: {
           block_tor: boolean
@@ -1167,6 +1200,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      quote_submissions: {
+        Row: {
+          currency: string | null
+          delivery_date: string | null
+          file_url: string | null
+          id: string
+          magic_token: string
+          metadata: Json | null
+          notes: string | null
+          quote_amount: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          rfq_id: string
+          status: string | null
+          submitted_at: string
+          supplier_company: string | null
+          supplier_email: string
+          supplier_name: string
+          supplier_phone: string | null
+          validity_days: number | null
+        }
+        Insert: {
+          currency?: string | null
+          delivery_date?: string | null
+          file_url?: string | null
+          id?: string
+          magic_token: string
+          metadata?: Json | null
+          notes?: string | null
+          quote_amount?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rfq_id: string
+          status?: string | null
+          submitted_at?: string
+          supplier_company?: string | null
+          supplier_email: string
+          supplier_name: string
+          supplier_phone?: string | null
+          validity_days?: number | null
+        }
+        Update: {
+          currency?: string | null
+          delivery_date?: string | null
+          file_url?: string | null
+          id?: string
+          magic_token?: string
+          metadata?: Json | null
+          notes?: string | null
+          quote_amount?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rfq_id?: string
+          status?: string | null
+          submitted_at?: string
+          supplier_company?: string | null
+          supplier_email?: string
+          supplier_name?: string
+          supplier_phone?: string | null
+          validity_days?: number | null
+        }
+        Relationships: []
       }
       quotes: {
         Row: {

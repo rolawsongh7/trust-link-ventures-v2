@@ -1,5 +1,8 @@
 project_id = "ppyfrftmexvgnsxlhdbz"
 
+[functions.quote-submission]
+verify_jwt = false
+
 [api]
 enabled = true
 port = 54321

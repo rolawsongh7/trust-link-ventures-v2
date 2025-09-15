@@ -6,8 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, Send, Eye, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Search, Send, Eye, CheckCircle, XCircle, Clock, Mail, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import QuoteComparison from './QuoteComparison';
 
 interface RFQ {
   id: string;
@@ -63,15 +65,9 @@ const RFQManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRFQ, setSelectedRFQ] = useState<RFQ | null>(null);
-  const [newResponse, setNewResponse] = useState<RFQResponse>({
-    supplier_id: '',
-    response_data: {
-      items: [],
-      total_amount: 0,
-      currency: 'USD',
-    },
-    notes: '',
-  });
+  const [supplierEmails, setSupplierEmails] = useState<string>('');
+  const [sendingMagicLinks, setSendingMagicLinks] = useState(false);
+  const [activeTab, setActiveTab] = useState('rfqs');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -124,42 +120,53 @@ const RFQManagement = () => {
     }
   };
 
-  const submitRFQResponse = async (rfqId: string) => {
+  const sendMagicLinks = async (rfq: RFQ) => {
     try {
-      const { error } = await supabase
-        .from('rfq_responses')
-        .insert({
-          rfq_id: rfqId,
-          supplier_id: newResponse.supplier_id,
-          response_data: newResponse.response_data,
-          notes: newResponse.notes,
+      setSendingMagicLinks(true);
+      
+      // Parse email addresses
+      const emails = supplierEmails
+        .split(/[,;\n]/)
+        .map(email => email.trim())
+        .filter(email => email && /\S+@\S+\.\S+/.test(email));
+
+      if (emails.length === 0) {
+        toast({
+          title: "Error",
+          description: "Please enter valid email addresses",
+          variant: "destructive",
         });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('send-rfq-magic-links', {
+        body: {
+          rfqId: rfq.id,
+          supplierEmails: emails,
+          rfqTitle: rfq.title,
+          rfqDescription: rfq.description,
+          deadline: rfq.deadline
+        }
+      });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "RFQ response submitted successfully",
+        description: `Magic links sent to ${data.emailsSent} suppliers successfully`,
       });
 
-      setNewResponse({
-        supplier_id: '',
-        response_data: {
-          items: [],
-          total_amount: 0,
-          currency: 'USD',
-        },
-        notes: '',
-      });
-
-      fetchRFQs();
-    } catch (error) {
-      console.error('Error submitting RFQ response:', error);
+      setSupplierEmails('');
+      setSelectedRFQ(null);
+    } catch (error: any) {
+      console.error('Error sending magic links:', error);
       toast({
         title: "Error",
-        description: "Failed to submit RFQ response",
+        description: "Failed to send magic links to suppliers",
         variant: "destructive",
       });
+    } finally {
+      setSendingMagicLinks(false);
     }
   };
 
@@ -269,35 +276,42 @@ const RFQManagement = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">RFQ Management</h1>
           <p className="text-muted-foreground">
-            Manage requests for quotes and supplier responses
+            Manage requests for quotes and supplier responses via magic links
           </p>
         </div>
       </div>
 
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Search RFQs..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="rfqs">RFQ List</TabsTrigger>
+          <TabsTrigger value="comparison">Quote Comparison</TabsTrigger>
+        </TabsList>
 
-      <div className="space-y-4">
-        {filteredRFQs.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No RFQs found</h3>
-              <p className="text-gray-500">
-                RFQs are automatically created when quotes require supplier input.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
+        <TabsContent value="rfqs" className="space-y-4">
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search RFQs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {filteredRFQs.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No RFQs found</h3>
+                  <p className="text-gray-500">
+                    RFQs are automatically created when quotes require supplier input.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
           filteredRFQs.map(rfq => (
             <Card key={rfq.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
@@ -388,45 +402,106 @@ const RFQManagement = () => {
                     <div className="text-sm text-muted-foreground">
                       Created: {new Date(rfq.created_at).toLocaleDateString()}
                     </div>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" onClick={() => setSelectedRFQ(rfq)}>
-                          <Send className="mr-2 h-4 w-4" />
-                          Send to Suppliers
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>Send RFQ to Suppliers</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <label className="text-sm font-medium">Select Suppliers:</label>
-                            <div className="grid grid-cols-2 gap-2 mt-2">
-                              {suppliers.map(supplier => (
-                                <div key={supplier.id} className="flex items-center space-x-2">
-                                  <input type="checkbox" id={supplier.id} />
-                                  <label htmlFor={supplier.id} className="text-sm">
-                                    {supplier.name}
-                                  </label>
-                                </div>
-                              ))}
+                    <div className="flex space-x-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" onClick={() => setSelectedRFQ(rfq)}>
+                            <Mail className="mr-2 h-4 w-4" />
+                            Send Magic Links
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>Send RFQ Magic Links</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-sm font-medium">RFQ Details:</label>
+                              <div className="bg-gray-50 p-3 rounded-lg mt-2">
+                                <p><strong>Title:</strong> {selectedRFQ?.title}</p>
+                                {selectedRFQ?.description && (
+                                  <p><strong>Description:</strong> {selectedRFQ.description}</p>
+                                )}
+                                {selectedRFQ?.deadline && (
+                                  <p><strong>Deadline:</strong> {new Date(selectedRFQ.deadline).toLocaleDateString()}</p>
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Supplier Email Addresses:</label>
+                              <p className="text-xs text-muted-foreground mb-2">
+                                Enter email addresses separated by commas, semicolons, or new lines
+                              </p>
+                              <Textarea
+                                placeholder="supplier1@email.com, supplier2@email.com&#10;supplier3@email.com"
+                                value={supplierEmails}
+                                onChange={(e) => setSupplierEmails(e.target.value)}
+                                rows={4}
+                              />
+                            </div>
+                            <div className="bg-blue-50 p-3 rounded-lg">
+                              <p className="text-sm text-blue-800">
+                                <strong>Magic Link Benefits:</strong> Suppliers receive secure, time-limited links 
+                                to submit quotes without needing accounts. Links expire in 7 days.
+                              </p>
+                            </div>
+                            <div className="flex justify-end space-x-2">
+                              <Button variant="outline" onClick={() => setSelectedRFQ(null)}>
+                                Cancel
+                              </Button>
+                              <Button 
+                                onClick={() => selectedRFQ && sendMagicLinks(selectedRFQ)}
+                                disabled={sendingMagicLinks}
+                              >
+                                {sendingMagicLinks ? 'Sending...' : 'Send Magic Links'}
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex justify-end space-x-2">
-                            <Button variant="outline">Cancel</Button>
-                            <Button>Send RFQ</Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                        </DialogContent>
+                      </Dialog>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setActiveTab('comparison')}
+                      >
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        Compare Quotes
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
           ))
-        )}
-      </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="comparison" className="space-y-4">
+          {filteredRFQs.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <BarChart3 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No RFQs Available</h3>
+                <p className="text-gray-500">
+                  Create RFQs first to compare supplier quotes.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {filteredRFQs.map(rfq => (
+                <QuoteComparison 
+                  key={rfq.id} 
+                  rfqId={rfq.id} 
+                  rfqTitle={rfq.title}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
