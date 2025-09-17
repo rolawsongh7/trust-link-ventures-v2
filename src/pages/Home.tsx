@@ -213,117 +213,131 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <div 
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: `url(${heroImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent z-10" />
+      <section className="relative min-h-screen flex items-center overflow-hidden">
+        {/* Background with parallax effect */}
+        <div className="absolute inset-0 z-0">
+          <div 
+            className="absolute inset-0 scale-110 transition-transform duration-1000"
+            style={{
+              backgroundImage: `url(${heroImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat'
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/70 to-background/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent" />
+        </div>
         
-        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8 animate-fade-in-left">
-              {/* Story Indicator */}
-              <div className="flex items-center gap-2 mb-4">
+        {/* Floating elements for visual interest */}
+        <div className="absolute top-1/4 left-10 w-2 h-2 bg-primary rounded-full animate-pulse opacity-60" />
+        <div className="absolute top-3/4 right-20 w-3 h-3 bg-accent rounded-full animate-pulse opacity-40" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 right-40 w-1 h-1 bg-primary rounded-full animate-pulse opacity-50" style={{ animationDelay: '2s' }} />
+        
+        <div className="relative z-20 w-full">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+            {/* Main Content */}
+            <div className="max-w-4xl mx-auto text-center space-y-12">
+              {/* Story Indicators */}
+              <div className="flex justify-center items-center gap-4 animate-fade-in">
                 <div className="flex items-center gap-2">
                   {heroStories.map((_, index) => (
-                    <div
+                    <button
                       key={index}
-                      className={`h-1 w-8 rounded-full transition-all duration-500 ${
-                        index === currentSlide ? 'bg-primary' : 'bg-primary/30'
+                      onClick={() => setCurrentSlide(index)}
+                      className={`h-1 w-12 rounded-full transition-all duration-500 ${
+                        index === currentSlide ? 'bg-primary scale-110' : 'bg-primary/30 hover:bg-primary/50'
                       }`}
                     />
                   ))}
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="p-1 bg-primary/10 rounded-full">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground ml-4">
+                  <div className="p-1.5 bg-primary/10 rounded-full">
                     {React.createElement(heroStories[currentSlide].icon, { className: "h-4 w-4 text-primary" })}
                   </div>
                   <span className="font-medium">{heroStories[currentSlide].accent}</span>
                 </div>
               </div>
 
-              <div className="space-y-4">
+              {/* Main Title */}
+              <div className="space-y-6">
                 <h1 
                   key={currentSlide} 
-                  className="text-5xl lg:text-7xl font-poppins font-black leading-tight animate-fade-in"
+                  className="text-6xl lg:text-8xl font-poppins font-black leading-tight animate-fade-in tracking-tight"
                 >
                   {heroStories[currentSlide].title}
                 </h1>
                 <p 
                   key={`subtitle-${currentSlide}`}
-                  className="text-xl text-muted-foreground leading-relaxed max-w-2xl animate-fade-in"
-                  style={{ animationDelay: '0.1s' }}
+                  className="text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-3xl mx-auto animate-fade-in"
+                  style={{ animationDelay: '0.2s' }}
                 >
                   {heroStories[currentSlide].subtitle}
                 </p>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button asChild size="lg" className="btn-hero text-lg px-8 py-4">
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                <Button asChild size="lg" className="text-lg px-10 py-6 rounded-full shadow-2xl hover:shadow-primary/25 transition-all duration-300 group">
                   <Link to="/quote-request">
                     Get Quote
-                    <ArrowRight className="h-5 w-5 ml-2" />
+                    <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="btn-outline text-lg px-8 py-4">
+                <Button asChild variant="outline" size="lg" className="text-lg px-10 py-6 rounded-full border-2 hover:bg-primary/5 transition-all duration-300 group">
                   <Link to="/products">
                     View Products
-                    <ArrowRight className="h-5 w-5 ml-2" />
+                    <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
               </div>
-              
             </div>
 
-            {/* Enhanced Stats Card with World-Class Metrics */}
-            <div className="animate-fade-in-right">
-              <Card className="p-8 bg-white/30 backdrop-blur-sm border border-white/20 shadow-2xl">
-                <CardContent className="p-0">
-                  {/* Header */}
-                  <div className="text-center mb-8">
-                    <h3 className="text-2xl font-poppins font-bold gradient-text mb-2">
-                      World-Class Performance
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Measurable excellence in every metric
-                    </p>
-                  </div>
-                  
-                  {/* Horizontal Stats Row */}
-                  <div className="flex justify-center items-center space-x-12">
-                    {stats.map((stat, index) => {
-                      const IconComponent = stat.icon;
-                      const { count, ref } = useCounterAnimation({ 
-                        end: stat.end, 
-                        suffix: stat.suffix, 
-                        duration: 2500 + (index * 200) 
-                      });
-                      
-                      return (
-                        <div key={index} ref={ref} className="text-center space-y-3">
-                          <div className="flex justify-center">
-                            <div className="p-4 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl shadow-lg">
-                              <IconComponent className="h-7 w-7 text-primary" />
+            {/* Stats Section - Moved below main content */}
+            <div className="mt-24 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+              <div className="max-w-5xl mx-auto">
+                <Card className="p-8 lg:p-12 bg-gradient-to-br from-background/80 to-accent/10 backdrop-blur-xl border border-border/50 shadow-2xl rounded-3xl">
+                  <CardContent className="p-0">
+                    {/* Header */}
+                    <div className="text-center mb-12">
+                      <h3 className="text-3xl lg:text-4xl font-poppins font-bold gradient-text mb-4">
+                        World-Class Performance
+                      </h3>
+                      <p className="text-lg text-muted-foreground">
+                        Measurable excellence in every metric
+                      </p>
+                    </div>
+                    
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                      {stats.map((stat, index) => {
+                        const IconComponent = stat.icon;
+                        const { count, ref } = useCounterAnimation({ 
+                          end: stat.end, 
+                          suffix: stat.suffix, 
+                          duration: 2500 + (index * 200) 
+                        });
+                        
+                        return (
+                          <div key={index} ref={ref} className="text-center space-y-4 group">
+                            <div className="flex justify-center">
+                              <div className="p-6 bg-gradient-to-br from-primary/20 to-primary/10 rounded-3xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                <IconComponent className="h-8 w-8 text-primary" />
+                              </div>
+                            </div>
+                            <div className="text-5xl lg:text-6xl font-poppins font-black gradient-text">
+                              {count}
+                            </div>
+                            <div className="text-sm text-muted-foreground font-semibold uppercase tracking-wide">
+                              {stat.label}
                             </div>
                           </div>
-                          <div className="text-4xl lg:text-5xl font-poppins font-black gradient-text">
-                            {count}
-                          </div>
-                          <div className="text-sm text-muted-foreground font-semibold uppercase tracking-wide">
-                            {stat.label}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>
