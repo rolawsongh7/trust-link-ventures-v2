@@ -162,6 +162,60 @@ export class EmailService {
   }
 
   /**
+   * Send quote approval magic link
+   */
+  static async sendQuoteApprovalLink(
+    quoteId: string,
+    customerEmail: string,
+    customerName?: string,
+    companyName?: string
+  ): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-quote-approval-link', {
+        body: {
+          quoteId,
+          customerEmail,
+          customerName,
+          companyName
+        }
+      });
+
+      if (error) throw error;
+      return data?.success || false;
+    } catch (error) {
+      console.error('Error sending quote approval link:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Send order tracking magic link
+   */
+  static async sendOrderTrackingLink(
+    orderId: string,
+    customerEmail: string,
+    customerName?: string,
+    companyName?: string
+  ): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-order-tracking-link', {
+        body: {
+          orderId,
+          customerEmail,
+          customerName,
+          companyName
+        }
+      });
+
+      if (error) throw error;
+      return data?.success || false;
+    } catch (error) {
+      console.error('Error sending order tracking link:', error);
+      return false;
+    }
+  }
+
+  /**
    * Send custom email with template
    */
   static async sendCustomEmail(

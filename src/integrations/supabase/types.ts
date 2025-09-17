@@ -601,9 +601,12 @@ export type Database = {
           expires_at: string
           id: string
           metadata: Json | null
+          order_id: string | null
+          quote_id: string | null
           rfq_id: string
           supplier_email: string
           token: string
+          token_type: string | null
           used_at: string | null
         }
         Insert: {
@@ -611,9 +614,12 @@ export type Database = {
           expires_at: string
           id?: string
           metadata?: Json | null
+          order_id?: string | null
+          quote_id?: string | null
           rfq_id: string
           supplier_email: string
           token: string
+          token_type?: string | null
           used_at?: string | null
         }
         Update: {
@@ -621,9 +627,12 @@ export type Database = {
           expires_at?: string
           id?: string
           metadata?: Json | null
+          order_id?: string | null
+          quote_id?: string | null
           rfq_id?: string
           supplier_email?: string
           token?: string
+          token_type?: string | null
           used_at?: string | null
         }
         Relationships: []
@@ -1034,6 +1043,45 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_approvals: {
+        Row: {
+          approved_at: string
+          created_at: string
+          customer_email: string
+          customer_notes: string | null
+          decision: string
+          id: string
+          ip_address: unknown | null
+          quote_id: string
+          token: string
+          user_agent: string | null
+        }
+        Insert: {
+          approved_at?: string
+          created_at?: string
+          customer_email: string
+          customer_notes?: string | null
+          decision: string
+          id?: string
+          ip_address?: unknown | null
+          quote_id: string
+          token: string
+          user_agent?: string | null
+        }
+        Update: {
+          approved_at?: string
+          created_at?: string
+          customer_email?: string
+          customer_notes?: string | null
+          decision?: string
+          id?: string
+          ip_address?: unknown | null
+          quote_id?: string
+          token?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       quote_items: {
         Row: {
           created_at: string
@@ -1258,6 +1306,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           currency: string | null
+          customer_email: string | null
           customer_id: string | null
           description: string | null
           file_url: string | null
@@ -1278,6 +1327,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           currency?: string | null
+          customer_email?: string | null
           customer_id?: string | null
           description?: string | null
           file_url?: string | null
@@ -1298,6 +1348,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           currency?: string | null
+          customer_email?: string | null
           customer_id?: string | null
           description?: string | null
           file_url?: string | null
@@ -1789,6 +1840,10 @@ export type Database = {
         Returns: undefined
       }
       generate_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_secure_token: {
         Args: Record<PropertyKey, never>
         Returns: string
       }

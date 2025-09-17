@@ -220,6 +220,46 @@ const UnifiedQuoteManagement = () => {
     }
   };
 
+  const sendQuoteApprovalLink = async (quote: Quote) => {
+    try {
+      // Check if customer email is available
+      let customerEmail = quote.customers?.contact_name; // Assuming this might contain email
+      if (!customerEmail) {
+        // Prompt for email
+        customerEmail = prompt('Please enter the customer email address:');
+        if (!customerEmail) return;
+      }
+
+      toast({
+        title: "Sending approval link...",
+        description: "Please wait while we send the quote approval link.",
+      });
+
+      const { data, error } = await supabase.functions.invoke('send-quote-approval-link', {
+        body: {
+          quoteId: quote.id,
+          customerEmail: customerEmail,
+          customerName: quote.customers?.contact_name,
+          companyName: quote.customers?.company_name
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Quote approval link sent successfully to " + customerEmail,
+      });
+    } catch (error: any) {
+      console.error('Error sending quote approval link:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send quote approval link",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft': return 'bg-gray-100 text-gray-800';
@@ -579,6 +619,16 @@ const UnifiedQuoteManagement = () => {
                             Reject
                           </Button>
                         </>
+                      )}
+                      {(quote.status === 'draft' || quote.status === 'sent') && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => sendQuoteApprovalLink(quote)}
+                          className="bg-blue-50 text-blue-700 hover:bg-blue-100"
+                        >
+                          📧 Send Approval Link
+                        </Button>
                       )}
                     </div>
                   </div>

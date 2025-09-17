@@ -119,6 +119,48 @@ const OrdersManagement = () => {
     }
   };
 
+  const sendOrderTrackingLink = async (order: Order) => {
+    try {
+      // Check if customer email is available from the related quote
+      let customerEmail = null;
+      
+      // For now, we'll prompt for email since customer ID is not available in the current interface
+      // In a full implementation, you would fetch the customer data properly
+
+      // Prompt for email
+      customerEmail = prompt('Please enter the customer email address:');
+      if (!customerEmail) return;
+
+      toast({
+        title: "Sending tracking link...",
+        description: "Please wait while we send the order tracking link.",
+      });
+
+      const { data, error } = await supabase.functions.invoke('send-order-tracking-link', {
+        body: {
+          orderId: order.id,
+          customerEmail: customerEmail,
+          customerName: order.customers?.contact_name,
+          companyName: order.customers?.company_name
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Order tracking link sent successfully to " + customerEmail,
+      });
+    } catch (error: any) {
+      console.error('Error sending order tracking link:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send order tracking link",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -309,6 +351,14 @@ const OrdersManagement = () => {
                             Mark as Delivered
                           </Button>
                         )}
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => sendOrderTrackingLink(order)}
+                          className="bg-blue-50 text-blue-700 hover:bg-blue-100"
+                        >
+                          📧 Send Tracking Link
+                        </Button>
                       </div>
                     </div>
                   </div>
