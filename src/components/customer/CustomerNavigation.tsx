@@ -65,8 +65,16 @@ export const CustomerNavigation: React.FC = () => {
     }
   ];
 
-  const handleSignOut = async () => {
-    await signOut();
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log('🔄 Navigation sign out triggered');
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Sign out error in navigation:', error);
+      // Force redirect as fallback
+      window.location.href = '/';
+    }
   };
 
   const getInitials = (name?: string) => {

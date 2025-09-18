@@ -202,26 +202,41 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     console.log('🔄 Starting customer sign out process...');
     
     try {
+      // Clear profile state first
+      console.log('🔄 Clearing profile state...');
+      setProfile(null);
+      setUser(null);
+      setSession(null);
+      
       const { error } = await supabase.auth.signOut();
       console.log('✅ Supabase auth.signOut completed:', { error });
       
       if (!error) {
-        console.log('🔄 Clearing profile state...');
-        setProfile(null);
         toast({
           title: "Signed out",
           description: "You have been successfully signed out.",
         });
         console.log('✅ Customer sign out completed successfully');
-        // Redirect to home page after successful sign out using window.location
-        window.location.href = '/';
+        
+        // Force redirect to home page
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 100);
       } else {
         console.error('❌ Sign out error from Supabase:', error);
+        // Still redirect even if there was an error
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 100);
       }
       
       return { error };
     } catch (err) {
       console.error('❌ Exception during sign out:', err);
+      // Force redirect even on exception
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
       return { error: err };
     }
   };
