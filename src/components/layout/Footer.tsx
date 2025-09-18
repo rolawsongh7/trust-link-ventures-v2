@@ -40,7 +40,7 @@ const Footer = () => {
                 />
               </div>
               <div className="font-semibold">
-                <div className="text-lg font-bold text-blue-100">Trust Link</div>
+                <div className="text-lg font-bold text-blue-100">Trust Link Ventures</div>
                 
               </div>
             </div>
