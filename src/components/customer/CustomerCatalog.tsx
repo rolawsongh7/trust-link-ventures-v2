@@ -78,11 +78,30 @@ export const CustomerCatalog: React.FC = () => {
       }
 
       if (products) {
-        setProducts(products);
+        // Filter out products with packaging/carton images
+        const filteredProducts = products.filter(product => {
+          // Skip J. Marr products with packaging/carton images
+          if (product.supplier === 'J. Marr') {
+            const name = product.name.toLowerCase();
+            const imageUrl = product.image_public_url?.toLowerCase() || '';
+            
+            // Filter out products with packaging-related keywords
+            if (name.includes('carton') || 
+                name.includes('package') || 
+                name.includes('box') ||
+                imageUrl.includes('carton') ||
+                imageUrl.includes('package')) {
+              return false;
+            }
+          }
+          return true;
+        });
+
+        setProducts(filteredProducts);
         
         // Extract unique categories and suppliers
-        const uniqueCategories = [...new Set(products.map(p => p.category))];
-        const uniqueSuppliers = [...new Set(products.map(p => p.supplier))];
+        const uniqueCategories = [...new Set(filteredProducts.map(p => p.category))];
+        const uniqueSuppliers = [...new Set(filteredProducts.map(p => p.supplier))];
         
         setCategories(uniqueCategories);
         setSuppliers(uniqueSuppliers);

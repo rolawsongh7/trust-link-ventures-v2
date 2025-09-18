@@ -43,3 +43,6 @@ verify_jwt = false
 
 [functions.import-supplier-catalog]
 verify_jwt = false
+
+[functions.update-jmarr-product-images]
+verify_jwt = false
