@@ -28,7 +28,7 @@ const Footer = () => {
   return (
     <footer className="bg-blue-900 border-t border-blue-800 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -49,26 +49,6 @@ const Footer = () => {
             </p>
           </div>
 
-          {/* Quick Links */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-blue-100">Quick Links</h3>
-            <div className="space-y-2">
-              {[
-                { name: 'About', href: '/about' },
-                { name: 'Products', href: '/products' },
-                { name: 'Partners', href: '/partners' },
-                { name: 'Contact', href: '/contact' },
-              ].map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.href}
-                  className="block text-blue-200 hover:text-blue-100 transition-colors text-sm"
-                >
-                  {link.name}
-                </Link>
-              ))}
-            </div>
-          </div>
 
           {/* Contact Info */}
           <div className="space-y-4">
