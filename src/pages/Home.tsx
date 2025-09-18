@@ -96,7 +96,6 @@ const Home = () => {
 
   const stats = [
     { end: 99.8, suffix: '%', label: 'On-Time Delivery', icon: Target },
-    { end: 18, suffix: '', label: 'Months Zero Breaches', icon: Thermometer },
     { end: 24, suffix: '/7', label: 'Real-Time Tracking', icon: Clock },
   ];
 
