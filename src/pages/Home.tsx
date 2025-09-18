@@ -79,25 +79,12 @@ const Home = () => {
     subtitle: "Our precision logistics network ensures your goods arrive exactly when promised, every single time, anywhere in the world.",
     icon: Target,
     accent: "Precision delivery guaranteed"
-  }, {
-    title: <>
-          <span className="gradient-text">Zero</span> Temperature Breaches{' '}
-          in <span className="gradient-text">18 Months</span>
-        </>,
-    subtitle: "Advanced IoT monitoring and redundant cold chain systems maintain perfect temperature control from source to destination.",
-    icon: Thermometer,
-    accent: "Perfect temperature control"
   }];
   const stats = [{
     end: 99.8,
     suffix: '%',
     label: 'On-Time Delivery',
     icon: Target
-  }, {
-    end: 18,
-    suffix: '',
-    label: 'Months Zero Breaches',
-    icon: Thermometer
   }, {
     end: 24,
     suffix: '/7',
