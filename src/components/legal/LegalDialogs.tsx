@@ -76,7 +76,7 @@ export const TermsDialog = ({ trigger }: { trigger: React.ReactNode }) => (
 
       <section>
         <h3 className="font-semibold mb-2">9. Contact Information</h3>
-        <p>For questions about these terms, contact us at: <a href="mailto:legal@trustlinkventures.com" className="text-primary hover:underline">legal@trustlinkventures.com</a></p>
+        <p>For questions about these terms, contact us at: <a href="mailto:info@trustlinkventures.com" className="text-primary hover:underline">info@trustlinkventures.com</a></p>
       </section>
     </div>
   </LegalDialog>
@@ -124,7 +124,7 @@ export const PrivacyDialog = ({ trigger }: { trigger: React.ReactNode }) => (
 
       <section>
         <h3 className="font-semibold mb-2">8. Contact Us</h3>
-        <p>If you have questions about this Privacy Policy, please contact us at: <a href="mailto:privacy@trustlinkventures.com" className="text-primary hover:underline">privacy@trustlinkventures.com</a></p>
+        <p>If you have questions about this Privacy Policy, please contact us at: <a href="mailto:info@trustlinkventures.com" className="text-primary hover:underline">info@trustlinkventures.com</a></p>
       </section>
     </div>
   </LegalDialog>
