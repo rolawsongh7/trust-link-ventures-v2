@@ -70,10 +70,12 @@ const Products = () => {
 
   // Fetch products from database
   useEffect(() => {
+    console.log('🚀 Products useEffect triggered');
     fetchProducts();
   }, []);
 
   const fetchProducts = async () => {
+    console.log('🔄 Starting to fetch products...');
     try {
       const { data: products, error } = await supabase
         .from('supplier_products')
@@ -81,11 +83,16 @@ const Products = () => {
         .eq('is_active', true)
         .order('name');
 
+      console.log('📊 Products fetch result:', { products: products?.length, error });
+
       if (error) {
+        console.error('❌ Error fetching products:', error);
         throw error;
       }
 
       if (products) {
+        console.log(`✅ Fetched ${products.length} products from database`);
+        
         // Filter out products with packaging/carton images
         const filteredProducts = products.filter(product => {
           // Skip J. Marr products with packaging/carton images
@@ -99,22 +106,25 @@ const Products = () => {
                 name.includes('box') ||
                 imageUrl.includes('carton') ||
                 imageUrl.includes('package')) {
+              console.log(`🗑️ Filtering out packaging product: ${product.name}`);
               return false;
             }
           }
           return true;
         });
 
+        console.log(`✅ After filtering: ${filteredProducts.length} products remaining`);
         setProducts(filteredProducts);
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error('❌ Error fetching products:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to load products. Please try again.",
       });
     } finally {
+      console.log('🏁 Fetch products completed, setting loading to false');
       setLoading(false);
     }
   };
