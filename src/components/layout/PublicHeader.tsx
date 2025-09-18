@@ -27,7 +27,7 @@ export const PublicHeader = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
               <span className="text-2xl font-poppins font-bold gradient-text">
-                Trust Link Ventures
+                Trust Link<br />Ventures
               </span>
             </Link>
           </div>
