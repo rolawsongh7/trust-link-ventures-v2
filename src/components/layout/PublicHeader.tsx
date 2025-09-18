@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { LogIn, Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import trustLinkLogo from '@/assets/trust-link-logo.png';
 
 export const PublicHeader = () => {
   const { user } = useAuth();
@@ -25,7 +26,12 @@ export const PublicHeader = () => {
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Top">
         <div className="flex w-full items-center justify-between border-b border-border py-6 lg:border-none">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center">
+            <Link to="/" className="flex items-center space-x-3">
+              <img 
+                src={trustLinkLogo} 
+                alt="Trust Link Ventures Logo" 
+                className="h-12 w-12 object-contain"
+              />
               <span className="text-2xl font-poppins font-bold gradient-text">
                 Trust Link<br />Ventures
               </span>
