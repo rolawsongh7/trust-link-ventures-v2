@@ -30,7 +30,7 @@ export const PublicHeader = () => {
               <img 
                 src={trustLinkLogo} 
                 alt="Trust Link Ventures Logo" 
-                className="h-12 w-12 object-contain"
+                className="h-16 w-16 object-contain"
               />
               <span className="text-2xl font-poppins font-bold gradient-text">
                 Trust Link<br />Ventures
