@@ -28,43 +28,7 @@ const Footer = () => {
   return (
     <footer className="bg-blue-900 border-t border-blue-800 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Newsletter Section - Compact */}
-        <div className="bg-blue-800/40 rounded-lg p-6 mb-8">
-          <div className="text-center max-w-xl mx-auto">
-            <h3 className="text-lg font-semibold text-blue-100 mb-2">
-              Stay Connected
-            </h3>
-            <p className="text-blue-200 text-sm mb-4">
-              Get updates on our premium seafood products and export opportunities.
-            </p>
-            
-            {isSubscribed ? (
-              <div className="text-center py-2">
-                <p className="text-blue-100 font-medium text-sm">✅ Thank you for subscribing!</p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubscribe} className="flex gap-2 max-w-sm mx-auto">
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="flex-1 bg-blue-800/30 border-blue-700 text-blue-100 placeholder:text-blue-300 text-sm h-9"
-                />
-                <Button 
-                  type="submit"
-                  size="sm"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 font-medium"
-                >
-                  Subscribe
-                </Button>
-              </form>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -107,7 +71,7 @@ const Footer = () => {
           </div>
 
           {/* Contact Info */}
-          <div className="space-y-4 text-right">
+          <div className="space-y-4">
             <h3 className="font-semibold text-blue-100">Contact</h3>
             <div className="space-y-3">
               <div className="text-sm">
@@ -126,6 +90,38 @@ const Footer = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Stay Connected */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-blue-100">Stay Connected</h3>
+            <p className="text-blue-200 text-xs mb-3">
+              Get updates on premium products.
+            </p>
+            
+            {isSubscribed ? (
+              <div className="py-1">
+                <p className="text-blue-100 font-medium text-xs">✅ Thank you for subscribing!</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubscribe} className="space-y-2">
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="bg-blue-800/30 border-blue-700 text-blue-100 placeholder:text-blue-300 text-xs h-8"
+                />
+                <Button 
+                  type="submit"
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground w-full h-8 text-xs font-medium"
+                >
+                  Subscribe
+                </Button>
+              </form>
+            )}
           </div>
         </div>
 
