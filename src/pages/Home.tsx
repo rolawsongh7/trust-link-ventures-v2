@@ -284,7 +284,7 @@ const Home = () => {
             {/* Enhanced Stats Card with World-Class Metrics */}
             <div className="animate-fade-in-right">
               <Card className="p-8 bg-white/30 backdrop-blur-sm border border-white/20 shadow-2xl">
-                <CardContent className="p-0">
+                <CardContent className="p-0 mt-4">
                   {/* Header */}
                   <div className="text-center mb-8">
                     <h3 className="text-2xl font-poppins font-bold gradient-text mb-2">
