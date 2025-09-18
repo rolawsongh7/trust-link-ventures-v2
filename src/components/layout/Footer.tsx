@@ -34,7 +34,7 @@ const Footer = () => {
             <div className="flex items-center space-x-2">
               <div className="w-10 h-10 rounded-lg overflow-hidden bg-background/20 p-1">
                 <img 
-                  src="/lovable-uploads/22e4a71a-b0c3-4abd-8f53-268d55d324df.png" 
+                  src="/src/assets/trust-link-logo.png" 
                   alt="Trust Link Company Logo" 
                   className="w-full h-full object-contain bg-white rounded-md"
                 />
