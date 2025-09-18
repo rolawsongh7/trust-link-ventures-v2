@@ -107,7 +107,7 @@ const Footer = () => {
           </div>
 
           {/* Contact Info */}
-          <div className="space-y-4">
+          <div className="space-y-4 text-right">
             <h3 className="font-semibold text-blue-100">Contact</h3>
             <div className="space-y-3">
               <div className="text-sm">
