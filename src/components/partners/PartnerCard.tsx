@@ -48,10 +48,10 @@ const PartnerCard: React.FC<PartnerCardProps> = ({ partner, index }) => {
       }`}
       style={{ transitionDelay: `${index * 100}ms` }}
     >
-      <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group">
-        <CardHeader className="pb-4">
+      <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group hover:border-primary/30 touch-manipulation">
+        <CardHeader className="pb-3 p-4 md:p-6">
           {/* Partner Logo */}
-          <div className="flex items-center justify-center mb-4 h-16 overflow-hidden">
+          <div className="flex items-center justify-center mb-4 h-12 sm:h-16 overflow-hidden">
             <img 
               src={partner.logo}
               alt={`${partner.name} logo`}
@@ -63,35 +63,35 @@ const PartnerCard: React.FC<PartnerCardProps> = ({ partner, index }) => {
             />
           </div>
           
-          <div className="flex items-center justify-between mb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span className="text-2xl" role="img" aria-label={`${partner.location} flag`}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 space-y-2 sm:space-y-0">
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2 line-clamp-2">
+              <span className="text-xl sm:text-2xl flex-shrink-0" role="img" aria-label={`${partner.location} flag`}>
                 {getCountryFlag(partner.location)}
               </span>
-              {partner.name}
+              <span className="min-w-0">{partner.name}</span>
             </CardTitle>
-            <Badge variant="outline" className="flex items-center space-x-1">
+            <Badge variant="outline" className="flex items-center space-x-1 w-fit">
               <span className="text-xs">{partner.location}</span>
             </Badge>
           </div>
-          <CardDescription className="text-sm line-clamp-3">
+          <CardDescription className="text-xs sm:text-sm line-clamp-3 leading-relaxed">
             {partner.description}
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="space-y-4 pt-0">
+        <CardContent className="space-y-4 pt-0 p-4 md:p-6">
           <div>
-            <h4 className="font-semibold text-sm mb-2">Specialties</h4>
+            <h4 className="font-semibold text-xs sm:text-sm mb-2">Specialties</h4>
             <div className="flex flex-wrap gap-1">
               {partner.specialties.map((specialty, idx) => (
-                <Badge key={idx} variant="secondary" className="text-xs">
+                <Badge key={idx} variant="secondary" className="text-xs px-2 py-1">
                   {specialty}
                 </Badge>
               ))}
             </div>
           </div>
           
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-xs sm:text-sm">
             <span className="text-muted-foreground">Est. {partner.established}</span>
             {partner.reach && (
               <span className="text-primary font-medium">{partner.reach}</span>
@@ -103,10 +103,11 @@ const PartnerCard: React.FC<PartnerCardProps> = ({ partner, index }) => {
               variant="outline" 
               size="sm" 
               asChild 
-              className="w-full group-hover:border-primary group-hover:text-primary transition-colors"
+              className="w-full h-10 sm:h-11 group-hover:border-primary group-hover:text-primary transition-colors touch-manipulation"
             >
               <a href={partner.website} target="_blank" rel="noopener noreferrer">
-                Visit Website <ExternalLink className="ml-2 h-3 w-3" />
+                <span className="text-xs sm:text-sm">Visit Website</span>
+                <ExternalLink className="ml-2 h-3 w-3" />
               </a>
             </Button>
           )}

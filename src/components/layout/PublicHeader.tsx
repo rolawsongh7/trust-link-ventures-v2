@@ -22,29 +22,29 @@ export const PublicHeader = () => {
   ];
 
   return (
-    <header className="bg-background border-b border-border">
+    <header className="bg-background border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-background/90">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Top">
-        <div className="flex w-full items-center justify-between border-b border-border py-6 lg:border-none">
+        <div className="flex w-full items-center justify-between border-b border-border py-4 md:py-6 lg:border-none">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-3">
+            <Link to="/" className="flex items-center space-x-2 md:space-x-3 touch-manipulation">
               <img 
                 src={trustLinkLogo} 
                 alt="Trust Link Ventures Logo" 
-                className="h-16 w-16 object-contain"
+                className="h-12 w-12 md:h-16 md:w-16 object-contain"
               />
-              <span className="text-2xl font-poppins font-bold gradient-text">
+              <span className="text-lg md:text-2xl font-poppins font-bold gradient-text leading-tight">
                 Trust Link<br />Ventures
               </span>
             </Link>
           </div>
           
           {/* Desktop Navigation */}
-          <div className="ml-10 hidden space-x-8 lg:block">
+          <div className="ml-10 hidden space-x-6 xl:space-x-8 lg:block">
             {navigation.map((link) => (
               <Link
                 key={link.name}
                 to={link.href}
-                className="text-base font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm xl:text-base font-medium text-muted-foreground hover:text-foreground transition-colors py-2 px-1 rounded-md hover:bg-muted/50"
               >
                 {link.name}
               </Link>
@@ -52,11 +52,12 @@ export const PublicHeader = () => {
           </div>
           
           {/* Auth Actions */}
-          <div className="ml-6 flex items-center space-x-4">
-            <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+          <div className="ml-4 md:ml-6 flex items-center space-x-2 md:space-x-4">
+            <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hidden sm:flex touch-manipulation">
               <Link to="/login">
                 <LogIn className="h-4 w-4 mr-2" />
-                Sign In
+                <span className="hidden md:inline">Sign In</span>
+                <span className="md:hidden">Login</span>
               </Link>
             </Button>
             
@@ -66,11 +67,13 @@ export const PublicHeader = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 touch-manipulation"
+                aria-label="Toggle mobile menu"
               >
                 {mobileMenuOpen ? (
-                  <X className="h-6 w-6" />
+                  <X className="h-5 w-5 md:h-6 md:w-6" />
                 ) : (
-                  <Menu className="h-6 w-6" />
+                  <Menu className="h-5 w-5 md:h-6 md:w-6" />
                 )}
               </Button>
             </div>
@@ -79,18 +82,25 @@ export const PublicHeader = () => {
         
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="lg:hidden">
-            <div className="space-y-1 pb-3 pt-2">
+          <div className="lg:hidden animate-fade-in">
+            <div className="space-y-1 pb-4 pt-2">
               {navigation.map((link) => (
                 <Link
                   key={link.name}
                   to={link.href}
-                  className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="block px-3 py-3 text-base font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted/50 touch-manipulation"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.name}
                 </Link>
               ))}
+              <Link
+                to="/login"
+                className="block px-3 py-3 text-base font-medium text-primary hover:text-primary/80 transition-colors rounded-md hover:bg-muted/50 touch-manipulation sm:hidden"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Sign In
+              </Link>
             </div>
           </div>
         )}

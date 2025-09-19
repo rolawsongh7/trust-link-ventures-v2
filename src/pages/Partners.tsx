@@ -128,7 +128,7 @@ const Partners = () => {
         {/* Hero Section */}
         <section 
           ref={heroRef as React.RefObject<HTMLElement>} 
-          className="relative min-h-[80vh] flex items-center justify-center overflow-hidden"
+          className="relative min-h-[70vh] md:min-h-[80vh] flex items-center justify-center overflow-hidden"
         >
           {/* Background Image */}
           <div 
@@ -146,77 +146,76 @@ const Partners = () => {
             <div className={`transform transition-all duration-1000 ${
               heroVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
             }`}>
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 text-white">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 md:mb-6 text-white leading-tight">
                 Our Global <span className="text-primary">Partners</span>
               </h1>
-              <p className="text-xl sm:text-2xl text-white/90 max-w-4xl mx-auto mb-12 leading-relaxed">
+              <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-4xl mx-auto mb-8 md:mb-12 leading-relaxed px-4">
                 Building strong partnerships across continents to deliver premium frozen products 
                 with excellence, reliability, and innovation at every step of the supply chain.
               </p>
             </div>
             
             {/* Feature Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-12">
-              <div className="flex items-center justify-center space-x-3 p-6 rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
-                <Globe className="h-8 w-8 text-white" />
-                <span className="text-lg font-semibold text-white">6 Continents</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mt-8 md:mt-12 max-w-4xl mx-auto">
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3 p-4 md:p-6 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all duration-300 touch-manipulation">
+                <Globe className="h-6 w-6 md:h-8 md:w-8 text-white flex-shrink-0" />
+                <span className="text-base md:text-lg font-semibold text-white text-center sm:text-left">6 Continents</span>
               </div>
-              <div className="flex items-center justify-center space-x-3 p-6 rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
-                <Users className="h-8 w-8 text-white" />
-                <span className="text-lg font-semibold text-white">Trusted Network</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3 p-4 md:p-6 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all duration-300 touch-manipulation">
+                <Users className="h-6 w-6 md:h-8 md:w-8 text-white flex-shrink-0" />
+                <span className="text-base md:text-lg font-semibold text-white text-center sm:text-left">Trusted Network</span>
               </div>
-              <div className="flex items-center justify-center space-x-3 p-6 rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
-                <Shield className="h-8 w-8 text-white" />
-                <span className="text-lg font-semibold text-white">Quality Assured</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3 p-4 md:p-6 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all duration-300 touch-manipulation">
+                <Shield className="h-6 w-6 md:h-8 md:w-8 text-white flex-shrink-0" />
+                <span className="text-base md:text-lg font-semibold text-white text-center sm:text-left">Quality Assured</span>
               </div>
             </div>
           </div>
         </section>
 
         {/* White space after hero */}
-        <div className="py-12 bg-background"></div>
+        <div className="py-8 md:py-12 bg-background"></div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Strategic Partner Section */}
-          <section className="mb-20">
-            <div className="text-center mb-16">
+          <section className="mb-16 md:mb-20">
+            <div className="text-center mb-12 md:mb-16">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
                 Our Strategic Partner
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
                 Partnering with industry leaders to ensure seamless global distribution and premium quality delivery.
               </p>
             </div>
 
-            <Card className="border-primary/20 hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center justify-between mb-4">
-                  <CardTitle className="text-xl sm:text-2xl text-primary">{strategicPartner.name}</CardTitle>
-                  <Badge variant="secondary" className="flex items-center space-x-1">
+            <Card className="border-primary/20 hover:shadow-lg transition-all duration-300 hover:border-primary/30">
+              <CardHeader className="p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
+                  <CardTitle className="text-lg sm:text-xl md:text-2xl text-primary">{strategicPartner.name}</CardTitle>
+                  <Badge variant="secondary" className="flex items-center space-x-1 w-fit">
                     <MapPin className="h-3 w-3" />
-                    <span>{strategicPartner.location}</span>
+                    <span className="text-xs md:text-sm">{strategicPartner.location}</span>
                   </Badge>
                 </div>
-                <CardDescription className="text-base">
+                <CardDescription className="text-sm md:text-base leading-relaxed">
                   {strategicPartner.description}
                 </CardDescription>
               </CardHeader>
               
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 p-4 md:p-6 pt-0">
                 <div>
-                  <h4 className="font-semibold mb-3">Key Services</h4>
-                  <ul className="space-y-2">
+                  <h4 className="font-semibold mb-3 text-sm md:text-base">Key Services</h4>
+                  <ul className="space-y-3">
                     {strategicPartner.services.map((service, index) => (
-                      <li key={index} className="flex items-center space-x-2">
-                        <div className="h-1.5 w-1.5 bg-primary rounded-full flex-shrink-0"></div>
-                        <span className="text-sm text-muted-foreground">{service}</span>
+                      <li key={index} className="flex items-start space-x-3">
+                        <div className="h-1.5 w-1.5 bg-primary rounded-full flex-shrink-0 mt-2"></div>
+                        <span className="text-xs md:text-sm text-muted-foreground leading-relaxed">{service}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
                 
-                
-                <Button asChild className="w-full">
+                <Button asChild className="w-full h-12 touch-manipulation">
                   <a href={strategicPartner.website} target="_blank" rel="noopener noreferrer">
                     Visit Website <ExternalLink className="ml-2 h-4 w-4" />
                   </a>
@@ -226,12 +225,12 @@ const Partners = () => {
           </section>
 
           {/* Global Partners Section */}
-          <section ref={partnersRef as React.RefObject<HTMLElement>} className="mb-20">
-            <div className="text-center mb-16">
+          <section ref={partnersRef as React.RefObject<HTMLElement>} className="mb-16 md:mb-20">
+            <div className="text-center mb-12 md:mb-16">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
                 Our Trusted Suppliers
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-8 px-4 leading-relaxed">
                 A carefully curated network of premium suppliers from around the world, 
                 ensuring consistent quality and reliable supply chains.
               </p>
@@ -246,49 +245,49 @@ const Partners = () => {
           </section>
 
           {/* Supply Chain Excellence */}
-          <section>
+          <section className="pb-8 md:pb-12">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-              <div>
+              <div className="order-2 lg:order-1">
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6">
                   Supply Chain Excellence
                 </h2>
-                <p className="text-lg text-muted-foreground mb-8">
+                <p className="text-base md:text-lg text-muted-foreground mb-8 leading-relaxed">
                   Our global partner network ensures seamless logistics, quality control, 
                   and timely delivery across international markets.
                 </p>
                 
                 <div className="space-y-6">
-                  <div className="flex items-start space-x-4">
+                  <div className="flex items-start space-x-4 p-4 rounded-lg hover:bg-muted/50 transition-colors duration-300">
                     <div className="bg-primary/10 p-3 rounded-lg flex-shrink-0">
-                      <Truck className="h-6 w-6 text-primary" />
+                      <Truck className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-2">Global Logistics Network</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <h3 className="font-semibold mb-2 text-sm md:text-base">Global Logistics Network</h3>
+                      <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
                         Efficient transportation and distribution systems spanning multiple continents.
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex items-start space-x-4">
+                  <div className="flex items-start space-x-4 p-4 rounded-lg hover:bg-muted/50 transition-colors duration-300">
                     <div className="bg-primary/10 p-3 rounded-lg flex-shrink-0">
-                      <Shield className="h-6 w-6 text-primary" />
+                      <Shield className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-2">Quality Assurance</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <h3 className="font-semibold mb-2 text-sm md:text-base">Quality Assurance</h3>
+                      <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
                         Rigorous quality control standards maintained across all partner facilities.
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex items-start space-x-4">
+                  <div className="flex items-start space-x-4 p-4 rounded-lg hover:bg-muted/50 transition-colors duration-300">
                     <div className="bg-primary/10 p-3 rounded-lg flex-shrink-0">
-                      <Globe className="h-6 w-6 text-primary" />
+                      <Globe className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-2">Market Expertise</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <h3 className="font-semibold mb-2 text-sm md:text-base">Market Expertise</h3>
+                      <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
                         Deep understanding of local markets and regulatory requirements worldwide.
                       </p>
                     </div>
@@ -296,17 +295,17 @@ const Partners = () => {
                 </div>
               </div>
               
-              <div className="relative overflow-hidden rounded-lg">
+              <div className="relative overflow-hidden rounded-lg order-1 lg:order-2">
                 <img 
                   src={portFleetAerial} 
                   alt="Aerial view of cargo ships docking at commercial port"
-                  className="w-full h-64 sm:h-80 object-cover"
+                  className="w-full h-48 sm:h-64 md:h-80 object-cover hover:scale-105 transition-transform duration-700"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-                  <div className="p-6 text-white">
-                    <h3 className="text-xl sm:text-2xl font-bold mb-2">Global Supply Chain</h3>
-                    <p className="text-white/90 text-sm sm:text-base">
+                  <div className="p-4 md:p-6 text-white">
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">Global Supply Chain</h3>
+                    <p className="text-white/90 text-xs sm:text-sm md:text-base leading-relaxed">
                       Strategic port operations ensuring seamless global distribution
                     </p>
                   </div>
