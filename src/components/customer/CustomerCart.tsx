@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 
 
 export const CustomerCart: React.FC = () => {
-  const { items, totalItems, updateQuantity, removeItem, clearCart } = useShoppingCart();
+  const { items, totalItems, updateQuantity, removeItem, clearCart, loading } = useShoppingCart();
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -105,6 +105,14 @@ export const CustomerCart: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (

@@ -137,6 +137,48 @@ export type Database = {
         }
         Relationships: []
       }
+      cart_items: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          preferred_grade: string | null
+          product_description: string | null
+          product_name: string
+          quantity: number
+          specifications: string | null
+          unit: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          preferred_grade?: string | null
+          product_description?: string | null
+          product_name: string
+          quantity?: number
+          specifications?: string | null
+          unit: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          preferred_grade?: string | null
+          product_description?: string | null
+          product_name?: string
+          quantity?: number
+          specifications?: string | null
+          unit?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       communications: {
         Row: {
           communication_date: string
