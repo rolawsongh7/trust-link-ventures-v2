@@ -15,6 +15,7 @@ import { FloatingCart } from '@/components/products/FloatingCart';
 import { CartModal } from '@/components/products/CartModal';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { categorySlides } from '@/data/categorySlides';
+import ProductCard from '@/components/products/ProductCard';
 
 // SEAPRO SAS Product Images - using public folder paths
 import seafoodHeroImg from '@/assets/seafood-hero.jpg';
@@ -564,106 +565,16 @@ const Products = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredProducts.map((product, index) => (
-              <Card 
-                key={product.id} 
-                className="group overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                {/* Product Image */}
-                <div className="relative h-64 overflow-hidden">
-                  {product.image_public_url ? (
-                    <img 
-                      src={product.image_public_url} 
-                      alt={product.name} 
-                      className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
-                      onError={(e) => {
-                        console.error(`Failed to load image: ${product.image_public_url} for product: ${product.name}`);
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.parentElement?.classList.add('bg-gradient-to-br', 'from-primary/20', 'to-primary/10', 'flex', 'items-center', 'justify-center');
-                        if (e.currentTarget.parentElement) {
-                          e.currentTarget.parentElement.innerHTML = `<span class="text-6xl">🐟</span>`;
-                        }
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                      <span className="text-6xl">🐟</span>
-                    </div>
-                  )}
-                  
-                  {/* Category Badge */}
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
-                      {product.category === 'Seafood' ? 'Farm Fresh' : 'Premium Grade'}
-                    </span>
-                  </div>
-                  
-                  {/* Product ID Badge */}
-                  <div className="absolute top-4 right-4">
-                    <span className="bg-black/50 text-white px-2 py-1 rounded text-xs font-mono">
-                      {product.id}
-                    </span>
-                  </div>
+                <div
+                  key={product.id}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                  className="animate-fade-in"
+                >
+                  <ProductCard
+                    product={product}
+                    onRequestQuote={handleQuoteRequest}
+                  />
                 </div>
-
-                {/* Product Info */}
-                <CardContent className="p-6">
-                  <div className="mb-3">
-                    <h3 className="text-xl font-poppins font-bold mb-1">{product.name}</h3>
-                    <p className="text-primary text-sm font-medium">{product.category}</p>
-                  </div>
-                  
-                  <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-3">
-                    {product.description}
-                  </p>
-
-                  {/* Product Details */}
-                  <div className="space-y-3 mb-6">
-                    <div>
-                      <h4 className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-1">Supplier</h4>
-                      <p className="text-sm">{product.supplier}</p>
-                    </div>
-                    
-                    {product.brand && (
-                      <div>
-                        <h4 className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-1">Brand</h4>
-                        <div className="flex flex-wrap gap-1">
-                          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                            {product.brand}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-col gap-2">
-                    <div className="text-center py-2">
-                      <span className="text-muted-foreground text-sm">Contact for Pricing</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button 
-                        onClick={() => handleQuoteRequest(product)}
-                        variant="outline"
-                        className="w-full"
-                      >
-                        Quick Quote
-                      </Button>
-                      <AddToCartButton
-                        productName={product.name}
-                        productDescription={product.description}
-                        imageUrl={product.image_public_url}
-                        data-product-name={product.name}
-                      />
-                    </div>
-                    <div className="mt-2">
-                      <p className="text-xs text-muted-foreground text-center">
-                        💡 Add multiple items to cart for bulk quotes
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
               ))}
             </div>
           )}
