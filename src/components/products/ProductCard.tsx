@@ -79,16 +79,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onRequestQuote }) =>
   const cleanDescription = (description?: string) => {
     if (!description) return '';
     
+    // Debug: Log the original description
+    console.log('Original description:', description);
+    
     // Remove unwanted elements from scraped content
-    return description
+    const cleaned = description
       .replace(/\[Back to top\]/gi, '') // Remove "[Back to top]" text
       .replace(/\(https?:\/\/[^\s)]+\)/g, '') // Remove URLs in parentheses
       .replace(/https?:\/\/[^\s]+/g, '') // Remove standalone URLs
       .replace(/\\"[^"]*\\"/g, '') // Remove quoted strings that might be navigation
       .replace(/Menu$/gi, '') // Remove "Menu" at the end
       .replace(/back to top/gi, '') // Remove variations of back to top
+      .replace(/menu/gi, '') // Remove "menu" variations
       .replace(/\s{2,}/g, ' ') // Replace multiple spaces with single space
       .trim(); // Remove leading/trailing whitespace
+    
+    // Debug: Log the cleaned description  
+    console.log('Cleaned description:', cleaned);
+    
+    return cleaned;
   };
 
   const getKeyFeatures = () => {
