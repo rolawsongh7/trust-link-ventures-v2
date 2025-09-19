@@ -3,6 +3,8 @@ import { X, Trash2, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
+import { CustomerAuthModal } from '@/components/customer/CustomerAuthModal';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useNavigate } from 'react-router-dom';
 
 interface CartModalProps {
@@ -12,11 +14,25 @@ interface CartModalProps {
 
 export const CartModal: React.FC<CartModalProps> = ({ open, onOpenChange }) => {
   const { items, totalItems, updateQuantity, removeItem, clearCart } = useShoppingCart();
+  const { user } = useCustomerAuth();
   const navigate = useNavigate();
+  const [showAuthModal, setShowAuthModal] = React.useState(false);
 
   const handleSignInToQuote = () => {
+    if (user) {
+      // User is already authenticated, redirect to customer cart
+      onOpenChange(false);
+      navigate('/customer/cart');
+    } else {
+      // User needs to authenticate
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
     onOpenChange(false);
-    navigate('/customer-auth');
+    navigate('/customer/cart');
   };
 
   const handleClearCart = () => {
@@ -141,6 +157,13 @@ export const CartModal: React.FC<CartModalProps> = ({ open, onOpenChange }) => {
           )}
         </div>
       </DialogContent>
+
+      {/* Customer Auth Modal */}
+      <CustomerAuthModal 
+        open={showAuthModal}
+        onOpenChange={setShowAuthModal}
+        onSuccess={handleAuthSuccess}
+      />
     </Dialog>
   );
 };
