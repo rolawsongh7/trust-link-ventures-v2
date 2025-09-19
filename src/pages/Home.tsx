@@ -241,9 +241,9 @@ const Home = () => {
             </div>
 
             {/* Enhanced Stats Card with World-Class Metrics */}
-            <div className="animate-fade-in-right px-[27px] my-[2px] py-px mx-[120px]">
-              <Card className="p-4 bg-white/30 backdrop-blur-sm border border-white/20 shadow-2xl max-w-md mx-auto">
-                <CardContent className="p-0">
+            <div className="flex justify-center items-center animate-fade-in-right">
+              <Card className="bg-surface/80 backdrop-blur-sm border border-border/50 shadow-lg rounded-3xl max-w-md w-full">
+                <CardContent className="p-8">
                   {/* Header */}
                   <div className="text-center mb-8">
                     <h3 className="text-2xl font-poppins font-bold gradient-text mb-2">
