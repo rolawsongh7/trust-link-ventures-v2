@@ -76,6 +76,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onRequestQuote }) =>
     return 'Quality Product';
   };
 
+  const cleanDescription = (description?: string) => {
+    if (!description) return '';
+    
+    // Remove unwanted elements from scraped content
+    return description
+      .replace(/\[Back to top\]/gi, '') // Remove "[Back to top]" text
+      .replace(/\(https?:\/\/[^\s)]+\)/g, '') // Remove URLs in parentheses
+      .replace(/https?:\/\/[^\s]+/g, '') // Remove standalone URLs
+      .replace(/\\"[^"]*\\"/g, '') // Remove quoted strings that might be navigation
+      .replace(/Menu$/gi, '') // Remove "Menu" at the end
+      .replace(/back to top/gi, '') // Remove variations of back to top
+      .replace(/\s{2,}/g, ' ') // Replace multiple spaces with single space
+      .trim(); // Remove leading/trailing whitespace
+  };
+
   const getKeyFeatures = () => {
     if (product.category === 'Seafood') {
       return [
@@ -153,7 +168,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onRequestQuote }) =>
 
         {/* Product Description */}
         <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
-          {product.description || `Premium ${product.name.toLowerCase()} from ${product.supplier}. Export-quality product with firm texture and excellent flavor. Shore frozen to preserve freshness. Excellent for various culinary preparations.`}
+          {cleanDescription(product.description) || `Premium ${product.name.toLowerCase()} from ${product.supplier}. Export-quality product with firm texture and excellent flavor. Shore frozen to preserve freshness. Excellent for various culinary preparations.`}
         </p>
 
         {/* Expanded Content */}
