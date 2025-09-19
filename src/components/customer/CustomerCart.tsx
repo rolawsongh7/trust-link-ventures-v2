@@ -100,8 +100,8 @@ export const CustomerCart: React.FC = () => {
       setMessage('');
       
       toast({
-        title: "Quote Request Submitted Successfully!",
-        description: "Your quote request has been submitted and your cart has been cleared. We'll get back to you soon!",
+        title: "🎉 Quote Request Submitted Successfully!",
+        description: "Great! Your quote request has been received and is being processed. We'll send you a detailed quote soon. Your cart has been cleared for your next order.",
       });
 
     } catch (error) {
