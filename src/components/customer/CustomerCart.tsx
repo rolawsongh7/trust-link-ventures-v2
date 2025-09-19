@@ -34,6 +34,16 @@ export const CustomerCart: React.FC = () => {
       return;
     }
 
+    // Check for required profile fields
+    if (!profile.company_name || !profile.full_name) {
+      toast({
+        variant: "destructive",
+        title: "Incomplete Profile",
+        description: "Please complete your company name and full name in your profile before submitting a quote request.",
+      });
+      return;
+    }
+
     if (items.length === 0) {
       toast({
         variant: "destructive",
@@ -86,12 +96,12 @@ export const CustomerCart: React.FC = () => {
       if (itemsError) throw itemsError;
 
       // Clear cart and show success
-      clearCart();
+      await clearCart();
       setMessage('');
       
       toast({
-        title: "Quote Request Submitted",
-        description: "Your quote request has been submitted successfully. We'll get back to you soon!",
+        title: "Quote Request Submitted Successfully!",
+        description: "Your quote request has been submitted and your cart has been cleared. We'll get back to you soon!",
       });
 
     } catch (error) {
