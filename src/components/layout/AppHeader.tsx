@@ -24,7 +24,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
   const location = useLocation();
   const navigate = useNavigate();
 
-  const ADMIN_EMAIL = 'trustlinkventureslimitedghana@gmail.com';
+  const ADMIN_EMAIL = 'trustlventuresghana_a01@yahoo.com';
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   const handleSignOut = async () => {
@@ -45,7 +45,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
   // Use admin email prefix for display name  
   const getDisplayName = () => {
     if (isAdmin) {
-      return 'trustlinkventureslimitedghana';
+      return 'Admin';
     }
     return user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
   };

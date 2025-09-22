@@ -47,7 +47,7 @@ export const AppLayout = () => {
               <Outlet />
             </main>
             
-            {!isCRMPage && <Footer />}
+            {/* Remove footer from admin portal */}
           </div>
         </SidebarInset>
         
