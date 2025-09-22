@@ -69,10 +69,48 @@ const Products = () => {
     { name: 'Other Meat', icon: Beef }
   ];
 
-  // Fetch products from database
+  // Import JAB Brothers seafood on component mount
   useEffect(() => {
     console.log('🚀 Products useEffect triggered');
+    
+    // Check if JAB Brothers seafood products exist
+    const checkAndImportJabProducts = async () => {
+      try {
+        const { data: existingJabProducts } = await supabase
+          .from('supplier_products')
+          .select('id')
+          .eq('supplier', 'JAB Brothers')
+          .eq('category', 'Seafood')
+          .limit(1);
+
+        if (!existingJabProducts || existingJabProducts.length === 0) {
+          console.log('No JAB Brothers seafood found, importing...');
+          
+          const { data, error } = await supabase.functions.invoke('import-supplier-catalog', {
+            body: {
+              supplier: 'JAB Brothers',
+              category: 'Seafood',
+              url: 'https://www.jab-bros.com.ar/seafood',
+              download: true,
+              clearExisting: false
+            }
+          });
+
+          if (error) {
+            console.error('Import error:', error);
+          } else {
+            console.log('JAB Brothers seafood imported successfully:', data);
+            // Refresh products after import
+            setTimeout(() => fetchProducts(), 2000);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking/importing JAB products:', error);
+      }
+    };
+
     fetchProducts();
+    checkAndImportJabProducts();
   }, []);
 
   const fetchProducts = async () => {
