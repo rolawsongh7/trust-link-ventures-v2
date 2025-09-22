@@ -194,9 +194,8 @@ Deno.serve(async (req) => {
     const firecrawl = new FirecrawlApp({ apiKey: firecrawlKey });
 
     // Crawl the page
-    const crawlRes: any = await firecrawl.crawlUrl(url, {
-      limit: 200,
-      scrapeOptions: { formats: ["markdown", "html"] },
+    const crawlRes: any = await firecrawl.scrapeUrl(url, {
+      formats: ["markdown", "html"]
     });
 
     if (!crawlRes?.success) {
@@ -206,12 +205,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    const md = typeof crawlRes?.data?.[0]?.markdown === "string"
-      ? crawlRes.data.map((p: any) => p.markdown).join("\n\n")
+    const md = typeof crawlRes?.data?.markdown === "string"
+      ? crawlRes.data.markdown
       : JSON.stringify(crawlRes.data);
 
-    const html = typeof crawlRes?.data?.[0]?.html === "string"
-      ? crawlRes.data.map((p: any) => p.html).join("\n\n")
+    const html = typeof crawlRes?.data?.html === "string"
+      ? crawlRes.data.html
       : "";
 
     const parsedMd = parseProductsGenericFromMarkdown(md);
