@@ -81,17 +81,18 @@ const Products = () => {
           .from('supplier_products')
           .select('id')
           .eq('supplier', 'JAB Brothers')
-          .eq('category', 'Seafood')
           .limit(1);
 
         if (!existingJabProducts || existingJabProducts.length === 0) {
-          console.log('No JAB Brothers seafood found, importing...');
+          console.log('No JAB Brothers products found, importing...');
           
           const result = await addJabSeafoodProducts();
-          console.log('JAB Brothers seafood imported successfully:', result);
+          console.log('JAB Brothers products imported successfully:', result);
           
           // Refresh products after import
           setTimeout(() => fetchProducts(), 1000);
+        } else {
+          console.log('JAB Brothers products already exist:', existingJabProducts.length);
         }
       } catch (error) {
         console.error('Error checking/importing JAB products:', error);
