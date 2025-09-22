@@ -45,6 +45,7 @@ const CommunicationsManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCommunication, setEditingCommunication] = useState<Communication | null>(null);
+  const [replyingToCommunication, setReplyingToCommunication] = useState<Communication | null>(null);
   const { toast } = useToast();
 
   const form = useForm({
@@ -189,20 +190,31 @@ const CommunicationsManagement = () => {
           description: "Communication updated successfully",
         });
       } else {
+        // If replying, get customer info from the original communication
+        const insertData = replyingToCommunication?.customers 
+          ? {
+              ...data,
+              customer_id: (replyingToCommunication as any).customers.id,
+              direction: 'inbound',
+              contact_person: 'Admin Team'
+            }
+          : data;
+
         const { error } = await supabase
           .from('communications')
-          .insert([data]);
+          .insert([insertData]);
 
         if (error) throw error;
 
         toast({
           title: "Success",
-          description: "Communication logged successfully",
+          description: replyingToCommunication ? "Reply sent successfully" : "Communication logged successfully",
         });
       }
 
       setIsDialogOpen(false);
       setEditingCommunication(null);
+      setReplyingToCommunication(null);
       form.reset();
       fetchCommunications();
     } catch (error: any) {
@@ -213,6 +225,21 @@ const CommunicationsManagement = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleReply = (originalComm: Communication) => {
+    if (!originalComm.customers) return;
+    
+    setReplyingToCommunication(originalComm);
+    form.reset({
+      communication_type: 'email',
+      subject: `Re: ${originalComm.subject}`,
+      content: '',
+      customer_id: '',
+      lead_id: '',
+      communication_date: new Date().toISOString().slice(0, 16)
+    });
+    setIsDialogOpen(true);
   };
 
   const filteredCommunications = communications.filter(comm =>
@@ -273,16 +300,29 @@ const CommunicationsManagement = () => {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingCommunication(null)}>
+            <Button onClick={() => {
+              setEditingCommunication(null);
+              setReplyingToCommunication(null);
+            }}>
               <Plus className="h-4 w-4 mr-2" />
               Log Communication
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingCommunication ? 'Edit Communication' : 'Log New Communication'}</DialogTitle>
+              <DialogTitle>
+                {editingCommunication 
+                  ? 'Edit Communication' 
+                  : replyingToCommunication 
+                    ? 'Reply to Customer' 
+                    : 'Log New Communication'}
+              </DialogTitle>
               <DialogDescription>
-                {editingCommunication ? 'Update communication details' : 'Record a customer interaction'}
+                {editingCommunication 
+                  ? 'Update communication details' 
+                  : replyingToCommunication 
+                    ? `Replying to ${replyingToCommunication.customers?.company_name}` 
+                    : 'Record a customer interaction'}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -326,30 +366,41 @@ const CommunicationsManagement = () => {
                 />
 
                 <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="customer_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Customer</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select customer" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {customers.map((customer) => (
-                              <SelectItem key={customer.id} value={customer.id}>
-                                {customer.company_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {!replyingToCommunication && (
+                    <FormField
+                      control={form.control}
+                      name="customer_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Customer</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select customer" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {customers.map((customer) => (
+                                <SelectItem key={customer.id} value={customer.id}>
+                                  {customer.company_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  
+                  {replyingToCommunication && (
+                    <div className="col-span-1">
+                      <FormLabel>Replying to Customer</FormLabel>
+                      <div className="p-2 bg-muted rounded border">
+                        {replyingToCommunication.customers?.company_name}
+                      </div>
+                    </div>
+                  )}
 
                   <FormField
                     control={form.control}
@@ -482,17 +533,29 @@ const CommunicationsManagement = () => {
                         </div>
                       )}
                     </div>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => {
-                        setEditingCommunication(comm);
-                        setIsDialogOpen(true);
-                      }}
-                    >
-                      <Edit className="h-3 w-3 mr-1" />
-                      Edit
-                    </Button>
+                     <div className="flex gap-2">
+                      {comm.customers && (
+                        <Button 
+                          size="sm" 
+                          variant="default"
+                          onClick={() => handleReply(comm)}
+                        >
+                          <MessageSquare className="h-3 w-3 mr-1" />
+                          Reply
+                        </Button>
+                      )}
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          setEditingCommunication(comm);
+                          setIsDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

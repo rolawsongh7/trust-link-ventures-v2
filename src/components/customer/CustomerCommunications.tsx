@@ -49,29 +49,44 @@ export const CustomerCommunications: React.FC = () => {
     if (!profile?.email) return;
     
     try {
-      // Mock data for now - in real implementation, this would fetch from the communications table
-      const mockData: Communication[] = [
-        {
-          id: '1',
-          subject: 'Welcome to Trust Link Ventures',
-          content: 'Thank you for joining our customer portal. We look forward to serving your premium seafood needs.',
-          communication_type: 'email',
-          direction: 'inbound',
-          communication_date: new Date(Date.now() - 86400000).toISOString(),
-          contact_person: 'Sales Team'
-        },
-        {
-          id: '2',
-          subject: 'Quote Request Received',
-          content: 'We have received your quote request for premium mackerel. Our team will review and respond within 24 hours.',
-          communication_type: 'email',
-          direction: 'inbound',
-          communication_date: new Date(Date.now() - 3600000).toISOString(),
-          contact_person: 'Quote Team'
-        }
-      ];
+      // First find the customer by email
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', profile.email)
+        .single();
+
+      if (customerError && customerError.code !== 'PGRST116') {
+        throw customerError;
+      }
+
+      if (!customerData) {
+        // No customer found, show empty state
+        setCommunications([]);
+        return;
+      }
+
+      // Fetch communications for this customer
+      const { data: commsData, error: commsError } = await supabase
+        .from('communications')
+        .select('*')
+        .eq('customer_id', customerData.id)
+        .order('communication_date', { ascending: false });
+
+      if (commsError) throw commsError;
+
+      // Transform the data to match our interface
+      const transformedComms: Communication[] = (commsData || []).map(comm => ({
+        id: comm.id,
+        subject: comm.subject || 'No Subject',
+        content: comm.content || '',
+        communication_type: comm.communication_type || 'email',
+        direction: (comm.direction === 'outbound' ? 'outbound' : 'inbound') as 'inbound' | 'outbound',
+        communication_date: comm.communication_date || comm.created_at,
+        contact_person: comm.contact_person || 'Support Team'
+      }));
       
-      setCommunications(mockData);
+      setCommunications(transformedComms);
     } catch (error) {
       console.error('Error fetching communications:', error);
       toast({
@@ -94,23 +109,68 @@ export const CustomerCommunications: React.FC = () => {
       return;
     }
 
+    if (!profile?.email) {
+      toast({
+        title: "Error",
+        description: "Unable to identify customer. Please try logging in again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSending(true);
     
     try {
-      // In real implementation, this would create a communication record
-      // and potentially send an email to the support team
+      // First, find or create the customer record
+      let customerId: string;
       
-      const newCommunication: Communication = {
-        id: Date.now().toString(),
-        subject: newMessage.subject,
-        content: newMessage.content,
-        communication_type: 'email',
-        direction: 'outbound',
-        communication_date: new Date().toISOString(),
-        contact_person: profile?.full_name || 'Customer'
-      };
-      
-      setCommunications(prev => [newCommunication, ...prev]);
+      const { data: existingCustomer, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', profile.email)
+        .single();
+
+      if (customerError && customerError.code !== 'PGRST116') {
+        throw customerError;
+      }
+
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        // Create new customer record
+        const { data: newCustomer, error: createError } = await supabase
+          .from('customers')
+          .insert({
+            company_name: profile.company_name || 'Customer Portal User',
+            contact_name: profile.full_name || 'Customer',
+            email: profile.email,
+            customer_status: 'active',
+            priority: 'medium'
+          })
+          .select('id')
+          .single();
+
+        if (createError) throw createError;
+        customerId = newCustomer.id;
+      }
+
+      // Insert the communication record
+      const { error: commError } = await supabase
+        .from('communications')
+        .insert({
+          customer_id: customerId,
+          communication_type: 'email',
+          subject: newMessage.subject,
+          content: newMessage.content,
+          direction: 'outbound',
+          contact_person: profile.full_name || 'Customer',
+          communication_date: new Date().toISOString()
+        });
+
+      if (commError) throw commError;
+
+      // Refresh communications list
+      await fetchCommunications();
       setNewMessage({ subject: '', content: '' });
       
       toast({
