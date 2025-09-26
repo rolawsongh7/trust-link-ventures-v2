@@ -242,20 +242,20 @@ const Home = () => {
 
             {/* Enhanced Stats Card with World-Class Metrics */}
             <div className="flex justify-center items-center animate-fade-in-right">
-              <Card className="bg-surface/80 backdrop-blur-sm border border-border/50 shadow-lg rounded-3xl max-w-md w-full">
-                <CardContent className="p-8">
+              <Card className="bg-surface/80 backdrop-blur-sm border border-border/50 shadow-lg rounded-2xl max-w-xs w-full">
+                <CardContent className="p-4">
                   {/* Header */}
-                  <div className="text-center mb-8">
-                    <h3 className="text-2xl font-poppins font-bold gradient-text mb-2">
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-poppins font-bold gradient-text mb-1">
                       World-Class Performance
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Measurable excellence in every metric
                     </p>
                   </div>
                   
                   {/* Horizontal Stats Row */}
-                  <div className="flex justify-center items-center space-x-12">
+                  <div className="flex justify-center items-center space-x-8">
                     {stats.map((stat, index) => {
                     const IconComponent = stat.icon;
                     const {
@@ -266,16 +266,16 @@ const Home = () => {
                       suffix: stat.suffix,
                       duration: 2500 + index * 200
                     });
-                    return <div key={index} ref={ref} className="text-center space-y-3">
+                    return <div key={index} ref={ref} className="text-center space-y-2">
                           <div className="flex justify-center">
-                            <div className="p-4 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl shadow-lg">
-                              <IconComponent className="h-7 w-7 text-primary" />
+                            <div className="p-2 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl shadow-lg">
+                              <IconComponent className="h-4 w-4 text-primary" />
                             </div>
                           </div>
-                          <div className="text-4xl lg:text-5xl font-poppins font-black gradient-text">
+                          <div className="text-2xl lg:text-3xl font-poppins font-black gradient-text">
                             {count}
                           </div>
-                          <div className="text-sm text-muted-foreground font-semibold uppercase tracking-wide">
+                          <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
                             {stat.label}
                           </div>
                         </div>;
