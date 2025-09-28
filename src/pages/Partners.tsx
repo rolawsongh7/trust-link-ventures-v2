@@ -9,10 +9,10 @@ import partnershipsHeroBg from '@/assets/partnerships-hero-bg.jpg';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { Helmet } from 'react-helmet-async';
 
-// Partner logos
-import niahFoodsLogo from '@/assets/partners/niah-foods-logo.png';
+// Partner logos - Updated
+import niahFoodsLogoNew from '@/assets/partners/niah-foods-logo.png';
 import jabBrothersLogo from '@/assets/partners/jab-brothers-logo.png';
-import nowacoLogo from '@/assets/partners/nowaco-logo.png';
+import nowacoLogoNew from '@/assets/partners/nowaco-logo.png';
 import ajcLogo from '@/assets/partners/ajc-logo.png';
 import jMarrLogo from '@/assets/partners/j-marr-logo.png';
 import seaproLogo from '@/assets/partners/seapro-logo.png';
@@ -42,7 +42,7 @@ const Partners = () => {
       description: "Premium UK-based food supplier specializing in high-quality frozen products for international markets. Known for exceptional quality standards and reliable supply chain management.",
       specialties: ["Premium Frozen Foods", "Quality Assurance", "UK Market Expertise"],
       established: "2010+",
-      logo: niahFoodsLogo
+      logo: niahFoodsLogoNew
     },
     {
       name: "JAB Brothers",
@@ -60,7 +60,7 @@ const Partners = () => {
       description: "Professional food merchant dedicated to providing and selling frozen food on a global scale. With over 50 years of passion in the food trading business.",
       specialties: ["Frozen Meats", "Fish & Seafood", "Vegetables", "Global Trading"],
       established: "1970+",
-      logo: nowacoLogo
+      logo: nowacoLogoNew
     },
     {
       name: "AJC International",
