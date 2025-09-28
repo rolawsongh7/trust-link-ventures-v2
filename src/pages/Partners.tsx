@@ -24,7 +24,7 @@ const Partners = () => {
   const strategicPartner = {
     name: "New Gen Link",
     location: "Global Operations", 
-    website: "https://nglglobamarkets.com",
+    website: "https://nglglobalmarkets.com",
     description: "New Gen Link serves as a vital bridge between premium seafood and meat exporters in Europe and the U.S. and the rapidly expanding food distribution networks across West Africa. With proven expertise in international trade, cold-chain logistics, and regulatory compliance, the company has become a trusted partner for businesses seeking reliable access to world-class products.",
     services: [
       "Premium Sourcing – Direct partnerships with certified suppliers of frozen seafood, premium beef, and specialty meats",
