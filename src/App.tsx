@@ -10,6 +10,7 @@ import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedR
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PublicLayout } from "@/components/layout/PublicLayout";
+import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Auth from "./pages/Auth";
@@ -57,6 +58,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             {/* Public routes */}
             <Route element={<PublicLayout />}>
