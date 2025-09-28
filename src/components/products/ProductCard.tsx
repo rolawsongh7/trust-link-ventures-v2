@@ -118,7 +118,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onRequestQuote }) =>
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 bg-background border border-border">
+    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 bg-background border border-border touch-manipulation">
       {/* Product Image */}
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
@@ -130,27 +130,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onRequestQuote }) =>
           }}
         />
         {/* Badge */}
-        <div className="absolute top-4 left-4">
-          <Badge className="bg-primary text-primary-foreground font-medium px-3 py-1">
+        <div className="absolute top-2 md:top-4 left-2 md:left-4">
+          <Badge className="bg-primary text-primary-foreground font-medium px-2 md:px-3 py-1 text-xs md:text-sm">
             {getBadgeText()}
           </Badge>
         </div>
       </div>
 
-      <CardContent className="p-6">
+      <CardContent className="p-4 md:p-6">
         {/* Product Header */}
-        <div className="mb-4">
+        <div className="mb-3 md:mb-4">
           <div 
-            className="flex items-center justify-between cursor-pointer group"
+            className="flex items-center justify-between cursor-pointer group touch-manipulation"
             onClick={() => setIsExpanded(!isExpanded)}
           >
-            <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+            <h3 className="text-lg md:text-xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2">
               {product.name}
             </h3>
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0"
+              className="h-6 w-6 md:h-8 md:w-8 p-0 touch-manipulation"
             >
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />
@@ -161,7 +161,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onRequestQuote }) =>
           </div>
           
           <div className="mt-2">
-            <Badge variant="secondary" className="text-sm">
+            <Badge variant="secondary" className="text-xs md:text-sm">
               {product.supplier}
             </Badge>
           </div>

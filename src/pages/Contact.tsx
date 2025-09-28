@@ -117,10 +117,10 @@ const Contact = () => {
         
         {/* Content */}
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-          <h1 className="text-4xl lg:text-6xl font-bold mb-6 leading-tight animate-fade-in">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight animate-fade-in px-4 sm:px-0">
             Let's Build a <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Global Partnership</span>
           </h1>
-          <p className="text-xl lg:text-2xl mb-8 text-white/90 max-w-3xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 text-white/90 max-w-3xl mx-auto leading-relaxed animate-fade-in px-4 sm:px-0" style={{ animationDelay: '0.2s' }}>
             Whether you're sourcing premium products, exploring a venture, or investing in logistics, you're in the right place. Reach out—let's grow together.
           </p>
         </div>

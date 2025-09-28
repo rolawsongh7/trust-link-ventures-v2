@@ -24,16 +24,17 @@ export const PublicHeader = () => {
   return (
     <header className="bg-background border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-background/90">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Top">
-        <div className="flex w-full items-center justify-between border-b border-border py-4 md:py-6 lg:border-none">
+        <div className="flex w-full items-center justify-between py-3 md:py-4 lg:py-6 lg:border-none">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2 md:space-x-3 touch-manipulation">
               <img 
                 src={trustLinkLogo} 
                 alt="Trust Link Ventures Logo" 
-                className="h-12 w-12 md:h-16 md:w-16 object-contain"
+                className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 object-contain"
               />
-              <span className="text-lg md:text-2xl font-poppins font-bold gradient-text leading-tight">
-                Trust Link<br />Ventures
+              <span className="text-base sm:text-lg md:text-2xl font-poppins font-bold gradient-text leading-tight">
+                <span className="hidden sm:inline">Trust Link<br />Ventures</span>
+                <span className="sm:hidden">Trust Link<br />Ventures</span>
               </span>
             </Link>
           </div>

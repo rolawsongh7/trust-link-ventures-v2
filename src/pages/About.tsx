@@ -250,13 +250,13 @@ const About = () => {
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-center animate-fade-in">
           <div className="text-center mb-16">
-            <h1 className="text-4xl lg:text-6xl font-poppins font-bold text-white drop-shadow-lg">
-              Powering Cold Chain Logistics. <br />
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-poppins font-bold text-white drop-shadow-lg px-4 sm:px-0">
+              Powering Cold Chain Logistics. <br className="hidden sm:block" />
               <span className="gradient-text">Delivering Trust.</span>
             </h1>
           </div>
           <div className="text-center mt-auto mb-4">
-            <p className="text-xl text-white/90 max-w-4xl mx-auto leading-relaxed drop-shadow-md">
+            <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-4xl mx-auto leading-relaxed drop-shadow-md px-4 sm:px-0">
               From humble beginnings to 1,200 tonnes monthly, Trust Link Ventures connects Ghana to the world's most reliable cold-chain food supply.
             </p>
           </div>
@@ -279,13 +279,13 @@ const About = () => {
               <Target className="w-4 h-4 mr-2" />
               Our Foundation
             </Badge>
-            <h2 className="text-4xl lg:text-6xl font-poppins font-bold mb-6 leading-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-6xl font-poppins font-bold mb-4 md:mb-6 leading-tight px-4 sm:px-0">
               Written in <span className="gradient-text relative">
                 History
                 <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-primary to-secondary opacity-30 rounded-full" />
               </span>
             </h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
               Our mission, vision, and values guide every decision we make, from sourcing to delivery
             </p>
           </div>

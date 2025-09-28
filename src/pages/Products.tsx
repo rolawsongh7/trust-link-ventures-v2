@@ -408,43 +408,43 @@ const Products = () => {
             </span>
           </div>
           
-          <h1 className="text-5xl lg:text-7xl font-poppins font-bold text-white mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-poppins font-bold text-white mb-4 md:mb-6 px-4 sm:px-0">
             Premium <span className="text-primary">Seafood</span> Collections
           </h1>
           
-          <p className="text-xl text-white/90 max-w-4xl mx-auto leading-relaxed mb-12">
+          <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-4xl mx-auto leading-relaxed mb-8 md:mb-12 px-4 sm:px-0">
             Explore our premium selection of export-quality seafood products sourced from credible global suppliers. Available for wholesale distribution with custom packaging options.
           </p>
 
           {/* Feature Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center">
-              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Globe className="h-6 w-6 text-white" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto px-4 sm:px-0">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 text-center touch-manipulation">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                <Globe className="h-5 w-5 md:h-6 md:w-6 text-white" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">Globally Certified</h3>
+              <h3 className="text-base md:text-lg font-bold text-white mb-2">Globally Certified</h3>
               <p className="text-white/80 text-sm">International quality standards and certifications</p>
             </div>
             
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center">
-              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Package className="h-6 w-6 text-white" />
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 text-center touch-manipulation">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                <Package className="h-5 w-5 md:h-6 md:w-6 text-white" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">Flash-Frozen for Freshness</h3>
+              <h3 className="text-base md:text-lg font-bold text-white mb-2">Flash-Frozen for Freshness</h3>
               <p className="text-white/80 text-sm">Advanced preservation techniques for peak quality</p>
             </div>
             
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center">
-              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ShoppingCart className="h-6 w-6 text-white" />
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 text-center touch-manipulation sm:col-span-2 lg:col-span-1">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                <ShoppingCart className="h-5 w-5 md:h-6 md:w-6 text-white" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">Multi-Item Quotes</h3>
+              <h3 className="text-base md:text-lg font-bold text-white mb-2">Multi-Item Quotes</h3>
               <p className="text-white/80 text-sm">Add multiple products to cart and request bulk quotes</p>
             </div>
           </div>
           
           {/* Shopping Cart in Hero */}
-          <div className="mt-8 flex justify-center">
+          <div className="mt-6 md:mt-8 flex justify-center px-4 sm:px-0">
             <CartComponent onRequestQuote={() => setShowMultiItemQuote(true)} />
           </div>
         </div>
@@ -492,7 +492,7 @@ const Products = () => {
               {/* Title */}
               <h2 
                 key={`title-${currentCategory}`}
-                className="text-5xl lg:text-6xl font-poppins font-bold text-white mb-6 animate-fade-in"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-poppins font-bold text-white mb-4 md:mb-6 animate-fade-in px-4 sm:px-0"
               >
                 {categorySlides[currentCategory].title}
               </h2>
@@ -500,23 +500,23 @@ const Products = () => {
               {/* Description */}
               <p 
                 key={`desc-${currentCategory}`}
-                className="text-xl text-white/90 leading-relaxed mb-8 animate-fade-in"
+                className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed mb-6 md:mb-8 animate-fade-in px-4 sm:px-0"
                 style={{ animationDelay: '0.2s' }}
               >
                 {categorySlides[currentCategory].description}
               </p>
 
               {/* Navigation Buttons */}
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center gap-3 md:gap-4 px-4 sm:px-0">
                 <Button 
                   variant="outline"
-                  className="bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+                  className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm touch-manipulation"
                   onClick={() => setCurrentCategory((prev) => prev === 0 ? categorySlides.length - 1 : prev - 1)}
                 >
                   Previous
                 </Button>
                 <Button 
-                  className="bg-primary hover:bg-primary/90"
+                  className="w-full sm:w-auto bg-primary hover:bg-primary/90 touch-manipulation"
                   onClick={() => setCurrentCategory((prev) => (prev + 1) % categorySlides.length)}
                 >
                   Next Category
@@ -547,31 +547,32 @@ const Products = () => {
       {/* Product Catalog Section */}
       <section className="py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl lg:text-5xl font-poppins font-bold mb-6">
+          <div className="text-center mb-12 md:mb-16 px-4 sm:px-0">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-poppins font-bold mb-4 md:mb-6">
               Browse Our <span className="gradient-text">Premium Products</span>
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
               Discover our comprehensive selection of premium frozen seafood, meats, and specialty products sourced from trusted suppliers worldwide.
             </p>
           </div>
 
           {/* Product Filters */}
-          <div className="flex flex-wrap justify-center gap-3 mb-16">
+          <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-12 md:mb-16 px-4 sm:px-0">
             {filterCategories.map((filter) => {
               const IconComponent = filter.icon;
               return (
                 <button
                   key={filter.name}
                   onClick={() => setActiveFilter(filter.name)}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 ${
+                  className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2 md:py-3 rounded-full text-sm md:text-base font-medium transition-all duration-300 touch-manipulation ${
                     activeFilter === filter.name
                       ? 'bg-primary text-primary-foreground shadow-lg scale-105'
                       : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:scale-105'
                   }`}
                 >
-                  <IconComponent className="h-4 w-4" />
-                  {filter.name}
+                  <IconComponent className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">{filter.name}</span>
+                  <span className="sm:hidden">{filter.name.split(' ')[0]}</span>
                 </button>
               );
             })}
@@ -579,18 +580,18 @@ const Products = () => {
 
           {/* Product Grid */}
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
               {[...Array(9)].map((_, i) => (
                 <Card key={i} className="overflow-hidden animate-pulse">
-                  <div className="h-64 bg-muted"></div>
-                  <CardContent className="p-6">
+                  <div className="h-48 md:h-64 bg-muted"></div>
+                  <CardContent className="p-4 md:p-6">
                     <div className="h-4 bg-muted rounded mb-2"></div>
                     <div className="h-3 bg-muted rounded mb-4 w-2/3"></div>
                     <div className="space-y-2">
                       <div className="h-3 bg-muted rounded"></div>
                       <div className="h-3 bg-muted rounded w-3/4"></div>
                     </div>
-                    <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div className="h-8 bg-muted rounded"></div>
                       <div className="h-8 bg-muted rounded"></div>
                     </div>
@@ -607,7 +608,7 @@ const Products = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
               {filteredProducts.map((product, index) => (
                 <div
                   key={product.id}
