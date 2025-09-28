@@ -77,11 +77,19 @@ const Products = () => {
     // Check if JAB Brothers seafood products exist
     const checkAndImportJabProducts = async () => {
       try {
-        const { data: existingJabProducts } = await supabase
+        console.log('🔍 Checking for existing JAB Brothers products...');
+        const { data: existingJabProducts, error: jabError } = await supabase
           .from('supplier_products')
           .select('id')
           .eq('supplier', 'JAB Brothers')
           .limit(1);
+
+        console.log('🔍 JAB check result:', { existingJabProducts, jabError });
+
+        if (jabError) {
+          console.error('❌ Error checking JAB products:', jabError);
+          return;
+        }
 
         if (!existingJabProducts || existingJabProducts.length === 0) {
           console.log('No JAB Brothers products found, importing...');
@@ -99,13 +107,20 @@ const Products = () => {
       }
     };
 
-    fetchProducts();
-    checkAndImportJabProducts();
+    // Don't wait for JAB check to complete
+    fetchProducts().catch(error => {
+      console.error('❌ Failed to fetch products:', error);
+    });
+    
+    checkAndImportJabProducts().catch(error => {
+      console.error('❌ Failed to check/import JAB products:', error);
+    });
   }, []);
 
   const fetchProducts = async () => {
     console.log('🔄 Starting to fetch products...');
     try {
+      console.log('🔍 Making Supabase query...');
       const { data: products, error } = await supabase
         .from('supplier_products')
         .select('*')
@@ -113,6 +128,7 @@ const Products = () => {
         .order('name');
 
       console.log('📊 Products fetch result:', { products: products?.length, error });
+      console.log('🔍 Raw products data:', products);
 
       if (error) {
         console.error('❌ Error fetching products:', error);
