@@ -16,6 +16,10 @@ import coldChainBg from '@/assets/quality-assurance/cold-chain-bg.jpg';
 import marketPricingBg from '@/assets/quality-assurance/market-pricing-bg.jpg';
 import foodSafetyBg from '@/assets/quality-assurance/food-safety-bg.jpg';
 import certifiedSuppliersBg from '@/assets/quality-assurance/certified-suppliers-bg.jpg';
+import premiumSeafoodImg from '@/assets/premium-seafood.jpg';
+import beefLambImg from '@/assets/beef-lamb.jpg';
+import freshPoultryImg from '@/assets/fresh-poultry.jpg';
+import qualityPorkImg from '@/assets/quality-pork.jpg';
 
 // Stats Card Component with Counter Animation
 const StatsCard = ({
@@ -430,7 +434,7 @@ const Home = () => {
               <Card className="card-elevated overflow-hidden">
                 <CardContent className="p-0">
                   <div className="relative h-64 overflow-hidden">
-                    <img src="/src/assets/premium-seafood.jpg" alt="Premium Seafood Selection" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <img src={premiumSeafoodImg} alt="Premium Seafood Selection" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-6">
                       <h3 className="text-xl font-poppins font-bold text-white mb-2">Premium Seafood</h3>
@@ -448,7 +452,7 @@ const Home = () => {
               <Card className="card-elevated overflow-hidden">
                 <CardContent className="p-0">
                   <div className="relative h-64 overflow-hidden">
-                    <img src="/src/assets/beef-lamb.jpg" alt="Premium Beef Products" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <img src={beefLambImg} alt="Premium Beef Products" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-6">
                       <h3 className="text-xl font-poppins font-bold text-white mb-2">Premium Beef</h3>
@@ -466,7 +470,7 @@ const Home = () => {
               <Card className="card-elevated overflow-hidden">
                 <CardContent className="p-0">
                   <div className="relative h-64 overflow-hidden">
-                    <img src="/src/assets/fresh-poultry.jpg" alt="Fresh Poultry Products" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <img src={freshPoultryImg} alt="Fresh Poultry Products" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-6">
                       <h3 className="text-xl font-poppins font-bold text-white mb-2">Fresh Poultry</h3>
@@ -484,7 +488,7 @@ const Home = () => {
               <Card className="card-elevated overflow-hidden">
                 <CardContent className="p-0">
                   <div className="relative h-64 overflow-hidden">
-                    <img src="/src/assets/quality-pork.jpg" alt="Quality Pork Products" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <img src={qualityPorkImg} alt="Quality Pork Products" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-6">
                       <h3 className="text-xl font-poppins font-bold text-white mb-2">Quality Pork</h3>
