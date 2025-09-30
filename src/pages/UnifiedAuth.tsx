@@ -72,27 +72,35 @@ useEffect(() => {
 
     try {
       if (isLogin) {
+        console.log('🔐 Starting admin login for:', email);
+        
         // Try admin login first
         const adminResult = await adminSignIn(email, password);
         
-if (!adminResult.error) {
-  // If email is on the admin whitelist, route directly to dashboard
-  try {
-    const { data: isAllowed } = await supabase.rpc('is_allowed_admin_email', {
-      user_email: email,
-    });
+        if (!adminResult.error) {
+          console.log('✅ Admin login successful');
+          
+          // If email is on the admin whitelist, route directly to dashboard
+          try {
+            const { data: isAllowed } = await supabase.rpc('is_allowed_admin_email', {
+              user_email: email,
+            });
 
-    if (isAllowed) {
-      toast({ title: 'Welcome back!', description: 'Redirecting to your dashboard...' });
-      navigate('/dashboard');
-      return;
-    }
-  } catch (_) {
-    // If whitelist check fails, fall back to role-based redirect via effect
-  }
+            if (isAllowed) {
+              console.log('✅ Admin email confirmed, redirecting to dashboard');
+              toast({ title: 'Welcome back!', description: 'Redirecting to your dashboard...' });
+              navigate('/dashboard');
+              return;
+            }
+          } catch (error) {
+            console.error('⚠️ Admin whitelist check failed:', error);
+            // If whitelist check fails, fall back to role-based redirect via effect
+          }
 
-  // Not an admin — continue to try customer login below
-}
+          // Success but not on whitelist - let the useEffect handle routing
+          toast({ title: 'Welcome back!', description: 'Redirecting...' });
+          return;
+        }
 
         // If admin login failed, handle specific cases
         if (adminResult.error) {
@@ -173,12 +181,14 @@ if (!adminResult.error) {
         }
       }
     } catch (error) {
+      console.error('🚨 Authentication error:', error);
       toast({
         title: "Authentication error",
         description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
+      console.log('🔄 Setting loading to false');
       setLoading(false);
     }
   };
