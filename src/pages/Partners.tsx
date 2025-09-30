@@ -67,7 +67,7 @@ const Partners = () => {
       name: "AJC International",
       location: "United States",
       website: "https://www.ajcfood.com",
-      description: "Leading global frozen food marketer serving more than 140 countries across six continents. Expertise in poultry, pork, meat, vegetables, fruits, and seafood with 400+ branded products.",
+      description: "Leading global frozen food marketer headquartered in Atlanta, Georgia, serving more than 140 countries across six continents. Expertise in poultry, pork, meat, vegetables, fruits, and seafood with 400+ branded products.",
       specialties: ["Poultry", "Pork", "Meat", "Vegetables & Fruits", "Seafood"],
       established: "1960+",
       reach: "140+ Countries",
