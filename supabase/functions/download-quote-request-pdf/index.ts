@@ -80,7 +80,7 @@ serve(async (req) => {
 
 async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Promise<Uint8Array> {
   // Import PDF generation library
-  const { PDFDocument, StandardFonts, rgb } = await import('https://cdn.skypack.dev/pdf-lib@^1.17.1')
+  const { PDFDocument, StandardFonts, rgb } = await import('https://esm.sh/pdf-lib@1.17.1')
   
   const pdfDoc = await PDFDocument.create()
   const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman)
