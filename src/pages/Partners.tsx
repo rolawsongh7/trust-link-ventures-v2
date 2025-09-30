@@ -16,6 +16,7 @@ import nowacoLogoNew from '@/assets/partners/nowaco-logo.png';
 import ajcLogo from '@/assets/partners/ajc-logo.png';
 import jMarrLogo from '@/assets/partners/j-marr-logo.png';
 import seaproLogo from '@/assets/partners/seapro-logo.png';
+import trustLinkLogo from '@/assets/trust-link-logo.png';
 
 const Partners = () => {
   const { elementRef: heroRef, isVisible: heroVisible } = useScrollAnimation({ threshold: 0.2 });
@@ -178,6 +179,47 @@ const Partners = () => {
         <div className="py-8 md:py-12 bg-background"></div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Trust Link Ventures Company Info */}
+          <section className="mb-16 md:mb-20">
+            <div className="text-center mb-12 md:mb-16">
+              <div className="flex justify-center mb-6">
+                <img 
+                  src={trustLinkLogo} 
+                  alt="Trust Link Ventures Limited"
+                  className="h-24 w-24 md:h-32 md:w-32 object-contain"
+                />
+              </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
+                Trust Link Ventures Limited
+              </h2>
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
+                Your trusted partner in premium frozen food distribution across West Africa.
+              </p>
+            </div>
+
+            <Card className="border-primary/20 hover:shadow-lg transition-all duration-300 hover:border-primary/30">
+              <CardContent className="p-4 md:p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-semibold mb-3 text-sm md:text-base">Contact Information</h4>
+                    <div className="space-y-2 text-xs md:text-sm text-muted-foreground">
+                      <p><span className="font-medium">Email:</span> info@trustlinkventures.com</p>
+                      <p><span className="font-medium">Phone:</span> +233 243131257</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-3 text-sm md:text-base">Location</h4>
+                    <div className="text-xs md:text-sm text-muted-foreground">
+                      <p>Enyedado Coldstore Premises</p>
+                      <p>Afko Junction Box 709</p>
+                      <p>Adabraka, Ghana</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+
           {/* Strategic Partner Section */}
           <section className="mb-16 md:mb-20">
             <div className="text-center mb-12 md:mb-16">
