@@ -105,6 +105,8 @@ serve(async (req) => {
 })
 
 async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Promise<Uint8Array> {
+  console.log('Starting PDF generation...')
+  
   // Import PDF generation library
   const { PDFDocument, StandardFonts, rgb } = await import('https://esm.sh/pdf-lib@1.17.1')
   
@@ -112,11 +114,26 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
   const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman)
   const timesRomanBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold)
   
-  const page = pdfDoc.addPage()
-  const { width, height } = page.getSize()
+  console.log('Fonts embedded successfully')
+  
+  let currentPage = pdfDoc.addPage()
+  let { width, height } = currentPage.getSize()
+  const MARGIN_BOTTOM = 80 // Reserve space for footer
+  
+  // Helper function to check if we need a new page
+  const checkPageOverflow = (yPos: number) => {
+    if (yPos < MARGIN_BOTTOM) {
+      console.log('Adding new page, current Y:', yPos)
+      currentPage = pdfDoc.addPage()
+      const pageSize = currentPage.getSize()
+      return pageSize.height - 80 // Return new starting Y position
+    }
+    return yPos
+  }
   
   // Header
-  page.drawText('TRUST LINK FROZEN FOODS', {
+  console.log('Drawing header...')
+  currentPage.drawText('TRUST LINK FROZEN FOODS', {
     x: 50,
     y: height - 80,
     size: 20,
@@ -124,7 +141,7 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
     color: rgb(0, 0, 0),
   })
   
-  page.drawText('Quote Request Details', {
+  currentPage.drawText('Quote Request Details', {
     x: 50,
     y: height - 110,
     size: 16,
@@ -136,14 +153,16 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
   let yPosition = height - 150
   
   const drawField = (label: string, value: string, y: number) => {
-    page.drawText(`${label}:`, {
+    y = checkPageOverflow(y)
+    console.log(`Drawing field: ${label}, Y: ${y}`)
+    currentPage.drawText(`${label}:`, {
       x: 50,
       y,
       size: 12,
       font: timesRomanBold,
       color: rgb(0, 0, 0),
     })
-    page.drawText(value || 'N/A', {
+    currentPage.drawText(value || 'N/A', {
       x: 200,
       y,
       size: 12,
@@ -153,7 +172,8 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
     return y - 25
   }
   
-  yPosition = drawField('Quote Number', quoteRequest.quote_number || 'Generating...', yPosition)
+  console.log('Drawing quote request fields...')
+  yPosition = drawField('Quote Number', quoteRequest.quote_number || 'Pending', yPosition)
   yPosition = drawField('Title', quoteRequest.title, yPosition)
   yPosition = drawField('Status', quoteRequest.status, yPosition)
   yPosition = drawField('Urgency', quoteRequest.urgency, yPosition)
@@ -165,8 +185,10 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
   }
   
   // Customer/Lead Information
+  console.log('Drawing customer/lead information...')
   yPosition -= 20
-  page.drawText('Customer/Lead Information', {
+  yPosition = checkPageOverflow(yPosition)
+  currentPage.drawText('Customer/Lead Information', {
     x: 50,
     y: yPosition,
     size: 14,
@@ -209,8 +231,10 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
   
   // Message
   if (quoteRequest.message) {
+    console.log('Drawing message...')
     yPosition -= 20
-    page.drawText('Message', {
+    yPosition = checkPageOverflow(yPosition)
+    currentPage.drawText('Message', {
       x: 50,
       y: yPosition,
       size: 14,
@@ -229,7 +253,8 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
       const testWidth = timesRomanFont.widthOfTextAtSize(testLine, 12)
       
       if (testWidth > maxWidth && line !== '') {
-        page.drawText(line, {
+        yPosition = checkPageOverflow(yPosition)
+        currentPage.drawText(line, {
           x: 50,
           y: yPosition,
           size: 12,
@@ -244,7 +269,8 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
     }
     
     if (line) {
-      page.drawText(line, {
+      yPosition = checkPageOverflow(yPosition)
+      currentPage.drawText(line, {
         x: 50,
         y: yPosition,
         size: 12,
@@ -257,7 +283,10 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
   
   // Requested Items Table
   if (quoteRequest.quote_request_items && quoteRequest.quote_request_items.length > 0) {
-    page.drawText('Requested Items', {
+    console.log('Drawing items table...')
+    yPosition -= 20
+    yPosition = checkPageOverflow(yPosition)
+    currentPage.drawText('Requested Items', {
       x: 50,
       y: yPosition,
       size: 14,
@@ -271,8 +300,9 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
     const columnWidths = [150, 60, 50, 150, 100]
     let xPosition = 50
     
+    yPosition = checkPageOverflow(yPosition)
     tableHeaders.forEach((header, index) => {
-      page.drawText(header, {
+      currentPage.drawText(header, {
         x: xPosition,
         y: yPosition,
         size: 10,
@@ -283,7 +313,7 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
     })
     
     // Draw header line
-    page.drawLine({
+    currentPage.drawLine({
       start: { x: 50, y: yPosition - 5 },
       end: { x: 510, y: yPosition - 5 },
       thickness: 1,
@@ -293,7 +323,9 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
     yPosition -= 25
     
     // Table rows
-    quoteRequest.quote_request_items.forEach((item: any) => {
+    quoteRequest.quote_request_items.forEach((item: any, idx: number) => {
+      console.log(`Drawing item ${idx + 1}/${quoteRequest.quote_request_items.length}`)
+      yPosition = checkPageOverflow(yPosition)
       xPosition = 50
       const rowData = [
         item.product_name || '',
@@ -305,7 +337,7 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
       
       rowData.forEach((data, index) => {
         const text = data.length > 20 ? data.substring(0, 17) + '...' : data
-        page.drawText(text, {
+        currentPage.drawText(text, {
           x: xPosition,
           y: yPosition,
           size: 9,
@@ -321,8 +353,10 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
   
   // Admin Notes
   if (quoteRequest.admin_notes) {
+    console.log('Drawing admin notes...')
     yPosition -= 20
-    page.drawText('Admin Notes', {
+    yPosition = checkPageOverflow(yPosition)
+    currentPage.drawText('Admin Notes', {
       x: 50,
       y: yPosition,
       size: 14,
@@ -341,7 +375,8 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
       const testWidth = timesRomanFont.widthOfTextAtSize(testLine, 12)
       
       if (testWidth > maxWidth && line !== '') {
-        page.drawText(line, {
+        yPosition = checkPageOverflow(yPosition)
+        currentPage.drawText(line, {
           x: 50,
           y: yPosition,
           size: 12,
@@ -356,7 +391,8 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
     }
     
     if (line) {
-      page.drawText(line, {
+      yPosition = checkPageOverflow(yPosition)
+      currentPage.drawText(line, {
         x: 50,
         y: yPosition,
         size: 12,
@@ -366,23 +402,30 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
     }
   }
   
-  // Footer
-  page.drawText('Generated by Trust Link Frozen Foods CRM System', {
-    x: 50,
-    y: 50,
-    size: 8,
-    font: timesRomanFont,
-    color: rgb(0.5, 0.5, 0.5),
+  // Footer on all pages
+  console.log('Adding footers to all pages...')
+  const pages = pdfDoc.getPages()
+  pages.forEach((pg) => {
+    const pgHeight = pg.getSize().height
+    pg.drawText('Generated by Trust Link Frozen Foods CRM System', {
+      x: 50,
+      y: 50,
+      size: 8,
+      font: timesRomanFont,
+      color: rgb(0.5, 0.5, 0.5),
+    })
+    
+    pg.drawText(`Generated on: ${new Date().toLocaleDateString()}`, {
+      x: 400,
+      y: 50,
+      size: 8,
+      font: timesRomanFont,
+      color: rgb(0.5, 0.5, 0.5),
+    })
   })
   
-  page.drawText(`Generated on: ${new Date().toLocaleDateString()}`, {
-    x: 400,
-    y: 50,
-    size: 8,
-    font: timesRomanFont,
-    color: rgb(0.5, 0.5, 0.5),
-  })
-  
+  console.log('Saving PDF...')
   const pdfBytes = await pdfDoc.save()
+  console.log('PDF generated successfully, size:', pdfBytes.length, 'bytes')
   return pdfBytes
 }

@@ -464,12 +464,23 @@ const QuoteRequestManagement = () => {
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              Quote Request Details
+            <DialogTitle className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span>Quote Request Details</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => selectedRequest && handleDownloadPDF(selectedRequest)}
+                  className="ml-auto"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </Button>
+              </div>
               {selectedRequest && (
-                <span className="text-sm font-mono text-primary">
+                <div className="text-2xl font-bold font-mono text-primary bg-primary/10 px-4 py-2 rounded-lg border-2 border-primary/30">
                   {selectedRequest.quote_number || `QR-${new Date(selectedRequest.created_at).getFullYear()}${String(new Date(selectedRequest.created_at).getMonth() + 1).padStart(2, '0')}-${selectedRequest.id.slice(0, 8).toUpperCase()}`}
-                </span>
+                </div>
               )}
             </DialogTitle>
             <DialogDescription>
