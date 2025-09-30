@@ -31,8 +31,7 @@ serve(async (req) => {
       .from('quote_requests')
       .select(`
         *,
-        quote_request_items (*),
-        customers (company_name, contact_name, email, phone, address, city, country)
+        quote_request_items (*)
       `)
       .eq('id', quoteRequestId)
       .single()
@@ -45,8 +44,22 @@ serve(async (req) => {
       )
     }
 
+    // Fetch customer data separately if customer_id exists
+    let customerData = null
+    if (quoteRequest.customer_id) {
+      const { data: customer, error: customerError } = await supabase
+        .from('customers')
+        .select('company_name, contact_name, email, phone, address, city, country')
+        .eq('id', quoteRequest.customer_id)
+        .single()
+      
+      if (!customerError) {
+        customerData = customer
+      }
+    }
+
     // Generate PDF content
-    const pdfContent = await generateQuoteRequestPDF(quoteRequest)
+    const pdfContent = await generateQuoteRequestPDF(quoteRequest, customerData)
 
     return new Response(pdfContent, {
       headers: {
@@ -65,7 +78,7 @@ serve(async (req) => {
   }
 })
 
-async function generateQuoteRequestPDF(quoteRequest: any): Promise<Uint8Array> {
+async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Promise<Uint8Array> {
   // Import PDF generation library
   const { PDFDocument, StandardFonts, rgb } = await import('https://cdn.skypack.dev/pdf-lib@^1.17.1')
   
@@ -143,14 +156,14 @@ async function generateQuoteRequestPDF(quoteRequest: any): Promise<Uint8Array> {
     yPosition = drawField('Phone', quoteRequest.lead_phone, yPosition)
     yPosition = drawField('Country', quoteRequest.lead_country, yPosition)
     yPosition = drawField('Industry', quoteRequest.lead_industry, yPosition)
-  } else if (quoteRequest.customers) {
-    yPosition = drawField('Company', quoteRequest.customers.company_name, yPosition)
-    yPosition = drawField('Contact Name', quoteRequest.customers.contact_name, yPosition)
-    yPosition = drawField('Email', quoteRequest.customers.email, yPosition)
-    yPosition = drawField('Phone', quoteRequest.customers.phone, yPosition)
-    yPosition = drawField('Address', quoteRequest.customers.address, yPosition)
-    yPosition = drawField('City', quoteRequest.customers.city, yPosition)
-    yPosition = drawField('Country', quoteRequest.customers.country, yPosition)
+  } else if (customerData) {
+    yPosition = drawField('Company', customerData.company_name, yPosition)
+    yPosition = drawField('Contact Name', customerData.contact_name, yPosition)
+    yPosition = drawField('Email', customerData.email, yPosition)
+    yPosition = drawField('Phone', customerData.phone, yPosition)
+    yPosition = drawField('Address', customerData.address, yPosition)
+    yPosition = drawField('City', customerData.city, yPosition)
+    yPosition = drawField('Country', customerData.country, yPosition)
   }
   
   // Message
