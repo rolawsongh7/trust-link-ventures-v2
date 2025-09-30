@@ -45,12 +45,13 @@ const Partners = () => {
       logo: niahFoodsLogoNew
     },
     {
-      name: "JAB Brothers",
-      location: "Argentina",
-      website: "https://www.jab-bros.com.ar/home",
-      description: "Family-owned business with over 15 years of experience in production and exportation of frozen foods. Based in the Rio de la Plata region, specializing in premium seafood and beef products.",
-      specialties: ["Seafood", "Beef Products", "South American Markets"],
-      established: "2008",
+      name: "JAB Bros. Company LLC",
+      location: "United States",
+      website: "https://www.jab-bros.com.ar",
+      description: "JAB Bros. Company LLC operates from North Miami, Florida, serving as a strategic distribution hub for premium frozen food products. With extensive experience in international food trade and logistics.",
+      specialties: ["Frozen Food Distribution", "International Trade", "Logistics Solutions"],
+      established: "2008+",
+      reach: "North American Markets",
       logo: jabBrothersLogo
     },
     {
