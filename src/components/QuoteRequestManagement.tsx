@@ -106,6 +106,8 @@ const QuoteRequestManagement = () => {
 
   const updateRequestStatus = async (requestId: string, status: string, notes?: string) => {
     try {
+      console.log('Updating request status:', { requestId, status, notes });
+      
       const { error } = await supabase
         .from('quote_requests')
         .update({ 
@@ -114,8 +116,12 @@ const QuoteRequestManagement = () => {
         })
         .eq('id', requestId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
       
+      console.log('Update successful');
       toast.success('Request status updated successfully');
       fetchQuoteRequests();
       setShowUpdateDialog(false);
