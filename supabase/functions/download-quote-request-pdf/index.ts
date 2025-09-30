@@ -34,10 +34,18 @@ serve(async (req) => {
         quote_request_items (*)
       `)
       .eq('id', quoteRequestId)
-      .single()
+      .maybeSingle()
 
     if (quoteError) {
       console.error('Error fetching quote request:', quoteError)
+      return new Response(
+        JSON.stringify({ error: 'Database error', details: quoteError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (!quoteRequest) {
+      console.error('Quote request not found for ID:', quoteRequestId)
       return new Response(
         JSON.stringify({ error: 'Quote request not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -51,9 +59,9 @@ serve(async (req) => {
         .from('customers')
         .select('company_name, contact_name, email, phone, address, city, country')
         .eq('id', quoteRequest.customer_id)
-        .single()
+        .maybeSingle()
       
-      if (!customerError) {
+      if (!customerError && customer) {
         customerData = customer
       }
     }
