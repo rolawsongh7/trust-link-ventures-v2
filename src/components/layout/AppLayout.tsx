@@ -13,9 +13,9 @@ export const AppLayout = () => {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const location = useLocation();
 
-  // Redirect to auth page if not authenticated
+  // Redirect to login page if not authenticated
   if (!loading && !user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (loading) {

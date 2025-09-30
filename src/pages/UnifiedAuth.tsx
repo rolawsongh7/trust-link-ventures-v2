@@ -79,6 +79,7 @@ useEffect(() => {
         
         if (!adminResult.error) {
           console.log('✅ Admin login successful');
+          setLoading(false); // Clear loading immediately on success
           
           // If email is on the admin whitelist, route directly to dashboard
           try {
@@ -89,7 +90,7 @@ useEffect(() => {
             if (isAllowed) {
               console.log('✅ Admin email confirmed, redirecting to dashboard');
               toast({ title: 'Welcome back!', description: 'Redirecting to your dashboard...' });
-              navigate('/dashboard');
+              setTimeout(() => navigate('/dashboard'), 100); // Small delay to ensure state updates
               return;
             }
           } catch (error) {
@@ -99,6 +100,7 @@ useEffect(() => {
 
           // Success but not on whitelist - let the useEffect handle routing
           toast({ title: 'Welcome back!', description: 'Redirecting...' });
+          setTimeout(() => navigate('/dashboard'), 100); // Force redirect for admin users
           return;
         }
 
