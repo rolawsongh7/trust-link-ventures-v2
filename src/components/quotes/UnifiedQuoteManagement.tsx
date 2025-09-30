@@ -324,14 +324,50 @@ const UnifiedQuoteManagement = () => {
     }
   };
 
-  const downloadQuote = (fileUrl: string, fileName: string) => {
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = fileName;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const downloadQuote = async (fileUrl: string, fileName: string) => {
+    try {
+      // Extract storage path from URL
+      const urlParts = fileUrl.split('/quotes/');
+      const storagePath = urlParts.length > 1 ? urlParts[1] : fileUrl.split('/').pop();
+      
+      if (!storagePath) {
+        throw new Error('Invalid file path');
+      }
+
+      // Create signed URL for private bucket
+      const { data, error } = await supabase.storage
+        .from('quotes')
+        .createSignedUrl(storagePath, 60); // 60 seconds expiry
+
+      if (error) throw error;
+      if (!data?.signedUrl) throw new Error('Failed to generate download URL');
+
+      // Download using signed URL
+      const response = await fetch(data.signedUrl);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Success",
+        description: "PDF downloaded successfully",
+      });
+    } catch (error) {
+      console.error('Error downloading quote:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
