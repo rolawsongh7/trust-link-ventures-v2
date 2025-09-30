@@ -13,6 +13,7 @@ import { Search, Plus, Eye, Edit, CheckCircle, XCircle, Clock, FileText, FileIma
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import QuoteUploadDialog from './QuoteUploadDialog';
+import { SimpleQuoteUpload } from './SimpleQuoteUpload';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Quote {
@@ -28,9 +29,15 @@ interface Quote {
   created_at: string;
   file_url?: string;
   final_file_url?: string;
+  linked_quote_request_id?: string;
+  supplier_quote_uploaded_at?: string;
+  approved_by?: string;
+  approved_at?: string;
+  sent_at?: string;
   customers?: {
     company_name: string;
     contact_name?: string;
+    email?: string;
   };
   leads?: {
     title: string;
@@ -56,6 +63,7 @@ const UnifiedQuoteManagement = () => {
   const [selectedTab, setSelectedTab] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [selectedQuoteForUpload, setSelectedQuoteForUpload] = useState<Quote | null>(null);
   const { toast } = useToast();
 
   const form = useForm({
@@ -276,7 +284,8 @@ const UnifiedQuoteManagement = () => {
 
   const approveQuote = async (quoteId: string) => {
     try {
-      const { error } = await supabase
+      // First approve the quote
+      const { error: updateError } = await supabase
         .from('quotes')
         .update({
           status: 'approved',
@@ -285,11 +294,23 @@ const UnifiedQuoteManagement = () => {
         })
         .eq('id', quoteId);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Get quote details to send to customer
+      const { data: quote, error: fetchError } = await supabase
+        .from('quotes')
+        .select('*, customers(company_name, contact_name, email)')
+        .eq('id', quoteId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Send to customer
+      await sendQuoteApprovalLink(quote);
 
       toast({
         title: "Success",
-        description: "Quote approved successfully",
+        description: "Quote approved and sent to customer",
       });
 
       fetchQuotes();
@@ -297,7 +318,7 @@ const UnifiedQuoteManagement = () => {
       console.error('Error approving quote:', error);
       toast({
         title: "Error",
-        description: "Failed to approve quote",
+        description: "Failed to approve and send quote",
         variant: "destructive",
       });
     }
@@ -366,11 +387,7 @@ const UnifiedQuoteManagement = () => {
             Unified view of all quotes, RFQs, and order conversions
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setIsUploadDialogOpen(true)} variant="outline">
-            <Upload className="mr-2 h-4 w-4" />
-            Upload Quote
-          </Button>
+        <div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -638,6 +655,42 @@ const UnifiedQuoteManagement = () => {
                       )}
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      {/* Step 1: Upload Supplier Quote - only if no supplier quote uploaded yet */}
+                      {!quote.file_url && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedQuoteForUpload(quote)}
+                        >
+                          <Upload className="mr-1 h-3 w-3" />
+                          Upload Quote
+                        </Button>
+                      )}
+                      
+                      {/* Step 2: Generate Title Page - only if supplier quote uploaded but no final quote */}
+                      {quote.file_url && !quote.final_file_url && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => generateTitlePage(quote.id)}
+                        >
+                          <FileCheck className="mr-1 h-3 w-3" />
+                          Generate Title Page
+                        </Button>
+                      )}
+                      
+                      {/* Step 3: Approve - only if final quote exists but not approved */}
+                      {quote.final_file_url && quote.status === 'draft' && (
+                        <Button
+                          size="sm"
+                          onClick={() => approveQuote(quote.id)}
+                        >
+                          <ThumbsUp className="mr-1 h-3 w-3" />
+                          Approve & Send
+                        </Button>
+                      )}
+                      
+                      {/* Download buttons */}
                       {quote.file_url && (
                         <Button
                           variant="outline"
@@ -655,36 +708,7 @@ const UnifiedQuoteManagement = () => {
                           onClick={() => downloadQuote(quote.final_file_url!, `final-quote-${quote.quote_number}.pdf`)}
                         >
                           <Download className="mr-1 h-3 w-3" />
-                          Final PDF
-                        </Button>
-                      )}
-                      {quote.status === 'draft' && quote.file_url && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => generateTitlePage(quote.id)}
-                        >
-                          <FileCheck className="mr-1 h-3 w-3" />
-                          Generate Title
-                        </Button>
-                      )}
-                      {quote.status === 'draft' && quote.final_file_url && (
-                        <Button
-                          size="sm"
-                          onClick={() => approveQuote(quote.id)}
-                        >
-                          <ThumbsUp className="mr-1 h-3 w-3" />
-                          Approve
-                        </Button>
-                      )}
-                      {(quote.status === 'approved' || quote.status === 'sent') && quote.final_file_url && (
-                        <Button
-                          size="sm"
-                          onClick={() => sendQuoteApprovalLink(quote)}
-                          className="bg-blue-50 text-blue-700 hover:bg-blue-100"
-                        >
-                          <Mail className="mr-1 h-3 w-3" />
-                          Send to Customer
+                          Final Quote
                         </Button>
                       )}
                     </div>
@@ -701,6 +725,16 @@ const UnifiedQuoteManagement = () => {
         onOpenChange={setIsUploadDialogOpen}
         onUploadComplete={fetchQuotes}
       />
+
+      {selectedQuoteForUpload && (
+        <SimpleQuoteUpload
+          open={!!selectedQuoteForUpload}
+          onOpenChange={(open) => !open && setSelectedQuoteForUpload(null)}
+          quoteId={selectedQuoteForUpload.id}
+          quoteNumber={selectedQuoteForUpload.quote_number}
+          onSuccess={fetchQuotes}
+        />
+      )}
     </div>
   );
 };
