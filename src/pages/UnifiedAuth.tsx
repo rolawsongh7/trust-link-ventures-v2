@@ -28,38 +28,52 @@ const UnifiedAuth = () => {
   // Route authenticated users to their appropriate portal
   useEffect(() => {
     const routeUser = async () => {
+      console.log('[UnifiedAuth] Routing check:', { 
+        adminUser: !!adminUser, 
+        customerUser: !!customerUser, 
+        role, 
+        roleLoading 
+      });
+
       // Wait until role has been resolved to avoid misrouting to customer portal
-      if (roleLoading) return;
+      if (roleLoading) {
+        console.log('[UnifiedAuth] Waiting for role to load');
+        return;
+      }
 
       if (adminUser) {
+        console.log('[UnifiedAuth] Admin user detected, role:', role);
         // Check if user has admin access for CRM
         if (role === 'admin') {
-          navigate('/dashboard');
+          console.log('[UnifiedAuth] Navigating to dashboard (admin role)');
+          navigate('/dashboard', { replace: true });
           return;
         }
         
-        // Check if user is in admin whitelist (for trustlventuresghana_a01@yahoo.com)
+        // Check if user is in admin whitelist
         try {
           const { data: isAllowed } = await supabase.rpc('is_allowed_admin_email', {
             user_email: adminUser.email,
           });
           
           if (isAllowed) {
-            navigate('/dashboard');
+            console.log('[UnifiedAuth] Navigating to dashboard (whitelisted)');
+            navigate('/dashboard', { replace: true });
             return;
           }
         } catch (error) {
-          console.error('Error checking admin whitelist:', error);
+          console.error('[UnifiedAuth] Error checking admin whitelist:', error);
         }
         
-        // If user is authenticated but not admin, still route to dashboard for now
-        // This allows all authenticated users to access CRM functionality
-        navigate('/dashboard');
+        // If user is authenticated but not admin, still route to dashboard
+        console.log('[UnifiedAuth] Navigating to dashboard (default)');
+        navigate('/dashboard', { replace: true });
         return;
       }
 
       if (customerUser) {
-        navigate('/customer');
+        console.log('[UnifiedAuth] Customer user detected, navigating to customer portal');
+        navigate('/customer', { replace: true });
       }
     };
 
@@ -72,7 +86,7 @@ const UnifiedAuth = () => {
 
     try {
       if (isLogin) {
-        console.log('🔐 Starting login for:', email);
+        console.log('[UnifiedAuth] Starting login for:', email);
         
         // Use Supabase directly for simpler auth
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -80,73 +94,58 @@ const UnifiedAuth = () => {
           password,
         });
         
-        console.log('🔑 Login result:', { success: !!data.user, error: error?.message });
+        console.log('[UnifiedAuth] Login result:', { success: !!data.user, error: error?.message });
         
-        if (!error && data.user) {
-          console.log('✅ Login successful for user:', data.user.id);
-          
-          // Check if this is an admin email
-          const { data: isAllowed } = await supabase.rpc('is_allowed_admin_email', {
-            user_email: email,
-          });
-          
-          console.log('🛡️ Admin check result:', isAllowed);
-          
-          if (isAllowed) {
-            toast({ 
-              title: 'Welcome back!', 
-              description: 'Redirecting to dashboard...' 
-            });
-            // Force redirect with window.location to ensure it works
-            setTimeout(() => {
-              window.location.href = '/dashboard';
-            }, 500);
-            return;
-          } else {
-            // Try customer portal
-            toast({ 
-              title: 'Welcome back!', 
-              description: 'Redirecting to customer portal...' 
-            });
-            setTimeout(() => {
-              window.location.href = '/customer';
-            }, 500);
-            return;
-          }
-        } else {
-          console.error('❌ Login failed:', error);
+        if (error) {
+          console.error('[UnifiedAuth] Login failed:', error);
           toast({
             title: "Login failed",
-            description: error?.message || "Invalid email or password. Please try again.",
+            description: error.message || "Invalid email or password. Please try again.",
             variant: "destructive",
           });
+          return;
+        }
+
+        if (data.user) {
+          console.log('[UnifiedAuth] Login successful for user:', data.user.id);
+          
+          toast({ 
+            title: 'Welcome back!', 
+            description: 'Loading your dashboard...' 
+          });
+          
+          // Let the useEffect handle navigation based on role
+          // Don't force redirect here to avoid race conditions
         }
       } else {
         // Sign up - default to customer registration
+        console.log('[UnifiedAuth] Starting customer signup');
         const { error } = await customerSignUp(email, password, companyName, fullName);
         
         if (error) {
+          console.error('[UnifiedAuth] Signup failed:', error);
           toast({
             title: "Sign up failed",
             description: error.message,
             variant: "destructive",
           });
         } else {
+          console.log('[UnifiedAuth] Signup successful');
           toast({
             title: "Account created!",
             description: "Please check your email to verify your account.",
           });
         }
       }
-    } catch (error) {
-      console.error('🚨 Authentication error:', error);
+    } catch (error: any) {
+      console.error('[UnifiedAuth] Authentication error:', error);
       toast({
         title: "Authentication error",
-        description: "Something went wrong. Please try again.",
+        description: error?.message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
-      console.log('🔄 Setting loading to false');
+      console.log('[UnifiedAuth] Setting loading to false');
       setLoading(false);
     }
   };

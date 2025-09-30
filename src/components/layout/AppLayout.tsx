@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppSidebar } from './AppSidebar';
@@ -9,12 +9,25 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
 export const AppLayout = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, session } = useAuth();
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const location = useLocation();
 
+  // Validate session health
+  useEffect(() => {
+    const validateSession = async () => {
+      if (user && !session) {
+        console.warn('[AppLayout] User exists but no session, refreshing');
+        // Session might be stale, let auth context handle it
+      }
+    };
+    
+    validateSession();
+  }, [user, session]);
+
   // Redirect to login page if not authenticated
   if (!loading && !user) {
+    console.log('[AppLayout] No user, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 

@@ -36,6 +36,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [roleLoading, setRoleLoading] = useState(false);
+  const [isFetchingRole, setIsFetchingRole] = useState(false);
+
+  // Clear all auth state
+  const clearAuthState = () => {
+    console.log('[Auth] Clearing all auth state');
+    setUser(null);
+    setSession(null);
+    setUserRole(null);
+    setRoleLoading(false);
+    setIsFetchingRole(false);
+  };
 
   // Fetch user role when user changes
   const fetchUserRole = async (userId: string) => {
@@ -44,79 +55,151 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
+    // Prevent concurrent role fetching
+    if (isFetchingRole) {
+      console.log('[Auth] Role fetch already in progress, skipping');
+      return;
+    }
+
     try {
+      setIsFetchingRole(true);
       setRoleLoading(true);
+      console.log('[Auth] Fetching role for user:', userId);
       
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Role fetch timeout')), 10000)
+      );
+
       // Check for admin role first
-      const { data: isAdmin } = await supabase.rpc('check_user_role', {
+      const adminPromise = supabase.rpc('check_user_role', {
         check_user_id: userId,
         required_role: 'admin'
       });
 
+      const { data: isAdmin } = await Promise.race([adminPromise, timeoutPromise]) as any;
+
       if (isAdmin) {
+        console.log('[Auth] User has admin role');
         setUserRole('admin');
         return;
       }
 
       // Check for sales rep role
-      const { data: isSalesRep } = await supabase.rpc('check_user_role', {
+      const salesPromise = supabase.rpc('check_user_role', {
         check_user_id: userId,
         required_role: 'sales_rep'
       });
 
+      const { data: isSalesRep } = await Promise.race([salesPromise, timeoutPromise]) as any;
+
       if (isSalesRep) {
+        console.log('[Auth] User has sales_rep role');
         setUserRole('sales_rep');
         return;
       }
 
       // Default to user role
+      console.log('[Auth] User has default user role');
       setUserRole('user');
     } catch (error) {
-      console.error('Error fetching user role:', error);
+      console.error('[Auth] Error fetching user role:', error);
       setUserRole('user'); // Default to user role on error
     } finally {
       setRoleLoading(false);
+      setIsFetchingRole(false);
     }
   };
 
   useEffect(() => {
+    let mounted = true;
+
     // Get the session immediately first
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('[Auth] Getting initial session');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('[Auth] Error getting initial session:', error);
+          clearAuthState();
+          setLoading(false);
+          return;
+        }
+
+        if (!mounted) return;
+
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Fetch role if user exists
+        // Defer role fetching to prevent blocking
         if (session?.user) {
-          await fetchUserRole(session.user.id);
+          console.log('[Auth] Initial session found, fetching role');
+          setTimeout(() => {
+            if (mounted) {
+              fetchUserRole(session.user.id);
+            }
+          }, 0);
+        } else {
+          console.log('[Auth] No initial session found');
         }
       } catch (error) {
-        console.error('Error getting initial session:', error);
-        setLoading(false);
+        console.error('[Auth] Exception getting initial session:', error);
+        if (mounted) {
+          clearAuthState();
+          setLoading(false);
+        }
       }
     };
 
     getInitialSession();
 
-    // Then set up the listener for future changes
+    // Set up the listener for future changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        console.log('[Auth] Auth state change event:', event);
+        
+        if (!mounted) return;
+
+        // Update state synchronously
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Fetch role when user signs in or changes
-        if (session?.user) {
-          await fetchUserRole(session.user.id);
-        } else {
+        // Handle different auth events
+        if (event === 'SIGNED_OUT') {
+          console.log('[Auth] User signed out');
+          clearAuthState();
+        } else if (event === 'SIGNED_IN' && session?.user) {
+          console.log('[Auth] User signed in, fetching role');
+          // Defer role fetching to prevent deadlock
+          setTimeout(() => {
+            if (mounted) {
+              fetchUserRole(session.user.id);
+            }
+          }, 0);
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          console.log('[Auth] Token refreshed');
+          // Only fetch role if we don't have it yet
+          if (!userRole) {
+            setTimeout(() => {
+              if (mounted) {
+                fetchUserRole(session.user.id);
+              }
+            }, 0);
+          }
+        } else if (!session) {
+          console.log('[Auth] No session, clearing state');
           setUserRole(null);
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -156,8 +239,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    console.log('[Auth] Signing out');
+    try {
+      // Clear state first
+      clearAuthState();
+      
+      // Then sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('[Auth] Sign out error:', error);
+      } else {
+        console.log('[Auth] Sign out successful');
+      }
+      
+      return { error };
+    } catch (error: any) {
+      console.error('[Auth] Sign out exception:', error);
+      return { error };
+    }
   };
 
   const signInWithProvider = async (provider: 'google' | 'github') => {
