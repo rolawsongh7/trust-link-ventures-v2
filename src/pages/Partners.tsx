@@ -83,10 +83,10 @@ const Partners = () => {
       logo: jMarrLogo
     },
     {
-      name: "Seapro SAS",
+      name: "SEAPRO SAS",
       location: "France",
       website: "https://seaprosas.com/en/",
-      description: "Founded in 2006 by food sector experts, Seapro SAS focuses on retail and HORECA format products. Committed to putting customers at the center of priorities with humane and close treatment.",
+      description: "Founded in 2006 by food sector experts, SEAPRO SAS operates from Cabestany, France, focusing on retail and HORECA format products. Committed to putting customers at the center with humane and close treatment.",
       specialties: ["Seafood", "Meat & Poultry", "Asian Specialties", "Processed Foods"],
       established: "2006",
       logo: seaproLogo
