@@ -35,6 +35,7 @@ import Cookies from "./pages/Cookies";
 import Products from "./pages/Products";
 import QuoteRequest from "./pages/QuoteRequest";
 import QuoteSystem from "./pages/QuoteSystem";
+import QuoteRequestManagement from "@/components/QuoteRequestManagement";
 import Terms from "./pages/Terms";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import CustomersPage from "./pages/CustomersPage";
@@ -108,7 +109,7 @@ const App = () => (
               <Route path="/orders" element={<OrdersPage />} />
               <Route path="/quotes" element={<QuotesPage />} />
               <Route path="/rfqs" element={<RFQPage />} />
-              <Route path="/quote-inquiries" element={<div>Quote Inquiries Page</div>} />
+              <Route path="/quote-inquiries" element={<QuoteRequestManagement />} />
               <Route path="/communication" element={<CommunicationPage />} />
               <Route path="/accounting" element={<AccountingPage />} />
               <Route path="/quote-requests" element={<div>Quote Requests Page</div>} />
