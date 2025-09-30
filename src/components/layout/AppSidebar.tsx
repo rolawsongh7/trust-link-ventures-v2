@@ -36,7 +36,6 @@ const navigationItems = [
   { title: 'RFQs', url: '/rfqs', icon: Clock },
   { title: 'Customer Quote Inquiries', url: '/quote-inquiries', icon: MessageSquare },
   { title: 'Communication', url: '/communication', icon: Phone },
-  { title: 'Accounting', url: '/accounting', icon: Calculator },
 ];
 
 
@@ -66,8 +65,7 @@ export function AppSidebar() {
           </div>
           {isExpanded && (
             <div className="font-semibold text-sidebar-foreground">
-              <div className="text-sm font-bold">Trust Link</div>
-              
+              <div className="text-sm font-bold">Trust Link Ventures</div>
             </div>
           )}
         </div>

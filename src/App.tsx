@@ -43,7 +43,7 @@ import LeadsPage from "./pages/LeadsPage";
 import OrdersPage from "./pages/OrdersPage";
 import QuotesPage from "./pages/QuotesPage";
 import CommunicationPage from "./pages/CommunicationPage";
-import AccountingPage from "./pages/AccountingPage";
+
 import RFQPage from "./pages/RFQPage";
 import UnifiedAuth from "./pages/UnifiedAuth";
 import NotificationDemo from "./pages/NotificationDemo";
@@ -111,7 +111,7 @@ const App = () => (
               <Route path="/rfqs" element={<RFQPage />} />
               <Route path="/quote-inquiries" element={<QuoteRequestManagement />} />
               <Route path="/communication" element={<CommunicationPage />} />
-              <Route path="/accounting" element={<AccountingPage />} />
+              
               <Route path="/quote-requests" element={<div>Quote Requests Page</div>} />
               <Route path="/quote-system" element={<QuoteSystem />} />
               <Route path="/settings" element={<div>Settings Page</div>} />
