@@ -175,21 +175,36 @@ async function generateQuoteRequestPDF(quoteRequest: any, customerData: any): Pr
   })
   yPosition -= 30
   
-  if (quoteRequest.request_type === 'lead') {
-    yPosition = drawField('Company', quoteRequest.lead_company_name, yPosition)
-    yPosition = drawField('Contact Name', quoteRequest.lead_contact_name, yPosition)
-    yPosition = drawField('Email', quoteRequest.lead_email, yPosition)
-    yPosition = drawField('Phone', quoteRequest.lead_phone, yPosition)
-    yPosition = drawField('Country', quoteRequest.lead_country, yPosition)
-    yPosition = drawField('Industry', quoteRequest.lead_industry, yPosition)
+  // Check if lead fields are populated (regardless of request_type)
+  if (quoteRequest.lead_company_name || quoteRequest.lead_email) {
+    yPosition = drawField('Company', quoteRequest.lead_company_name || 'N/A', yPosition)
+    yPosition = drawField('Contact Name', quoteRequest.lead_contact_name || 'N/A', yPosition)
+    yPosition = drawField('Email', quoteRequest.lead_email || 'N/A', yPosition)
+    if (quoteRequest.lead_phone) {
+      yPosition = drawField('Phone', quoteRequest.lead_phone, yPosition)
+    }
+    if (quoteRequest.lead_country) {
+      yPosition = drawField('Country', quoteRequest.lead_country, yPosition)
+    }
+    if (quoteRequest.lead_industry) {
+      yPosition = drawField('Industry', quoteRequest.lead_industry, yPosition)
+    }
   } else if (customerData) {
-    yPosition = drawField('Company', customerData.company_name, yPosition)
-    yPosition = drawField('Contact Name', customerData.contact_name, yPosition)
-    yPosition = drawField('Email', customerData.email, yPosition)
-    yPosition = drawField('Phone', customerData.phone, yPosition)
-    yPosition = drawField('Address', customerData.address, yPosition)
-    yPosition = drawField('City', customerData.city, yPosition)
-    yPosition = drawField('Country', customerData.country, yPosition)
+    yPosition = drawField('Company', customerData.company_name || 'N/A', yPosition)
+    yPosition = drawField('Contact Name', customerData.contact_name || 'N/A', yPosition)
+    yPosition = drawField('Email', customerData.email || 'N/A', yPosition)
+    if (customerData.phone) {
+      yPosition = drawField('Phone', customerData.phone, yPosition)
+    }
+    if (customerData.address) {
+      yPosition = drawField('Address', customerData.address, yPosition)
+    }
+    if (customerData.city) {
+      yPosition = drawField('City', customerData.city, yPosition)
+    }
+    if (customerData.country) {
+      yPosition = drawField('Country', customerData.country, yPosition)
+    }
   }
   
   // Message
