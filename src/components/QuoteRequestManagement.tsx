@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download, Zap } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 
 interface QuoteRequest {
@@ -560,7 +561,7 @@ const QuoteRequestManagement = () => {
 
       {/* Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
@@ -586,8 +587,9 @@ const QuoteRequestManagement = () => {
             </DialogDescription>
           </DialogHeader>
           
-          {selectedRequest && (
-            <div className="space-y-4">
+          <ScrollArea className="flex-1 pr-4">
+            {selectedRequest && (
+              <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Title</label>
@@ -691,17 +693,18 @@ const QuoteRequestManagement = () => {
                 </div>
               )}
 
-              <div className="flex justify-end pt-4">
-                <Button
-                  onClick={() => selectedRequest && handleDownloadPDF(selectedRequest)}
-                  className="gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Download PDF
-                </Button>
+                <div className="flex justify-end pt-4">
+                  <Button
+                    onClick={() => selectedRequest && handleDownloadPDF(selectedRequest)}
+                    className="gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download PDF
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 
