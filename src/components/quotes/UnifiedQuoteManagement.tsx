@@ -9,9 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Eye, Edit, CheckCircle, XCircle, Clock, FileText, FileImage } from 'lucide-react';
+import { Search, Plus, Eye, Edit, CheckCircle, XCircle, Clock, FileText, FileImage, Upload, Download, ThumbsUp, FileCheck, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
+import QuoteUploadDialog from './QuoteUploadDialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Quote {
   id: string;
@@ -24,6 +26,8 @@ interface Quote {
   origin_type: string;
   valid_until?: string;
   created_at: string;
+  file_url?: string;
+  final_file_url?: string;
   customers?: {
     company_name: string;
     contact_name?: string;
@@ -44,12 +48,14 @@ interface Quote {
 }
 
 const UnifiedQuoteManagement = () => {
+  const { user } = useAuth();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm({
@@ -246,10 +252,18 @@ const UnifiedQuoteManagement = () => {
 
       if (error) throw error;
 
+      // Update sent timestamp
+      await supabase
+        .from('quotes')
+        .update({ sent_at: new Date().toISOString() })
+        .eq('id', quote.id);
+
       toast({
         title: "Success",
         description: "Quote approval link sent successfully to " + customerEmail,
       });
+      
+      fetchQuotes();
     } catch (error: any) {
       console.error('Error sending quote approval link:', error);
       toast({
@@ -258,6 +272,45 @@ const UnifiedQuoteManagement = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const approveQuote = async (quoteId: string) => {
+    try {
+      const { error } = await supabase
+        .from('quotes')
+        .update({
+          status: 'approved',
+          approved_by: user?.id,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', quoteId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Quote approved successfully",
+      });
+
+      fetchQuotes();
+    } catch (error: any) {
+      console.error('Error approving quote:', error);
+      toast({
+        title: "Error",
+        description: "Failed to approve quote",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const downloadQuote = (fileUrl: string, fileName: string) => {
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getStatusColor = (status: string) => {
@@ -313,13 +366,18 @@ const UnifiedQuoteManagement = () => {
             Unified view of all quotes, RFQs, and order conversions
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Quote
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsUploadDialogOpen(true)} variant="outline">
+            <Upload className="mr-2 h-4 w-4" />
+            Upload Quote
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                New Quote
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Quote</DialogTitle>
@@ -489,6 +547,7 @@ const UnifiedQuoteManagement = () => {
           </DialogContent>
         </Dialog>
       </div>
+      </div>
 
       <div className="flex items-center space-x-4">
         <div className="relative flex-1 max-w-sm">
@@ -578,56 +637,54 @@ const UnifiedQuoteManagement = () => {
                         </p>
                       )}
                     </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="mr-2 h-4 w-4" />
-                        View
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </Button>
-                      {(quote.status === 'draft' || quote.status === 'sent') && (
-                        <Button 
-                          variant="outline" 
+                    <div className="flex flex-wrap gap-2">
+                      {quote.file_url && (
+                        <Button
+                          variant="outline"
                           size="sm"
-                          onClick={() => generateTitlePage(quote.id)}
-                          className="text-blue-600 hover:text-blue-700"
+                          onClick={() => downloadQuote(quote.file_url!, `supplier-quote-${quote.quote_number}.pdf`)}
                         >
-                          <FileImage className="mr-2 h-4 w-4" />
-                          Generate Title Page
+                          <Download className="mr-1 h-3 w-3" />
+                          Supplier PDF
                         </Button>
                       )}
-                      {quote.status === 'sent' && (
-                        <>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => updateQuoteStatus(quote.id, 'accepted')}
-                            className="text-green-600 hover:text-green-700"
-                          >
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Accept
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => updateQuoteStatus(quote.id, 'rejected')}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Reject
-                          </Button>
-                        </>
+                      {quote.final_file_url && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => downloadQuote(quote.final_file_url!, `final-quote-${quote.quote_number}.pdf`)}
+                        >
+                          <Download className="mr-1 h-3 w-3" />
+                          Final PDF
+                        </Button>
                       )}
-                      {(quote.status === 'draft' || quote.status === 'sent') && (
-                        <Button 
-                          variant="outline" 
+                      {quote.status === 'draft' && quote.file_url && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => generateTitlePage(quote.id)}
+                        >
+                          <FileCheck className="mr-1 h-3 w-3" />
+                          Generate Title
+                        </Button>
+                      )}
+                      {quote.status === 'draft' && quote.final_file_url && (
+                        <Button
+                          size="sm"
+                          onClick={() => approveQuote(quote.id)}
+                        >
+                          <ThumbsUp className="mr-1 h-3 w-3" />
+                          Approve
+                        </Button>
+                      )}
+                      {(quote.status === 'approved' || quote.status === 'sent') && quote.final_file_url && (
+                        <Button
                           size="sm"
                           onClick={() => sendQuoteApprovalLink(quote)}
                           className="bg-blue-50 text-blue-700 hover:bg-blue-100"
                         >
-                          📧 Send Approval Link
+                          <Mail className="mr-1 h-3 w-3" />
+                          Send to Customer
                         </Button>
                       )}
                     </div>
@@ -638,6 +695,12 @@ const UnifiedQuoteManagement = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      <QuoteUploadDialog
+        open={isUploadDialogOpen}
+        onOpenChange={setIsUploadDialogOpen}
+        onUploadComplete={fetchQuotes}
+      />
     </div>
   );
 };

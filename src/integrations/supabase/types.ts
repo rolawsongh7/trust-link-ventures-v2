@@ -1348,6 +1348,8 @@ export type Database = {
       }
       quotes: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           created_by: string | null
           currency: string | null
@@ -1358,10 +1360,13 @@ export type Database = {
           final_file_url: string | null
           id: string
           lead_id: string | null
+          linked_quote_request_id: string | null
           notes: string | null
           origin_type: string | null
           quote_number: string
+          sent_at: string | null
           status: string | null
+          supplier_quote_uploaded_at: string | null
           terms: string | null
           title: string
           total_amount: number | null
@@ -1369,6 +1374,8 @@ export type Database = {
           valid_until: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string | null
@@ -1379,10 +1386,13 @@ export type Database = {
           final_file_url?: string | null
           id?: string
           lead_id?: string | null
+          linked_quote_request_id?: string | null
           notes?: string | null
           origin_type?: string | null
           quote_number: string
+          sent_at?: string | null
           status?: string | null
+          supplier_quote_uploaded_at?: string | null
           terms?: string | null
           title: string
           total_amount?: number | null
@@ -1390,6 +1400,8 @@ export type Database = {
           valid_until?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string | null
@@ -1400,10 +1412,13 @@ export type Database = {
           final_file_url?: string | null
           id?: string
           lead_id?: string | null
+          linked_quote_request_id?: string | null
           notes?: string | null
           origin_type?: string | null
           quote_number?: string
+          sent_at?: string | null
           status?: string | null
+          supplier_quote_uploaded_at?: string | null
           terms?: string | null
           title?: string
           total_amount?: number | null
@@ -1423,6 +1438,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_linked_quote_request_id_fkey"
+            columns: ["linked_quote_request_id"]
+            isOneToOne: false
+            referencedRelation: "quote_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -1907,6 +1929,10 @@ export type Database = {
       is_allowed_admin_email: {
         Args: { user_email: string }
         Returns: boolean
+      }
+      link_quote_to_request: {
+        Args: { p_quote_id: string; p_quote_number: string }
+        Returns: Json
       }
       log_security_event: {
         Args: {
