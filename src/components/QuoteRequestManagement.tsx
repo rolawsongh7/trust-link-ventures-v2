@@ -193,16 +193,31 @@ const QuoteRequestManagement = () => {
 
   const handleDownloadPDF = async (request: QuoteRequest) => {
     try {
-      const { data, error } = await supabase.functions.invoke('download-quote-request-pdf', {
-        body: { quoteRequestId: request.id },
-      });
-
-      if (error) {
-        throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error('Please log in to download PDF');
+        return;
       }
 
-      // The response should be a blob or base64 data
-      const blob = new Blob([data], { type: 'application/pdf' });
+      const response = await fetch(
+        `https://ppyfrftmexvgnsxlhdbz.supabase.co/functions/v1/download-quote-request-pdf`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBweWZyZnRtZXh2Z25zeGxoZGJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3ODQ3NzYsImV4cCI6MjA3MDM2MDc3Nn0.iF81frkpEqDyrA8Ntfv6-Eyoy7r_BK8rpW_w07mcRl4'
+          },
+          body: JSON.stringify({ quoteRequestId: request.id })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
