@@ -384,21 +384,21 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
     const logoYPosition = yPosition + 30
     let leftYPos = logoYPosition - 70
 
-    // New Gen Link LLC (left side)
-    if (newGenLogo) {
-      console.log('Drawing New Gen Link logo')
-      const logoScale = 0.15
-      const logoWidth = newGenLogo.width * logoScale
-      const logoHeight = newGenLogo.height * logoScale
+    // Trust Link Ventures Limited (left side)
+    if (trustLinkLogo) {
+      console.log('Drawing Trust Link logo')
+      const logoScale = 0.6496875
+      const logoWidth = trustLinkLogo.width * logoScale
+      const logoHeight = trustLinkLogo.height * logoScale
       
-      page.drawImage(newGenLogo, {
+      page.drawImage(trustLinkLogo, {
         x: leftColumn,
         y: logoYPosition - logoHeight + 15,
         width: logoWidth,
         height: logoHeight,
       })
       
-      page.drawText('New Gen Link LLC', {
+      page.drawText('Trust Link Ventures Limited', {
         x: leftColumn,
         y: logoYPosition - logoHeight - 5,
         size: 14,
@@ -407,7 +407,7 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
       })
       
       leftYPos = logoYPosition - logoHeight - 25
-      page.drawText('3240 Lone Tree Way Street', {
+      page.drawText('Enyedado Coldstore Premises', {
         x: leftColumn,
         y: leftYPos,
         size: 10,
@@ -416,7 +416,7 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
       })
 
       leftYPos -= 15
-      page.drawText('204-J Antioch, CA', {
+      page.drawText('Afko Junction Box 709', {
         x: leftColumn,
         y: leftYPos,
         size: 10,
@@ -425,7 +425,7 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
       })
 
       leftYPos -= 15
-      page.drawText('94509 USA', {
+      page.drawText('Adabraka Ghana', {
         x: leftColumn,
         y: leftYPos,
         size: 10,
@@ -434,7 +434,16 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
       })
 
       leftYPos -= 15
-      page.drawText('newgentrustlinkllc@gmail.com', {
+      page.drawText('info@trustlinkventures.com', {
+        x: leftColumn,
+        y: leftYPos,
+        size: 10,
+        font: regularFont,
+        color: darkGray,
+      })
+
+      leftYPos -= 15
+      page.drawText('+233 243131257', {
         x: leftColumn,
         y: leftYPos,
         size: 10,
@@ -443,23 +452,23 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
       })
     }
 
-    // Trust Link Ventures Limited (right side)
+    // New Gen Link LLC (right side)
     const rightColumnAdjusted = rightColumn + 60
     let rightYPos = logoYPosition
-    if (trustLinkLogo) {
-      console.log('Drawing Trust Link logo')
-      const logoScale = 0.6496875
-      const logoWidth = trustLinkLogo.width * logoScale
-      const logoHeight = trustLinkLogo.height * logoScale
+    if (newGenLogo) {
+      console.log('Drawing New Gen Link logo')
+      const logoScale = 0.15
+      const logoWidth = newGenLogo.width * logoScale
+      const logoHeight = newGenLogo.height * logoScale
       
-      page.drawImage(trustLinkLogo, {
+      page.drawImage(newGenLogo, {
         x: rightColumnAdjusted,
         y: logoYPosition - logoHeight + 15,
         width: logoWidth,
         height: logoHeight,
       })
       
-      page.drawText('Trust Link Ventures Limited', {
+      page.drawText('New Gen Link LLC', {
         x: rightColumnAdjusted,
         y: logoYPosition - logoHeight - 5,
         size: 14,
@@ -468,7 +477,7 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
       })
       
       rightYPos = logoYPosition - logoHeight - 25
-      page.drawText('Enyedado Coldstore Premises', {
+      page.drawText('3240 Lone Tree Way Street', {
         x: rightColumnAdjusted,
         y: rightYPos,
         size: 10,
@@ -477,7 +486,7 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
       })
 
       rightYPos -= 15
-      page.drawText('Afko Junction Box 709', {
+      page.drawText('204-J Antioch, CA', {
         x: rightColumnAdjusted,
         y: rightYPos,
         size: 10,
@@ -486,7 +495,7 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
       })
 
       rightYPos -= 15
-      page.drawText('Adabraka Ghana', {
+      page.drawText('94509 USA', {
         x: rightColumnAdjusted,
         y: rightYPos,
         size: 10,
@@ -495,16 +504,7 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
       })
 
       rightYPos -= 15
-      page.drawText('info@trustlinkventures.com', {
-        x: rightColumnAdjusted,
-        y: rightYPos,
-        size: 10,
-        font: regularFont,
-        color: darkGray,
-      })
-
-      rightYPos -= 15
-      page.drawText('+233 243131257', {
+      page.drawText('newgentrustlinkllc@gmail.com', {
         x: rightColumnAdjusted,
         y: rightYPos,
         size: 10,
