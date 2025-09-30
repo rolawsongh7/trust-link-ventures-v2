@@ -51,7 +51,7 @@ serve(async (req) => {
     console.log('Quote fetched successfully')
 
     // Add supplier and customer info to quote object
-    quote.supplier = supplier;
+    quote.suppliers = supplier;
     quote.customers = customer;
 
     console.log('About to generate title page PDF...')
