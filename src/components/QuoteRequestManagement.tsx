@@ -107,21 +107,25 @@ const QuoteRequestManagement = () => {
   const updateRequestStatus = async (requestId: string, status: string, notes?: string) => {
     try {
       console.log('Updating request status:', { requestId, status, notes });
+      console.log('Current user authentication status');
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('quote_requests')
         .update({ 
           status,
-          admin_notes: notes 
+          admin_notes: notes || null 
         })
-        .eq('id', requestId);
+        .eq('id', requestId)
+        .select();
+
+      console.log('Update response:', { data, error });
 
       if (error) {
         console.error('Supabase error:', error);
         throw error;
       }
       
-      console.log('Update successful');
+      console.log('Update successful, affected rows:', data?.length);
       toast.success('Request status updated successfully');
       fetchQuoteRequests();
       setShowUpdateDialog(false);
