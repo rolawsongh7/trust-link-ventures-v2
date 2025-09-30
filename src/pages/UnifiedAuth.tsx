@@ -27,23 +27,43 @@ const UnifiedAuth = () => {
 
 // Route authenticated users to their appropriate portal
 useEffect(() => {
-  // Wait until role has been resolved to avoid misrouting to customer portal
-  if (roleLoading) return;
+  const routeUser = async () => {
+    // Wait until role has been resolved to avoid misrouting to customer portal
+    if (roleLoading) return;
 
-  if (adminUser) {
-    if (role === 'admin' || role === 'sales_rep') {
+    if (adminUser) {
+      // Check if user has admin access for CRM
+      if (role === 'admin') {
+        navigate('/dashboard');
+        return;
+      }
+      
+      // Check if user is in admin whitelist (for trustlventuresghana_a01@yahoo.com)
+      try {
+        const { data: isAllowed } = await supabase.rpc('is_allowed_admin_email', {
+          user_email: adminUser.email,
+        });
+        
+        if (isAllowed) {
+          navigate('/dashboard');
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking admin whitelist:', error);
+      }
+      
+      // If user is authenticated but not admin, still route to dashboard for now
+      // This allows all authenticated users to access CRM functionality
       navigate('/dashboard');
-    } else if (role === 'supplier') {
-      navigate('/supplier');
-    } else if (customerUser) {
+      return;
+    }
+
+    if (customerUser) {
       navigate('/customer');
     }
-    return;
-  }
+  };
 
-  if (customerUser) {
-    navigate('/customer');
-  }
+  routeUser();
 }, [adminUser, customerUser, role, roleLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
