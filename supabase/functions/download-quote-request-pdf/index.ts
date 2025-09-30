@@ -12,12 +12,16 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting PDF generation for quote request...')
+    
+    // Use SERVICE_ROLE_KEY to bypass RLS policies
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
     const { quoteRequestId } = await req.json()
+    console.log('Quote Request ID:', quoteRequestId)
 
     if (!quoteRequestId) {
       return new Response(
@@ -26,13 +30,11 @@ serve(async (req) => {
       )
     }
 
-    // Fetch quote request details with items
+    // Fetch quote request details (separate from items to avoid nested query issues)
+    console.log('Fetching quote request details...')
     const { data: quoteRequest, error: quoteError } = await supabase
       .from('quote_requests')
-      .select(`
-        *,
-        quote_request_items (*)
-      `)
+      .select('*')
       .eq('id', quoteRequestId)
       .maybeSingle()
 
@@ -50,6 +52,22 @@ serve(async (req) => {
         JSON.stringify({ error: 'Quote request not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    console.log('Quote request found:', quoteRequest.quote_number)
+
+    // Fetch quote request items separately
+    console.log('Fetching quote request items...')
+    const { data: items, error: itemsError } = await supabase
+      .from('quote_request_items')
+      .select('*')
+      .eq('quote_request_id', quoteRequestId)
+
+    if (itemsError) {
+      console.error('Error fetching quote request items:', itemsError)
+    } else {
+      console.log('Found items:', items?.length || 0)
+      quoteRequest.quote_request_items = items || []
     }
 
     // Fetch customer data separately if customer_id exists

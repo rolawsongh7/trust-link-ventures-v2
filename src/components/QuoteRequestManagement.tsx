@@ -464,7 +464,14 @@ const QuoteRequestManagement = () => {
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Quote Request Details</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              Quote Request Details
+              {selectedRequest && (
+                <span className="text-sm font-mono text-primary">
+                  {selectedRequest.quote_number || `QR-${new Date(selectedRequest.created_at).getFullYear()}${String(new Date(selectedRequest.created_at).getMonth() + 1).padStart(2, '0')}-${selectedRequest.id.slice(0, 8).toUpperCase()}`}
+                </span>
+              )}
+            </DialogTitle>
             <DialogDescription>
               View complete information about this quote request
             </DialogDescription>
