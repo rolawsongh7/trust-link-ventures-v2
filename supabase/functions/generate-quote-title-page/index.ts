@@ -28,14 +28,13 @@ serve(async (req) => {
       throw new Error('Quote ID is required')
     }
 
-    // Fetch quote details with customer, supplier information
+    // Fetch quote details with customer information
     console.log('Fetching quote with ID:', quoteId)
     const { data: quote, error: quoteError } = await supabase
       .from('quotes')
       .select(`
         *,
-        customers:customer_id(*),
-        suppliers:supplier_id(*)
+        customers:customer_id(*)
       `)
       .eq('id', quoteId)
       .maybeSingle()
@@ -60,13 +59,15 @@ serve(async (req) => {
     let finalPdfBytes: Uint8Array
 
     if (quote.file_url) {
-      // Extract filename from the full URL for download
-      const fileName = quote.file_url.split('/').pop() || quote.file_url;
-      console.log('Downloading original PDF from:', quote.file_url, 'using filename:', fileName);
+      // Extract the storage path from the full URL
+      // URL format: https://...supabase.co/storage/v1/object/public/quotes/supplier-quotes/filename.pdf
+      const urlParts = quote.file_url.split('/quotes/');
+      const storagePath = urlParts.length > 1 ? urlParts[1] : quote.file_url.split('/').pop();
+      console.log('Downloading original PDF from storage path:', storagePath);
       
       const { data: originalPdfData, error: downloadError } = await supabase.storage
         .from('quotes')
-        .download(`quotes/${fileName}`)
+        .download(storagePath)
 
       if (downloadError) {
         console.error('Error downloading original PDF:', downloadError)
@@ -89,7 +90,7 @@ serve(async (req) => {
     console.log('Uploading final PDF to storage')
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('quotes')
-      .upload(`quotes/${finalFileName}`, finalPdfBytes, {
+      .upload(`final-quotes/${finalFileName}`, finalPdfBytes, {
         contentType: 'application/pdf',
         upsert: false
       })
@@ -99,12 +100,17 @@ serve(async (req) => {
       throw uploadError
     }
 
+    // Get public URL for the final PDF
+    const { data: { publicUrl } } = supabase.storage
+      .from('quotes')
+      .getPublicUrl(uploadData.path);
+    
     // Update the quote record with the new file URL
-    console.log('Updating quote record with final PDF URL')
+    console.log('Updating quote record with final PDF URL:', publicUrl)
     const { error: updateError } = await supabase
       .from('quotes')
       .update({ 
-        final_file_url: uploadData.path,
+        final_file_url: publicUrl,
         status: 'sent'
       })
       .eq('id', quoteId)
