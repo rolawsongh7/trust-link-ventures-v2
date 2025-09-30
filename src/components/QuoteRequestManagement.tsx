@@ -327,11 +327,10 @@ const QuoteRequestManagement = () => {
             <Card>
               <CardContent className="p-0">
                 <Table>
-                  <TableHeader>
+                   <TableHeader>
                      <TableRow>
                        <TableHead>Quote #</TableHead>
-                       <TableHead>Request Details</TableHead>
-                       <TableHead>Customer/Lead Info</TableHead>
+                       <TableHead>Customer/Lead</TableHead>
                        <TableHead>Status</TableHead>
                        <TableHead>Urgency</TableHead>
                        <TableHead>Items</TableHead>
@@ -341,48 +340,17 @@ const QuoteRequestManagement = () => {
                   </TableHeader>
                   <TableBody>
                     {filteredRequests.map((request) => (
-                      <TableRow key={request.id}>
+                       <TableRow key={request.id}>
+                          <TableCell className="font-medium">
+                            <div className="text-sm font-mono text-blue-600">
+                              {request.quote_number || `QR-${new Date(request.created_at).getFullYear()}${String(new Date(request.created_at).getMonth() + 1).padStart(2, '0')}-${request.id.slice(0, 8).toUpperCase()}`}
+                            </div>
+                          </TableCell>
                          <TableCell className="font-medium">
-                           <div className="text-sm font-mono text-blue-600">
-                             {request.quote_number || 'Generating...'}
+                           <div className="text-sm">
+                             {request.request_type === 'lead' ? request.lead_company_name : request.customer?.company_name}
                            </div>
                          </TableCell>
-                         <TableCell className="font-medium">
-                           <div>
-                             <div className="font-semibold">{request.title}</div>
-                             <Badge variant="outline" className="mt-1">
-                               {request.request_type === 'lead' ? 'New Lead' : 'Existing Customer'}
-                             </Badge>
-                           </div>
-                         </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            {request.request_type === 'lead' ? (
-                              <>
-                                <div className="font-medium text-sm">{request.lead_company_name}</div>
-                                <div className="text-xs text-muted-foreground">{request.lead_contact_name}</div>
-                                <div className="text-xs text-blue-600">{request.lead_email}</div>
-                                {request.lead_phone && (
-                                  <div className="text-xs text-muted-foreground">{request.lead_phone}</div>
-                                )}
-                                {request.lead_country && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {request.lead_country}
-                                  </Badge>
-                                )}
-                              </>
-                            ) : (
-                              <>
-                                <div className="font-medium text-sm">{request.customer?.company_name}</div>
-                                <div className="text-xs text-muted-foreground">{request.customer?.contact_name}</div>
-                                <div className="text-xs text-blue-600">{request.customer?.email}</div>
-                                <Badge variant="default" className="text-xs">
-                                  Customer ID: {request.customer_id?.slice(0, 8)}...
-                                </Badge>
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
                         <TableCell>
                           <Badge variant={getStatusColor(request.status)} className="flex items-center gap-1 w-fit">
                             {getStatusIcon(request.status)}
