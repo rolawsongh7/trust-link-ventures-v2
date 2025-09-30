@@ -25,46 +25,46 @@ const UnifiedAuth = () => {
   const { signIn: customerSignIn, signUp: customerSignUp, user: customerUser } = useCustomerAuth();
   const { role, loading: roleLoading } = useRoleAuth();
 
-// Route authenticated users to their appropriate portal
-useEffect(() => {
-  const routeUser = async () => {
-    // Wait until role has been resolved to avoid misrouting to customer portal
-    if (roleLoading) return;
+  // Route authenticated users to their appropriate portal
+  useEffect(() => {
+    const routeUser = async () => {
+      // Wait until role has been resolved to avoid misrouting to customer portal
+      if (roleLoading) return;
 
-    if (adminUser) {
-      // Check if user has admin access for CRM
-      if (role === 'admin') {
-        navigate('/dashboard');
-        return;
-      }
-      
-      // Check if user is in admin whitelist (for trustlventuresghana_a01@yahoo.com)
-      try {
-        const { data: isAllowed } = await supabase.rpc('is_allowed_admin_email', {
-          user_email: adminUser.email,
-        });
-        
-        if (isAllowed) {
+      if (adminUser) {
+        // Check if user has admin access for CRM
+        if (role === 'admin') {
           navigate('/dashboard');
           return;
         }
-      } catch (error) {
-        console.error('Error checking admin whitelist:', error);
+        
+        // Check if user is in admin whitelist (for trustlventuresghana_a01@yahoo.com)
+        try {
+          const { data: isAllowed } = await supabase.rpc('is_allowed_admin_email', {
+            user_email: adminUser.email,
+          });
+          
+          if (isAllowed) {
+            navigate('/dashboard');
+            return;
+          }
+        } catch (error) {
+          console.error('Error checking admin whitelist:', error);
+        }
+        
+        // If user is authenticated but not admin, still route to dashboard for now
+        // This allows all authenticated users to access CRM functionality
+        navigate('/dashboard');
+        return;
       }
-      
-      // If user is authenticated but not admin, still route to dashboard for now
-      // This allows all authenticated users to access CRM functionality
-      navigate('/dashboard');
-      return;
-    }
 
-    if (customerUser) {
-      navigate('/customer');
-    }
-  };
+      if (customerUser) {
+        navigate('/customer');
+      }
+    };
 
-  routeUser();
-}, [adminUser, customerUser, role, roleLoading, navigate]);
+    routeUser();
+  }, [adminUser, customerUser, role, roleLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,99 +72,55 @@ useEffect(() => {
 
     try {
       if (isLogin) {
-        console.log('🔐 Starting admin login for:', email);
+        console.log('🔐 Starting login for:', email);
         
-        // Try admin login first
-        const adminResult = await adminSignIn(email, password);
+        // Use Supabase directly for simpler auth
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
         
-        if (!adminResult.error) {
-          console.log('✅ Admin login successful');
-          setLoading(false); // Clear loading immediately on success
+        console.log('🔑 Login result:', { success: !!data.user, error: error?.message });
+        
+        if (!error && data.user) {
+          console.log('✅ Login successful for user:', data.user.id);
           
-          // If email is on the admin whitelist, route directly to dashboard
-          try {
-            const { data: isAllowed } = await supabase.rpc('is_allowed_admin_email', {
-              user_email: email,
+          // Check if this is an admin email
+          const { data: isAllowed } = await supabase.rpc('is_allowed_admin_email', {
+            user_email: email,
+          });
+          
+          console.log('🛡️ Admin check result:', isAllowed);
+          
+          if (isAllowed) {
+            toast({ 
+              title: 'Welcome back!', 
+              description: 'Redirecting to dashboard...' 
             });
-
-            if (isAllowed) {
-              console.log('✅ Admin email confirmed, redirecting to dashboard');
-              toast({ title: 'Welcome back!', description: 'Redirecting to your dashboard...' });
-              setTimeout(() => navigate('/dashboard'), 100); // Small delay to ensure state updates
-              return;
-            }
-          } catch (error) {
-            console.error('⚠️ Admin whitelist check failed:', error);
-            // If whitelist check fails, fall back to role-based redirect via effect
-          }
-
-          // Success but not on whitelist - let the useEffect handle routing
-          toast({ title: 'Welcome back!', description: 'Redirecting...' });
-          setTimeout(() => navigate('/dashboard'), 100); // Force redirect for admin users
-          return;
-        }
-
-        // If admin login failed, handle specific cases
-        if (adminResult.error) {
-          const msg = String(adminResult.error.message || '').toLowerCase();
-          if (msg.includes('email not confirmed')) {
-            try {
-              await supabase.auth.resend({
-                type: 'signup',
-                email,
-                options: { emailRedirectTo: `${window.location.origin}/login` },
-              });
-              toast({
-                title: 'Email not confirmed',
-                description: 'We resent a verification link. Please verify, then sign in.',
-              });
-            } catch (_) {
-              // ignore resend failures
-            }
+            // Force redirect with window.location to ensure it works
+            setTimeout(() => {
+              window.location.href = '/dashboard';
+            }, 500);
+            return;
+          } else {
+            // Try customer portal
+            toast({ 
+              title: 'Welcome back!', 
+              description: 'Redirecting to customer portal...' 
+            });
+            setTimeout(() => {
+              window.location.href = '/customer';
+            }, 500);
             return;
           }
-        }
-
-        // If admin login fails, try customer login (same auth, but keeps UX consistent)
-        const customerResult = await customerSignIn(email, password);
-        
-        if (!customerResult.error) {
+        } else {
+          console.error('❌ Login failed:', error);
           toast({
-            title: "Welcome back!",
-            description: "Redirecting to customer portal...",
+            title: "Login failed",
+            description: error?.message || "Invalid email or password. Please try again.",
+            variant: "destructive",
           });
-          // Directly navigate to customer portal since auth state change might be delayed
-          navigate('/customer');
-          return;
         }
-
-        // Handle unconfirmed email for customer sign in
-        if (customerResult.error) {
-          const msg = String(customerResult.error.message || '').toLowerCase();
-          if (msg.includes('email not confirmed')) {
-            try {
-              await supabase.auth.resend({
-                type: 'signup',
-                email,
-                options: { emailRedirectTo: `${window.location.origin}/login` },
-              });
-              toast({
-                title: 'Email not confirmed',
-                description: 'We resent a verification link. Please verify, then sign in.',
-              });
-              return;
-            } catch (_) {
-              // ignore resend failures
-            }
-          }
-        }
-
-        // Both failed
-        toast({
-          title: "Login failed",
-          description: customerResult.error?.message || adminResult.error?.message || "Invalid email or password. Please try again.",
-          variant: "destructive",
-        });
       } else {
         // Sign up - default to customer registration
         const { error } = await customerSignUp(email, password, companyName, fullName);
