@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 
 interface QuoteRequest {
   id: string;
+  quote_number?: string;
   request_type: string;
   title: string;
   message: string;
@@ -127,7 +128,7 @@ const QuoteRequestManagement = () => {
       
       console.log('Update successful, affected rows:', data?.length);
       toast.success('Request status updated successfully');
-      fetchQuoteRequests();
+      fetchQuoteRequests(); // Refresh the data
       setShowUpdateDialog(false);
     } catch (error) {
       console.error('Error updating request:', error);
@@ -327,27 +328,33 @@ const QuoteRequestManagement = () => {
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Request Details</TableHead>
-                      <TableHead>Customer/Lead Info</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Urgency</TableHead>
-                      <TableHead>Items</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
+                     <TableRow>
+                       <TableHead>Quote #</TableHead>
+                       <TableHead>Request Details</TableHead>
+                       <TableHead>Customer/Lead Info</TableHead>
+                       <TableHead>Status</TableHead>
+                       <TableHead>Urgency</TableHead>
+                       <TableHead>Items</TableHead>
+                       <TableHead>Created</TableHead>
+                       <TableHead>Actions</TableHead>
+                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredRequests.map((request) => (
                       <TableRow key={request.id}>
-                        <TableCell className="font-medium">
-                          <div>
-                            <div className="font-semibold">{request.title}</div>
-                            <Badge variant="outline" className="mt-1">
-                              {request.request_type === 'lead' ? 'New Lead' : 'Existing Customer'}
-                            </Badge>
-                          </div>
-                        </TableCell>
+                         <TableCell className="font-medium">
+                           <div className="text-sm font-mono text-blue-600">
+                             {request.quote_number || 'Generating...'}
+                           </div>
+                         </TableCell>
+                         <TableCell className="font-medium">
+                           <div>
+                             <div className="font-semibold">{request.title}</div>
+                             <Badge variant="outline" className="mt-1">
+                               {request.request_type === 'lead' ? 'New Lead' : 'Existing Customer'}
+                             </Badge>
+                           </div>
+                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
                             {request.request_type === 'lead' ? (
