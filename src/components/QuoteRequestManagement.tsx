@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface QuoteRequest {
@@ -43,6 +43,7 @@ interface QuoteRequest {
     quantity: number;
     unit: string;
     specifications?: string;
+    preferred_grade?: string;
   }>;
 }
 
@@ -187,6 +188,35 @@ const QuoteRequestManagement = () => {
     } catch (error) {
       console.error('Error converting to lead:', error);
       toast.error('Failed to convert quote request to lead');
+    }
+  };
+
+  const handleDownloadPDF = async (request: QuoteRequest) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('download-quote-request-pdf', {
+        body: { quoteRequestId: request.id },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // The response should be a blob or base64 data
+      const blob = new Blob([data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `quote-request-${request.quote_number || request.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success('PDF downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error('Failed to download PDF');
     }
   };
 
@@ -520,23 +550,40 @@ const QuoteRequestManagement = () => {
               {selectedRequest.quote_request_items && selectedRequest.quote_request_items.length > 0 && (
                 <div>
                   <label className="text-sm font-medium">Requested Items</label>
-                  <div className="mt-2 space-y-2">
-                    {selectedRequest.quote_request_items.map((item) => (
-                      <div key={item.id} className="bg-muted p-3 rounded">
-                        <p className="font-medium">{item.product_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Quantity: {item.quantity} {item.unit}
-                        </p>
-                        {item.specifications && (
-                          <p className="text-sm text-muted-foreground">
-                            Specifications: {item.specifications}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <Table className="mt-2">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Product Name</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead>Unit</TableHead>
+                        <TableHead>Specifications</TableHead>
+                        <TableHead>Preferred Grade</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedRequest.quote_request_items.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">{item.product_name}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>{item.unit}</TableCell>
+                          <TableCell>{item.specifications || '-'}</TableCell>
+                          <TableCell>{item.preferred_grade || '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
+
+              <div className="flex justify-end pt-4">
+                <Button
+                  onClick={() => selectedRequest && handleDownloadPDF(selectedRequest)}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Download PDF
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
