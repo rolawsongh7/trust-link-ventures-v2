@@ -74,10 +74,10 @@ const Partners = () => {
       logo: ajcLogo
     },
     {
-      name: "J. Marr",
+      name: "J Marr (Seafoods) Limited",
       location: "United Kingdom",
       website: "https://marsea.co.uk",
-      description: "Established UK supplier specializing in premium seafood and meat products. Known for quality Atlantic and global seafood sourcing, as well as premium beef, chicken, and pork products.",
+      description: "Established UK supplier operating from Hessle, East Yorkshire, specializing in premium seafood and meat products. Known for quality Atlantic and global seafood sourcing, as well as premium beef, chicken, and pork products.",
       specialties: ["Atlantic Seafood", "Premium Meat", "Poultry Products"],
       established: "1990+",
       logo: jMarrLogo
