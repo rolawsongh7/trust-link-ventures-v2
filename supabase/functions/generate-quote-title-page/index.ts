@@ -19,23 +19,22 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    const { quoteId } = await req.json()
+    const { quoteId, supplier, customer } = await req.json()
 
     console.log('Received quoteId:', quoteId)
+    console.log('Received supplier:', supplier)
+    console.log('Received customer:', customer)
 
     if (!quoteId) {
       console.error('Quote ID is missing')
       throw new Error('Quote ID is required')
     }
 
-    // Fetch quote details with customer information
+    // Fetch quote details
     console.log('Fetching quote with ID:', quoteId)
     const { data: quote, error: quoteError } = await supabase
       .from('quotes')
-      .select(`
-        *,
-        customers:customer_id(*)
-      `)
+      .select('*')
       .eq('id', quoteId)
       .maybeSingle()
 
@@ -50,6 +49,10 @@ serve(async (req) => {
     }
 
     console.log('Quote fetched successfully')
+
+    // Add supplier and customer info to quote object
+    quote.supplier = supplier;
+    quote.customers = customer;
 
     console.log('About to generate title page PDF...')
     // Generate title page PDF
@@ -105,13 +108,12 @@ serve(async (req) => {
       .from('quotes')
       .getPublicUrl(uploadData.path);
     
-    // Update the quote record with the new file URL
+    // Update the quote record with the new file URL (don't change status here)
     console.log('Updating quote record with final PDF URL:', publicUrl)
     const { error: updateError } = await supabase
       .from('quotes')
       .update({ 
-        final_file_url: publicUrl,
-        status: 'sent'
+        final_file_url: publicUrl
       })
       .eq('id', quoteId)
 

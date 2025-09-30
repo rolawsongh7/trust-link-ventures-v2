@@ -9,12 +9,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Eye, Edit, CheckCircle, XCircle, Clock, FileText, FileImage, Upload, Download, ThumbsUp, FileCheck, Mail } from 'lucide-react';
+import { Search, Plus, Eye, Edit, CheckCircle, XCircle, Clock, FileText, FileImage, Upload, Download, ThumbsUp, FileCheck, Mail, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import QuoteUploadDialog from './QuoteUploadDialog';
 import { SimpleQuoteUpload } from './SimpleQuoteUpload';
 import { useAuth } from '@/contexts/AuthContext';
+import { DataTable, Column } from '@/components/ui/data-table';
+import { GenerateTitlePageDialog } from './GenerateTitlePageDialog';
+import {
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 
 interface Quote {
   id: string;
@@ -64,6 +69,8 @@ const UnifiedQuoteManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedQuoteForUpload, setSelectedQuoteForUpload] = useState<Quote | null>(null);
+  const [isGenerateTitleDialogOpen, setIsGenerateTitleDialogOpen] = useState(false);
+  const [selectedQuoteForGenerate, setSelectedQuoteForGenerate] = useState<Quote | null>(null);
   const { toast } = useToast();
 
   const form = useForm({
@@ -389,6 +396,109 @@ const UnifiedQuoteManagement = () => {
     }
   };
 
+  const handleDelete = async (quoteId: string) => {
+    if (!confirm('Are you sure you want to delete this quote?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('quotes')
+        .delete()
+        .eq('id', quoteId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Quote deleted',
+        description: 'The quote has been deleted successfully'
+      });
+      
+      fetchQuotes();
+    } catch (error: any) {
+      console.error('Error deleting quote:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete quote',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleApprove = async (quote: Quote) => {
+    if (!quote.final_file_url) {
+      toast({
+        title: 'Cannot approve',
+        description: 'Final quote must be generated first',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('quotes')
+        .update({ 
+          status: 'sent',
+          approved_by: user?.id,
+          approved_at: new Date().toISOString(),
+          sent_at: new Date().toISOString()
+        })
+        .eq('id', quote.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Quote approved',
+        description: 'Quote status updated to sent'
+      });
+
+      fetchQuotes();
+    } catch (error: any) {
+      console.error('Error approving quote:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to approve quote',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const columns: Column<Quote>[] = [
+    {
+      key: 'quote_number',
+      label: 'Quote #',
+      sortable: true,
+      width: '150px',
+      render: (value) => (
+        <span className="font-mono font-semibold">{value}</span>
+      )
+    },
+    {
+      key: 'customers',
+      label: 'Customer',
+      sortable: false,
+      width: '200px',
+      render: (value: any, row) => (
+        <div>
+          <div className="font-medium">{value?.company_name || row.leads?.title || 'N/A'}</div>
+          {value?.contact_name && (
+            <div className="text-sm text-muted-foreground">{value.contact_name}</div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      sortable: true,
+      width: '150px',
+      render: (value) => (
+        <Badge className={getStatusColor(value as string)}>
+          {value}
+        </Badge>
+      )
+    }
+  ];
+
   const filteredQuotes = quotes.filter(quote => {
     const matchesSearch = quote.quote_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          quote.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -623,136 +733,73 @@ const UnifiedQuoteManagement = () => {
           <TabsTrigger value="rejected">Rejected ({quotes.filter(q => q.status === 'rejected').length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={selectedTab} className="space-y-4">
-          {filteredQuotes.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No quotes found</h3>
-                <p className="text-gray-500 mb-4">
-                  {searchTerm ? 'Try adjusting your search terms.' : 'Start by creating your first quote.'}
-                </p>
-                <Button onClick={() => setIsDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Quote
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredQuotes.map(quote => (
-              <Card key={quote.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle className="text-lg">
-                        {quote.quote_number} - {quote.title}
-                      </CardTitle>
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(quote.status)}>
-                          {quote.status}
-                        </Badge>
-                        <Badge className={getOriginTypeColor(quote.origin_type)}>
-                          {quote.origin_type}
-                        </Badge>
-                        {quote.rfqs && quote.rfqs.length > 0 && (
-                          <Badge variant="outline">
-                            <Clock className="mr-1 h-3 w-3" />
-                            RFQ Active
-                          </Badge>
-                        )}
-                        {quote.orders && quote.orders.length > 0 && (
-                          <Badge variant="outline" className="bg-green-50 text-green-700">
-                            <CheckCircle className="mr-1 h-3 w-3" />
-                            Order: {quote.orders[0].order_number}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold">
-                        {quote.currency} {quote.total_amount.toLocaleString()}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {quote.customers?.company_name || quote.leads?.title}
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">
-                        Created: {new Date(quote.created_at).toLocaleDateString()}
-                      </p>
-                      {quote.valid_until && (
-                        <p className="text-sm text-muted-foreground">
-                          Valid until: {new Date(quote.valid_until).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {/* Step 1: Upload Supplier Quote - only if no supplier quote uploaded yet */}
-                      {!quote.file_url && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedQuoteForUpload(quote)}
-                        >
-                          <Upload className="mr-1 h-3 w-3" />
-                          Upload Quote
-                        </Button>
-                      )}
-                      
-                      {/* Step 2: Generate Title Page - only if supplier quote uploaded but no final quote */}
-                      {quote.file_url && !quote.final_file_url && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => generateTitlePage(quote.id)}
-                        >
-                          <FileCheck className="mr-1 h-3 w-3" />
-                          Generate Title Page
-                        </Button>
-                      )}
-                      
-                      {/* Step 3: Approve - only if final quote exists but not approved */}
-                      {quote.final_file_url && quote.status === 'draft' && (
-                        <Button
-                          size="sm"
-                          onClick={() => approveQuote(quote.id)}
-                        >
-                          <ThumbsUp className="mr-1 h-3 w-3" />
-                          Approve & Send
-                        </Button>
-                      )}
-                      
-                      {/* Download buttons */}
-                      {quote.file_url && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => downloadQuote(quote.file_url!, `supplier-quote-${quote.quote_number}.pdf`)}
-                        >
-                          <Download className="mr-1 h-3 w-3" />
-                          Supplier PDF
-                        </Button>
-                      )}
-                      {quote.final_file_url && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => downloadQuote(quote.final_file_url!, `final-quote-${quote.quote_number}.pdf`)}
-                        >
-                          <Download className="mr-1 h-3 w-3" />
-                          Final Quote
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+        <TabsContent value={selectedTab} className="mt-6">
+          <DataTable
+            data={filteredQuotes}
+            columns={columns}
+            searchable={false}
+            actions={(quote) => (
+              <>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedQuoteForGenerate(quote);
+                    setIsGenerateTitleDialogOpen(true);
+                  }}
+                >
+                  <FileCheck className="mr-2 h-4 w-4" />
+                  Generate Title Page
+                </DropdownMenuItem>
+                
+                {quote.final_file_url && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadQuote(quote.final_file_url!, `final-quote-${quote.quote_number}.pdf`);
+                    }}
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Final Quote
+                  </DropdownMenuItem>
+                )}
+                
+                {quote.final_file_url && quote.status === 'draft' && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleApprove(quote);
+                    }}
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Approve & Send
+                  </DropdownMenuItem>
+                )}
+
+                {quote.status === 'sent' && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      sendQuoteApprovalLink(quote);
+                    }}
+                  >
+                    <Mail className="mr-2 h-4 w-4" />
+                    Submit to Customer
+                  </DropdownMenuItem>
+                )}
+                
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(quote.id);
+                  }}
+                  className="text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </>
+            )}
+          />
         </TabsContent>
       </Tabs>
 
@@ -768,6 +815,16 @@ const UnifiedQuoteManagement = () => {
           onOpenChange={(open) => !open && setSelectedQuoteForUpload(null)}
           quoteId={selectedQuoteForUpload.id}
           quoteNumber={selectedQuoteForUpload.quote_number}
+          onSuccess={fetchQuotes}
+        />
+      )}
+
+      {selectedQuoteForGenerate && (
+        <GenerateTitlePageDialog
+          open={isGenerateTitleDialogOpen}
+          onOpenChange={setIsGenerateTitleDialogOpen}
+          quote={selectedQuoteForGenerate}
+          customers={customers}
           onSuccess={fetchQuotes}
         />
       )}
