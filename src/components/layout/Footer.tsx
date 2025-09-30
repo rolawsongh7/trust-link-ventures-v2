@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { TermsDialog, PrivacyDialog, CookiesDialog } from '@/components/legal/LegalDialogs';
+import trustLinkLogo from '@/assets/trust-link-logo.png';
 
 const Footer = () => {
   const [email, setEmail] = useState('');
@@ -34,7 +35,7 @@ const Footer = () => {
             <div className="flex items-center space-x-2">
               <div className="w-10 h-10 rounded-lg overflow-hidden bg-background/20 p-1">
                 <img 
-                  src="/src/assets/trust-link-logo.png" 
+                  src={trustLinkLogo} 
                   alt="Trust Link Company Logo" 
                   className="w-full h-full object-contain bg-white rounded-md"
                 />
