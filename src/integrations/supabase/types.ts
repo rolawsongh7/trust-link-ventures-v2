@@ -1226,6 +1226,7 @@ export type Database = {
           lead_industry: string | null
           lead_phone: string | null
           message: string | null
+          quote_number: string | null
           request_type: string
           status: string
           title: string
@@ -1245,6 +1246,7 @@ export type Database = {
           lead_industry?: string | null
           lead_phone?: string | null
           message?: string | null
+          quote_number?: string | null
           request_type?: string
           status?: string
           title: string
@@ -1264,6 +1266,7 @@ export type Database = {
           lead_industry?: string | null
           lead_phone?: string | null
           message?: string | null
+          quote_number?: string | null
           request_type?: string
           status?: string
           title?: string
@@ -1882,6 +1885,10 @@ export type Database = {
         Returns: undefined
       }
       generate_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_quote_request_number: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
