@@ -43,7 +43,7 @@ import LeadsPage from "./pages/LeadsPage";
 import OrdersPage from "./pages/OrdersPage";
 import QuotesPage from "./pages/QuotesPage";
 import CommunicationPage from "./pages/CommunicationPage";
-
+import Settings from "./pages/Settings";
 import RFQPage from "./pages/RFQPage";
 import UnifiedAuth from "./pages/UnifiedAuth";
 import NotificationDemo from "./pages/NotificationDemo";
@@ -114,7 +114,7 @@ const App = () => (
               
               <Route path="/quote-requests" element={<div>Quote Requests Page</div>} />
               <Route path="/quote-system" element={<QuoteSystem />} />
-              <Route path="/settings" element={<div>Settings Page</div>} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="/notifications" element={<div>Notifications Page</div>} />
             </Route>
             

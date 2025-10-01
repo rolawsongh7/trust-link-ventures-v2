@@ -31,8 +31,6 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { SupabaseHealthCheck } from '@/components/utils/SupabaseHealthCheck';
-import { JMarrManualUpdater } from '@/components/admin/JMarrManualUpdater';
 
 // Sample data - in production, this would come from your API
 const monthlyRevenue = [
@@ -106,12 +104,6 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Supabase Health Check */}
-        <SupabaseHealthCheck />
-        
-        {/* J. Marr Product Updater */}
-        <JMarrManualUpdater />
-        
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
