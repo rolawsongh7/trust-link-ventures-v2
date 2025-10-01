@@ -446,6 +446,100 @@ const About = () => {
         </div>
       </section>
 
+      {/* Operations in Action - Video Section */}
+      <section className="py-24 bg-gradient-to-br from-background via-primary/5 to-accent/10 relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-10 left-10 w-64 h-64 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-10 right-10 w-80 h-80 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
+          <div className="text-center mb-16 animate-fade-in">
+            <Badge variant="outline" className="mb-6 px-6 py-3 text-sm font-medium border-primary/20 bg-primary/5">
+              <Award className="w-4 h-4 mr-2" />
+              Operations in Action
+            </Badge>
+            <h2 className="text-3xl lg:text-5xl font-poppins font-bold mb-6 leading-tight">
+              See Our <span className="gradient-text relative">
+                Cold Chain Excellence
+                <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-primary to-secondary opacity-30 rounded-full" />
+              </span> in Action
+            </h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Take a behind-the-scenes look at our state-of-the-art cold storage facilities, 
+              logistics operations, and the dedicated team that ensures every product arrives 
+              in perfect condition.
+            </p>
+          </div>
+
+          {/* Video Container */}
+          <div className="relative animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-border/50 bg-card">
+              {/* Video Player */}
+              <div className="relative aspect-video bg-muted">
+                <video
+                  className="w-full h-full object-cover"
+                  controls
+                  preload="metadata"
+                  playsInline
+                  onError={(e) => {
+                    console.error('Video failed to load:', e);
+                    const videoElement = e.currentTarget;
+                    videoElement.poster = temaPortTrucks;
+                  }}
+                >
+                  <source 
+                    src="https://ppyfrftmexvgnsxlhdbz.supabase.co/storage/v1/object/public/videos/trustlinkventures.mp4" 
+                    type="video/mp4" 
+                  />
+                  <p className="p-8 text-center text-muted-foreground">
+                    Your browser does not support the video tag. Please upgrade to a modern browser to view this content.
+                  </p>
+                </video>
+              </div>
+              
+              {/* Video Info Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/95 via-background/80 to-transparent p-6 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Package className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-1">Trust Link Ventures Operations</h3>
+                    <p className="text-sm text-muted-foreground">Cold chain logistics excellence from port to delivery</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Decorative corner elements */}
+            <div className="absolute -top-4 -left-4 w-16 h-16 border-l-2 border-t-2 border-primary/30 rounded-tl-2xl" />
+            <div className="absolute -bottom-4 -right-4 w-16 h-16 border-r-2 border-b-2 border-secondary/30 rounded-br-2xl" />
+          </div>
+
+          {/* Key Highlights Below Video */}
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <div className="text-center p-6 rounded-xl bg-card/50 border border-border/50 hover:shadow-lg transition-all duration-300">
+              <Thermometer className="w-10 h-10 text-primary mx-auto mb-3" />
+              <h4 className="font-semibold text-foreground mb-2">Cold Chain Integrity</h4>
+              <p className="text-sm text-muted-foreground">Consistent temperature control throughout storage and transport</p>
+            </div>
+            <div className="text-center p-6 rounded-xl bg-card/50 border border-border/50 hover:shadow-lg transition-all duration-300">
+              <Truck className="w-10 h-10 text-primary mx-auto mb-3" />
+              <h4 className="font-semibold text-foreground mb-2">Modern Fleet</h4>
+              <p className="text-sm text-muted-foreground">Refrigerated vehicles ensuring safe nationwide delivery</p>
+            </div>
+            <div className="text-center p-6 rounded-xl bg-card/50 border border-border/50 hover:shadow-lg transition-all duration-300">
+              <Users className="w-10 h-10 text-primary mx-auto mb-3" />
+              <h4 className="font-semibold text-foreground mb-2">Expert Team</h4>
+              <p className="text-sm text-muted-foreground">Trained professionals committed to quality and excellence</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Our Key Differentiators Section */}
       <section className="py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
