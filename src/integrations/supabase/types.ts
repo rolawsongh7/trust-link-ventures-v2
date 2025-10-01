@@ -645,7 +645,7 @@ export type Database = {
           metadata: Json | null
           order_id: string | null
           quote_id: string | null
-          rfq_id: string
+          rfq_id: string | null
           supplier_email: string
           token: string
           token_type: string | null
@@ -658,7 +658,7 @@ export type Database = {
           metadata?: Json | null
           order_id?: string | null
           quote_id?: string | null
-          rfq_id: string
+          rfq_id?: string | null
           supplier_email: string
           token: string
           token_type?: string | null
@@ -671,7 +671,7 @@ export type Database = {
           metadata?: Json | null
           order_id?: string | null
           quote_id?: string | null
-          rfq_id?: string
+          rfq_id?: string | null
           supplier_email?: string
           token?: string
           token_type?: string | null
