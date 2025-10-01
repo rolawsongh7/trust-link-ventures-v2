@@ -4,6 +4,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Search, Bell, User, LogOut, Package, MessageSquare, Shield } from 'lucide-react';
+import trustLinkLogo from '@/assets/trust-link-logo.png';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,6 +57,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
       
       <div className="flex-1 flex items-center justify-between">
         <div className="flex items-center gap-4">
+          <img 
+            src={trustLinkLogo} 
+            alt="Trust Link Ventures" 
+            className="h-10 w-auto"
+          />
           <h1 className="text-lg font-semibold text-foreground">
             Trust Link Ventures
           </h1>
