@@ -2272,6 +2272,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_magic_link_token_used: {
+        Args: { p_token: string }
+        Returns: boolean
+      }
       validate_file_upload: {
         Args: {
           p_file_size: number
@@ -2280,6 +2284,17 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json
+      }
+      validate_magic_link_token: {
+        Args: { p_token: string }
+        Returns: {
+          is_valid: boolean
+          order_id: string
+          quote_id: string
+          rfq_id: string
+          supplier_email: string
+          token_type: string
+        }[]
       }
       validate_session: {
         Args: { p_session_token: string }
