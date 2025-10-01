@@ -125,7 +125,16 @@ export const CustomerQuotes: React.FC = () => {
 
   const downloadQuote = async (fileUrl: string, quoteNumber: string) => {
     try {
-      // The file URL is already public, just open it in a new tab
+      console.log('Attempting to open quote PDF:', fileUrl);
+      
+      // Test if the URL is accessible
+      const response = await fetch(fileUrl, { method: 'HEAD' });
+      
+      if (!response.ok) {
+        throw new Error(`File not accessible: ${response.status} ${response.statusText}`);
+      }
+      
+      // Open the PDF in a new tab
       window.open(fileUrl, '_blank');
       
       toast({
@@ -137,7 +146,7 @@ export const CustomerQuotes: React.FC = () => {
       toast({
         variant: "destructive",
         title: "Failed to open quote",
-        description: "Unable to open the quote. Please try again.",
+        description: error instanceof Error ? error.message : "Unable to open the quote. Please try again.",
       });
     }
   };
