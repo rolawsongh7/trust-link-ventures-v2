@@ -62,7 +62,7 @@ export const suppliers: Supplier[] = [
   {
     id: 'ajc',
     name: 'AJC International',
-    logo: getStorageUrl('supplier-logos', 'ajc_international.jpeg'),
+    logo: getStorageUrl('supplier-logos', 'ajc-logo.png'),
     address: [
       'AJC International Inc.',
       '987 Global Plaza',

@@ -64,7 +64,7 @@ const Partners = () => {
       specialties: ["Poultry", "Pork", "Meat", "Vegetables & Fruits", "Seafood"],
       established: "1960+",
       reach: "140+ Countries",
-      logo: getStorageUrl('supplier-logos', 'ajc_international.jpeg')
+      logo: getStorageUrl('supplier-logos', 'ajc-logo.png')
     },
     {
       name: "J Marr (Seafoods) Limited",
