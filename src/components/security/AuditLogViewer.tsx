@@ -6,11 +6,29 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Shield, Download, Filter, Search, AlertTriangle, Info, AlertCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { 
+  Shield, 
+  Download, 
+  Filter, 
+  Search, 
+  AlertTriangle, 
+  Info, 
+  AlertCircle,
+  Activity,
+  Eye,
+  Lock,
+  TrendingUp,
+  Users,
+  FileText,
+  Clock
+} from 'lucide-react';
 import { AuditLogger, AuditSeverity } from '@/lib/auditLogger';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 export const AuditLogViewer: React.FC = () => {
   const { user, hasAdminAccess } = useAuth();
@@ -20,10 +38,23 @@ export const AuditLogViewer: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState<AuditSeverity | 'all'>('all');
   const [summary, setSummary] = useState<any[]>([]);
+  const [suspiciousActivity, setSuspiciousActivity] = useState<any[]>([]);
+  const [securityAlerts, setSecurityAlerts] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState({
+    totalEvents: 0,
+    highSeverityCount: 0,
+    failedLogins: 0,
+    suspiciousCount: 0
+  });
 
   useEffect(() => {
     loadLogs();
     loadSummary();
+    loadSecurityAlerts();
+    if (user) {
+      loadSuspiciousActivity();
+      calculateMetrics();
+    }
   }, [user, severityFilter]);
 
   const loadLogs = async () => {
@@ -65,6 +96,84 @@ export const AuditLogViewer: React.FC = () => {
       setSummary(summaryData);
     } catch (error) {
       console.error('Error loading summary:', error);
+    }
+  };
+
+  const loadSuspiciousActivity = async () => {
+    if (!user) return;
+
+    try {
+      const activity = await AuditLogger.detectSuspiciousActivity(user.id, 60);
+      setSuspiciousActivity(activity);
+    } catch (error) {
+      console.error('Error loading suspicious activity:', error);
+    }
+  };
+
+  const loadSecurityAlerts = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('security_alerts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (!error && data) {
+        setSecurityAlerts(data);
+      }
+    } catch (error) {
+      console.error('Error loading security alerts:', error);
+    }
+  };
+
+  const calculateMetrics = async () => {
+    if (!user) return;
+
+    try {
+      const userLogs = hasAdminAccess 
+        ? await AuditLogger.getAllLogs(undefined, 1000, 0)
+        : await AuditLogger.getUserLogs(user.id, 1000, 0);
+
+      setMetrics({
+        totalEvents: userLogs.length,
+        highSeverityCount: userLogs.filter(l => l.severity === 'high').length,
+        failedLogins: userLogs.filter(l => l.event_type === 'failed_login').length,
+        suspiciousCount: userLogs.filter(l => l.event_type === 'suspicious_activity').length
+      });
+    } catch (error) {
+      console.error('Error calculating metrics:', error);
+    }
+  };
+
+  const acknowledgeAlert = async (alertId: string) => {
+    try {
+      const { error } = await supabase
+        .from('security_alerts')
+        .update({ 
+          acknowledged_at: new Date().toISOString(),
+          status: 'acknowledged'
+        })
+        .eq('id', alertId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Alert Acknowledged',
+        description: 'The security alert has been acknowledged'
+      });
+
+      loadSecurityAlerts();
+    } catch (error) {
+      console.error('Error acknowledging alert:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to acknowledge alert',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -128,27 +237,117 @@ export const AuditLogViewer: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {summary.slice(0, 3).map((item, index) => (
-          <Card key={index}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {item.event_type.replace(/_/g, ' ').toUpperCase()}
-                  </p>
-                  <p className="text-2xl font-bold">{item.count}</p>
-                </div>
-                <Shield className="h-8 w-8 text-muted-foreground" />
+      {/* Security Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Events</p>
+                <p className="text-2xl font-bold">{metrics.totalEvents}</p>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Last: {format(new Date(item.last_occurrence), 'MMM d, HH:mm')}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+              <Activity className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">High Severity</p>
+                <p className="text-2xl font-bold text-destructive">{metrics.highSeverityCount}</p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-destructive" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Failed Logins</p>
+                <p className="text-2xl font-bold text-orange-500">{metrics.failedLogins}</p>
+              </div>
+              <Lock className="h-8 w-8 text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Suspicious</p>
+                <p className="text-2xl font-bold text-orange-500">{metrics.suspiciousCount}</p>
+              </div>
+              <Eye className="h-8 w-8 text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Security Alerts */}
+      {securityAlerts.length > 0 && (
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Active Security Alerts
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {securityAlerts.map((alert) => (
+                <Alert key={alert.id} variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold">{alert.title}</p>
+                      <p className="text-sm">{alert.description}</p>
+                      <p className="text-xs mt-1">
+                        {format(new Date(alert.created_at), 'MMM d, yyyy HH:mm')}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => acknowledgeAlert(alert.id)}
+                    >
+                      Acknowledge
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Suspicious Activity */}
+      {suspiciousActivity.length > 0 && (
+        <Card className="border-orange-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-500">
+              <Eye className="h-5 w-5" />
+              Suspicious Activity Detected
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {suspiciousActivity.map((activity, index) => (
+                <Alert key={index}>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <p className="font-semibold">{activity.pattern_type.replace(/_/g, ' ')}</p>
+                    <p className="text-sm">
+                      {activity.occurrences} occurrence(s) - Risk Level: {activity.risk_level}
+                    </p>
+                  </AlertDescription>
+                </Alert>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Audit Log Table */}
       <Card>

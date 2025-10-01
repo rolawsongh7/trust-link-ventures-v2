@@ -6,9 +6,10 @@ import { SupabaseHealthCheck } from '@/components/utils/SupabaseHealthCheck';
 import { JMarrManualUpdater } from '@/components/admin/JMarrManualUpdater';
 import { MultiFactorAuth } from '@/components/security/MultiFactorAuth';
 import { AuditLogViewer } from '@/components/security/AuditLogViewer';
+import { SecurityMonitoring } from '@/components/security/SecurityMonitoring';
 import { NetworkSecurity } from '@/components/security/NetworkSecurity';
 import { AnomalyDetection } from '@/components/security/AnomalyDetection';
-import { Settings as SettingsIcon, Database, Bell, Users, Shield, FileText, Network } from 'lucide-react';
+import { Settings as SettingsIcon, Database, Bell, Users, Shield, FileText, Network, Activity } from 'lucide-react';
 
 const Settings = () => {
   return (
@@ -36,10 +37,14 @@ const Settings = () => {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <Tabs defaultValue="system-status" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-7 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-8 lg:w-auto">
               <TabsTrigger value="system-status" className="flex items-center gap-2">
                 <Database className="h-4 w-4" />
                 <span className="hidden sm:inline">System</span>
+              </TabsTrigger>
+              <TabsTrigger value="monitoring" className="flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                <span className="hidden sm:inline">Monitoring</span>
               </TabsTrigger>
               <TabsTrigger value="security" className="flex items-center gap-2">
                 <Shield className="h-4 w-4" />
@@ -124,6 +129,11 @@ const Settings = () => {
               </Card>
 
               <AnomalyDetection />
+            </TabsContent>
+
+            {/* Security Monitoring Tab */}
+            <TabsContent value="monitoring" className="space-y-6">
+              <SecurityMonitoring />
             </TabsContent>
 
             {/* Network Security Tab */}
