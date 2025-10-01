@@ -41,6 +41,13 @@ const UnifiedAuth = () => {
         return;
       }
 
+      // Prioritize customer user check first (customer portal)
+      if (customerUser && !role) {
+        console.log('[UnifiedAuth] Customer user detected (no admin role), navigating to customer portal');
+        navigate('/customer', { replace: true });
+        return;
+      }
+
       if (adminUser) {
         console.log('[UnifiedAuth] Admin user detected, role:', role);
         // Check if user has admin access for CRM
@@ -65,15 +72,10 @@ const UnifiedAuth = () => {
           console.error('[UnifiedAuth] Error checking admin whitelist:', error);
         }
         
-        // If user is authenticated but not admin, still route to dashboard
-        console.log('[UnifiedAuth] Navigating to dashboard (default)');
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-
-      if (customerUser) {
-        console.log('[UnifiedAuth] Customer user detected, navigating to customer portal');
+        // If authenticated but not admin or whitelisted, route to customer portal as default
+        console.log('[UnifiedAuth] Non-admin user, navigating to customer portal');
         navigate('/customer', { replace: true });
+        return;
       }
     };
 
