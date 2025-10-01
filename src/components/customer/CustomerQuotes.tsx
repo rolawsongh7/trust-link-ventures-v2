@@ -125,18 +125,15 @@ export const CustomerQuotes: React.FC = () => {
 
   const downloadQuote = async (fileUrl: string, quoteNumber: string) => {
     try {
-      // Extract the file path from the full URL
-      // URL format: https://.../storage/v1/object/public/quotes/[path-we-need]
-      const bucketPath = fileUrl.split('/quotes/').pop() || 'quote.pdf';
-      
-      const { data, error } = await supabase.storage
-        .from('quotes')
-        .createSignedUrl(bucketPath, 3600); // 1 hour expiry
-
-      if (error) throw error;
-
-      // Open the signed URL in a new tab
-      window.open(data.signedUrl, '_blank');
+      // Since the quotes bucket is public, we can use the URL directly
+      // Create a temporary anchor element to trigger download
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `${quoteNumber}.pdf`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
       toast({
         title: "Download started",
