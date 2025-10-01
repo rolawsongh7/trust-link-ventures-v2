@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Search, Download, Eye, Calendar, DollarSign, Clock } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { FileText, Search, Download, Eye, Calendar, DollarSign, Clock, Package } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +27,8 @@ export const CustomerQuotes: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
 
@@ -235,7 +238,14 @@ export const CustomerQuotes: React.FC = () => {
                 )}
 
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSelectedQuote(quote);
+                      setDetailsDialogOpen(true);
+                    }}
+                  >
                     <Eye className="h-4 w-4 mr-2" />
                     View Details
                   </Button>
@@ -259,6 +269,131 @@ export const CustomerQuotes: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Details Dialog */}
+      <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">{selectedQuote?.title}</DialogTitle>
+          </DialogHeader>
+          
+          {selectedQuote && (
+            <div className="space-y-6">
+              {/* Status & Urgency */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Status:</span>
+                  <Badge className={getStatusColor(selectedQuote.status)}>
+                    {selectedQuote.status}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Urgency:</span>
+                  <Badge className={getUrgencyColor(selectedQuote.urgency)}>
+                    {selectedQuote.urgency}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Created</div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    {new Date(selectedQuote.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Last Updated</div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    {new Date(selectedQuote.updated_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Message */}
+              {selectedQuote.message && (
+                <div>
+                  <h4 className="font-semibold mb-2">Message</h4>
+                  <p className="text-muted-foreground bg-muted/30 p-4 rounded-lg">
+                    {selectedQuote.message}
+                  </p>
+                </div>
+              )}
+
+              {/* Items */}
+              {selectedQuote.quote_request_items && selectedQuote.quote_request_items.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Requested Items ({selectedQuote.quote_request_items.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedQuote.quote_request_items.map((item, index) => (
+                      <Card key={index}>
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h5 className="font-medium">{item.product_name}</h5>
+                              {item.specifications && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {item.specifications}
+                                </p>
+                              )}
+                              {item.preferred_grade && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Preferred Grade: {item.preferred_grade}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold">
+                                {item.quantity} {item.unit}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pt-4 border-t">
+                {selectedQuote.status === 'approved' && (
+                  <Button className="flex-1">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Quote
+                  </Button>
+                )}
+                {selectedQuote.status === 'completed' && (
+                  <Button className="flex-1 bg-gradient-to-r from-primary to-primary/90">
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Place Order
+                  </Button>
+                )}
+                <Button 
+                  variant="outline" 
+                  onClick={() => setDetailsDialogOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
