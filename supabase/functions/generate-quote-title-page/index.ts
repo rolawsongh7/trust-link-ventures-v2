@@ -560,7 +560,7 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
 
     yPosition -= 25
 
-    page.drawText(`Title: ${quote.title}`, {
+    page.drawText(`Commercial Quote - ${quote.customers?.company_name || 'Customer'}`, {
       x: leftColumn,
       y: yPosition,
       size: 12,
