@@ -125,28 +125,39 @@ export const CustomerQuotes: React.FC = () => {
 
   const downloadQuote = async (fileUrl: string, quoteNumber: string) => {
     try {
-      console.log('Attempting to open quote PDF:', fileUrl);
+      console.log('Attempting to download quote PDF:', fileUrl);
       
-      // Test if the URL is accessible
-      const response = await fetch(fileUrl, { method: 'HEAD' });
+      // Fetch the file as a blob
+      const response = await fetch(fileUrl);
       
       if (!response.ok) {
-        throw new Error(`File not accessible: ${response.status} ${response.statusText}`);
+        throw new Error(`File not found: ${response.status} ${response.statusText}`);
       }
       
-      // Open the PDF in a new tab
-      window.open(fileUrl, '_blank');
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${quoteNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
       toast({
-        title: "Opening quote",
-        description: `Opening ${quoteNumber} in a new tab`,
+        title: "Download started",
+        description: `Downloading ${quoteNumber}`,
       });
     } catch (error) {
-      console.error('Error opening quote:', error);
+      console.error('Error downloading quote:', error);
       toast({
         variant: "destructive",
-        title: "Failed to open quote",
-        description: error instanceof Error ? error.message : "Unable to open the quote. Please try again.",
+        title: "Failed to download quote",
+        description: error instanceof Error ? error.message : "Unable to download the quote. The file may not exist.",
       });
     }
   };
