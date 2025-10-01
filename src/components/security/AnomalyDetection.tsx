@@ -1,195 +1,136 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Activity, AlertTriangle, TrendingUp, Clock, MapPin, Shield } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { AnomalyDetectionService, AnomalyDetectionSettings } from '@/lib/anomalyDetection';
+import { useAuth } from '@/contexts/AuthContext';
+import { AlertTriangle, Shield, Activity, TrendingUp, Clock, MapPin } from 'lucide-react';
 
 export const AnomalyDetection: React.FC = () => {
-  const [detectionSettings, setDetectionSettings] = useState({
-    loginPatterns: true,
-    locationAnomaly: true,
-    deviceAnomaly: true,
-    timeAnomaly: true,
-    volumeAnomaly: true,
-    behaviorAnomaly: true
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<AnomalyDetectionSettings>({
+    enable_login_pattern_detection: true,
+    enable_velocity_checks: true,
+    enable_location_analysis: true,
+    enable_device_fingerprint_checks: true,
+    sensitivity_level: 'medium',
+    auto_block_threshold: 70,
   });
 
-  const [thresholds, setThresholds] = useState({
-    suspiciousLogins: '5',
-    unusualLocation: '500', // miles
-    offHoursAccess: '22', // hour
-    dataVolume: '100' // MB
-  });
-
-  const anomalies = [
-    {
-      id: '1',
-      type: 'location',
-      severity: 'high',
-      description: 'Login from unusual location: Moscow, Russia',
-      timestamp: '2024-01-15T03:22:00Z',
-      user: 'john.doe@company.com',
-      resolved: false
-    },
-    {
-      id: '2',
-      type: 'time',
-      severity: 'medium',
-      description: 'Off-hours access at 2:30 AM',
-      timestamp: '2024-01-15T02:30:00Z',
-      user: 'jane.smith@company.com',
-      resolved: true
-    },
-    {
-      id: '3',
-      type: 'behavior',
-      severity: 'low',
-      description: 'Unusual data access pattern detected',
-      timestamp: '2024-01-14T14:15:00Z',
-      user: 'mike.jones@company.com',
-      resolved: false
-    },
-    {
-      id: '4',
-      type: 'device',
-      severity: 'high',
-      description: 'Login from unrecognized device',
-      timestamp: '2024-01-14T11:45:00Z',
-      user: 'sarah.wilson@company.com',
-      resolved: false
+  useEffect(() => {
+    if (user) {
+      loadSettings();
     }
-  ];
+  }, [user]);
 
-  const getSeverityBadge = (severity: string) => {
-    switch (severity) {
+  const loadSettings = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const userSettings = await AnomalyDetectionService.getSettings(user.id);
+      if (userSettings) {
+        setSettings(userSettings);
+      }
+    } catch (error) {
+      console.error('Error loading anomaly detection settings:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load anomaly detection settings',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSettingsChange = async (
+    key: keyof AnomalyDetectionSettings,
+    value: boolean | string | number
+  ) => {
+    if (!user) return;
+
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+
+    const success = await AnomalyDetectionService.updateSettings(user.id, { [key]: value });
+    if (success) {
+      toast({
+        title: 'Settings Updated',
+        description: 'Anomaly detection settings have been updated successfully',
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Failed to update settings',
+        variant: 'destructive',
+      });
+      setSettings(settings);
+    }
+  };
+
+  const getSensitivityColor = (level: string) => {
+    switch (level) {
       case 'high':
-        return <Badge variant="destructive">High</Badge>;
+        return 'text-red-500';
       case 'medium':
-        return <Badge className="bg-orange-500">Medium</Badge>;
+        return 'text-yellow-500';
       case 'low':
-        return <Badge variant="secondary">Low</Badge>;
+        return 'text-green-500';
       default:
-        return <Badge variant="outline">Unknown</Badge>;
+        return 'text-gray-500';
     }
   };
 
-  const getAnomalyIcon = (type: string) => {
-    switch (type) {
-      case 'location':
-        return <MapPin className="h-4 w-4" />;
-      case 'time':
-        return <Clock className="h-4 w-4" />;
-      case 'device':
-        return <Shield className="h-4 w-4" />;
-      default:
-        return <Activity className="h-4 w-4" />;
-    }
+  const getThresholdColor = (threshold: number) => {
+    if (threshold >= 70) return 'text-red-500';
+    if (threshold >= 50) return 'text-yellow-500';
+    return 'text-green-500';
   };
 
-  const resolveAnomaly = (id: string) => {
-    // In a real app, this would update the anomaly status
-    console.log('Resolving anomaly:', id);
-  };
+  if (loading) {
+    return <div className="text-center py-8">Loading anomaly detection settings...</div>;
+  }
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="border-primary/20">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            Anomaly Detection Settings
-          </CardTitle>
-          <CardDescription>
-            Configure automatic detection of unusual user behavior and security threats
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            {Object.entries(detectionSettings).map(([key, enabled]) => (
-              <div key={key} className="flex items-center justify-between">
-                <Label className="text-sm font-medium">
-                  {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                </Label>
-                <Switch
-                  checked={enabled}
-                  onCheckedChange={(checked) => 
-                    setDetectionSettings(prev => ({ ...prev, [key]: checked }))
-                  }
-                />
-              </div>
-            ))}
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            <CardTitle>Anomaly Detection & Behavioral Analysis</CardTitle>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Detection Thresholds</CardTitle>
           <CardDescription>
-            Configure sensitivity levels for anomaly detection
+            Advanced machine learning algorithms monitor your login patterns and detect unusual activity
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="suspicious-logins">Failed Login Attempts</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="suspicious-logins"
-                  type="number"
-                  value={thresholds.suspiciousLogins}
-                  onChange={(e) => setThresholds(prev => ({ ...prev, suspiciousLogins: e.target.value }))}
-                  className="w-20"
-                />
-                <span className="text-sm text-muted-foreground">attempts</span>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+              <Activity className="h-8 w-8 text-primary" />
+              <div>
+                <p className="text-sm font-medium">Pattern Learning</p>
+                <p className="text-xs text-muted-foreground">Behavioral analysis active</p>
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="unusual-location">Location Distance</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="unusual-location"
-                  type="number"
-                  value={thresholds.unusualLocation}
-                  onChange={(e) => setThresholds(prev => ({ ...prev, unusualLocation: e.target.value }))}
-                  className="w-20"
-                />
-                <span className="text-sm text-muted-foreground">miles</span>
+            <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+              <TrendingUp className="h-8 w-8 text-primary" />
+              <div>
+                <p className="text-sm font-medium">Risk Scoring</p>
+                <p className="text-xs text-muted-foreground">Real-time evaluation</p>
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="off-hours">Off-Hours Threshold</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="off-hours"
-                  type="number"
-                  value={thresholds.offHoursAccess}
-                  onChange={(e) => setThresholds(prev => ({ ...prev, offHoursAccess: e.target.value }))}
-                  className="w-20"
-                  min="0"
-                  max="23"
-                />
-                <span className="text-sm text-muted-foreground">:00 (24h format)</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="data-volume">Data Volume Threshold</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="data-volume"
-                  type="number"
-                  value={thresholds.dataVolume}
-                  onChange={(e) => setThresholds(prev => ({ ...prev, dataVolume: e.target.value }))}
-                  className="w-20"
-                />
-                <span className="text-sm text-muted-foreground">MB</span>
+            <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+              <AlertTriangle className="h-8 w-8 text-primary" />
+              <div>
+                <p className="text-sm font-medium">Auto-blocking</p>
+                <p className="text-xs text-muted-foreground">Suspicious activity</p>
               </div>
             </div>
           </div>
@@ -198,133 +139,171 @@ export const AnomalyDetection: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Security Analytics Dashboard
-          </CardTitle>
+          <CardTitle>Detection Methods</CardTitle>
+          <CardDescription>
+            Enable or disable specific anomaly detection techniques
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-4 gap-4">
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-red-500">3</div>
-              <div className="text-sm text-muted-foreground">High Risk</div>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <Label htmlFor="login-pattern">Login Pattern Detection</Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Analyze typical login times and frequency patterns
+              </p>
             </div>
-            
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-orange-500">5</div>
-              <div className="text-sm text-muted-foreground">Medium Risk</div>
+            <Switch
+              id="login-pattern"
+              checked={settings.enable_login_pattern_detection}
+              onCheckedChange={(checked) =>
+                handleSettingsChange('enable_login_pattern_detection', checked)
+              }
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                <Label htmlFor="velocity">Velocity Checks</Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Detect impossible travel between login locations
+              </p>
             </div>
-            
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-yellow-500">12</div>
-              <div className="text-sm text-muted-foreground">Low Risk</div>
+            <Switch
+              id="velocity"
+              checked={settings.enable_velocity_checks}
+              onCheckedChange={(checked) =>
+                handleSettingsChange('enable_velocity_checks', checked)
+              }
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <Label htmlFor="location">Location Analysis</Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Monitor for logins from new or unusual locations
+              </p>
             </div>
-            
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-green-500">45</div>
-              <div className="text-sm text-muted-foreground">Resolved</div>
+            <Switch
+              id="location"
+              checked={settings.enable_location_analysis}
+              onCheckedChange={(checked) =>
+                handleSettingsChange('enable_location_analysis', checked)
+              }
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-primary" />
+                <Label htmlFor="device">Device Fingerprint Checks</Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Verify device and browser characteristics
+              </p>
             </div>
+            <Switch
+              id="device"
+              checked={settings.enable_device_fingerprint_checks}
+              onCheckedChange={(checked) =>
+                handleSettingsChange('enable_device_fingerprint_checks', checked)
+              }
+            />
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
-            Recent Anomalies
-          </CardTitle>
+          <CardTitle>Sensitivity Settings</CardTitle>
           <CardDescription>
-            Security anomalies detected in the last 7 days
+            Configure how aggressively anomalies are detected and handled
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {anomalies.map((anomaly) => (
-            <div key={anomaly.id} className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                {getAnomalyIcon(anomaly.type)}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    {getSeverityBadge(anomaly.severity)}
-                    <span className="font-medium">{anomaly.description}</span>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    User: {anomaly.user} • {new Date(anomaly.timestamp).toLocaleString()}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex gap-2">
-                {!anomaly.resolved ? (
-                  <>
-                    <Button variant="outline" size="sm">
-                      Investigate
-                    </Button>
-                    <Button 
-                      variant="default" 
-                      size="sm"
-                      onClick={() => resolveAnomaly(anomaly.id)}
-                    >
-                      Resolve
-                    </Button>
-                  </>
-                ) : (
-                  <Badge variant="outline" className="text-green-600">
-                    Resolved
-                  </Badge>
-                )}
-              </div>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="sensitivity">Detection Sensitivity</Label>
+              <Badge variant="outline" className={getSensitivityColor(settings.sensitivity_level)}>
+                {settings.sensitivity_level.toUpperCase()}
+              </Badge>
             </div>
-          ))}
+            <Select
+              value={settings.sensitivity_level}
+              onValueChange={(value) => handleSettingsChange('sensitivity_level', value)}
+            >
+              <SelectTrigger id="sensitivity">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low - Fewer false positives</SelectItem>
+                <SelectItem value="medium">Medium - Balanced approach</SelectItem>
+                <SelectItem value="high">High - Maximum security</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              Higher sensitivity may result in more false positives but provides better security
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Auto-block Threshold: {settings.auto_block_threshold}</Label>
+              <Badge variant="outline" className={getThresholdColor(settings.auto_block_threshold)}>
+                {settings.auto_block_threshold >= 70
+                  ? 'Strict'
+                  : settings.auto_block_threshold >= 50
+                  ? 'Moderate'
+                  : 'Permissive'}
+              </Badge>
+            </div>
+            <Slider
+              value={[settings.auto_block_threshold]}
+              onValueChange={([value]) => handleSettingsChange('auto_block_threshold', value)}
+              min={30}
+              max={90}
+              step={10}
+              className="w-full"
+            />
+            <p className="text-sm text-muted-foreground">
+              Logins with anomaly scores above this threshold will be automatically blocked
+            </p>
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-muted/50">
         <CardHeader>
-          <CardTitle>Machine Learning Models</CardTitle>
-          <CardDescription>
-            AI-powered anomaly detection model performance
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="p-4 border rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium">Login Behavior</span>
-                <Badge className="bg-green-500">Active</Badge>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Accuracy: 94.2% • Last trained: 2 days ago
-              </div>
-            </div>
-            
-            <div className="p-4 border rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium">Data Access</span>
-                <Badge className="bg-green-500">Active</Badge>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Accuracy: 89.7% • Last trained: 1 week ago
-              </div>
-            </div>
-            
-            <div className="p-4 border rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium">Network Traffic</span>
-                <Badge variant="secondary">Training</Badge>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Progress: 67% • ETA: 3 hours
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-primary" />
+            <CardTitle>How It Works</CardTitle>
           </div>
-
-          <Alert>
-            <Activity className="h-4 w-4" />
-            <AlertDescription>
-              Model retraining scheduled for tonight. Enhanced detection capabilities will be available tomorrow.
-            </AlertDescription>
-          </Alert>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <p>
+            Our anomaly detection system continuously learns your normal behavior patterns including:
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-4">
+            <li>Typical login times and days</li>
+            <li>Common geographic locations</li>
+            <li>Regular devices and browsers</li>
+            <li>Session duration patterns</li>
+            <li>Login frequency</li>
+          </ul>
+          <p>
+            When a login attempt deviates significantly from your established patterns, the system
+            calculates a risk score. High-risk logins can trigger alerts or be automatically blocked.
+          </p>
         </CardContent>
       </Card>
     </div>

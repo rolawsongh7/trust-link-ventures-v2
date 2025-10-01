@@ -10,6 +10,7 @@ export type AuditEventType =
   | 'mfa_verified'
   | 'failed_login'
   | 'unauthorized_access'
+  | 'anomaly_detected'
   | 'data_create'
   | 'data_update'
   | 'data_delete'

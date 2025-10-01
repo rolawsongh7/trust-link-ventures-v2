@@ -101,6 +101,45 @@ export type Database = {
           },
         ]
       }
+      anomaly_detection_settings: {
+        Row: {
+          auto_block_threshold: number
+          created_at: string
+          enable_device_fingerprint_checks: boolean
+          enable_location_analysis: boolean
+          enable_login_pattern_detection: boolean
+          enable_velocity_checks: boolean
+          id: string
+          sensitivity_level: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_block_threshold?: number
+          created_at?: string
+          enable_device_fingerprint_checks?: boolean
+          enable_location_analysis?: boolean
+          enable_login_pattern_detection?: boolean
+          enable_velocity_checks?: boolean
+          id?: string
+          sensitivity_level?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_block_threshold?: number
+          created_at?: string
+          enable_device_fingerprint_checks?: boolean
+          enable_location_analysis?: boolean
+          enable_login_pattern_detection?: boolean
+          enable_velocity_checks?: boolean
+          id?: string
+          sensitivity_level?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string | null
@@ -2188,6 +2227,15 @@ export type Database = {
       generate_secure_token: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_anomaly_statistics: {
+        Args: { p_days?: number; p_user_id: string }
+        Returns: {
+          anomalous_logins: number
+          average_risk_score: number
+          blocked_attempts: number
+          total_logins: number
+        }[]
       }
       get_audit_summary: {
         Args: { p_days?: number; p_user_id?: string }

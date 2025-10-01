@@ -1,6 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
 import { AuditLogger } from './auditLogger';
 
+interface LocationData {
+  country_name?: string;
+  city?: string;
+  [key: string]: any;
+}
+
 export interface AnomalyDetectionSettings {
   enable_login_pattern_detection: boolean;
   enable_velocity_checks: boolean;
@@ -56,7 +62,7 @@ export class AnomalyDetectionService {
 
       // Extract typical locations
       const locations = history
-        .map(h => h.location_data?.country_name)
+        .map(h => (h.location_data as LocationData)?.country_name)
         .filter(Boolean) as string[];
       const typicalLocations = [...new Set(locations)];
 
@@ -210,17 +216,19 @@ export class AnomalyDetectionService {
       const timeDiff = Date.now() - new Date(lastLogin.login_time).getTime();
       const hoursDiff = timeDiff / (1000 * 60 * 60);
 
+      const lastLocationData = lastLogin.location_data as LocationData;
+
       // If less than 2 hours and different country, flag as suspicious
       if (hoursDiff < 2 && 
-          lastLogin.location_data?.country_name && 
-          lastLogin.location_data.country_name !== currentLocation) {
+          lastLocationData?.country_name && 
+          lastLocationData.country_name !== currentLocation) {
         return 30;
       }
 
       // If less than 30 minutes and different city, flag as suspicious
       if (hoursDiff < 0.5 && 
-          lastLogin.location_data?.city && 
-          lastLogin.location_data.city !== currentLocation) {
+          lastLocationData?.city && 
+          lastLocationData.city !== currentLocation) {
         return 15;
       }
 
@@ -260,7 +268,7 @@ export class AnomalyDetectionService {
     try {
       const { data, error } = await supabase
         .from('anomaly_detection_settings')
-        .select('*')
+        .select('enable_login_pattern_detection, enable_velocity_checks, enable_location_analysis, enable_device_fingerprint_checks, sensitivity_level, auto_block_threshold')
         .eq('user_id', userId)
         .single();
 
@@ -269,7 +277,7 @@ export class AnomalyDetectionService {
         return null;
       }
 
-      return data || null;
+      return data as AnomalyDetectionSettings | null;
     } catch (error) {
       console.error('Error fetching anomaly detection settings:', error);
       return null;
@@ -288,9 +296,14 @@ export class AnomalyDetectionService {
         .from('anomaly_detection_settings')
         .upsert({
           user_id: userId,
-          ...settings,
+          enable_login_pattern_detection: settings.enable_login_pattern_detection,
+          enable_velocity_checks: settings.enable_velocity_checks,
+          enable_location_analysis: settings.enable_location_analysis,
+          enable_device_fingerprint_checks: settings.enable_device_fingerprint_checks,
+          sensitivity_level: settings.sensitivity_level,
+          auto_block_threshold: settings.auto_block_threshold,
           updated_at: new Date().toISOString(),
-        });
+        } as any);
 
       if (error) throw error;
       return true;
@@ -318,9 +331,9 @@ export class AnomalyDetectionService {
         metadata: {
           anomaly_score: anomalyScore,
           context,
-        },
+        } as any,
         status: 'active',
-      });
+      } as any);
 
       await AuditLogger.logSecurity(
         'anomaly_detected',
