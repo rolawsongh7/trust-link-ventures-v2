@@ -20,6 +20,17 @@ interface Quote {
   created_at: string;
   updated_at: string;
   quote_request_items?: any[];
+  // Final quote information
+  final_quote?: {
+    id: string;
+    quote_number: string;
+    status: string;
+    total_amount: number;
+    currency: string;
+    valid_until?: string;
+    final_file_url?: string;
+    sent_at?: string;
+  };
 }
 
 export const CustomerQuotes: React.FC = () => {
@@ -40,7 +51,8 @@ export const CustomerQuotes: React.FC = () => {
     if (!profile?.email) return;
 
     try {
-      const { data, error } = await supabase
+      // Fetch quote requests
+      const { data: quoteRequests, error: requestsError } = await supabase
         .from('quote_requests')
         .select(`
           *,
@@ -49,9 +61,35 @@ export const CustomerQuotes: React.FC = () => {
         .eq('lead_email', profile.email)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (requestsError) throw requestsError;
 
-      setQuotes(data || []);
+      // Fetch linked final quotes
+      const { data: finalQuotes, error: quotesError } = await supabase
+        .from('quotes')
+        .select('id, quote_number, status, total_amount, currency, valid_until, final_file_url, sent_at, linked_quote_request_id')
+        .or(`customer_email.eq.${profile.email},linked_quote_request_id.in.(${quoteRequests?.map(q => q.id).join(',') || 'null'})`);
+
+      if (quotesError) throw quotesError;
+
+      // Merge quote requests with their final quotes
+      const mergedData = quoteRequests?.map(request => {
+        const finalQuote = finalQuotes?.find(q => 
+          q.linked_quote_request_id === request.id
+        );
+        
+        return {
+          ...request,
+          final_quote: finalQuote || undefined,
+          // Update status based on final quote if available
+          status: finalQuote ? 
+            (finalQuote.status === 'sent' ? 'quoted' : 
+             finalQuote.status === 'accepted' ? 'approved' : 
+             request.status) : 
+            request.status
+        };
+      }) || [];
+
+      setQuotes(mergedData);
     } catch (error) {
       console.error('Error fetching quotes:', error);
       toast({
@@ -75,10 +113,38 @@ export const CustomerQuotes: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'quoted': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'approved': return 'bg-green-100 text-green-800 border-green-200';
       case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
-      case 'completed': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'completed': return 'bg-purple-100 text-purple-800 border-purple-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const downloadQuote = async (fileUrl: string, quoteNumber: string) => {
+    try {
+      // Generate signed URL for secure download
+      const fileName = fileUrl.split('/').pop() || 'quote.pdf';
+      const { data, error } = await supabase.storage
+        .from('quotes')
+        .createSignedUrl(fileName, 3600); // 1 hour expiry
+
+      if (error) throw error;
+
+      // Open the signed URL in a new tab
+      window.open(data.signedUrl, '_blank');
+      
+      toast({
+        title: "Download started",
+        description: `Downloading ${quoteNumber}`,
+      });
+    } catch (error) {
+      console.error('Error downloading quote:', error);
+      toast({
+        variant: "destructive",
+        title: "Download failed",
+        description: "Unable to download the quote. Please try again.",
+      });
     }
   };
 
@@ -144,6 +210,7 @@ export const CustomerQuotes: React.FC = () => {
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="quoted">Quoted</SelectItem>
                 <SelectItem value="approved">Approved</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
@@ -216,6 +283,34 @@ export const CustomerQuotes: React.FC = () => {
                   <p className="text-muted-foreground mb-4">{quote.message}</p>
                 )}
                 
+                {/* Final Quote Info */}
+                {quote.final_quote && (
+                  <div className="mb-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-primary">Final Quote Available</h4>
+                      <Badge variant="outline" className="bg-primary/10">
+                        {quote.final_quote.quote_number}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Amount:</span>
+                        <span className="font-semibold ml-2">
+                          {quote.final_quote.currency} {quote.final_quote.total_amount.toLocaleString()}
+                        </span>
+                      </div>
+                      {quote.final_quote.valid_until && (
+                        <div>
+                          <span className="text-muted-foreground">Valid Until:</span>
+                          <span className="ml-2">
+                            {new Date(quote.final_quote.valid_until).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {quote.quote_request_items && quote.quote_request_items.length > 0 && (
                   <div className="mb-4">
                     <h4 className="font-medium mb-2">Items Requested:</h4>
@@ -250,14 +345,18 @@ export const CustomerQuotes: React.FC = () => {
                     View Details
                   </Button>
                   
-                  {quote.status === 'approved' && (
-                    <Button variant="outline" size="sm">
+                  {quote.final_quote?.final_file_url && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => downloadQuote(quote.final_quote!.final_file_url!, quote.final_quote!.quote_number)}
+                    >
                       <Download className="h-4 w-4 mr-2" />
                       Download Quote
                     </Button>
                   )}
                   
-                  {quote.status === 'completed' && (
+                  {quote.status === 'approved' && quote.final_quote && (
                     <Button size="sm" className="bg-gradient-to-r from-primary to-primary/90">
                       <DollarSign className="h-4 w-4 mr-2" />
                       Place Order
@@ -321,6 +420,49 @@ export const CustomerQuotes: React.FC = () => {
                 </div>
               </div>
 
+              {/* Final Quote Details */}
+              {selectedQuote.final_quote && (
+                <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <h4 className="font-semibold mb-3 text-primary">Final Quote Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm text-muted-foreground mb-1">Quote Number</div>
+                      <div className="font-semibold">{selectedQuote.final_quote.quote_number}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground mb-1">Total Amount</div>
+                      <div className="font-semibold text-lg">
+                        {selectedQuote.final_quote.currency} {selectedQuote.final_quote.total_amount.toLocaleString()}
+                      </div>
+                    </div>
+                    {selectedQuote.final_quote.valid_until && (
+                      <div>
+                        <div className="text-sm text-muted-foreground mb-1">Valid Until</div>
+                        <div className="font-semibold">
+                          {new Date(selectedQuote.final_quote.valid_until).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {selectedQuote.final_quote.sent_at && (
+                      <div>
+                        <div className="text-sm text-muted-foreground mb-1">Sent Date</div>
+                        <div className="font-semibold">
+                          {new Date(selectedQuote.final_quote.sent_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Message */}
               {selectedQuote.message && (
                 <div>
@@ -371,13 +513,16 @@ export const CustomerQuotes: React.FC = () => {
 
               {/* Actions */}
               <div className="flex items-center gap-2 pt-4 border-t">
-                {selectedQuote.status === 'approved' && (
-                  <Button className="flex-1">
+                {selectedQuote.final_quote?.final_file_url && (
+                  <Button 
+                    className="flex-1"
+                    onClick={() => downloadQuote(selectedQuote.final_quote!.final_file_url!, selectedQuote.final_quote!.quote_number)}
+                  >
                     <Download className="h-4 w-4 mr-2" />
-                    Download Quote
+                    Download Quote PDF
                   </Button>
                 )}
-                {selectedQuote.status === 'completed' && (
+                {selectedQuote.status === 'approved' && selectedQuote.final_quote && (
                   <Button className="flex-1 bg-gradient-to-r from-primary to-primary/90">
                     <DollarSign className="h-4 w-4 mr-2" />
                     Place Order
