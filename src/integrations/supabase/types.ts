@@ -103,33 +103,48 @@ export type Database = {
       }
       audit_logs: {
         Row: {
+          action: string | null
+          changes: Json | null
           created_at: string
           event_data: Json | null
           event_type: string
           id: string
           ip_address: unknown | null
+          request_id: string | null
+          resource_id: string | null
+          resource_type: string | null
           session_id: string | null
           severity: string
           user_agent: string | null
           user_id: string | null
         }
         Insert: {
+          action?: string | null
+          changes?: Json | null
           created_at?: string
           event_data?: Json | null
           event_type: string
           id?: string
           ip_address?: unknown | null
+          request_id?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
           session_id?: string | null
           severity?: string
           user_agent?: string | null
           user_id?: string | null
         }
         Update: {
+          action?: string | null
+          changes?: Json | null
           created_at?: string
           event_data?: Json | null
           event_type?: string
           id?: string
           ip_address?: unknown | null
+          request_id?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
           session_id?: string | null
           severity?: string
           user_agent?: string | null
@@ -1629,6 +1644,42 @@ export type Database = {
           },
         ]
       }
+      security_alert_rules: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_pattern: string
+          id: string
+          is_active: boolean
+          name: string
+          notification_channels: Json | null
+          severity_threshold: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_pattern: string
+          id?: string
+          is_active?: boolean
+          name: string
+          notification_channels?: Json | null
+          severity_threshold?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_pattern?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          notification_channels?: Json | null
+          severity_threshold?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       security_alerts: {
         Row: {
           acknowledged_at: string | null
@@ -1752,6 +1803,36 @@ export type Database = {
           source_url?: string | null
           supplier?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      system_events: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          message: string
+          severity: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          message: string
+          severity?: string
+          source: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          message?: string
+          severity?: string
+          source?: string
         }
         Relationships: []
       }
@@ -2039,6 +2120,21 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      create_audit_log: {
+        Args: {
+          p_action: string
+          p_changes?: Json
+          p_event_data?: Json
+          p_event_type: string
+          p_ip_address?: unknown
+          p_resource_id?: string
+          p_resource_type?: string
+          p_severity?: string
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       create_customer_for_quote: {
         Args: {
           p_company_name: string
@@ -2059,6 +2155,14 @@ export type Database = {
           p_title: string
         }
         Returns: string
+      }
+      detect_suspicious_activity: {
+        Args: { p_time_window?: number; p_user_id: string }
+        Returns: {
+          occurrences: number
+          pattern_type: string
+          risk_level: string
+        }[]
       }
       enhanced_audit_log: {
         Args: {
@@ -2084,6 +2188,14 @@ export type Database = {
       generate_secure_token: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_audit_summary: {
+        Args: { p_days?: number; p_user_id?: string }
+        Returns: {
+          count: number
+          event_type: string
+          last_occurrence: string
+        }[]
       }
       get_password_policy: {
         Args: Record<PropertyKey, never>

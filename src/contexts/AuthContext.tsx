@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { AuditLogger } from '@/lib/auditLogger';
 
 export type UserRole = 'admin' | 'sales_rep' | 'user';
 
@@ -217,6 +218,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
+      // Log successful login
+      if (data.user) {
+        await AuditLogger.logAuth('user_login', data.user.id);
+      }
+
       // Check if user has MFA enabled
       if (data.user) {
         const { data: mfaSettings } = await supabase
@@ -236,6 +242,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { error: null };
     } catch (error: any) {
+      // Log failed login
+      await AuditLogger.logAuth('failed_login', undefined, { email });
       return { error };
     }
   };
@@ -290,6 +298,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     console.log('[Auth] Signing out');
     try {
+      // Log logout before clearing state
+      if (user) {
+        await AuditLogger.logAuth('user_logout', user.id);
+      }
+
       // Clear state first
       clearAuthState();
       
