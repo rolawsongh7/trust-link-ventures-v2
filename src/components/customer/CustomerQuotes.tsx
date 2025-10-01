@@ -30,6 +30,7 @@ interface Quote {
     valid_until?: string;
     final_file_url?: string;
     sent_at?: string;
+    customer_email?: string;
   };
 }
 
@@ -66,7 +67,7 @@ export const CustomerQuotes: React.FC = () => {
       // Fetch linked final quotes
       const { data: finalQuotes, error: quotesError } = await supabase
         .from('quotes')
-        .select('id, quote_number, status, total_amount, currency, valid_until, final_file_url, sent_at, linked_quote_request_id')
+        .select('id, quote_number, status, total_amount, currency, valid_until, final_file_url, sent_at, linked_quote_request_id, customer_email')
         .or(`customer_email.eq.${profile.email},linked_quote_request_id.in.(${quoteRequests?.map(q => q.id).join(',') || 'null'})`);
 
       if (quotesError) throw quotesError;
@@ -74,7 +75,8 @@ export const CustomerQuotes: React.FC = () => {
       // Merge quote requests with their final quotes
       const mergedData = quoteRequests?.map(request => {
         const finalQuote = finalQuotes?.find(q => 
-          q.linked_quote_request_id === request.id
+          q.linked_quote_request_id === request.id ||
+          (q.customer_email && q.customer_email === request.lead_email)
         );
         
         return {
