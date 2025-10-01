@@ -41,23 +41,24 @@ const UnifiedAuth = () => {
         return;
       }
 
-      // Prioritize customer user check first (customer portal)
-      if (customerUser && !role) {
-        console.log('[UnifiedAuth] Customer user detected (no admin role), navigating to customer portal');
-        navigate('/customer', { replace: true });
+      // Check if user is authenticated
+      const authenticatedUser = adminUser || customerUser;
+      if (!authenticatedUser) {
+        console.log('[UnifiedAuth] No authenticated user');
         return;
       }
 
-      if (adminUser) {
-        console.log('[UnifiedAuth] Admin user detected, role:', role);
-        // Check if user has admin access for CRM
-        if (role === 'admin') {
-          console.log('[UnifiedAuth] Navigating to dashboard (admin role)');
-          navigate('/dashboard', { replace: true });
-          return;
-        }
-        
-        // Check if user is in admin whitelist
+      console.log('[UnifiedAuth] Authenticated user detected, role:', role);
+
+      // PRIORITY 1: Check for admin role
+      if (role === 'admin') {
+        console.log('[UnifiedAuth] Navigating to dashboard (admin role)');
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+
+      // PRIORITY 2: Check if user is in admin whitelist
+      if (adminUser?.email) {
         try {
           const { data: isAllowed } = await supabase.rpc('is_allowed_admin_email', {
             user_email: adminUser.email,
@@ -71,12 +72,11 @@ const UnifiedAuth = () => {
         } catch (error) {
           console.error('[UnifiedAuth] Error checking admin whitelist:', error);
         }
-        
-        // If authenticated but not admin or whitelisted, route to customer portal as default
-        console.log('[UnifiedAuth] Non-admin user, navigating to customer portal');
-        navigate('/customer', { replace: true });
-        return;
       }
+
+      // PRIORITY 3: If authenticated but not admin, route to customer portal
+      console.log('[UnifiedAuth] Non-admin user, navigating to customer portal');
+      navigate('/customer', { replace: true });
     };
 
     routeUser();
