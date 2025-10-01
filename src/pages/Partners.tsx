@@ -9,15 +9,14 @@ import partnershipsHeroBg from '@/assets/partnerships-hero-bg.jpg';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { Helmet } from 'react-helmet-async';
 
-// Partner logos from Supabase Storage
-const STORAGE_URL = 'https://ppyfrftmexvgnsxlhdbz.supabase.co/storage/v1/object/public';
-const niahFoodsLogoNew = `${STORAGE_URL}/supplier-logos/niah-foods-logo.png`;
-const jabBrothersLogo = `${STORAGE_URL}/supplier-logos/jab-brothers-logo.png`;
-const nowacoLogoNew = `${STORAGE_URL}/supplier-logos/nowaco-logo.png`;
-const ajcLogo = `${STORAGE_URL}/supplier-logos/ajc-logo.png`;
-const jMarrLogo = `${STORAGE_URL}/supplier-logos/j-marr-logo.png`;
-const seaproLogo = `${STORAGE_URL}/supplier-logos/seapro-logo.png`;
-const trustLinkLogo = `${STORAGE_URL}/logos/trust-link-logo.png`;
+// Partner logos
+import niahFoodsLogoNew from '@/assets/partners/niah-foods-logo.png';
+import jabBrothersLogo from '@/assets/partners/jab-brothers-logo.png';
+import nowacoLogoNew from '@/assets/partners/nowaco-logo.png';
+import ajcLogo from '@/assets/partners/ajc-logo.png';
+import jMarrLogo from '@/assets/partners/j-marr-logo.png';
+import seaproLogo from '@/assets/partners/seapro-logo.png';
+import trustLinkLogo from '@/assets/trust-link-logo.png';
 
 const Partners = () => {
   const { elementRef: heroRef, isVisible: heroVisible } = useScrollAnimation({ threshold: 0.2 });
