@@ -8,15 +8,7 @@ import portFleetAerial from '@/assets/port-fleet-aerial.jpg';
 import partnershipsHeroBg from '@/assets/partnerships-hero-bg.jpg';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { Helmet } from 'react-helmet-async';
-
-// Partner logos
-import niahFoodsLogoNew from '@/assets/partners/niah-foods-logo.png';
-import jabBrothersLogo from '@/assets/partners/jab-brothers-logo.png';
-import nowacoLogoNew from '@/assets/partners/nowaco-logo.png';
-import ajcLogo from '@/assets/partners/ajc-logo.png';
-import jMarrLogo from '@/assets/partners/j-marr-logo.png';
-import seaproLogo from '@/assets/partners/seapro-logo.png';
-import trustLinkLogo from '@/assets/trust-link-logo.png';
+import { getStorageUrl } from '@/config/supabase';
 
 const Partners = () => {
   const { elementRef: heroRef, isVisible: heroVisible } = useScrollAnimation({ threshold: 0.2 });
@@ -43,7 +35,7 @@ const Partners = () => {
       description: "Premium UK-based food supplier specializing in high-quality frozen products for international markets. Known for exceptional quality standards and reliable supply chain management.",
       specialties: ["Premium Frozen Foods", "Quality Assurance", "UK Market Expertise"],
       established: "2010+",
-      logo: niahFoodsLogoNew
+      logo: getStorageUrl('supplier-logos', 'niah_foods.png')
     },
     {
       name: "JAB Bros. Company LLC",
@@ -53,7 +45,7 @@ const Partners = () => {
       specialties: ["Frozen Food Distribution", "International Trade", "Logistics Solutions"],
       established: "2008+",
       reach: "North American Markets",
-      logo: jabBrothersLogo
+      logo: getStorageUrl('supplier-logos', 'Jab_bros.png')
     },
     {
       name: "NOWACO",
@@ -62,7 +54,7 @@ const Partners = () => {
       description: "Professional food merchant dedicated to providing and selling frozen food on a global scale. With over 50 years of passion in the food trading business.",
       specialties: ["Frozen Meats", "Fish & Seafood", "Vegetables", "Global Trading"],
       established: "1970+",
-      logo: nowacoLogoNew
+      logo: getStorageUrl('supplier-logos', 'nowaco.png')
     },
     {
       name: "AJC International",
@@ -72,7 +64,7 @@ const Partners = () => {
       specialties: ["Poultry", "Pork", "Meat", "Vegetables & Fruits", "Seafood"],
       established: "1960+",
       reach: "140+ Countries",
-      logo: ajcLogo
+      logo: getStorageUrl('supplier-logos', 'ajc_international.jpeg')
     },
     {
       name: "J Marr (Seafoods) Limited",
@@ -81,7 +73,7 @@ const Partners = () => {
       description: "Established UK supplier operating from Hessle, East Yorkshire, specializing in premium seafood and meat products. Known for quality Atlantic and global seafood sourcing, as well as premium beef, chicken, and pork products.",
       specialties: ["Atlantic Seafood", "Premium Meat", "Poultry Products"],
       established: "1990+",
-      logo: jMarrLogo
+      logo: getStorageUrl('supplier-logos', 'J_marr.png')
     },
     {
       name: "SEAPRO SAS",
@@ -90,7 +82,7 @@ const Partners = () => {
       description: "Founded in 2006 by food sector experts, SEAPRO SAS operates from Cabestany, France, focusing on retail and HORECA format products. Committed to putting customers at the center with humane and close treatment.",
       specialties: ["Seafood", "Meat & Poultry", "Asian Specialties", "Processed Foods"],
       established: "2006",
-      logo: seaproLogo
+      logo: getStorageUrl('supplier-logos', 'seapro.png')
     }
   ];
 
@@ -184,7 +176,7 @@ const Partners = () => {
             <div className="text-center mb-12 md:mb-16">
               <div className="flex justify-center mb-6">
                 <img 
-                  src={trustLinkLogo} 
+                  src={getStorageUrl('logos', 'trust_link_ventures.png')} 
                   alt="Trust Link Ventures Limited"
                   className="h-24 w-24 md:h-32 md:w-32 object-contain"
                 />

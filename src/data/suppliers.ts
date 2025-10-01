@@ -1,3 +1,5 @@
+import { getStorageUrl } from '@/config/supabase';
+
 export interface Supplier {
   id: string;
   name: string;
@@ -9,7 +11,7 @@ export const suppliers: Supplier[] = [
   {
     id: 'jmarr',
     name: 'J Marr',
-    logo: '/src/assets/partners/j-marr-logo.png',
+    logo: getStorageUrl('supplier-logos', 'J_marr.png'),
     address: [
       'J Marr (Assisted Sales) Ltd',
       '123 Industrial Estate',
@@ -20,7 +22,7 @@ export const suppliers: Supplier[] = [
   {
     id: 'niah-foods',
     name: 'Niah Foods',
-    logo: '/src/assets/partners/niah-foods-logo.png',
+    logo: getStorageUrl('supplier-logos', 'niah_foods.png'),
     address: [
       'Niah Foods Limited',
       '456 Business Park',
@@ -30,7 +32,7 @@ export const suppliers: Supplier[] = [
   {
     id: 'nowaco',
     name: 'Nowaco',
-    logo: '/src/assets/partners/nowaco-logo.png',
+    logo: getStorageUrl('supplier-logos', 'nowaco.png'),
     address: [
       'Nowaco Trading Company',
       '789 Commerce Street',
@@ -40,7 +42,7 @@ export const suppliers: Supplier[] = [
   {
     id: 'jab-brothers',
     name: 'JAB Brothers',
-    logo: '/src/assets/partners/jab-brothers-logo.png',
+    logo: getStorageUrl('supplier-logos', 'Jab_bros.png'),
     address: [
       'JAB Brothers International',
       '321 Trading Avenue',
@@ -50,7 +52,7 @@ export const suppliers: Supplier[] = [
   {
     id: 'seapro',
     name: 'Seapro',
-    logo: '/src/assets/partners/seapro-logo.png',
+    logo: getStorageUrl('supplier-logos', 'seapro.png'),
     address: [
       'Seapro Seafood Solutions',
       '654 Marine Drive',
@@ -60,7 +62,7 @@ export const suppliers: Supplier[] = [
   {
     id: 'ajc',
     name: 'AJC International',
-    logo: '/src/assets/partners/ajc-logo.png',
+    logo: getStorageUrl('supplier-logos', 'ajc_international.jpeg'),
     address: [
       'AJC International Inc.',
       '987 Global Plaza',
