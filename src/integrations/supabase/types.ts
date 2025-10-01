@@ -432,6 +432,85 @@ export type Database = {
         }
         Relationships: []
       }
+      email_logs: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          delivered_at: string | null
+          email_type: string
+          error_message: string | null
+          id: string
+          last_retry_at: string | null
+          metadata: Json | null
+          order_id: string | null
+          quote_id: string | null
+          recipient_email: string
+          resend_id: string | null
+          retry_count: number | null
+          status: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          delivered_at?: string | null
+          email_type: string
+          error_message?: string | null
+          id?: string
+          last_retry_at?: string | null
+          metadata?: Json | null
+          order_id?: string | null
+          quote_id?: string | null
+          recipient_email: string
+          resend_id?: string | null
+          retry_count?: number | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          delivered_at?: string | null
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          last_retry_at?: string | null
+          metadata?: Json | null
+          order_id?: string | null
+          quote_id?: string | null
+          recipient_email?: string
+          resend_id?: string | null
+          retry_count?: number | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_tags: {
         Row: {
           created_at: string

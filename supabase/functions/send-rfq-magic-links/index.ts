@@ -7,13 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface SendRFQRequest {
-  rfqId: string;
-  supplierEmails: string[];
-  rfqTitle: string;
-  rfqDescription?: string;
-  deadline?: string;
-}
+// Verified domain for email sending
+const FROM_EMAIL = 'Trust Link Ventures <noreply@trustlinkventures.com>';
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
@@ -21,6 +16,47 @@ const supabase = createClient(
 );
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+
+// Helper function to log email attempts
+async function logEmailAttempt(
+  data: {
+    email_type: string;
+    recipient_email: string;
+    subject: string;
+    status: string;
+    error_message?: string;
+    resend_id?: string;
+    metadata?: any;
+  }
+) {
+  try {
+    const { error } = await supabase
+      .from('email_logs')
+      .insert({
+        email_type: data.email_type,
+        recipient_email: data.recipient_email,
+        subject: data.subject,
+        status: data.status,
+        error_message: data.error_message,
+        resend_id: data.resend_id,
+        metadata: data.metadata || {},
+      });
+    
+    if (error) {
+      console.error('[Email Logging] Failed to log email attempt:', error);
+    }
+  } catch (err) {
+    console.error('[Email Logging] Exception while logging email:', err);
+  }
+}
+
+interface SendRFQRequest {
+  rfqId: string;
+  supplierEmails: string[];
+  rfqTitle: string;
+  rfqDescription?: string;
+  deadline?: string;
+}
 
 function generateSecureToken(): string {
   const array = new Uint8Array(32);
@@ -36,7 +72,12 @@ serve(async (req) => {
   try {
     const { rfqId, supplierEmails, rfqTitle, rfqDescription, deadline }: SendRFQRequest = await req.json();
 
-    console.log(`Sending RFQ ${rfqId} to ${supplierEmails.length} suppliers`);
+    console.log(`[RFQ Magic Links] Sending RFQ ${rfqId} to ${supplierEmails.length} suppliers`);
+    
+    // Validate inputs
+    if (!rfqId || !supplierEmails || supplierEmails.length === 0) {
+      throw new Error('Missing required fields: rfqId and supplierEmails are required');
+    }
 
     // Create magic link tokens for each supplier
     const tokens = [];
@@ -56,7 +97,7 @@ serve(async (req) => {
         });
 
       if (tokenError) {
-        console.error('Error creating token:', tokenError);
+        console.error('[RFQ Magic Links] Error creating token:', tokenError);
         throw tokenError;
       }
 
@@ -104,11 +145,39 @@ serve(async (req) => {
         </div>
       `;
 
+      console.log(`[RFQ Magic Links] Sending email to ${email}`);
+      
       return resend.emails.send({
-        from: 'Trust Link Ventures <noreply@trustlinkventures.com>',
+        from: FROM_EMAIL,
         to: [email],
         subject: `RFQ: ${rfqTitle} - Submit Your Quote`,
         html: emailContent,
+      }).then(async (result) => {
+        // Log successful send
+        if (result.data) {
+          await logEmailAttempt({
+            email_type: 'rfq_invitation',
+            recipient_email: email,
+            subject: `RFQ: ${rfqTitle} - Submit Your Quote`,
+            status: 'sent',
+            resend_id: result.data.id,
+            metadata: { rfq_id: rfqId, rfq_title: rfqTitle, token },
+          });
+          console.log(`[RFQ Magic Links] Successfully sent to ${email}`);
+        }
+        return result;
+      }).catch(async (error) => {
+        // Log failed send
+        await logEmailAttempt({
+          email_type: 'rfq_invitation',
+          recipient_email: email,
+          subject: `RFQ: ${rfqTitle} - Submit Your Quote`,
+          status: 'failed',
+          error_message: error.message || JSON.stringify(error),
+          metadata: { rfq_id: rfqId, rfq_title: rfqTitle, token },
+        });
+        console.error(`[RFQ Magic Links] Failed to send to ${email}:`, error);
+        throw error;
       });
     });
 
@@ -117,13 +186,14 @@ serve(async (req) => {
     const successful = emailResults.filter(result => result.status === 'fulfilled').length;
     const failed = emailResults.filter(result => result.status === 'rejected').length;
 
-    console.log(`Email sending completed: ${successful} successful, ${failed} failed`);
+    console.log(`[RFQ Magic Links] Email sending completed: ${successful} successful, ${failed} failed`);
 
     if (failed > 0) {
-      console.warn('Some emails failed to send:', emailResults
+      const failedReasons = emailResults
         .filter(result => result.status === 'rejected')
-        .map(result => (result as PromiseRejectedResult).reason)
-      );
+        .map(result => (result as PromiseRejectedResult).reason);
+      
+      console.error('[RFQ Magic Links] Failed emails details:', failedReasons);
     }
 
     return new Response(
@@ -140,9 +210,14 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Error in send-rfq-magic-links:', error);
+    console.error('[RFQ Magic Links] Critical error:', error);
+    console.error('[RFQ Magic Links] Error stack:', error.stack);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: 'Failed to send RFQ invitation emails. Please check logs for details.'
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
