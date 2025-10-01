@@ -34,6 +34,7 @@ interface Quote {
   created_at: string;
   file_url?: string;
   final_file_url?: string;
+  customer_email?: string;
   linked_quote_request_id?: string;
   supplier_quote_uploaded_at?: string;
   approved_by?: string;
@@ -244,7 +245,7 @@ const UnifiedQuoteManagement = () => {
   const sendQuoteApprovalLink = async (quote: Quote) => {
     try {
       // Check if customer email is available
-      let customerEmail = quote.customers?.contact_name; // Assuming this might contain email
+      let customerEmail = quote.customer_email || quote.customers?.email;
       if (!customerEmail) {
         // Prompt for email
         customerEmail = prompt('Please enter the customer email address:');

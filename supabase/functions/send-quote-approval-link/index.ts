@@ -107,7 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email with approval/rejection links
     const emailResponse = await resend.emails.send({
-      from: "SeaPro SAS <quotes@seapro.com>",
+      from: "SeaPro SAS <onboarding@resend.dev>",
       to: [customerEmail],
       subject: `Quote Approval Required - ${quote.quote_number}`,
       html: `
