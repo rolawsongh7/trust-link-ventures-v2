@@ -33,20 +33,20 @@ const ContactFAQ = () => {
 
   return (
     <Card className="card-elevated">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <HelpCircle className="w-5 h-5" />
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+          <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
           Frequently Asked Questions
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 sm:p-6 pt-0">
         <Accordion type="single" collapsible className="w-full">
           {faqs.map((faq, index) => (
-            <AccordionItem key={index} value={`item-${index}`}>
-              <AccordionTrigger className="text-left hover:text-primary transition-colors">
+            <AccordionItem key={index} value={`item-${index}`} className="border-b last:border-b-0">
+              <AccordionTrigger className="text-left hover:text-primary transition-colors py-4 text-sm sm:text-base touch-manipulation min-h-[44px]">
                 {faq.question}
               </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground leading-relaxed">
+              <AccordionContent className="text-muted-foreground leading-relaxed pb-4 text-sm sm:text-base">
                 {faq.answer}
               </AccordionContent>
             </AccordionItem>

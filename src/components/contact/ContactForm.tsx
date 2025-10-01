@@ -7,12 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { Send, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
 
 interface ContactFormProps {
   initialInquiryType?: string;
 }
 
 const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) => {
+  const { isMobile } = useMobileDetection();
   const [formData, setFormData] = useState({
     name: '',
     company: '',
@@ -111,11 +113,11 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
   if (isSubmitted) {
     return (
       <Card className="card-elevated">
-        <CardContent className="p-8">
-          <div className="text-center py-12 space-y-6">
-            <CheckCircle className="h-20 w-20 text-green-500 mx-auto animate-bounce" />
-            <h3 className="text-2xl font-bold text-green-600">✅ Thank you!</h3>
-            <p className="text-muted-foreground text-lg leading-relaxed">
+        <CardContent className="p-6 sm:p-8">
+          <div className="text-center py-8 sm:py-12 space-y-4 sm:space-y-6">
+            <CheckCircle className="h-16 w-16 sm:h-20 sm:w-20 text-green-500 mx-auto animate-bounce" />
+            <h3 className="text-xl sm:text-2xl font-bold text-green-600">✅ Thank you!</h3>
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg leading-relaxed px-4">
               We've received your inquiry and will be in touch shortly.<br />
               Meanwhile, you can explore our <a href="/about" className="text-primary font-medium hover:underline">Sustainability Commitments</a> or <a href="/partners" className="text-primary font-medium hover:underline">Partner Network</a>.
             </p>
@@ -127,50 +129,51 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
 
   return (
     <Card className="card-elevated">
-      <CardContent className="p-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <CardContent className="p-4 sm:p-6 md:p-8">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {formData.inquiryType && (
-            <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
-              <Clock className="w-4 h-4 text-primary" />
-              <span className="text-sm text-primary font-medium">
+            <div className="flex items-center gap-2 p-2 sm:p-3 bg-primary/10 rounded-lg border border-primary/20">
+              <Clock className="w-4 h-4 text-primary flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-primary font-medium">
                 Expected response time: {getEstimatedResponseTime()}
               </span>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name *</Label>
+              <Label htmlFor="name" className="text-sm sm:text-base">Full Name *</Label>
               <Input
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
                 onBlur={() => handleBlur('name')}
-                className={errors.name ? 'border-red-500' : ''}
+                className={`min-h-[44px] text-base ${errors.name ? 'border-red-500' : ''}`}
                 required
               />
               {errors.name && (
-                <div className="flex items-center gap-1 text-red-500 text-sm">
-                  <AlertCircle className="w-3 h-3" />
+                <div className="flex items-center gap-1 text-red-500 text-xs sm:text-sm">
+                  <AlertCircle className="w-3 h-3 flex-shrink-0" />
                   {errors.name}
                 </div>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company">Company</Label>
+              <Label htmlFor="company" className="text-sm sm:text-base">Company</Label>
               <Input
                 id="company"
                 name="company"
                 value={formData.company}
                 onChange={handleInputChange}
+                className="min-h-[44px] text-base"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email" className="text-sm sm:text-base">Email *</Label>
               <Input
                 id="email"
                 name="email"
@@ -178,30 +181,30 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
                 value={formData.email}
                 onChange={handleInputChange}
                 onBlur={() => handleBlur('email')}
-                className={errors.email ? 'border-red-500' : ''}
+                className={`min-h-[44px] text-base ${errors.email ? 'border-red-500' : ''}`}
                 required
               />
               {errors.email && (
-                <div className="flex items-center gap-1 text-red-500 text-sm">
-                  <AlertCircle className="w-3 h-3" />
+                <div className="flex items-center gap-1 text-red-500 text-xs sm:text-sm">
+                  <AlertCircle className="w-3 h-3 flex-shrink-0" />
                   {errors.email}
                 </div>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="country">Country *</Label>
+              <Label htmlFor="country" className="text-sm sm:text-base">Country *</Label>
               <Input
                 id="country"
                 name="country"
                 value={formData.country}
                 onChange={handleInputChange}
                 onBlur={() => handleBlur('country')}
-                className={errors.country ? 'border-red-500' : ''}
+                className={`min-h-[44px] text-base ${errors.country ? 'border-red-500' : ''}`}
                 required
               />
               {errors.country && (
-                <div className="flex items-center gap-1 text-red-500 text-sm">
-                  <AlertCircle className="w-3 h-3" />
+                <div className="flex items-center gap-1 text-red-500 text-xs sm:text-sm">
+                  <AlertCircle className="w-3 h-3 flex-shrink-0" />
                   {errors.country}
                 </div>
               )}
@@ -209,9 +212,9 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="inquiryType">Inquiry Type</Label>
+            <Label htmlFor="inquiryType" className="text-sm sm:text-base">Inquiry Type</Label>
             <Select value={formData.inquiryType} onValueChange={(value) => handleSelectChange('inquiryType', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="min-h-[44px] text-base">
                 <SelectValue placeholder="Select inquiry type" />
               </SelectTrigger>
               <SelectContent>
@@ -224,21 +227,22 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="message">Message</Label>
+            <Label htmlFor="message" className="text-sm sm:text-base">Message</Label>
             <Textarea
               id="message"
               name="message"
               value={formData.message}
               onChange={handleInputChange}
-              rows={6}
+              rows={isMobile ? 4 : 6}
               placeholder="Tell us about your inquiry..."
+              className="min-h-[100px] text-base resize-none"
             />
           </div>
 
           <Button 
             type="submit" 
-            className="w-full relative" 
-            size="lg" 
+            className="w-full relative min-h-[48px] sm:min-h-[52px] touch-manipulation text-base sm:text-lg" 
+            size={isMobile ? "default" : "lg"}
             disabled={isLoading}
           >
             {isLoading ? (
@@ -248,7 +252,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
               </>
             ) : (
               <>
-                <Send className="h-5 w-5 mr-2" />
+                <Send className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Send My Message
               </>
             )}
