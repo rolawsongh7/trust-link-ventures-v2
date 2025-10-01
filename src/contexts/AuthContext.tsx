@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AuditLogger } from '@/lib/auditLogger';
 import { NetworkSecurityService } from '@/lib/networkSecurity';
+import { AnomalyDetectionService } from '@/lib/anomalyDetection';
 
 export type UserRole = 'admin' | 'sales_rep' | 'user';
 
@@ -219,10 +220,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
-      // Check network security before proceeding
+      // Check network security and anomaly detection before proceeding
       if (data.user) {
         const currentIP = await NetworkSecurityService.getCurrentIP();
         if (currentIP) {
+          // Network security check
           const networkCheck = await NetworkSecurityService.validateNetworkAccess(
             data.user.id,
             currentIP
@@ -238,14 +240,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             throw new Error(networkCheck.reason || 'Network access blocked');
           }
 
-          // Log successful network validation
+          // Get IP intelligence for anomaly detection
+          const ipIntel = await NetworkSecurityService.getIPIntelligence(currentIP);
+          
+          // Anomaly detection check
+          const anomalyScore = await AnomalyDetectionService.calculateAnomalyScore(
+            data.user.id,
+            currentIP,
+            navigator.userAgent,
+            {
+              country_name: ipIntel.country_name,
+            }
+          );
+
+          // Record login attempt with risk score
+          await AnomalyDetectionService.recordLoginAttempt(
+            data.user.id,
+            true,
+            currentIP,
+            navigator.userAgent,
+            { country_name: ipIntel.country_name },
+            anomalyScore.total_score
+          );
+
+          // Check if login should be blocked based on anomaly score
+          const blockDecision = await AnomalyDetectionService.shouldBlockLogin(
+            data.user.id,
+            anomalyScore
+          );
+
+          if (blockDecision.blocked) {
+            await supabase.auth.signOut();
+            await AnomalyDetectionService.createSecurityAlert(data.user.id, anomalyScore, {
+              ip_address: currentIP,
+              user_agent: navigator.userAgent,
+              location: ipIntel.country_name,
+            });
+            throw new Error(blockDecision.reason || 'Login blocked due to unusual activity');
+          }
+
+          // Create alert for medium/high risk but don't block
+          if (anomalyScore.risk_level === 'medium' || anomalyScore.risk_level === 'high') {
+            await AnomalyDetectionService.createSecurityAlert(data.user.id, anomalyScore, {
+              ip_address: currentIP,
+              user_agent: navigator.userAgent,
+              location: ipIntel.country_name,
+            });
+          }
+
+          // Log successful validation
           await AuditLogger.log({
             userId: data.user.id,
             eventType: 'user_login',
-            action: 'network_validation_passed',
+            action: 'security_validation_passed',
             eventData: {
               ip_address: currentIP,
-              risk_score: networkCheck.risk_score,
+              network_risk_score: networkCheck.risk_score,
+              anomaly_score: anomalyScore.total_score,
+              anomaly_risk_level: anomalyScore.risk_level,
               is_vpn: networkCheck.is_vpn,
               is_tor: networkCheck.is_tor,
             },

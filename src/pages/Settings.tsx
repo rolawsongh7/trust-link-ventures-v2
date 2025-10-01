@@ -7,6 +7,7 @@ import { JMarrManualUpdater } from '@/components/admin/JMarrManualUpdater';
 import { MultiFactorAuth } from '@/components/security/MultiFactorAuth';
 import { AuditLogViewer } from '@/components/security/AuditLogViewer';
 import { NetworkSecurity } from '@/components/security/NetworkSecurity';
+import { AnomalyDetection } from '@/components/security/AnomalyDetection';
 import { Settings as SettingsIcon, Database, Bell, Users, Shield, FileText, Network } from 'lucide-react';
 
 const Settings = () => {
@@ -121,6 +122,8 @@ const Settings = () => {
                   <MultiFactorAuth />
                 </CardContent>
               </Card>
+
+              <AnomalyDetection />
             </TabsContent>
 
             {/* Network Security Tab */}
