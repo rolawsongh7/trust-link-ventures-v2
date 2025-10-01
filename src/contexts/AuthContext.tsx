@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AuditLogger } from '@/lib/auditLogger';
+import { NetworkSecurityService } from '@/lib/networkSecurity';
 
 export type UserRole = 'admin' | 'sales_rep' | 'user';
 
@@ -217,6 +218,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) throw error;
+
+      // Check network security before proceeding
+      if (data.user) {
+        const currentIP = await NetworkSecurityService.getCurrentIP();
+        if (currentIP) {
+          const networkCheck = await NetworkSecurityService.validateNetworkAccess(
+            data.user.id,
+            currentIP
+          );
+
+          if (networkCheck.blocked) {
+            await supabase.auth.signOut();
+            await AuditLogger.logSecurity('unauthorized_access', data.user.id, {
+              reason: networkCheck.reason,
+              ip_address: currentIP,
+              risk_score: networkCheck.risk_score,
+            }, 'high');
+            throw new Error(networkCheck.reason || 'Network access blocked');
+          }
+
+          // Log successful network validation
+          await AuditLogger.log({
+            userId: data.user.id,
+            eventType: 'user_login',
+            action: 'network_validation_passed',
+            eventData: {
+              ip_address: currentIP,
+              risk_score: networkCheck.risk_score,
+              is_vpn: networkCheck.is_vpn,
+              is_tor: networkCheck.is_tor,
+            },
+            severity: 'low',
+          });
+        }
+      }
 
       // Log successful login
       if (data.user) {

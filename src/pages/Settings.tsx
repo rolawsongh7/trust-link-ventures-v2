@@ -6,7 +6,8 @@ import { SupabaseHealthCheck } from '@/components/utils/SupabaseHealthCheck';
 import { JMarrManualUpdater } from '@/components/admin/JMarrManualUpdater';
 import { MultiFactorAuth } from '@/components/security/MultiFactorAuth';
 import { AuditLogViewer } from '@/components/security/AuditLogViewer';
-import { Settings as SettingsIcon, Database, Bell, Users, Shield, FileText } from 'lucide-react';
+import { NetworkSecurity } from '@/components/security/NetworkSecurity';
+import { Settings as SettingsIcon, Database, Bell, Users, Shield, FileText, Network } from 'lucide-react';
 
 const Settings = () => {
   return (
@@ -34,7 +35,7 @@ const Settings = () => {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <Tabs defaultValue="system-status" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-7 lg:w-auto">
               <TabsTrigger value="system-status" className="flex items-center gap-2">
                 <Database className="h-4 w-4" />
                 <span className="hidden sm:inline">System</span>
@@ -42,6 +43,10 @@ const Settings = () => {
               <TabsTrigger value="security" className="flex items-center gap-2">
                 <Shield className="h-4 w-4" />
                 <span className="hidden sm:inline">Security</span>
+              </TabsTrigger>
+              <TabsTrigger value="network" className="flex items-center gap-2">
+                <Network className="h-4 w-4" />
+                <span className="hidden sm:inline">Network</span>
               </TabsTrigger>
               <TabsTrigger value="audit-logs" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
@@ -116,6 +121,11 @@ const Settings = () => {
                   <MultiFactorAuth />
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Network Security Tab */}
+            <TabsContent value="network" className="space-y-6">
+              <NetworkSecurity />
             </TabsContent>
 
             {/* Audit Logs Tab */}
