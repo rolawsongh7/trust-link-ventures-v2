@@ -155,47 +155,47 @@ serve(async (req) => {
 
 function getSupplierData(supplierName: string | undefined) {
   const suppliers = {
-    "J Marr (Seafoods) Limited": {
+    "J Marr": {
       name: "J Marr (Seafoods) Limited",
       address: "Livingstone Road, Hessle, East Yorkshire, UK, HU13 0EE",
       email: "seafoods@marsea.co.uk",
       phone: "+441482642302",
-      logo: "J_marr.png"
+      logo: "j-marr-logo.png"
     },
-    "JAB Bros. Company LLC": {
+    "JAB Brothers": {
       name: "JAB Bros. Company LLC",
       address: "12895 NE 14 Av, North Miami, FL, 22161, USA",
-      email: "info@jab-bros.com@.ar",
+      email: "info@jab-bros.com",
       phone: "+54114732.0591",
-      logo: "Jab_bros.png"
+      logo: "jab-brothers-logo.png"
     },
-    "Niah Foods Limited": {
+    "Niah Foods": {
       name: "Niah Foods Limited",
       address: "20-22 Wenlock Road, London, N1 7GU, UK",
       email: "liz@niahfoods.com",
       phone: "+44 7368356155",
-      logo: "niah_foods.png"
+      logo: "niah-foods-logo.png"
     },
-    "SEAPRO SAS": {
+    "Seapro": {
       name: "SEAPRO SAS",
       address: "5 rue du Moulinas, 66330 Cabestany, France",
       email: "dominique@seaprosas.com",
       phone: "+33 (0)251378686",
-      logo: "seapro.png"
+      logo: "seapro-logo.png"
     },
     "AJC International": {
       name: "AJC International",
       address: "1000 Abernathy Road NE, Suite 600, Atlanta GA, 30328, USA",
       email: "customercare@ajc.com",
       phone: "+1 4042526750",
-      logo: "ajc_international.jpeg"
+      logo: "ajc-logo.png"
     },
-    "NOWACO": {
+    "Nowaco": {
       name: "NOWACO",
       address: "NOWACO A/S Prinsengade 15, 9000 Aalborg, Denmark",
       email: "nowaco@nowaco.com",
       phone: "+45 7788 6100",
-      logo: "nowaco.png"
+      logo: "nowaco-logo.png"
     }
   }
 
@@ -234,9 +234,10 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
     let trustLinkLogo = null;
     
     try {
+      console.log('Attempting to load New Gen Link logo: new-gen-link-logo.png')
       const newGenLogoResponse = await supabase.storage
-        .from('supplier-logos')
-        .download('New_gen_link.png');
+        .from('logos')
+        .download('new-gen-link-logo.png');
       
       if (newGenLogoResponse.data) {
         const newGenLogoBytes = await newGenLogoResponse.data.arrayBuffer();
@@ -245,24 +246,26 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
       }
     } catch (error) {
       console.log("Failed to load New Gen Link logo from storage:", error);
+      // Continue without logo - will display text only
     }
 
     try {
-      console.log('Attempting to load Trust Link logo: trust_link_venetures (1).png')
+      console.log('Attempting to load Trust Link logo: trust-link-logo.png')
       const trustLinkLogoResponse = await supabase.storage
-        .from('supplier-logos')
-        .download('trust_link_venetures (1).png');
+        .from('logos')
+        .download('trust-link-logo.png');
       
       console.log('Trust Link logo response:', trustLinkLogoResponse)
       if (trustLinkLogoResponse.data) {
         const trustLinkLogoBytes = await trustLinkLogoResponse.data.arrayBuffer();
         trustLinkLogo = await pdfDoc.embedPng(new Uint8Array(trustLinkLogoBytes));
-        console.log("Trust Link logo loaded successfully from storage - using updated version");
+        console.log("Trust Link logo loaded successfully from storage");
       } else {
         console.log("Trust Link logo response data is null");
       }
     } catch (error) {
       console.log("Failed to load Trust Link logo from storage:", error);
+      // Continue without logo - will display text only
     }
     
     // Enhanced Colors & Visual Effects
