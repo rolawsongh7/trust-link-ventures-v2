@@ -160,42 +160,42 @@ function getSupplierData(supplierName: string | undefined) {
       address: "Livingstone Road, Hessle, East Yorkshire, UK, HU13 0EE",
       email: "seafoods@marsea.co.uk",
       phone: "+441482642302",
-      logo: "j-marr-logo.png"
+      logo: "J_marr.png"
     },
     "JAB Brothers": {
       name: "JAB Bros. Company LLC",
       address: "12895 NE 14 Av, North Miami, FL, 22161, USA",
       email: "info@jab-bros.com",
       phone: "+54114732.0591",
-      logo: "jab-brothers-logo.png"
+      logo: "Jab_bros.png"
     },
     "Niah Foods": {
       name: "Niah Foods Limited",
       address: "20-22 Wenlock Road, London, N1 7GU, UK",
       email: "liz@niahfoods.com",
       phone: "+44 7368356155",
-      logo: "niah-foods-logo.png"
+      logo: "niah_foods.png"
     },
     "Seapro": {
       name: "SEAPRO SAS",
       address: "5 rue du Moulinas, 66330 Cabestany, France",
       email: "dominique@seaprosas.com",
       phone: "+33 (0)251378686",
-      logo: "seapro-logo.png"
+      logo: "seapro.png"
     },
     "AJC International": {
       name: "AJC International",
       address: "1000 Abernathy Road NE, Suite 600, Atlanta GA, 30328, USA",
       email: "customercare@ajc.com",
       phone: "+1 4042526750",
-      logo: "ajc-logo.png"
+      logo: "ajc_international.jpeg"
     },
     "Nowaco": {
       name: "NOWACO",
       address: "NOWACO A/S Prinsengade 15, 9000 Aalborg, Denmark",
       email: "nowaco@nowaco.com",
       phone: "+45 7788 6100",
-      logo: "nowaco-logo.png"
+      logo: "nowaco.png"
     }
   }
 
@@ -234,10 +234,10 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
     let trustLinkLogo = null;
     
     try {
-      console.log('Attempting to load New Gen Link logo: new-gen-link-logo.png')
+      console.log('Attempting to load New Gen Link logo: New_gen_link.png')
       const newGenLogoResponse = await supabase.storage
         .from('logos')
-        .download('new-gen-link-logo.png');
+        .download('New_gen_link.png');
       
       if (newGenLogoResponse.data) {
         const newGenLogoBytes = await newGenLogoResponse.data.arrayBuffer();
@@ -250,10 +250,10 @@ async function generateTitlePagePDF(quote: any): Promise<Uint8Array> {
     }
 
     try {
-      console.log('Attempting to load Trust Link logo: trust-link-logo.png')
+      console.log('Attempting to load Trust Link logo: trust_link_ventures.png')
       const trustLinkLogoResponse = await supabase.storage
         .from('logos')
-        .download('trust-link-logo.png');
+        .download('trust_link_ventures.png');
       
       console.log('Trust Link logo response:', trustLinkLogoResponse)
       if (trustLinkLogoResponse.data) {
