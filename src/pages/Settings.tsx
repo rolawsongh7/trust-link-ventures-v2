@@ -4,7 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { SupabaseHealthCheck } from '@/components/utils/SupabaseHealthCheck';
 import { JMarrManualUpdater } from '@/components/admin/JMarrManualUpdater';
-import { Settings as SettingsIcon, Database, Bell, Users } from 'lucide-react';
+import { MultiFactorAuth } from '@/components/security/MultiFactorAuth';
+import { Settings as SettingsIcon, Database, Bell, Users, Shield } from 'lucide-react';
 
 const Settings = () => {
   return (
@@ -32,10 +33,14 @@ const Settings = () => {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <Tabs defaultValue="system-status" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-5 lg:w-auto">
               <TabsTrigger value="system-status" className="flex items-center gap-2">
                 <Database className="h-4 w-4" />
                 <span className="hidden sm:inline">System Status</span>
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                <span className="hidden sm:inline">Security</span>
               </TabsTrigger>
               <TabsTrigger value="general" className="flex items-center gap-2">
                 <SettingsIcon className="h-4 w-4" />
@@ -91,6 +96,21 @@ const Settings = () => {
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            {/* Security Tab */}
+            <TabsContent value="security" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Two-Factor Authentication</CardTitle>
+                  <CardDescription>
+                    Add an extra layer of security to your account with two-factor authentication
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MultiFactorAuth />
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* General Settings Tab */}

@@ -8,9 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { MFAVerificationModal } from '@/components/security/MFAVerificationModal';
 
 const Auth = () => {
-  const { user, signIn, signUp, loading } = useAuth();
+  const { user, signIn, signUp, loading, requiresMFA, mfaUserId, verifyMFA, cancelMFA } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -29,7 +30,7 @@ const Auth = () => {
   });
 
   // Redirect authenticated users
-  if (user && !loading) {
+  if (user && !loading && !requiresMFA) {
     // Check if user is admin and redirect to dashboard, otherwise to home
     const ADMIN_EMAIL = 'admin@rustlinkvnts.com';
     const isAdmin = user.email === ADMIN_EMAIL;
@@ -46,7 +47,7 @@ const Auth = () => {
     setIsLoading(true);
     setError('');
 
-    const { error } = await signIn(signInData.email, signInData.password);
+    const { error, requiresMFA: needsMFA } = await signIn(signInData.email, signInData.password);
 
     if (error) {
       if (error.message.includes('Invalid login credentials')) {
@@ -56,7 +57,7 @@ const Auth = () => {
       } else {
         setError(error.message);
       }
-    } else {
+    } else if (!needsMFA) {
       toast({
         title: 'Welcome back!',
         description: 'You have successfully signed in.',
@@ -64,6 +65,22 @@ const Auth = () => {
     }
 
     setIsLoading(false);
+  };
+
+  const handleMFAVerified = async (trustDevice: boolean) => {
+    await verifyMFA(trustDevice);
+    toast({
+      title: 'Welcome back!',
+      description: 'You have successfully signed in with 2FA.',
+    });
+  };
+
+  const handleMFACancel = () => {
+    cancelMFA();
+    toast({
+      title: 'Sign in cancelled',
+      description: 'MFA verification was cancelled.',
+    });
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -239,6 +256,17 @@ const Auth = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* MFA Verification Modal */}
+      {requiresMFA && mfaUserId && (
+        <MFAVerificationModal
+          open={requiresMFA}
+          onOpenChange={(open) => !open && handleMFACancel()}
+          userId={mfaUserId}
+          onVerified={handleMFAVerified}
+          onCancel={handleMFACancel}
+        />
+      )}
     </div>
   );
 };

@@ -82,6 +82,10 @@ export class MFAService {
           updated_at: new Date().toISOString()
         });
 
+      if (!error) {
+        await MFAService.logMFAEvent(userId, 'mfa_enabled');
+      }
+
       return !error;
     } catch (error) {
       console.error('Error enabling MFA:', error);
@@ -100,6 +104,16 @@ export class MFAService {
         })
         .eq('user_id', userId);
 
+      if (!error) {
+        // Delete backup codes
+        await supabase
+          .from('user_backup_codes')
+          .delete()
+          .eq('user_id', userId);
+        
+        await MFAService.logMFAEvent(userId, 'mfa_disabled');
+      }
+
       return !error;
     } catch (error) {
       console.error('Error disabling MFA:', error);
@@ -113,7 +127,7 @@ export class MFAService {
         .from('user_mfa_settings')
         .select('enabled, secret_key')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (error || !data) return null;
 
@@ -124,6 +138,134 @@ export class MFAService {
     } catch (error) {
       console.error('Error getting MFA settings:', error);
       return null;
+    }
+  }
+
+  // Generate backup codes (10 codes, 8 characters each)
+  static generateBackupCodes(): string[] {
+    const codes: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const code = Array.from(crypto.getRandomValues(new Uint8Array(4)), 
+        byte => byte.toString(36).padStart(2, '0')
+      ).join('').toUpperCase().substring(0, 8);
+      codes.push(code);
+    }
+    return codes;
+  }
+
+  // Hash backup code for storage
+  static async hashBackupCode(code: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(code);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  // Store backup codes
+  static async storeBackupCodes(userId: string, codes: string[]): Promise<boolean> {
+    try {
+      const hashedCodes = await Promise.all(
+        codes.map(async code => ({
+          user_id: userId,
+          code_hash: await MFAService.hashBackupCode(code)
+        }))
+      );
+
+      const { error } = await supabase
+        .from('user_backup_codes')
+        .insert(hashedCodes);
+
+      if (error) throw error;
+
+      return true;
+    } catch (error) {
+      console.error('Error storing backup codes:', error);
+      return false;
+    }
+  }
+
+  // Verify backup code
+  static async verifyBackupCode(userId: string, code: string): Promise<boolean> {
+    try {
+      const hashedCode = await MFAService.hashBackupCode(code);
+      
+      const { data, error } = await supabase
+        .from('user_backup_codes')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('code_hash', hashedCode)
+        .is('used_at', null)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) return false;
+
+      // Mark code as used
+      await supabase
+        .from('user_backup_codes')
+        .update({ used_at: new Date().toISOString() })
+        .eq('id', data.id);
+
+      await MFAService.logMFAEvent(userId, 'backup_code_used');
+      return true;
+    } catch (error) {
+      console.error('Error verifying backup code:', error);
+      return false;
+    }
+  }
+
+  // Check if MFA attempts are rate limited
+  static async checkRateLimit(userId: string): Promise<boolean> {
+    try {
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      
+      const { data, error } = await supabase
+        .from('mfa_login_attempts')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('success', false)
+        .gte('attempt_time', fifteenMinutesAgo);
+
+      if (error) throw error;
+      
+      return (data?.length || 0) >= 5; // Max 5 failed attempts per 15 minutes
+    } catch (error) {
+      console.error('Error checking rate limit:', error);
+      return false;
+    }
+  }
+
+  // Log MFA attempt
+  static async logMFAAttempt(userId: string, success: boolean): Promise<void> {
+    try {
+      await supabase
+        .from('mfa_login_attempts')
+        .insert({
+          user_id: userId,
+          success,
+          ip_address: null,
+          user_agent: navigator.userAgent
+        });
+    } catch (error) {
+      console.error('Error logging MFA attempt:', error);
+    }
+  }
+
+  // Log MFA-related security event
+  static async logMFAEvent(userId: string, eventType: string): Promise<void> {
+    try {
+      await supabase
+        .from('audit_logs')
+        .insert({
+          user_id: userId,
+          event_type: eventType,
+          event_data: { timestamp: new Date().toISOString() },
+          severity: 'medium'
+        });
+    } catch (error) {
+      console.error('Error logging MFA event:', error);
     }
   }
 }

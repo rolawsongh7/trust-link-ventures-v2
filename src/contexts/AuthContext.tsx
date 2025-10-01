@@ -10,11 +10,15 @@ interface AuthContextType {
   loading: boolean;
   userRole: UserRole | null;
   roleLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  requiresMFA: boolean;
+  mfaUserId: string | null;
+  signIn: (email: string, password: string) => Promise<{ error: any; requiresMFA?: boolean }>;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
   signInWithProvider: (provider: 'google' | 'github') => Promise<{ error: any }>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  verifyMFA: (trustDevice: boolean) => Promise<void>;
+  cancelMFA: () => void;
   hasRole: (role: UserRole) => boolean;
   hasAdminAccess: boolean;
   hasSalesAccess: boolean;
@@ -37,6 +41,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [roleLoading, setRoleLoading] = useState(false);
   const [isFetchingRole, setIsFetchingRole] = useState(false);
+  const [requiresMFA, setRequiresMFA] = useState(false);
+  const [mfaUserId, setMfaUserId] = useState<string | null>(null);
 
   // Clear all auth state
   const clearAuthState = () => {
@@ -203,11 +209,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      // Check if user has MFA enabled
+      if (data.user) {
+        const { data: mfaSettings } = await supabase
+          .from('user_mfa_settings')
+          .select('enabled')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        if (mfaSettings?.enabled) {
+          // Sign out temporarily until MFA is verified
+          await supabase.auth.signOut();
+          setRequiresMFA(true);
+          setMfaUserId(data.user.id);
+          return { error: null, requiresMFA: true };
+        }
+      }
+
+      return { error: null };
+    } catch (error: any) {
+      return { error };
+    }
+  };
+
+  const verifyMFA = async (trustDevice: boolean) => {
+    if (!mfaUserId) return;
+
+    try {
+      // MFA verification already happened in the modal
+      // Now we can complete the sign-in
+      setRequiresMFA(false);
+      setMfaUserId(null);
+    } catch (error) {
+      console.error('MFA verification error:', error);
+      throw error;
+    }
+  };
+
+  const cancelMFA = () => {
+    setRequiresMFA(false);
+    setMfaUserId(null);
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
@@ -303,11 +352,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     userRole,
     roleLoading,
+    requiresMFA,
+    mfaUserId,
     signIn,
     signUp,
     signOut,
     signInWithProvider,
     resetPassword,
+    verifyMFA,
+    cancelMFA,
     hasRole,
     hasAdminAccess,
     hasSalesAccess,
