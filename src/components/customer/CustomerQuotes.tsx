@@ -125,26 +125,19 @@ export const CustomerQuotes: React.FC = () => {
 
   const downloadQuote = async (fileUrl: string, quoteNumber: string) => {
     try {
-      // Since the quotes bucket is public, we can use the URL directly
-      // Create a temporary anchor element to trigger download
-      const link = document.createElement('a');
-      link.href = fileUrl;
-      link.download = `${quoteNumber}.pdf`;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // The file URL is already public, just open it in a new tab
+      window.open(fileUrl, '_blank');
       
       toast({
-        title: "Download started",
-        description: `Downloading ${quoteNumber}`,
+        title: "Opening quote",
+        description: `Opening ${quoteNumber} in a new tab`,
       });
     } catch (error) {
-      console.error('Error downloading quote:', error);
+      console.error('Error opening quote:', error);
       toast({
         variant: "destructive",
-        title: "Download failed",
-        description: "Unable to download the quote. Please try again.",
+        title: "Failed to open quote",
+        description: "Unable to open the quote. Please try again.",
       });
     }
   };
