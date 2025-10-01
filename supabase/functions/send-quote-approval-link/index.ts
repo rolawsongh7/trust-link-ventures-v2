@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 // Verified domain for email sending
-const FROM_EMAIL = 'Trust Link Ventures <noreply@trustlinkventures.com>';
+const FROM_EMAIL = 'Trust Link Ventures <noreply@trustlinkventureslimited.com>';
 
 interface SendQuoteApprovalRequest {
   quoteId: string;
