@@ -125,11 +125,13 @@ export const CustomerQuotes: React.FC = () => {
 
   const downloadQuote = async (fileUrl: string, quoteNumber: string) => {
     try {
-      // Generate signed URL for secure download
-      const fileName = fileUrl.split('/').pop() || 'quote.pdf';
+      // Extract the file path from the full URL
+      // URL format: https://.../storage/v1/object/public/quotes/[path-we-need]
+      const bucketPath = fileUrl.split('/quotes/').pop() || 'quote.pdf';
+      
       const { data, error } = await supabase.storage
         .from('quotes')
-        .createSignedUrl(fileName, 3600); // 1 hour expiry
+        .createSignedUrl(bucketPath, 3600); // 1 hour expiry
 
       if (error) throw error;
 
@@ -295,12 +297,6 @@ export const CustomerQuotes: React.FC = () => {
                       </Badge>
                     </div>
                     <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Amount:</span>
-                        <span className="font-semibold ml-2">
-                          {quote.final_quote.currency} {quote.final_quote.total_amount.toLocaleString()}
-                        </span>
-                      </div>
                       {quote.final_quote.valid_until && (
                         <div>
                           <span className="text-muted-foreground">Valid Until:</span>
@@ -430,12 +426,6 @@ export const CustomerQuotes: React.FC = () => {
                     <div>
                       <div className="text-sm text-muted-foreground mb-1">Quote Number</div>
                       <div className="font-semibold">{selectedQuote.final_quote.quote_number}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-1">Total Amount</div>
-                      <div className="font-semibold text-lg">
-                        {selectedQuote.final_quote.currency} {selectedQuote.final_quote.total_amount.toLocaleString()}
-                      </div>
                     </div>
                     {selectedQuote.final_quote.valid_until && (
                       <div>
