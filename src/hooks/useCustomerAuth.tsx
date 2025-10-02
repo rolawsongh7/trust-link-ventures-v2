@@ -41,11 +41,37 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Validate if a session is still valid (not expired)
+  const isSessionValid = (session: Session | null): boolean => {
+    if (!session) return false;
+    
+    const expiresAt = session.expires_at;
+    if (!expiresAt) return false;
+    
+    // Check if session expires within the next 5 minutes
+    const now = Math.floor(Date.now() / 1000);
+    const bufferTime = 300; // 5 minutes
+    
+    return expiresAt > (now + bufferTime);
+  };
+
   useEffect(() => {
     // Get the session immediately first
     const getInitialSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        
+        // Validate session before using it
+        if (session && !isSessionValid(session)) {
+          console.log('🔄 Session expired, clearing authentication state');
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -55,6 +81,10 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setLoading(false);
       } catch (error) {
         console.error('Error getting initial session:', error);
+        // Clear everything on error
+        setSession(null);
+        setUser(null);
+        setProfile(null);
         setLoading(false);
       }
     };
@@ -208,8 +238,24 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setUser(null);
       setSession(null);
       
+      // Call Supabase sign out (this clears localStorage automatically)
       const { error } = await supabase.auth.signOut();
       console.log('✅ Supabase auth.signOut completed:', { error });
+      
+      // Extra cleanup: manually clear any remaining Supabase keys from localStorage
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key?.startsWith('sb-')) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        console.log('✅ Cleared localStorage keys:', keysToRemove);
+      } catch (storageError) {
+        console.warn('⚠️ Could not clear localStorage:', storageError);
+      }
       
       if (!error) {
         toast({
@@ -217,18 +263,14 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           description: "You have been successfully signed out.",
         });
         console.log('✅ Customer sign out completed successfully');
-        
-        // Force redirect to home page
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 100);
       } else {
         console.error('❌ Sign out error from Supabase:', error);
-        // Still redirect even if there was an error
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 100);
       }
+      
+      // Force a hard reload to clear all app state
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
       
       return { error };
     } catch (err) {
