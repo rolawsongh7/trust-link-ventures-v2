@@ -159,17 +159,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onRequestQuote }) =>
               )}
             </Button>
           </div>
-          
-          <div className="mt-2">
-            <Badge variant="secondary" className="text-xs md:text-sm">
-              {product.supplier}
-            </Badge>
-          </div>
         </div>
 
         {/* Product Description */}
         <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
-          {cleanDescription(product.description) || `Premium ${product.name.toLowerCase()} from ${product.supplier}. Export-quality product with firm texture and excellent flavor. Shore frozen to preserve freshness. Excellent for various culinary preparations.`}
+          {cleanDescription(product.description) || `Premium export-quality ${product.name.toLowerCase()} with firm texture and excellent flavor. Shore frozen to preserve freshness. Excellent for various culinary preparations.`}
         </p>
 
         {/* Expanded Content */}

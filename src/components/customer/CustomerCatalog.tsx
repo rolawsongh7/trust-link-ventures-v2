@@ -206,7 +206,7 @@ export const CustomerCatalog: React.FC = () => {
       {/* Filters */}
       <Card>
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -232,19 +232,22 @@ export const CustomerCatalog: React.FC = () => {
               </SelectContent>
             </Select>
 
-            <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Suppliers" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Suppliers</SelectItem>
-                {suppliers.map(supplier => (
-                  <SelectItem key={supplier} value={supplier}>
-                    {supplier}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Supplier filter hidden from customers but kept for backend filtering */}
+            <div className="hidden">
+              <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Suppliers" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Suppliers</SelectItem>
+                  {suppliers.map(supplier => (
+                    <SelectItem key={supplier} value={supplier}>
+                      {supplier}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <Button
               variant="outline"
@@ -292,7 +295,6 @@ export const CustomerCatalog: React.FC = () => {
                     </CardTitle>
                     <div className="flex gap-2 mt-2">
                       <Badge variant="secondary">{product.category}</Badge>
-                      <Badge variant="outline">{product.supplier}</Badge>
                     </div>
                   </div>
                 </div>
