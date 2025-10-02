@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export const CustomerCart: React.FC = () => {
   const { items, totalItems, updateQuantity, removeItem, clearCart, loading } = useShoppingCart();
-  const { profile } = useCustomerAuth();
+  const { user, profile } = useCustomerAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
@@ -25,11 +25,11 @@ export const CustomerCart: React.FC = () => {
   };
 
   const handleSubmitQuote = async () => {
-    if (!profile) {
+    if (!user || !profile) {
       toast({
         variant: "destructive",
-        title: "Profile Required",
-        description: "Please complete your profile before submitting a quote request.",
+        title: "Authentication Required",
+        description: "Please sign in to submit a quote request.",
       });
       return;
     }
@@ -61,6 +61,7 @@ export const CustomerCart: React.FC = () => {
         .from('quote_requests')
         .insert([
           {
+            customer_id: user.id,
             title: `Quote Request from ${profile.company_name}`,
             message: message || `Quote request for ${items.length} product(s)`,
             request_type: 'customer',
