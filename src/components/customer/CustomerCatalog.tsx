@@ -305,11 +305,7 @@ export const CustomerCatalog: React.FC = () => {
                     {product.description}
                   </p>
                 )}
-                {product.brand && (
-                  <p className="text-sm font-medium mb-4">
-                    Brand: <span className="text-primary">{product.brand}</span>
-                  </p>
-                )}
+                {/* Brand hidden from customers */}
                 
                 <Dialog>
                   <DialogTrigger asChild>
