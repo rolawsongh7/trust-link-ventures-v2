@@ -280,7 +280,10 @@ const QuoteRequestManagement = () => {
       // 3. Update request status
       await updateRequestStatus(request.id, 'quoted');
 
-      toast.success('Quote created from request successfully');
+      toast.success('Quote created! Now add prices in the Quotes page to complete it.');
+      
+      // Optional: Navigate to quotes page
+      // navigate('/crm?tab=quotes');
     } catch (error) {
       console.error('Error creating quote:', error);
       toast.error('Failed to create quote from request');

@@ -17,6 +17,7 @@ import { SimpleQuoteUpload } from './SimpleQuoteUpload';
 import { useAuth } from '@/contexts/AuthContext';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { GenerateTitlePageDialog } from './GenerateTitlePageDialog';
+import { QuoteEditor } from './QuoteEditor';
 import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
@@ -72,6 +73,8 @@ const UnifiedQuoteManagement = () => {
   const [selectedQuoteForUpload, setSelectedQuoteForUpload] = useState<Quote | null>(null);
   const [isGenerateTitleDialogOpen, setIsGenerateTitleDialogOpen] = useState(false);
   const [selectedQuoteForGenerate, setSelectedQuoteForGenerate] = useState<Quote | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const { toast } = useToast();
 
   const form = useForm({
@@ -744,6 +747,17 @@ const UnifiedQuoteManagement = () => {
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
+                    setEditingQuote(quote);
+                    setIsEditorOpen(true);
+                  }}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Prices
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setSelectedQuoteForGenerate(quote);
                     setIsGenerateTitleDialogOpen(true);
                   }}
@@ -826,6 +840,16 @@ const UnifiedQuoteManagement = () => {
           onOpenChange={setIsGenerateTitleDialogOpen}
           quote={selectedQuoteForGenerate}
           customers={customers}
+          onSuccess={fetchQuotes}
+        />
+      )}
+
+      {editingQuote && (
+        <QuoteEditor
+          quoteId={editingQuote.id}
+          quoteNumber={editingQuote.quote_number}
+          open={isEditorOpen}
+          onOpenChange={setIsEditorOpen}
           onSuccess={fetchQuotes}
         />
       )}
