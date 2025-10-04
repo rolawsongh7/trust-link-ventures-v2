@@ -11,7 +11,8 @@ import {
   Calculator,
   Settings,
   Bell,
-  Clock
+  Clock,
+  Bot
 } from 'lucide-react';
 
 import {
@@ -40,6 +41,7 @@ const navigationItems = [
 
 
 const systemItems = [
+  { title: 'Virtual Assistant', url: '/virtual-assistant', icon: Bot },
   { title: 'Settings', url: '/settings', icon: Settings },
   { title: 'Notifications', url: '/notifications', icon: Bell },
 ];

@@ -2142,6 +2142,137 @@ export type Database = {
         }
         Relationships: []
       }
+      virtual_assistant_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          error_message: string | null
+          id: string
+          mode: Database["public"]["Enums"]["assistant_mode"]
+          responsibility_id: string | null
+          responsibility_name: string
+          status: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          mode: Database["public"]["Enums"]["assistant_mode"]
+          responsibility_id?: string | null
+          responsibility_name: string
+          status: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          mode?: Database["public"]["Enums"]["assistant_mode"]
+          responsibility_id?: string | null
+          responsibility_name?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "virtual_assistant_logs_responsibility_id_fkey"
+            columns: ["responsibility_id"]
+            isOneToOne: false
+            referencedRelation: "virtual_assistant_responsibilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      virtual_assistant_reports: {
+        Row: {
+          data: Json | null
+          generated_at: string
+          id: string
+          mode: Database["public"]["Enums"]["assistant_mode"]
+          report_type: string
+          summary: string | null
+        }
+        Insert: {
+          data?: Json | null
+          generated_at?: string
+          id?: string
+          mode: Database["public"]["Enums"]["assistant_mode"]
+          report_type: string
+          summary?: string | null
+        }
+        Update: {
+          data?: Json | null
+          generated_at?: string
+          id?: string
+          mode?: Database["public"]["Enums"]["assistant_mode"]
+          report_type?: string
+          summary?: string | null
+        }
+        Relationships: []
+      }
+      virtual_assistant_responsibilities: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_enabled: boolean
+          last_run_at: string | null
+          mode: Database["public"]["Enums"]["assistant_mode"]
+          name: string
+          status: Database["public"]["Enums"]["responsibility_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          last_run_at?: string | null
+          mode: Database["public"]["Enums"]["assistant_mode"]
+          name: string
+          status?: Database["public"]["Enums"]["responsibility_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          last_run_at?: string | null
+          mode?: Database["public"]["Enums"]["assistant_mode"]
+          name?: string
+          status?: Database["public"]["Enums"]["responsibility_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      virtual_assistant_settings: {
+        Row: {
+          created_at: string
+          current_mode: Database["public"]["Enums"]["assistant_mode"]
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_mode?: Database["public"]["Enums"]["assistant_mode"]
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_mode?: Database["public"]["Enums"]["assistant_mode"]
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2302,6 +2433,7 @@ export type Database = {
       }
     }
     Enums: {
+      assistant_mode: "qa" | "workflow"
       communication_type: "email" | "phone" | "meeting" | "note"
       lead_status:
         | "new"
@@ -2311,6 +2443,12 @@ export type Database = {
         | "negotiation"
         | "closed_won"
         | "closed_lost"
+      responsibility_status:
+        | "active"
+        | "inactive"
+        | "running"
+        | "completed"
+        | "failed"
       user_role: "admin" | "user" | "moderator"
     }
     CompositeTypes: {
@@ -2439,6 +2577,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      assistant_mode: ["qa", "workflow"],
       communication_type: ["email", "phone", "meeting", "note"],
       lead_status: [
         "new",
@@ -2448,6 +2587,13 @@ export const Constants = {
         "negotiation",
         "closed_won",
         "closed_lost",
+      ],
+      responsibility_status: [
+        "active",
+        "inactive",
+        "running",
+        "completed",
+        "failed",
       ],
       user_role: ["admin", "user", "moderator"],
     },

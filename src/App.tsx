@@ -47,6 +47,7 @@ import Settings from "./pages/Settings";
 import RFQPage from "./pages/RFQPage";
 import UnifiedAuth from "./pages/UnifiedAuth";
 import NotificationDemo from "./pages/NotificationDemo";
+import VirtualAssistant from "./pages/VirtualAssistant";
 
 const queryClient = new QueryClient();
 
@@ -116,6 +117,7 @@ const App = () => (
               <Route path="/quote-system" element={<QuoteSystem />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/notifications" element={<div>Notifications Page</div>} />
+              <Route path="/virtual-assistant" element={<VirtualAssistant />} />
             </Route>
             
             {/* Catch all route */}
