@@ -94,18 +94,18 @@ const OrdersManagement = () => {
     }
   };
 
-  const updateOrderStatus = async (orderId: string, status: string) => {
+  const updateOrderStatus = async (orderId: string, status: any) => {
     try {
       const { error } = await supabase
         .from('orders')
-        .update({ status })
+        .update({ status } as any)
         .eq('id', orderId);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: `Order status updated to ${status}`,
+        description: `Order status updated to ${status.replace('_', ' ')}`,
       });
 
       fetchOrders();
@@ -163,24 +163,32 @@ const OrdersManagement = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed': return 'bg-blue-100 text-blue-800';
+      case 'quote_pending': return 'bg-gray-100 text-gray-800';
+      case 'quote_sent': return 'bg-blue-100 text-blue-800';
+      case 'order_confirmed': return 'bg-cyan-100 text-cyan-800';
+      case 'payment_received': return 'bg-emerald-100 text-emerald-800';
       case 'processing': return 'bg-purple-100 text-purple-800';
+      case 'ready_to_ship': return 'bg-indigo-100 text-indigo-800';
       case 'shipped': return 'bg-orange-100 text-orange-800';
       case 'delivered': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'delivery_failed': return 'bg-rose-100 text-rose-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending': return <Clock className="h-4 w-4" />;
-      case 'confirmed': return <CheckCircle className="h-4 w-4" />;
+      case 'quote_pending': return <Clock className="h-4 w-4" />;
+      case 'quote_sent': return <Package className="h-4 w-4" />;
+      case 'order_confirmed': return <CheckCircle className="h-4 w-4" />;
+      case 'payment_received': return <CheckCircle className="h-4 w-4" />;
       case 'processing': return <Package className="h-4 w-4" />;
+      case 'ready_to_ship': return <Package className="h-4 w-4" />;
       case 'shipped': return <Truck className="h-4 w-4" />;
       case 'delivered': return <CheckCircle className="h-4 w-4" />;
       case 'cancelled': return <AlertCircle className="h-4 w-4" />;
+      case 'delivery_failed': return <AlertCircle className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
     }
   };
@@ -234,11 +242,12 @@ const OrdersManagement = () => {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList>
+        <TabsList className="grid grid-cols-7 w-full">
           <TabsTrigger value="all">All ({orders.length})</TabsTrigger>
-          <TabsTrigger value="pending">Pending ({orders.filter(o => o.status === 'pending').length})</TabsTrigger>
-          <TabsTrigger value="confirmed">Confirmed ({orders.filter(o => o.status === 'confirmed').length})</TabsTrigger>
+          <TabsTrigger value="order_confirmed">Confirmed ({orders.filter(o => o.status === 'order_confirmed').length})</TabsTrigger>
+          <TabsTrigger value="payment_received">Payment ({orders.filter(o => o.status === 'payment_received').length})</TabsTrigger>
           <TabsTrigger value="processing">Processing ({orders.filter(o => o.status === 'processing').length})</TabsTrigger>
+          <TabsTrigger value="ready_to_ship">Ready ({orders.filter(o => o.status === 'ready_to_ship').length})</TabsTrigger>
           <TabsTrigger value="shipped">Shipped ({orders.filter(o => o.status === 'shipped').length})</TabsTrigger>
           <TabsTrigger value="delivered">Delivered ({orders.filter(o => o.status === 'delivered').length})</TabsTrigger>
         </TabsList>
@@ -314,17 +323,17 @@ const OrdersManagement = () => {
                           </p>
                         )}
                       </div>
-                      <div className="flex space-x-2">
-                        {order.status === 'pending' && (
+                      <div className="flex flex-wrap gap-2">
+                        {order.status === 'order_confirmed' && (
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => updateOrderStatus(order.id, 'confirmed')}
+                            onClick={() => updateOrderStatus(order.id, 'payment_received')}
                           >
-                            Confirm Order
+                            Confirm Payment
                           </Button>
                         )}
-                        {order.status === 'confirmed' && (
+                        {order.status === 'payment_received' && (
                           <Button 
                             variant="outline" 
                             size="sm"
@@ -334,6 +343,15 @@ const OrdersManagement = () => {
                           </Button>
                         )}
                         {order.status === 'processing' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => updateOrderStatus(order.id, 'ready_to_ship')}
+                          >
+                            Mark Ready to Ship
+                          </Button>
+                        )}
+                        {order.status === 'ready_to_ship' && (
                           <Button 
                             variant="outline" 
                             size="sm"
@@ -351,14 +369,25 @@ const OrdersManagement = () => {
                             Mark as Delivered
                           </Button>
                         )}
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => sendOrderTrackingLink(order)}
-                          className="bg-blue-50 text-blue-700 hover:bg-blue-100"
-                        >
-                          📧 Send Tracking Link
-                        </Button>
+                        {order.status === 'delivery_failed' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => updateOrderStatus(order.id, 'shipped')}
+                          >
+                            Retry Delivery
+                          </Button>
+                        )}
+                        {!['delivered', 'cancelled'].includes(order.status) && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => sendOrderTrackingLink(order)}
+                            className="bg-blue-50 text-blue-700 hover:bg-blue-100"
+                          >
+                            📧 Send Tracking Link
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

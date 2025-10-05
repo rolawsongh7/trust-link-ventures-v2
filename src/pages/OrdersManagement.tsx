@@ -54,7 +54,7 @@ const OrdersManagement = () => {
   const { register, handleSubmit, reset, setValue, watch } = useForm<OrderFormData>({
     defaultValues: {
       currency: 'USD',
-      status: 'draft'
+      status: 'order_confirmed'
     }
   });
 
@@ -76,7 +76,7 @@ const OrdersManagement = () => {
     } else {
       reset({
         currency: 'USD',
-        status: 'draft'
+        status: 'order_confirmed'
       });
     }
   }, [editingOrder, setValue, reset]);
@@ -143,7 +143,7 @@ const OrdersManagement = () => {
           .update({
             ...data,
             updated_at: new Date().toISOString()
-          })
+          } as any)
           .eq('id', editingOrder.id);
 
         if (error) throw error;
@@ -158,7 +158,7 @@ const OrdersManagement = () => {
           .insert([{
             ...data,
             created_by: user?.id
-          }]);
+          }] as any);
 
         if (error) throw error;
 
@@ -209,12 +209,16 @@ const OrdersManagement = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'draft': return 'bg-gray-100 text-gray-800';
-      case 'confirmed': return 'bg-blue-100 text-blue-800';
-      case 'processing': return 'bg-yellow-100 text-yellow-800';
-      case 'shipped': return 'bg-purple-100 text-purple-800';
+      case 'quote_pending': return 'bg-gray-100 text-gray-800';
+      case 'quote_sent': return 'bg-blue-100 text-blue-800';
+      case 'order_confirmed': return 'bg-cyan-100 text-cyan-800';
+      case 'payment_received': return 'bg-emerald-100 text-emerald-800';
+      case 'processing': return 'bg-purple-100 text-purple-800';
+      case 'ready_to_ship': return 'bg-indigo-100 text-indigo-800';
+      case 'shipped': return 'bg-orange-100 text-orange-800';
       case 'delivered': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'delivery_failed': return 'bg-rose-100 text-rose-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -328,12 +332,16 @@ const OrdersManagement = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="quote_pending">Quote Pending</SelectItem>
+                      <SelectItem value="quote_sent">Quote Sent</SelectItem>
+                      <SelectItem value="order_confirmed">Order Confirmed</SelectItem>
+                      <SelectItem value="payment_received">Payment Received</SelectItem>
                       <SelectItem value="processing">Processing</SelectItem>
+                      <SelectItem value="ready_to_ship">Ready to Ship</SelectItem>
                       <SelectItem value="shipped">Shipped</SelectItem>
                       <SelectItem value="delivered">Delivered</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="delivery_failed">Delivery Failed</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

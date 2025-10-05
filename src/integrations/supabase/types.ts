@@ -1041,7 +1041,7 @@ export type Database = {
           quote_id: string | null
           ready_to_ship_at: string | null
           shipped_at: string | null
-          status: Database["public"]["Enums"]["order_status_new"] | null
+          status: Database["public"]["Enums"]["order_status_enhanced"]
           total_amount: number
           tracking_number: string | null
           updated_at: string | null
@@ -1072,7 +1072,7 @@ export type Database = {
           quote_id?: string | null
           ready_to_ship_at?: string | null
           shipped_at?: string | null
-          status?: Database["public"]["Enums"]["order_status_new"] | null
+          status?: Database["public"]["Enums"]["order_status_enhanced"]
           total_amount: number
           tracking_number?: string | null
           updated_at?: string | null
@@ -1103,7 +1103,7 @@ export type Database = {
           quote_id?: string | null
           ready_to_ship_at?: string | null
           shipped_at?: string | null
-          status?: Database["public"]["Enums"]["order_status_new"] | null
+          status?: Database["public"]["Enums"]["order_status_enhanced"]
           total_amount?: number
           tracking_number?: string | null
           updated_at?: string | null
@@ -2497,6 +2497,17 @@ export type Database = {
         | "negotiation"
         | "closed_won"
         | "closed_lost"
+      order_status_enhanced:
+        | "quote_pending"
+        | "quote_sent"
+        | "order_confirmed"
+        | "payment_received"
+        | "processing"
+        | "ready_to_ship"
+        | "shipped"
+        | "delivered"
+        | "cancelled"
+        | "delivery_failed"
       order_status_new:
         | "quote_pending"
         | "quote_sent"
@@ -2652,6 +2663,18 @@ export const Constants = {
         "negotiation",
         "closed_won",
         "closed_lost",
+      ],
+      order_status_enhanced: [
+        "quote_pending",
+        "quote_sent",
+        "order_confirmed",
+        "payment_received",
+        "processing",
+        "ready_to_ship",
+        "shipped",
+        "delivered",
+        "cancelled",
+        "delivery_failed",
       ],
       order_status_new: [
         "quote_pending",
