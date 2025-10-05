@@ -1016,42 +1016,96 @@ export type Database = {
       }
       orders: {
         Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          carrier_name: string | null
           created_at: string | null
           created_by: string | null
           currency: string | null
           customer_id: string | null
+          delivered_at: string | null
+          delivery_notes: string | null
+          delivery_proof_url: string | null
+          delivery_signature: string | null
+          estimated_delivery_date: string | null
+          failed_delivery_at: string | null
+          failed_delivery_reason: string | null
           id: string
+          internal_notes: string | null
           notes: string | null
           order_number: string
+          payment_confirmed_at: string | null
+          payment_proof_url: string | null
+          payment_reference: string | null
+          processing_started_at: string | null
           quote_id: string | null
-          status: string | null
+          ready_to_ship_at: string | null
+          shipped_at: string | null
+          status: Database["public"]["Enums"]["order_status_new"] | null
           total_amount: number
+          tracking_number: string | null
           updated_at: string | null
         }
         Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          carrier_name?: string | null
           created_at?: string | null
           created_by?: string | null
           currency?: string | null
           customer_id?: string | null
+          delivered_at?: string | null
+          delivery_notes?: string | null
+          delivery_proof_url?: string | null
+          delivery_signature?: string | null
+          estimated_delivery_date?: string | null
+          failed_delivery_at?: string | null
+          failed_delivery_reason?: string | null
           id?: string
+          internal_notes?: string | null
           notes?: string | null
           order_number: string
+          payment_confirmed_at?: string | null
+          payment_proof_url?: string | null
+          payment_reference?: string | null
+          processing_started_at?: string | null
           quote_id?: string | null
-          status?: string | null
+          ready_to_ship_at?: string | null
+          shipped_at?: string | null
+          status?: Database["public"]["Enums"]["order_status_new"] | null
           total_amount: number
+          tracking_number?: string | null
           updated_at?: string | null
         }
         Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          carrier_name?: string | null
           created_at?: string | null
           created_by?: string | null
           currency?: string | null
           customer_id?: string | null
+          delivered_at?: string | null
+          delivery_notes?: string | null
+          delivery_proof_url?: string | null
+          delivery_signature?: string | null
+          estimated_delivery_date?: string | null
+          failed_delivery_at?: string | null
+          failed_delivery_reason?: string | null
           id?: string
+          internal_notes?: string | null
           notes?: string | null
           order_number?: string
+          payment_confirmed_at?: string | null
+          payment_proof_url?: string | null
+          payment_reference?: string | null
+          processing_started_at?: string | null
           quote_id?: string | null
-          status?: string | null
+          ready_to_ship_at?: string | null
+          shipped_at?: string | null
+          status?: Database["public"]["Enums"]["order_status_new"] | null
           total_amount?: number
+          tracking_number?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -2443,6 +2497,17 @@ export type Database = {
         | "negotiation"
         | "closed_won"
         | "closed_lost"
+      order_status_new:
+        | "quote_pending"
+        | "quote_sent"
+        | "order_confirmed"
+        | "payment_received"
+        | "processing"
+        | "ready_to_ship"
+        | "shipped"
+        | "delivered"
+        | "cancelled"
+        | "delivery_failed"
       responsibility_status:
         | "active"
         | "inactive"
@@ -2587,6 +2652,18 @@ export const Constants = {
         "negotiation",
         "closed_won",
         "closed_lost",
+      ],
+      order_status_new: [
+        "quote_pending",
+        "quote_sent",
+        "order_confirmed",
+        "payment_received",
+        "processing",
+        "ready_to_ship",
+        "shipped",
+        "delivered",
+        "cancelled",
+        "delivery_failed",
       ],
       responsibility_status: [
         "active",
