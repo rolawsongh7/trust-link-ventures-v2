@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign } from 'lucide-react';
+import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign, Download } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -136,11 +136,95 @@ export const CustomerOrders: React.FC = () => {
     }
   };
 
-  const handleReorder = (order: Order) => {
-    toast({
-      title: "Reorder Initiated",
-      description: `Items from ${order.order_number} have been added to your cart.`,
-    });
+  const handleReorder = async (order: Order) => {
+    if (!order.order_items || order.order_items.length === 0) {
+      toast({
+        title: "No Items",
+        description: "This order has no items to reorder.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to add items to your cart.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Add each order item to the cart
+      for (const item of order.order_items) {
+        await supabase.from('cart_items').insert({
+          user_id: user.id,
+          product_name: item.product_name,
+          product_description: item.product_description,
+          quantity: item.quantity,
+          unit: item.unit,
+          specifications: item.specifications,
+        });
+      }
+
+      toast({
+        title: "Reorder Successful",
+        description: `${order.order_items.length} items from ${order.order_number} have been added to your cart.`,
+      });
+
+      // Navigate to cart
+      navigate('/customer/cart');
+    } catch (error) {
+      console.error('Error reordering:', error);
+      toast({
+        title: "Reorder Failed",
+        description: "Failed to add items to cart. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadInvoice = async (orderId: string, orderNumber: string) => {
+    try {
+      toast({
+        title: "Generating Invoice",
+        description: "Please wait while we generate your invoice...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('generate-invoice', {
+        body: { orderId, type: 'commercial' }
+      });
+
+      if (error) throw error;
+
+      // Create blob and download
+      const blob = new Blob([Uint8Array.from(atob(data.pdf), c => c.charCodeAt(0))], { 
+        type: 'application/pdf' 
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${orderNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Invoice Downloaded",
+        description: `Invoice for ${orderNumber} has been downloaded.`,
+      });
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download invoice. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -301,7 +385,7 @@ export const CustomerOrders: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -318,6 +402,15 @@ export const CustomerOrders: React.FC = () => {
                     >
                       <RotateCcw className="h-4 w-4 mr-2" />
                       Reorder
+                    </Button>
+
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDownloadInvoice(order.id, order.order_number)}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Invoice
                     </Button>
                   </div>
                 </CardContent>
