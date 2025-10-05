@@ -30,6 +30,7 @@ import { CustomerQuotes } from "@/components/customer/CustomerQuotes";
 import { CustomerOrders } from "@/components/customer/CustomerOrders";
 import { CustomerProfile } from "@/components/customer/CustomerProfile";
 import { CustomerCommunications } from "@/components/customer/CustomerCommunications";
+import { OrderTracking } from "@/components/customer/OrderTracking";
 import AdminLogin from "./pages/AdminLogin";
 import Cookies from "./pages/Cookies";
 import Products from "./pages/Products";
@@ -93,9 +94,13 @@ const App = () => (
               <Route path="cart" element={<CustomerCart />} />
               <Route path="quotes" element={<CustomerQuotes />} />
               <Route path="orders" element={<CustomerOrders />} />
+              <Route path="orders/:orderId" element={<OrderTracking />} />
               <Route path="communications" element={<CustomerCommunications />} />
               <Route path="profile" element={<CustomerProfile />} />
             </Route>
+            
+            {/* Public order tracking with magic link */}
+            <Route path="/track-order" element={<OrderTracking />} />
 
             
             <Route path="/admin-login" element={<AdminLogin />} />

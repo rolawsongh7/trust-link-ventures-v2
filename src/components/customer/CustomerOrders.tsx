@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 
-// Placeholder interface for orders - this would be expanded based on actual order schema
+// Order interface matching database schema
 interface Order {
   id: string;
   order_number: string;
@@ -17,9 +19,16 @@ interface Order {
   currency: string;
   status: string;
   created_at: string;
-  expected_delivery?: string;
+  estimated_delivery_date?: string;
   tracking_number?: string;
-  items: any[];
+  order_items?: any[];
+  quotes?: {
+    quote_number: string;
+    customers?: {
+      company_name: string;
+      contact_name: string;
+    };
+  };
 }
 
 export const CustomerOrders: React.FC = () => {
@@ -29,59 +38,66 @@ export const CustomerOrders: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Simulated data - in real implementation, fetch from Supabase
-    setTimeout(() => {
-      setOrders([
-        {
-          id: '1',
-          order_number: 'ORD-2024-001',
-          total_amount: 15000,
-          currency: 'USD',
-          status: 'processing',
-          created_at: '2024-01-15T10:00:00Z',
-          expected_delivery: '2024-02-15',
-          tracking_number: 'TRK123456789',
-          items: [
-            { name: 'Premium Beef Cuts', quantity: 500, unit: 'kg' },
-            { name: 'Fresh Salmon Fillets', quantity: 200, unit: 'kg' }
-          ]
-        },
-        {
-          id: '2',
-          order_number: 'ORD-2024-002',
-          total_amount: 8500,
-          currency: 'USD',
-          status: 'shipped',
-          created_at: '2024-01-10T14:30:00Z',
-          expected_delivery: '2024-02-10',
-          tracking_number: 'TRK987654321',
-          items: [
-            { name: 'Organic Chicken Breast', quantity: 300, unit: 'kg' }
-          ]
-        },
-        {
-          id: '3',
-          order_number: 'ORD-2024-003',
-          total_amount: 22000,
-          currency: 'USD',
-          status: 'delivered',
-          created_at: '2024-01-05T09:15:00Z',
-          expected_delivery: '2024-02-05',
-          items: [
-            { name: 'Premium Tuna', quantity: 400, unit: 'kg' },
-            { name: 'Fresh Prawns', quantity: 150, unit: 'kg' }
-          ]
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
+    if (profile?.email) {
+      fetchOrders();
+    }
   }, [profile]);
+
+  const fetchOrders = async () => {
+    if (!profile?.email) return;
+
+    try {
+      setLoading(true);
+
+      // First, get the customer record
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', profile.email)
+        .single();
+
+      if (!customer) {
+        setOrders([]);
+        return;
+      }
+
+      // Fetch orders with related data
+      const { data: ordersData, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items(*),
+          quotes(
+            quote_number,
+            customers(company_name, contact_name)
+          )
+        `)
+        .eq('customer_id', customer.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setOrders(ordersData || []);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load orders",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.items.some(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
+                         (order.order_items || []).some(item => 
+                           item.product_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                         );
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     
     return matchesSearch && matchesStatus;
@@ -242,10 +258,10 @@ export const CustomerOrders: React.FC = () => {
                           <Calendar className="h-4 w-4" />
                           Ordered {new Date(order.created_at).toLocaleDateString()}
                         </div>
-                        {order.expected_delivery && (
+                        {order.estimated_delivery_date && (
                           <div className="flex items-center gap-1">
                             <Truck className="h-4 w-4" />
-                            Expected {new Date(order.expected_delivery).toLocaleDateString()}
+                            Expected {new Date(order.estimated_delivery_date).toLocaleDateString()}
                           </div>
                         )}
                         {order.tracking_number && (
@@ -269,34 +285,31 @@ export const CustomerOrders: React.FC = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="mb-4">
-                    <h4 className="font-medium mb-2">Order Items:</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {order.items.map((item, index) => (
-                        <div key={index} className="text-sm bg-muted/50 p-2 rounded">
-                          <span className="font-medium">{item.name}</span>
-                          <span className="text-muted-foreground ml-2">
-                            {item.quantity} {item.unit}
-                          </span>
-                        </div>
-                      ))}
+                  {order.order_items && order.order_items.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-medium mb-2">Order Items:</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {order.order_items.map((item, index) => (
+                          <div key={index} className="text-sm bg-muted/50 p-2 rounded">
+                            <span className="font-medium">{item.product_name}</span>
+                            <span className="text-muted-foreground ml-2">
+                              {item.quantity} {item.unit}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate(`/customer/orders/${order.id}`)}
+                    >
                       <Eye className="h-4 w-4 mr-2" />
-                      View Details
+                      Track Order
                     </Button>
-                    
-                    {order.tracking_number && (
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={`#track/${order.tracking_number}`} target="_blank">
-                          <Truck className="h-4 w-4 mr-2" />
-                          Track Package
-                        </a>
-                      </Button>
-                    )}
                     
                     <Button 
                       variant="outline" 

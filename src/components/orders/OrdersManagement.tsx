@@ -96,6 +96,19 @@ const OrdersManagement = () => {
 
   const updateOrderStatus = async (orderId: string, status: any) => {
     try {
+      // Get order details first
+      const { data: orderData } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          quotes(
+            customers(email, contact_name, company_name)
+          )
+        `)
+        .eq('id', orderId)
+        .single();
+
+      // Update status
       const { error } = await supabase
         .from('orders')
         .update({ status } as any)
@@ -103,9 +116,27 @@ const OrdersManagement = () => {
 
       if (error) throw error;
 
+      // Send tracking email for specific statuses
+      const emailStatuses = ['shipped', 'delivered', 'ready_to_ship', 'processing'];
+      if (emailStatuses.includes(status) && orderData?.quotes?.customers?.email) {
+        try {
+          await supabase.functions.invoke('send-order-tracking-link', {
+            body: {
+              orderId,
+              customerEmail: orderData.quotes.customers.email,
+              customerName: orderData.quotes.customers.contact_name,
+              companyName: orderData.quotes.customers.company_name,
+            },
+          });
+        } catch (emailError) {
+          console.error('Error sending tracking email:', emailError);
+          // Don't fail the status update if email fails
+        }
+      }
+
       toast({
         title: "Success",
-        description: `Order status updated to ${status.replace('_', ' ')}`,
+        description: `Order status updated to ${status.replace(/_/g, ' ')}`,
       });
 
       fetchOrders();
