@@ -222,9 +222,9 @@ export async function addJabSeafoodProducts() {
         slug: "jab-brothers-seafood-pulmones"
       },
       {
-        name: "Rabo",
+        name: "Pork Tail",
         imageUrl: "/products/jab-rabo.jpg",
-        slug: "jab-brothers-seafood-rabo"
+        slug: "jab-brothers-seafood-pork-tail"
       },
       {
         name: "Red Porgy",
