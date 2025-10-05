@@ -387,6 +387,62 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_addresses: {
+        Row: {
+          additional_directions: string | null
+          area: string | null
+          city: string
+          created_at: string | null
+          customer_id: string | null
+          ghana_digital_address: string
+          id: string
+          is_default: boolean | null
+          phone_number: string
+          receiver_name: string
+          region: string
+          street_address: string
+          updated_at: string | null
+        }
+        Insert: {
+          additional_directions?: string | null
+          area?: string | null
+          city: string
+          created_at?: string | null
+          customer_id?: string | null
+          ghana_digital_address: string
+          id?: string
+          is_default?: boolean | null
+          phone_number: string
+          receiver_name: string
+          region: string
+          street_address: string
+          updated_at?: string | null
+        }
+        Update: {
+          additional_directions?: string | null
+          area?: string | null
+          city?: string
+          created_at?: string | null
+          customer_id?: string | null
+          ghana_digital_address?: string
+          id?: string
+          is_default?: boolean | null
+          phone_number?: string
+          receiver_name?: string
+          region?: string
+          street_address?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_addresses_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
@@ -1024,6 +1080,7 @@ export type Database = {
           currency: string | null
           customer_id: string | null
           delivered_at: string | null
+          delivery_address_id: string | null
           delivery_notes: string | null
           delivery_proof_url: string | null
           delivery_signature: string | null
@@ -1055,6 +1112,7 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           delivered_at?: string | null
+          delivery_address_id?: string | null
           delivery_notes?: string | null
           delivery_proof_url?: string | null
           delivery_signature?: string | null
@@ -1086,6 +1144,7 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           delivered_at?: string | null
+          delivery_address_id?: string | null
           delivery_notes?: string | null
           delivery_proof_url?: string | null
           delivery_signature?: string | null
@@ -1114,6 +1173,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_delivery_address_id_fkey"
+            columns: ["delivery_address_id"]
+            isOneToOne: false
+            referencedRelation: "customer_addresses"
             referencedColumns: ["id"]
           },
           {
@@ -1434,6 +1500,7 @@ export type Database = {
           admin_notes: string | null
           created_at: string
           customer_id: string | null
+          delivery_address_id: string | null
           expected_delivery_date: string | null
           id: string
           lead_company_name: string | null
@@ -1454,6 +1521,7 @@ export type Database = {
           admin_notes?: string | null
           created_at?: string
           customer_id?: string | null
+          delivery_address_id?: string | null
           expected_delivery_date?: string | null
           id?: string
           lead_company_name?: string | null
@@ -1474,6 +1542,7 @@ export type Database = {
           admin_notes?: string | null
           created_at?: string
           customer_id?: string | null
+          delivery_address_id?: string | null
           expected_delivery_date?: string | null
           id?: string
           lead_company_name?: string | null
@@ -1496,6 +1565,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_requests_delivery_address_id_fkey"
+            columns: ["delivery_address_id"]
+            isOneToOne: false
+            referencedRelation: "customer_addresses"
             referencedColumns: ["id"]
           },
         ]

@@ -20,7 +20,8 @@ import {
   Package,
   MessageSquare,
   Grid3X3,
-  ChevronDown
+  ChevronDown,
+  MapPin
 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
@@ -57,6 +58,11 @@ export const CustomerNavigation: React.FC = () => {
       title: 'Orders',
       href: '/customer/orders',
       icon: Package
+    },
+    {
+      title: 'Addresses',
+      href: '/customer/addresses',
+      icon: MapPin
     },
     {
       title: 'Messages',
