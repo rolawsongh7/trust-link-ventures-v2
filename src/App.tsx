@@ -7,7 +7,9 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CustomerAuthProvider } from "@/hooks/useCustomerAuth";
 import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedRoute";
+import { AdminProtectedRoute } from "@/components/admin/AdminProtectedRoute";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
@@ -48,6 +50,8 @@ import CommunicationPage from "./pages/CommunicationPage";
 import Settings from "./pages/Settings";
 
 import UnifiedAuth from "./pages/UnifiedAuth";
+import AdminAuth from "./pages/AdminAuth";
+import Unauthorized from "./pages/Unauthorized";
 import NotificationDemo from "./pages/NotificationDemo";
 import VirtualAssistant from "./pages/VirtualAssistant";
 
@@ -105,9 +109,32 @@ const App = () => (
             <Route path="/track" element={<OrderTracking />} />
 
             
+            {/* Admin Routes - Separate from Customer Portal */}
+            <Route path="/admin/login" element={<AdminAuth />} />
             <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
             
-            {/* Protected routes */}
+            <Route path="/admin" element={
+              <AdminProtectedRoute>
+                <AdminLayout />
+              </AdminProtectedRoute>
+            }>
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="customers" element={<CustomersPage />} />
+              <Route path="leads" element={<LeadsPage />} />
+              <Route path="quotes" element={<QuotesPage />} />
+              <Route path="orders" element={<OrdersPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="crm" element={<CRM />} />
+              <Route path="quote-inquiries" element={<QuoteRequestManagement />} />
+              <Route path="communication" element={<CommunicationPage />} />
+              <Route path="quote-requests" element={<div>Quote Requests Page</div>} />
+              <Route path="quote-system" element={<QuoteSystem />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="virtual-assistant" element={<VirtualAssistant />} />
+            </Route>
+            
+            {/* Legacy Protected routes - Keep for backward compatibility */}
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/crm" element={<CRM />} />
