@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Package, Truck, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Search, Package, Truck, CheckCircle, Clock, AlertCircle, Mail } from 'lucide-react';
+import { toast } from 'sonner';
+import { DeliveryManagementDialog } from './DeliveryManagementDialog';
 
 interface Order {
   id: string;
@@ -34,7 +35,8 @@ const OrdersManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
-  const { toast } = useToast();
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -84,11 +86,7 @@ const OrdersManagement = () => {
       setOrders(ordersWithItems as Order[]);
     } catch (error) {
       console.error('Error fetching orders:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch orders",
-        variant: "destructive",
-      });
+      toast.error("Failed to fetch orders");
     } finally {
       setLoading(false);
     }
@@ -134,19 +132,27 @@ const OrdersManagement = () => {
         }
       }
 
-      toast({
-        title: "Success",
-        description: `Order status updated to ${status.replace(/_/g, ' ')}`,
-      });
+      toast.success(`Order status updated to ${status.replace(/_/g, ' ')}`);
 
       fetchOrders();
     } catch (error) {
       console.error('Error updating order status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update order status",
-        variant: "destructive",
+      toast.error("Failed to update order status");
+    }
+  };
+
+  const handleSendTrackingLink = async (order: Order) => {
+    try {
+      const { error } = await supabase.functions.invoke('send-tracking-link', {
+        body: { orderId: order.id },
       });
+
+      if (error) throw error;
+
+      toast.success('Tracking link sent to customer');
+    } catch (error) {
+      console.error('Error sending tracking link:', error);
+      toast.error('Failed to send tracking link');
     }
   };
 
@@ -162,10 +168,7 @@ const OrdersManagement = () => {
       customerEmail = prompt('Please enter the customer email address:');
       if (!customerEmail) return;
 
-      toast({
-        title: "Sending tracking link...",
-        description: "Please wait while we send the order tracking link.",
-      });
+      toast.loading("Sending tracking link...");
 
       const { data, error } = await supabase.functions.invoke('send-order-tracking-link', {
         body: {
@@ -178,17 +181,10 @@ const OrdersManagement = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Order tracking link sent successfully to " + customerEmail,
-      });
+      toast.success("Order tracking link sent successfully to " + customerEmail);
     } catch (error: any) {
       console.error('Error sending order tracking link:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send order tracking link",
-        variant: "destructive",
-      });
+      toast.error("Failed to send order tracking link");
     }
   };
 
@@ -409,6 +405,27 @@ const OrdersManagement = () => {
                             Retry Delivery
                           </Button>
                         )}
+                        {['shipped', 'delivered'].includes(order.status) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSendTrackingLink(order)}
+                          >
+                            <Mail className="h-4 w-4 mr-2" />
+                            Send Tracking Link
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setDeliveryDialogOpen(true);
+                          }}
+                        >
+                          <Truck className="h-4 w-4 mr-2" />
+                          Manage Delivery
+                        </Button>
                         {!['delivered', 'cancelled'].includes(order.status) && (
                           <Button 
                             variant="outline" 
@@ -428,6 +445,15 @@ const OrdersManagement = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      {selectedOrder && (
+        <DeliveryManagementDialog
+          order={selectedOrder}
+          open={deliveryDialogOpen}
+          onOpenChange={setDeliveryDialogOpen}
+          onSuccess={fetchOrders}
+        />
+      )}
     </div>
   );
 };

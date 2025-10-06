@@ -512,6 +512,79 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_history: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          location: string | null
+          notes: string | null
+          order_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          order_id: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          order_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_tracking_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          last_accessed_at: string | null
+          order_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          order_id: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          order_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_tracking_tokens_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_fingerprints: {
         Row: {
           created_at: string
@@ -1207,8 +1280,10 @@ export type Database = {
       }
       orders: {
         Row: {
+          actual_delivery_date: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
+          carrier: string | null
           carrier_name: string | null
           created_at: string | null
           created_by: string | null
@@ -1221,6 +1296,7 @@ export type Database = {
           delivery_signature: string | null
           estimated_delivery_date: string | null
           failed_delivery_at: string | null
+          failed_delivery_count: number | null
           failed_delivery_reason: string | null
           id: string
           internal_notes: string | null
@@ -1230,6 +1306,7 @@ export type Database = {
           payment_proof_url: string | null
           payment_reference: string | null
           processing_started_at: string | null
+          proof_of_delivery_url: string | null
           quote_id: string | null
           ready_to_ship_at: string | null
           shipped_at: string | null
@@ -1239,8 +1316,10 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          actual_delivery_date?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          carrier?: string | null
           carrier_name?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -1253,6 +1332,7 @@ export type Database = {
           delivery_signature?: string | null
           estimated_delivery_date?: string | null
           failed_delivery_at?: string | null
+          failed_delivery_count?: number | null
           failed_delivery_reason?: string | null
           id?: string
           internal_notes?: string | null
@@ -1262,6 +1342,7 @@ export type Database = {
           payment_proof_url?: string | null
           payment_reference?: string | null
           processing_started_at?: string | null
+          proof_of_delivery_url?: string | null
           quote_id?: string | null
           ready_to_ship_at?: string | null
           shipped_at?: string | null
@@ -1271,8 +1352,10 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          actual_delivery_date?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          carrier?: string | null
           carrier_name?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -1285,6 +1368,7 @@ export type Database = {
           delivery_signature?: string | null
           estimated_delivery_date?: string | null
           failed_delivery_at?: string | null
+          failed_delivery_count?: number | null
           failed_delivery_reason?: string | null
           id?: string
           internal_notes?: string | null
@@ -1294,6 +1378,7 @@ export type Database = {
           payment_proof_url?: string | null
           payment_reference?: string | null
           processing_started_at?: string | null
+          proof_of_delivery_url?: string | null
           quote_id?: string | null
           ready_to_ship_at?: string | null
           shipped_at?: string | null
@@ -2682,6 +2767,24 @@ export type Database = {
           count: number
           event_type: string
           last_occurrence: string
+        }[]
+      }
+      get_order_by_tracking_token: {
+        Args: { p_token: string }
+        Returns: {
+          actual_delivery_date: string
+          carrier: string
+          created_at: string
+          customer_name: string
+          delivered_at: string
+          delivery_address: string
+          delivery_notes: string
+          estimated_delivery_date: string
+          order_id: string
+          order_number: string
+          shipped_at: string
+          status: string
+          tracking_number: string
         }[]
       }
       get_password_policy: {
