@@ -8,7 +8,7 @@ export const CustomerLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted/20">
       <CustomerNavigation />
-      <main className="py-6">
+      <main className="container mx-auto px-4 py-6">
         <Outlet />
       </main>
       <FloatingLoginButton />

@@ -731,6 +731,141 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          invoice_id: string
+          product_name: string
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id: string
+          product_name: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string
+          product_name?: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          due_date: string | null
+          file_url: string | null
+          id: string
+          invoice_number: string
+          invoice_type: string
+          issue_date: string
+          notes: string | null
+          order_id: string | null
+          paid_at: string | null
+          payment_terms: string | null
+          quote_id: string | null
+          sent_at: string | null
+          status: string
+          subtotal: number
+          tax_amount: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          due_date?: string | null
+          file_url?: string | null
+          id?: string
+          invoice_number: string
+          invoice_type: string
+          issue_date?: string
+          notes?: string | null
+          order_id?: string | null
+          paid_at?: string | null
+          payment_terms?: string | null
+          quote_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          due_date?: string | null
+          file_url?: string | null
+          id?: string
+          invoice_number?: string
+          invoice_type?: string
+          issue_date?: string
+          notes?: string | null
+          order_id?: string | null
+          paid_at?: string | null
+          payment_terms?: string | null
+          quote_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ip_whitelist: {
         Row: {
           created_at: string
@@ -2515,6 +2650,10 @@ export type Database = {
           p_user_agent?: string
         }
         Returns: undefined
+      }
+      generate_invoice_number: {
+        Args: { invoice_type: string }
+        Returns: string
       }
       generate_order_number: {
         Args: Record<PropertyKey, never>

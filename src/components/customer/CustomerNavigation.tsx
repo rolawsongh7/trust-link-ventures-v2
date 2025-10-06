@@ -60,6 +60,11 @@ export const CustomerNavigation: React.FC = () => {
       icon: Package
     },
     {
+      title: 'Invoices',
+      href: '/customer/invoices',
+      icon: FileText
+    },
+    {
       title: 'Addresses',
       href: '/customer/addresses',
       icon: MapPin
