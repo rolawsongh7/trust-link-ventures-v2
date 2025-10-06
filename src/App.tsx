@@ -51,6 +51,7 @@ import Settings from "./pages/Settings";
 
 import UnifiedAuth from "./pages/UnifiedAuth";
 import AdminAuth from "./pages/AdminAuth";
+import CustomerAuth from "./pages/CustomerAuth";
 import Unauthorized from "./pages/Unauthorized";
 import NotificationDemo from "./pages/NotificationDemo";
 import VirtualAssistant from "./pages/VirtualAssistant";
@@ -86,10 +87,13 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/login" element={<UnifiedAuth />} />
+            
+            {/* Customer Auth Routes - Separate from Admin */}
+            <Route path="/customer-auth" element={<CustomerAuth />} />
             <Route path="/customer-portal" element={<CustomerPortal />} />
             
-            {/* Customer Portal Protected Routes */}
-            <Route path="/customer" element={
+            {/* Customer Portal Protected Routes - Mobile-Optimized */}
+            <Route path="/customer/*" element={
               <CustomerProtectedRoute>
                 <CustomerLayout />
               </CustomerProtectedRoute>
