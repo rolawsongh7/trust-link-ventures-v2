@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download, Zap } from 'lucide-react';
+import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 
@@ -290,79 +290,6 @@ const QuoteRequestManagement = () => {
     }
   };
 
-  const createRFQFromRequest = async (request: QuoteRequest) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      // 1. First create a quote if one doesn't exist
-      const quoteData = {
-        title: `Quote for: ${request.title}`,
-        customer_id: request.customer_id,
-        status: 'draft',
-        quote_number: `Q-${Date.now()}`,
-        total_amount: 0,
-        currency: 'USD',
-        notes: request.message,
-        origin_type: 'rfq',
-        created_by: user.id
-      };
-
-      const { data: quote, error: quoteError } = await supabase
-        .from('quotes')
-        .insert(quoteData)
-        .select()
-        .single();
-
-      if (quoteError) throw quoteError;
-
-      // 2. Copy items from quote request to quote
-      if (request.quote_request_items && request.quote_request_items.length > 0) {
-        const quoteItems = request.quote_request_items.map(item => ({
-          quote_id: quote.id,
-          product_name: item.product_name,
-          quantity: item.quantity,
-          unit: item.unit,
-          unit_price: 0,
-          total_price: 0,
-          product_description: item.specifications
-        }));
-
-        const { error: itemsError } = await supabase
-          .from('quote_items')
-          .insert(quoteItems);
-
-        if (itemsError) throw itemsError;
-      }
-
-      // 3. Create RFQ linked to the quote
-      const { data: rfq, error: rfqError } = await supabase
-        .from('rfqs')
-        .insert({
-          quote_id: quote.id,
-          title: `RFQ for: ${request.title}`,
-          description: request.message || `RFQ created from quote request ${request.quote_number}`,
-          status: 'open',
-          deadline: request.expected_delivery_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          created_by: user.id,
-        })
-        .select()
-        .single();
-
-      if (rfqError) throw rfqError;
-
-      // 4. Update request status
-      await updateRequestStatus(request.id, 'quoted');
-
-      toast.success('RFQ and Quote created successfully');
-      
-      // Navigate to the RFQ page
-      window.location.href = '/rfqs';
-    } catch (error) {
-      console.error('Error creating RFQ:', error);
-      toast.error('Failed to create RFQ from request');
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -542,14 +469,6 @@ const QuoteRequestManagement = () => {
                                 <FileText className="h-4 w-4" />
                               </Button>
                             )}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => createRFQFromRequest(request)}
-                              title="Create RFQ"
-                            >
-                              <Zap className="h-4 w-4" />
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>

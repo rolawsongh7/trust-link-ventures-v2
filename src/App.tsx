@@ -46,7 +46,7 @@ import OrdersPage from "./pages/OrdersPage";
 import QuotesPage from "./pages/QuotesPage";
 import CommunicationPage from "./pages/CommunicationPage";
 import Settings from "./pages/Settings";
-import RFQPage from "./pages/RFQPage";
+
 import UnifiedAuth from "./pages/UnifiedAuth";
 import NotificationDemo from "./pages/NotificationDemo";
 import VirtualAssistant from "./pages/VirtualAssistant";
@@ -116,7 +116,6 @@ const App = () => (
               <Route path="/leads" element={<LeadsPage />} />
               <Route path="/orders" element={<OrdersPage />} />
               <Route path="/quotes" element={<QuotesPage />} />
-              <Route path="/rfqs" element={<RFQPage />} />
               <Route path="/quote-inquiries" element={<QuoteRequestManagement />} />
               <Route path="/communication" element={<CommunicationPage />} />
               

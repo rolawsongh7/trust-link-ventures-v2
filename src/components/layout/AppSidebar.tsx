@@ -34,7 +34,6 @@ const navigationItems = [
   { title: 'Leads', url: '/leads', icon: Target },
   { title: 'Orders', url: '/orders', icon: ShoppingCart },
   { title: 'Quotes', url: '/quotes', icon: FileText },
-  { title: 'RFQs', url: '/rfqs', icon: Clock },
   { title: 'Customer Quote Inquiries', url: '/quote-inquiries', icon: MessageSquare },
   { title: 'Communication', url: '/communication', icon: Phone },
 ];
