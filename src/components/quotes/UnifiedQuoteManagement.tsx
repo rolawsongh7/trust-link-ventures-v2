@@ -16,7 +16,8 @@ import QuoteUploadDialog from './QuoteUploadDialog';
 import { SimpleQuoteUpload } from './SimpleQuoteUpload';
 import { useAuth } from '@/contexts/AuthContext';
 import { DataTable, Column } from '@/components/ui/data-table';
-import { GenerateTitlePageDialog } from './GenerateTitlePageDialog';
+import { GenerateQuoteDialog } from './GenerateQuoteDialog';
+import { QuotePreviewDialog } from './QuotePreviewDialog';
 import { QuoteEditor } from './QuoteEditor';
 import {
   DropdownMenuItem,
@@ -71,8 +72,10 @@ const UnifiedQuoteManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedQuoteForUpload, setSelectedQuoteForUpload] = useState<Quote | null>(null);
-  const [isGenerateTitleDialogOpen, setIsGenerateTitleDialogOpen] = useState(false);
+  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [selectedQuoteForGenerate, setSelectedQuoteForGenerate] = useState<Quote | null>(null);
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [selectedQuoteForPreview, setSelectedQuoteForPreview] = useState<Quote | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const { toast } = useToast();
@@ -732,6 +735,8 @@ const UnifiedQuoteManagement = () => {
         <TabsList>
           <TabsTrigger value="all">All ({quotes.length})</TabsTrigger>
           <TabsTrigger value="draft">Draft ({quotes.filter(q => q.status === 'draft').length})</TabsTrigger>
+          <TabsTrigger value="pending_review">Pending Review ({quotes.filter(q => q.status === 'pending_review').length})</TabsTrigger>
+          <TabsTrigger value="approved">Approved ({quotes.filter(q => q.status === 'approved').length})</TabsTrigger>
           <TabsTrigger value="sent">Sent ({quotes.filter(q => q.status === 'sent').length})</TabsTrigger>
           <TabsTrigger value="accepted">Accepted ({quotes.filter(q => q.status === 'accepted').length})</TabsTrigger>
           <TabsTrigger value="rejected">Rejected ({quotes.filter(q => q.status === 'rejected').length})</TabsTrigger>
@@ -755,38 +760,53 @@ const UnifiedQuoteManagement = () => {
                   Edit Prices
                 </DropdownMenuItem>
 
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedQuoteForGenerate(quote);
-                    setIsGenerateTitleDialogOpen(true);
-                  }}
-                >
-                  <FileCheck className="mr-2 h-4 w-4" />
-                  Generate Title Page
-                </DropdownMenuItem>
-                
-                {quote.final_file_url && (
+                {quote.status === 'draft' && !quote.final_file_url && (
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
-                      downloadQuote(quote.final_file_url!, `final-quote-${quote.quote_number}.pdf`);
+                      setSelectedQuoteForGenerate(quote);
+                      setIsGenerateDialogOpen(true);
                     }}
                   >
-                    <Eye className="mr-2 h-4 w-4" />
-                    View Final Quote
+                    <FileCheck className="mr-2 h-4 w-4" />
+                    Generate Quote
                   </DropdownMenuItem>
                 )}
                 
-                {quote.final_file_url && quote.status === 'draft' && (
+                {quote.status === 'pending_review' && quote.final_file_url && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedQuoteForPreview(quote);
+                      setIsPreviewDialogOpen(true);
+                    }}
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    Review Quote
+                  </DropdownMenuItem>
+                )}
+                
+                {quote.final_file_url && quote.status === 'approved' && (
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
                       handleApprove(quote);
                     }}
                   >
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Approve & Send
+                    <Mail className="mr-2 h-4 w-4" />
+                    Send to Customer
+                  </DropdownMenuItem>
+                )}
+
+                {quote.final_file_url && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadQuote(quote.final_file_url!, `quote-${quote.quote_number}.pdf`);
+                    }}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Quote
                   </DropdownMenuItem>
                 )}
 
@@ -835,11 +855,19 @@ const UnifiedQuoteManagement = () => {
       )}
 
       {selectedQuoteForGenerate && (
-        <GenerateTitlePageDialog
-          open={isGenerateTitleDialogOpen}
-          onOpenChange={setIsGenerateTitleDialogOpen}
+        <GenerateQuoteDialog
+          open={isGenerateDialogOpen}
+          onOpenChange={setIsGenerateDialogOpen}
           quote={selectedQuoteForGenerate}
-          customers={customers}
+          onSuccess={fetchQuotes}
+        />
+      )}
+
+      {selectedQuoteForPreview && (
+        <QuotePreviewDialog
+          open={isPreviewDialogOpen}
+          onOpenChange={setIsPreviewDialogOpen}
+          quote={selectedQuoteForPreview}
           onSuccess={fetchQuotes}
         />
       )}
