@@ -11,7 +11,7 @@ const corsHeaders = {
 interface EmailRequest {
   to: string;
   subject: string;
-  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification';
+  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification' | 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered';
   data?: Record<string, any>;
 }
 
@@ -41,6 +41,21 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'verification':
         html = generateVerificationEmail(data?.verificationLink || '', data?.name || 'User');
+        break;
+      case 'quote_ready':
+        html = generateQuoteReadyEmail(data);
+        break;
+      case 'quote_accepted':
+        html = generateQuoteAcceptedEmail(data);
+        break;
+      case 'order_confirmed':
+        html = generateOrderConfirmedEmail(data);
+        break;
+      case 'order_shipped':
+        html = generateOrderShippedEmail(data);
+        break;
+      case 'order_delivered':
+        html = generateOrderDeliveredEmail(data);
         break;
       default:
         throw new Error('Invalid email type');
@@ -266,6 +281,174 @@ function generateVerificationEmail(verificationLink: string, name: string): stri
         </div>
         <div class="footer">
           <p>If you didn't create an account, please ignore this email.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateQuoteReadyEmail(data: any): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #28a745; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+        .button { display: inline-block; background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📋 Your Quote is Ready!</h1>
+        </div>
+        <div class="content">
+          <p>Good news! Your quote <strong>${data?.quoteNumber}</strong> is now ready for review.</p>
+          <a href="${data?.customerPortalLink}" class="button">View Quote</a>
+          <p>Log in to your customer portal to review the details and accept the quote.</p>
+        </div>
+        <div class="footer">
+          <p>Best regards,<br>Trust Link Ventures Team</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateQuoteAcceptedEmail(data: any): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #28a745; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>✅ Quote Accepted</h1>
+        </div>
+        <div class="content">
+          <p>Quote <strong>${data?.quoteNumber}</strong> has been accepted by the customer.</p>
+          <p><strong>Customer Email:</strong> ${data?.customerEmail}</p>
+          <p>Please process this order accordingly.</p>
+        </div>
+        <div class="footer">
+          <p>Trust Link Ventures System</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateOrderConfirmedEmail(data: any): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #007bff; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+        .button { display: inline-block; background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🛒 Order Confirmed!</h1>
+        </div>
+        <div class="content">
+          <p>Your order <strong>${data?.orderNumber}</strong> has been confirmed and is being processed.</p>
+          <a href="${data?.trackingLink}" class="button">Track Order</a>
+          <p>You can track your order status anytime from your customer portal.</p>
+        </div>
+        <div class="footer">
+          <p>Thank you for your business!<br>Trust Link Ventures Team</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateOrderShippedEmail(data: any): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #fd7e14; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+        .button { display: inline-block; background: #fd7e14; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .info-box { background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📦 Order Shipped!</h1>
+        </div>
+        <div class="content">
+          <p>Great news! Your order <strong>${data?.orderNumber}</strong> has been shipped.</p>
+          ${data?.trackingNumber ? `
+            <div class="info-box">
+              <p><strong>Tracking Number:</strong> ${data.trackingNumber}</p>
+            </div>
+          ` : ''}
+          <a href="${data?.trackingLink}" class="button">Track Shipment</a>
+          <p>You can track your shipment progress from your customer portal.</p>
+        </div>
+        <div class="footer">
+          <p>Best regards,<br>Trust Link Ventures Team</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateOrderDeliveredEmail(data: any): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #28a745; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🎉 Order Delivered!</h1>
+        </div>
+        <div class="content">
+          <p>Your order <strong>${data?.orderNumber}</strong> has been successfully delivered.</p>
+          <p>We hope you're satisfied with your purchase. If you have any questions or concerns, please don't hesitate to contact us.</p>
+        </div>
+        <div class="footer">
+          <p>Thank you for choosing Trust Link Ventures!<br>We look forward to serving you again.</p>
         </div>
       </div>
     </body>

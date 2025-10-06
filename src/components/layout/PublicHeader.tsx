@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LogIn, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import trustLinkLogo from '@/assets/trust-link-logo.png';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
 export const PublicHeader = () => {
   const { user } = useAuth();
@@ -54,6 +55,7 @@ export const PublicHeader = () => {
           
           {/* Auth Actions */}
           <div className="ml-4 md:ml-6 flex items-center space-x-2 md:space-x-4">
+            {user && <NotificationCenter />}
             <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hidden sm:flex touch-manipulation">
               <Link to="/login">
                 <LogIn className="h-4 w-4 mr-2" />
