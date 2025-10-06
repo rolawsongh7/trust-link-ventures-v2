@@ -652,24 +652,3 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     throw error
   }
 }
-
-// Removed old generateTitlePagePDF and mergePDFs functions - no longer needed
-  try {
-    const mergedPdf = await PDFDocument.create()
-    
-    const titlePagePdf = await PDFDocument.load(titlePageBytes)
-    const titlePages = await mergedPdf.copyPages(titlePagePdf, titlePagePdf.getPageIndices())
-    
-    titlePages.forEach((page) => mergedPdf.addPage(page))
-    
-    const originalPdf = await PDFDocument.load(originalPdfBytes)
-    const originalPages = await mergedPdf.copyPages(originalPdf, originalPdf.getPageIndices())
-    
-    originalPages.forEach((page) => mergedPdf.addPage(page))
-    
-    return await mergedPdf.save()
-  } catch (error) {
-    console.error('Error merging PDFs:', error)
-    return titlePageBytes
-  }
-}
