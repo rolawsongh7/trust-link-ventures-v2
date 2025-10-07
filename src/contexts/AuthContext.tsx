@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AuditLogger } from '@/lib/auditLogger';
 import { NetworkSecurityService } from '@/lib/networkSecurity';
 import { AnomalyDetectionService } from '@/lib/anomalyDetection';
+import { isAdminDomain, getAdminUrl, getMainUrl } from '@/utils/domainUtils';
 
 export type UserRole = 'admin' | 'sales_rep' | 'user';
 
@@ -356,7 +357,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = isAdminDomain()
+      ? getAdminUrl('/admin/dashboard')
+      : getMainUrl('/');
     
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -411,10 +414,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithProvider = async (provider: 'google' | 'github') => {
+    const redirectUrl = isAdminDomain() 
+      ? getAdminUrl('/admin/dashboard')
+      : getMainUrl('/');
+      
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/`
+        redirectTo: redirectUrl
       }
     });
     return { error };

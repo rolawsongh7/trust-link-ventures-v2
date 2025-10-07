@@ -13,6 +13,7 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import { RECAPTCHA_SITE_KEY } from '@/config/recaptcha';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
+import { isAdminDomain, redirectToAdminDomain } from '@/utils/domainUtils';
 
 const AdminAuth = () => {
   const navigate = useNavigate();
@@ -31,12 +32,19 @@ const AdminAuth = () => {
     password: '',
   });
 
-  const from = (location.state as any)?.from?.pathname || '/dashboard';
+  const from = (location.state as any)?.from?.pathname || '/admin/dashboard';
+
+  // Redirect to admin subdomain if not already there
+  useEffect(() => {
+    if (!isAdminDomain()) {
+      redirectToAdminDomain('/');
+    }
+  }, []);
 
   // Redirect if already authenticated as admin
   useEffect(() => {
     if (user && !roleLoading && hasAdminAccess) {
-      navigate('/dashboard', { replace: true });
+      navigate('/admin/dashboard', { replace: true });
     }
   }, [user, hasAdminAccess, roleLoading, navigate]);
 

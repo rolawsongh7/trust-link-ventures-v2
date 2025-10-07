@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { getAdminUrl } from '@/utils/domainUtils';
 
 export const FloatingLoginButton: React.FC = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export const FloatingLoginButton: React.FC = () => {
   }
 
   const handleLoginClick = () => {
-    navigate('/login');
+    window.location.href = getAdminUrl('/');
   };
 
   return (

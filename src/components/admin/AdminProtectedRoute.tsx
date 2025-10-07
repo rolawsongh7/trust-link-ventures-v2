@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
+import { isAdminDomain, redirectToAdminDomain } from '@/utils/domainUtils';
 
 interface AdminProtectedRouteProps {
   children: React.ReactNode;
@@ -15,6 +16,13 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
   const location = useLocation();
   const [mfaRequired, setMfaRequired] = React.useState<boolean | null>(null);
   const [checkingMFA, setCheckingMFA] = React.useState(true);
+
+  // Redirect to admin subdomain if not already there
+  React.useEffect(() => {
+    if (!isAdminDomain()) {
+      redirectToAdminDomain(location.pathname);
+    }
+  }, [location.pathname]);
 
   // Check if admin user has MFA enabled
   React.useEffect(() => {
@@ -66,9 +74,13 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
     );
   }
 
-  // Not authenticated - redirect to admin login
+  // Not authenticated - redirect to admin login (root of admin domain)
   if (!user) {
-    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    if (!isAdminDomain()) {
+      redirectToAdminDomain('/');
+      return null;
+    }
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   // Authenticated but not admin - redirect to unauthorized page
