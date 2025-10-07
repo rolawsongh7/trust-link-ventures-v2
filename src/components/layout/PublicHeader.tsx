@@ -57,7 +57,7 @@ export const PublicHeader = () => {
           <div className="ml-4 md:ml-6 flex items-center space-x-2 md:space-x-4">
             {user && <NotificationCenter />}
             <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hidden sm:flex touch-manipulation">
-              <Link to="/login">
+              <Link to="/customer-auth">
                 <LogIn className="h-4 w-4 mr-2" />
                 <span className="hidden md:inline">Sign In</span>
                 <span className="md:hidden">Login</span>
@@ -98,7 +98,7 @@ export const PublicHeader = () => {
                 </Link>
               ))}
               <Link
-                to="/login"
+                to="/customer-auth"
                 className="block px-3 py-3 text-base font-medium text-primary hover:text-primary/80 transition-colors rounded-md hover:bg-muted/50 touch-manipulation sm:hidden"
                 onClick={() => setMobileMenuOpen(false)}
               >
