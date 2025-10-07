@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,115 +8,22 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  read: boolean;
-  link?: string;
-  created_at: string;
-}
-
 export const NotificationCenter = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
+  const { 
+    notifications, 
+    unreadCount, 
+    loading, 
+    markAsRead, 
+    markAllAsRead 
+  } = useRealtimeNotifications();
 
-  useEffect(() => {
-    fetchNotifications();
-    
-    // Subscribe to real-time notifications
-    const channel = supabase
-      .channel('user-notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'user_notifications',
-          filter: `user_id=eq.${supabase.auth.getUser()}`
-        },
-        (payload) => {
-          const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
-          
-          // Show toast for new notification
-          toast({
-            title: newNotification.title,
-            description: newNotification.message,
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const fetchNotifications = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('user_notifications')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(20);
-
-    if (error) {
-      console.error('Error fetching notifications:', error);
-      return;
-    }
-
-    setNotifications(data || []);
-    setUnreadCount(data?.filter(n => !n.read).length || 0);
-  };
-
-  const markAsRead = async (notificationId: string) => {
-    const { error } = await supabase
-      .from('user_notifications')
-      .update({ read: true })
-      .eq('id', notificationId);
-
-    if (!error) {
-      setNotifications(prev =>
-        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    }
-  };
-
-  const markAllAsRead = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { error } = await supabase
-      .from('user_notifications')
-      .update({ read: true })
-      .eq('user_id', user.id)
-      .eq('read', false);
-
-    if (!error) {
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      setUnreadCount(0);
-      toast({
-        title: 'All notifications marked as read',
-      });
-    }
-  };
-
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = (notification: any) => {
     markAsRead(notification.id);
     if (notification.link) {
       navigate(notification.link);
@@ -170,7 +77,11 @@ export const NotificationCenter = () => {
           )}
         </div>
         <ScrollArea className="h-[400px]">
-          {notifications.length === 0 ? (
+          {loading ? (
+            <div className="p-8 text-center text-muted-foreground">
+              Loading notifications...
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               No notifications yet
             </div>
