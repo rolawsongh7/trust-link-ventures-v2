@@ -24,7 +24,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { to, subject, type, data }: EmailRequest = await req.json();
 
     let html = '';
-    let from = "Trust Link Ventures <noreply@trustlinkventureslimited.com>";
+    let from = "Trust Link Ventures <onboarding@resend.dev>";
 
     switch (type) {
       case 'welcome':
