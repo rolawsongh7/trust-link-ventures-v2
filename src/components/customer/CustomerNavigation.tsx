@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +22,8 @@ import {
   MessageSquare,
   Grid3X3,
   ChevronDown,
-  MapPin
+  MapPin,
+  Menu
 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
@@ -31,6 +33,7 @@ export const CustomerNavigation: React.FC = () => {
   const { profile, signOut } = useCustomerAuth();
   const { totalItems } = useShoppingCart();
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigationItems = [
     {
@@ -99,17 +102,17 @@ export const CustomerNavigation: React.FC = () => {
   };
 
   return (
-    <nav className="bg-white border-b border-border/10 shadow-sm">
+    <nav className="bg-white border-b border-border/10 shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-16 sm:h-20">
           {/* Logo and Company Info */}
-          <div className="flex items-center">
-            <Link to="/customer" className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-primary-foreground" />
+          <div className="flex items-center min-w-0">
+            <Link to="/customer" className="flex items-center gap-2 sm:gap-3 touch-manipulation">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
               </div>
-              <div>
-                <div className="text-sm font-semibold text-primary">
+              <div className="hidden sm:block">
+                <div className="text-sm font-semibold text-primary truncate">
                   {profile?.company_name}
                 </div>
                 <div className="text-xs text-muted-foreground">
@@ -119,8 +122,8 @@ export const CustomerNavigation: React.FC = () => {
             </Link>
           </div>
 
-          {/* Navigation Links */}
-          <div className="hidden md:flex items-center space-x-1">
+          {/* Desktop Navigation - Hidden on Mobile */}
+          <div className="hidden lg:flex items-center space-x-1">
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.href;
               const Icon = item.icon;
@@ -130,14 +133,14 @@ export const CustomerNavigation: React.FC = () => {
                   <Button
                     variant={isActive ? "secondary" : "ghost"}
                     size="sm"
-                    className="relative"
+                    className="relative h-10 touch-manipulation"
                   >
                     <Icon className="h-4 w-4 mr-2" />
                     {item.title}
                     {item.badge && (
                       <Badge 
                         variant="destructive" 
-                        className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs"
+                        className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center"
                       >
                         {item.badge}
                       </Badge>
@@ -148,38 +151,98 @@ export const CustomerNavigation: React.FC = () => {
             })}
           </div>
 
-          {/* User Menu */}
-          <div className="flex items-center">
+          {/* Right Side Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Mobile Menu Button */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild className="lg:hidden">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-10 w-10 touch-manipulation"
+                  aria-label="Open menu"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[280px] sm:w-[320px]">
+                <SheetHeader>
+                  <SheetTitle className="text-left">Menu</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 space-y-1">
+                  {navigationItems.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    const Icon = item.icon;
+                    
+                    return (
+                      <Link 
+                        key={item.href} 
+                        to={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Button
+                          variant={isActive ? "secondary" : "ghost"}
+                          className="w-full justify-start h-12 text-base touch-manipulation"
+                        >
+                          <Icon className="h-5 w-5 mr-3" />
+                          {item.title}
+                          {item.badge && (
+                            <Badge 
+                              variant="destructive" 
+                              className="ml-auto h-6 w-6 p-0 text-xs flex items-center justify-center"
+                            >
+                              {item.badge}
+                            </Badge>
+                          )}
+                        </Button>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 px-3">
+                <Button 
+                  variant="ghost" 
+                  className="flex items-center gap-2 h-10 px-2 sm:px-3 touch-manipulation"
+                >
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                       {getInitials(profile?.full_name)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="hidden sm:block text-left">
-                    <div className="text-sm font-medium">{profile?.full_name}</div>
-                    <div className="text-xs text-muted-foreground">
+                  <div className="hidden md:block text-left min-w-0">
+                    <div className="text-sm font-medium truncate">{profile?.full_name}</div>
+                    <div className="text-xs text-muted-foreground truncate">
                       {profile?.email}
                     </div>
                   </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {profile?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 
                 <DropdownMenuItem asChild>
-                  <Link to="/customer/profile" className="flex items-center w-full">
+                  <Link to="/customer/profile" className="flex items-center w-full touch-manipulation">
                     <User className="h-4 w-4 mr-2" />
                     Profile Settings
                   </Link>
                 </DropdownMenuItem>
                 
                 <DropdownMenuItem asChild>
-                  <Link to="/customer" className="flex items-center w-full">
+                  <Link to="/customer" className="flex items-center w-full touch-manipulation">
                     <Settings className="h-4 w-4 mr-2" />
                     Dashboard
                   </Link>
@@ -189,7 +252,7 @@ export const CustomerNavigation: React.FC = () => {
                 
                 <DropdownMenuItem 
                   onClick={handleSignOut}
-                  className="text-destructive focus:text-destructive cursor-pointer"
+                  className="text-destructive focus:text-destructive cursor-pointer touch-manipulation"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
@@ -197,37 +260,6 @@ export const CustomerNavigation: React.FC = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </div>
-      </div>
-
-      {/* Mobile Navigation */}
-      <div className="md:hidden border-t border-border/10">
-        <div className="px-2 pt-2 pb-3 space-y-1">
-          {navigationItems.map((item) => {
-            const isActive = location.pathname === item.href;
-            const Icon = item.icon;
-            
-            return (
-              <Link key={item.href} to={item.href}>
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
-                  size="sm"
-                  className="w-full justify-start relative"
-                >
-                  <Icon className="h-4 w-4 mr-2" />
-                  {item.title}
-                  {item.badge && (
-                    <Badge 
-                      variant="destructive" 
-                      className="ml-auto h-5 w-5 p-0 text-xs"
-                    >
-                      {item.badge}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
-            );
-          })}
         </div>
       </div>
     </nav>

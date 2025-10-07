@@ -137,30 +137,34 @@ const CustomerPortalMain = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
       {/* Welcome Section */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Welcome to Trust Link Ventures</h1>
-        <p className="text-muted-foreground">Your premium seafood and meat products partner</p>
+      <div className="text-center space-y-2 px-4">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
+          Welcome to Trust Link Ventures
+        </h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
+          Your premium seafood and meat products partner
+        </p>
       </div>
 
       {/* Quick Actions */}
-      <div>
-        <h2 className="text-2xl font-bold mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+      <div className="space-y-4 sm:space-y-6">
+        <h2 className="text-xl sm:text-2xl font-bold px-4 sm:px-0">Quick Actions</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
           {quickActions.map((action) => (
             <Link key={action.title} to={action.href}>
-              <Card className="hover:shadow-lg transition-all duration-300 hover:scale-105 group cursor-pointer h-full">
-                <CardContent className="p-6">
+              <Card className="hover:shadow-lg transition-all duration-300 hover:scale-[1.02] group cursor-pointer h-full touch-manipulation">
+                <CardContent className="p-5 sm:p-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${action.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                      <action.icon className="w-6 h-6 text-white" />
+                    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-gradient-to-r ${action.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                      <action.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                     </div>
                     {action.badge && (
-                      <Badge variant="secondary">{action.badge}</Badge>
+                      <Badge variant="secondary" className="text-xs sm:text-sm">{action.badge}</Badge>
                     )}
                   </div>
-                  <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
+                  <h3 className="font-semibold text-base sm:text-lg mb-2 group-hover:text-primary transition-colors">
                     {action.title}
                   </h3>
                   <p className="text-muted-foreground text-sm mb-4">
@@ -177,41 +181,41 @@ const CustomerPortalMain = () => {
       </div>
 
       {/* Quick Overview */}
-      <div>
-        <h2 className="text-2xl font-bold mb-6">Quick Overview</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="space-y-4 sm:space-y-6">
+        <h2 className="text-xl sm:text-2xl font-bold px-4 sm:px-0">Quick Overview</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
-            <CardContent className="p-6">
+            <CardContent className="p-5 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Active Quotes</p>
-                  <p className="text-3xl font-bold text-blue-600">{stats.pendingQuotes}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Active Quotes</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-blue-600">{stats.pendingQuotes}</p>
                 </div>
-                <FileText className="h-8 w-8 text-blue-600" />
+                <FileText className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
-            <CardContent className="p-6">
+            <CardContent className="p-5 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Orders</p>
-                  <p className="text-3xl font-bold text-green-600">{stats.totalOrders}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Orders</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-green-600">{stats.totalOrders}</p>
                 </div>
-                <Package className="h-8 w-8 text-green-600" />
+                <Package className="h-7 w-7 sm:h-8 sm:w-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
-            <CardContent className="p-6">
+            <CardContent className="p-5 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Cart Items</p>
-                  <p className="text-3xl font-bold text-purple-600">{totalItems}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Cart Items</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-purple-600">{totalItems}</p>
                 </div>
-                <ShoppingCart className="h-8 w-8 text-purple-600" />
+                <ShoppingCart className="h-7 w-7 sm:h-8 sm:w-8 text-purple-600" />
               </div>
             </CardContent>
           </Card>
@@ -220,30 +224,30 @@ const CustomerPortalMain = () => {
 
       {/* Recent Activity */}
       {stats.recentActivity.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-bold mb-6">Recent Activity</h2>
+        <div className="space-y-4 sm:space-y-6">
+          <h2 className="text-xl sm:text-2xl font-bold px-4 sm:px-0">Recent Activity</h2>
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
                 Recent Activity
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {stats.recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg">
-                    <FileText className="h-5 w-5 text-primary mt-1" />
-                    <div className="flex-1">
-                      <p className="font-medium">Quote requested: {activity.title}</p>
-                      <p className="text-sm text-muted-foreground">
+                  <div key={activity.id} className="flex items-start gap-3 p-3 sm:p-4 bg-muted/30 rounded-lg touch-manipulation">
+                    <FileText className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm sm:text-base truncate">Quote requested: {activity.title}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {new Date(activity.created_at).toLocaleDateString()} • 
                         {new Date(activity.created_at).toLocaleTimeString()}
                       </p>
                     </div>
                     <Badge 
                       variant={activity.status === 'pending' ? 'secondary' : 'default'}
-                      className="capitalize"
+                      className="capitalize text-xs sm:text-sm flex-shrink-0"
                     >
                       {activity.status}
                     </Badge>
