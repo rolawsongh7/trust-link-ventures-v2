@@ -106,11 +106,24 @@ export const CustomerQuotes: React.FC = () => {
       if (quotesError) throw quotesError;
 
       // Merge quote requests with their final quotes
+      // IMPORTANT: Prioritize linked_quote_request_id to avoid duplicate matches
       const mergedData = quoteRequests?.map(request => {
-        const finalQuote = finalQuotes?.find(q => 
-          q.linked_quote_request_id === request.id ||
-          (q.customer_email && q.customer_email === request.lead_email)
-        );
+        // First, try to find by linked_quote_request_id (most accurate)
+        let finalQuote = finalQuotes?.find(q => q.linked_quote_request_id === request.id);
+        
+        // Only fall back to email matching if no linked quote exists
+        // AND if this quote hasn't already been linked to another request
+        if (!finalQuote) {
+          const usedQuoteIds = quoteRequests
+            .map(r => finalQuotes?.find(q => q.linked_quote_request_id === r.id)?.id)
+            .filter(Boolean);
+          
+          finalQuote = finalQuotes?.find(q => 
+            !usedQuoteIds.includes(q.id) &&
+            q.customer_email === request.lead_email &&
+            !q.linked_quote_request_id
+          );
+        }
         
         return {
           ...request,
