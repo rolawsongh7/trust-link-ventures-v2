@@ -66,7 +66,9 @@ const OrdersManagement = () => {
   const [selectedTab, setSelectedTab] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
+  const [editDetailsDialogOpen, setEditDetailsDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [paymentConfirmOrder, setPaymentConfirmOrder] = useState<Order | null>(null);
   const [confirmDialog, setConfirmDialog] = useState({
     open: false,
