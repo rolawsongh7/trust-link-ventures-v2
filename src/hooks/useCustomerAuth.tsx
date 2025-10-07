@@ -167,8 +167,11 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const signIn = async (email: string, password: string) => {
+    // Sanitize inputs (defense in depth)
+    const sanitizedEmail = email.trim().toLowerCase();
+    
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: sanitizedEmail,
       password,
     });
 
@@ -183,16 +186,21 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const signUp = async (email: string, password: string, companyName: string, fullName: string) => {
+    // Sanitize inputs (defense in depth)
+    const sanitizedEmail = email.trim().toLowerCase();
+    const sanitizedCompanyName = companyName.trim();
+    const sanitizedFullName = fullName.trim();
+    
     const redirectUrl = `${window.location.origin}/customer`;
     
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: sanitizedEmail,
       password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          company_name: companyName,
-          full_name: fullName
+          company_name: sanitizedCompanyName,
+          full_name: sanitizedFullName
         }
       }
     });
@@ -204,9 +212,9 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           .from('customers')
           .insert([
             {
-              company_name: companyName,
-              contact_name: fullName,
-              email: email,
+              company_name: sanitizedCompanyName,
+              contact_name: sanitizedFullName,
+              email: sanitizedEmail,
               customer_status: 'active',
               priority: 'medium'
             }
@@ -218,7 +226,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         toast({
           title: "Account created!",
-          description: "Welcome to your customer portal. You can now browse products and request quotes.",
+          description: "Please check your email to confirm your account. You may need to check your spam folder.",
+          duration: 6000,
         });
       } catch (customerError) {
         console.error('Failed to create customer record:', customerError);
