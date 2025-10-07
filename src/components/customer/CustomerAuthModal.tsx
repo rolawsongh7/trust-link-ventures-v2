@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import ReCAPTCHA from 'react-google-recaptcha';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +11,7 @@ import { PasswordStrengthIndicator } from '@/components/security/PasswordStrengt
 import { signInSchema, signUpSchema, type SignInFormData, type SignUpFormData } from '@/lib/customerAuthValidation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { performBotCheck } from '@/lib/botDetection';
 
 interface CustomerAuthModalProps {
   open: boolean;
@@ -28,12 +30,23 @@ export const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({
     email: '',
     password: '',
     fullName: '',
-    companyName: ''
+    companyName: '',
+    honeypot: '' // Hidden field for bot detection
   });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const formStartTime = useRef<number>(Date.now());
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   
   const { signIn, signUp } = useCustomerAuth();
   const { toast } = useToast();
+
+  // Reset form start time when switching tabs
+  useEffect(() => {
+    formStartTime.current = Date.now();
+    setRecaptchaToken(null);
+    recaptchaRef.current?.reset();
+  }, [isSignIn]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -58,6 +71,25 @@ export const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({
     setLoading(true);
 
     try {
+      // Bot detection check
+      const botCheck = await performBotCheck(
+        recaptchaToken,
+        formData.honeypot,
+        formStartTime.current
+      );
+
+      if (!botCheck.allowed) {
+        toast({
+          title: "Security Check Failed",
+          description: "Please try again. If the issue persists, contact support.",
+          variant: "destructive",
+        });
+        recaptchaRef.current?.reset();
+        setRecaptchaToken(null);
+        setLoading(false);
+        return;
+      }
+
       // Validate with Zod schema
       const validatedData = signInSchema.parse({
         email: formData.email,
@@ -110,6 +142,25 @@ export const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({
     setLoading(true);
 
     try {
+      // Bot detection check
+      const botCheck = await performBotCheck(
+        recaptchaToken,
+        formData.honeypot,
+        formStartTime.current
+      );
+
+      if (!botCheck.allowed) {
+        toast({
+          title: "Security Check Failed",
+          description: "Please try again. If the issue persists, contact support.",
+          variant: "destructive",
+        });
+        recaptchaRef.current?.reset();
+        setRecaptchaToken(null);
+        setLoading(false);
+        return;
+      }
+
       // Validate with Zod schema
       const validatedData = signUpSchema.parse({
         email: formData.email,
@@ -179,6 +230,20 @@ export const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({
 
           <TabsContent value="signin" className="space-y-4">
             <form onSubmit={handleSignIn} className="space-y-4">
+              {/* Honeypot field - hidden from users but visible to bots */}
+              <div className="absolute -left-[9999px]" aria-hidden="true">
+                <Label htmlFor="website">Website (leave blank)</Label>
+                <Input
+                  id="website"
+                  name="honeypot"
+                  type="text"
+                  value={formData.honeypot}
+                  onChange={handleInputChange}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="signin-email">Email</Label>
                 <Input
@@ -213,10 +278,19 @@ export const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({
                 )}
               </div>
 
+              <div className="flex justify-center">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"}
+                  onChange={(token) => setRecaptchaToken(token)}
+                  onExpired={() => setRecaptchaToken(null)}
+                />
+              </div>
+
               <Button 
                 type="submit" 
                 className="w-full"
-                disabled={loading}
+                disabled={loading || !recaptchaToken}
               >
                 {loading ? 'Signing In...' : 'Sign In'}
               </Button>
@@ -232,6 +306,20 @@ export const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({
             </Alert>
             
             <form onSubmit={handleSignUp} className="space-y-4">
+              {/* Honeypot field - hidden from users but visible to bots */}
+              <div className="absolute -left-[9999px]" aria-hidden="true">
+                <Label htmlFor="website-signup">Website (leave blank)</Label>
+                <Input
+                  id="website-signup"
+                  name="honeypot"
+                  type="text"
+                  value={formData.honeypot}
+                  onChange={handleInputChange}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="signup-fullname">Full Name</Label>
                 <Input
@@ -301,10 +389,19 @@ export const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({
                 <PasswordStrengthIndicator password={formData.password} />
               </div>
 
+              <div className="flex justify-center">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"}
+                  onChange={(token) => setRecaptchaToken(token)}
+                  onExpired={() => setRecaptchaToken(null)}
+                />
+              </div>
+
               <Button 
                 type="submit" 
                 className="w-full"
-                disabled={loading}
+                disabled={loading || !recaptchaToken}
               >
                 {loading ? 'Creating Account...' : 'Sign Up'}
               </Button>
