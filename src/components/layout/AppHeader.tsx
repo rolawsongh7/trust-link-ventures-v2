@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Search, Bell, User, LogOut, Package, MessageSquare, Shield } from 'lucide-react';
+import { Search, User, LogOut, MessageSquare, Shield, Package } from 'lucide-react';
 import trustLinkLogo from '@/assets/trust-link-logo.png';
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
 interface AppHeaderProps {
   onOpenCommandPalette: () => void;
@@ -83,10 +84,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
           </Button>
 
           {/* Notifications */}
-          <Button variant="ghost" size="sm" className="relative">
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 h-2 w-2 bg-destructive rounded-full"></span>
-          </Button>
+          <NotificationCenter />
 
           {/* User Menu */}
           <DropdownMenu>
@@ -114,21 +112,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
               <DropdownMenuSeparator />
               
               {/* Enhanced dropdown items based on admin/customer status */}
-              {isAdmin ? (
-                <>
-                  {location.pathname !== '/crm' && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link to="/customer-portal" className="flex items-center space-x-2 cursor-pointer">
-                          <Package className="mr-2 h-4 w-4" />
-                          <span>Customer Portal</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                </>
-              ) : (
+              {!isAdmin && (
                 <>
                   <DropdownMenuItem asChild>
                     <Link to="/customer-portal" className="flex items-center space-x-2 cursor-pointer">
@@ -159,11 +143,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
                 </>
               )}
               
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Bell className="mr-2 h-4 w-4" />
-                <span>Notifications</span>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
