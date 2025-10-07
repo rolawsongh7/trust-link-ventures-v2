@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Package, Truck, CheckCircle, Clock, AlertCircle, Mail, MapPin, Send } from 'lucide-react';
+import { Search, Package, Truck, CheckCircle, Clock, AlertCircle, Mail, MapPin, Send, Link2, Edit, History, Lock, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeliveryManagementDialog } from './DeliveryManagementDialog';
+import { EditOrderDetailsDialog } from './EditOrderDetailsDialog';
+import OrderStatusHistory from './OrderStatusHistory';
 import { PaymentConfirmationDialog } from './PaymentConfirmationDialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +50,7 @@ interface Order {
     region: string;
     ghana_digital_address?: string;
   };
+  quote_id?: string;
   quotes: {
     quote_number: string;
     title: string;
@@ -449,20 +453,33 @@ const OrdersManagement = () => {
                             Address Confirmed
                           </Badge>
                         )}
-                        <Badge variant="outline" className="bg-blue-50">
-                          Related Quote: {order.quotes?.quote_number || 'N/A'}
-                        </Badge>
+                        {order.quotes && (
+                          <Badge variant="outline" className="bg-blue-50 border-blue-200">
+                            <Link2 className="w-3 h-3 mr-1" />
+                            Linked to {order.quotes.quote_number}
+                          </Badge>
+                        )}
+                        {order.quote_id ? (
+                          <Badge variant="default" className="bg-blue-500">
+                            🤖 Auto-generated
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-yellow-500 text-white">
+                            ✏️ Manual Order
+                          </Badge>
+                        )}
                         <Badge variant="outline">
                           {order.order_items.length} Item(s)
                         </Badge>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right space-y-1">
                       <div className="text-2xl font-bold">
                         {order.currency} {order.total_amount.toLocaleString()}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground flex items-center justify-end gap-1">
                         {order.customers.company_name}
+                        {order.quote_id && <Lock className="w-3 h-3" />}
                       </div>
                     </div>
                   </div>
@@ -513,105 +530,79 @@ const OrdersManagement = () => {
                           </p>
                         )}
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {!order.delivery_address_id && ['payment_received', 'processing'].includes(order.status) && (
-                          <Button 
-                            variant="default" 
+                      <div className="flex gap-2 flex-wrap">
+                        {!order.delivery_address_id && order.status !== 'cancelled' && order.status !== 'delivered' && (
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => handleRequestAddress(order)}
-                            className="bg-orange-500 hover:bg-orange-600"
                           >
-                            <Send className="h-4 w-4 mr-2" />
-                            Request Delivery Address
+                            <MapPin className="w-4 h-4 mr-1" />
+                            Request Address
                           </Button>
                         )}
-                        {order.status === 'order_confirmed' && (
-                          <Button 
-                            variant="outline" 
+                        
+                        {['processing', 'ready_to_ship', 'shipped'].includes(order.status) && order.status !== 'delivered' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setDeliveryDialogOpen(true);
+                            }}
+                          >
+                            <Truck className="w-4 h-4 mr-1" />
+                            Manage Delivery
+                          </Button>
+                        )}
+                        
+                        {order.status !== 'cancelled' && order.status !== 'delivered' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setEditDetailsDialogOpen(true);
+                            }}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Edit Details
+                          </Button>
+                        )}
+                        
+                        {['pending_payment', 'order_confirmed'].includes(order.status) && (
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => handlePaymentConfirmation(order)}
                           >
+                            <DollarSign className="w-4 h-4 mr-1" />
                             Confirm Payment
                           </Button>
                         )}
-                        {order.status === 'payment_received' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => updateOrderStatus(order.id, 'processing')}
-                          >
-                            Start Processing
-                          </Button>
-                        )}
-                        {order.status === 'processing' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => updateOrderStatus(order.id, 'ready_to_ship')}
-                            disabled={!order.delivery_address_id}
-                            title={!order.delivery_address_id ? 'Delivery address required before shipping' : ''}
-                          >
-                            Mark Ready to Ship
-                          </Button>
-                        )}
-                        {order.status === 'ready_to_ship' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => updateOrderStatus(order.id, 'shipped')}
-                          >
-                            Mark as Shipped
-                          </Button>
-                        )}
+                        
                         {order.status === 'shipped' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => updateOrderStatus(order.id, 'delivered')}
-                          >
-                            Mark as Delivered
-                          </Button>
-                        )}
-                        {order.status === 'delivery_failed' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => updateOrderStatus(order.id, 'shipped')}
-                          >
-                            Retry Delivery
-                          </Button>
-                        )}
-                        {['shipped', 'delivered'].includes(order.status) && (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleSendTrackingLink(order)}
                           >
-                            <Mail className="h-4 w-4 mr-2" />
-                            Send Tracking Link
+                            <Send className="w-4 h-4 mr-1" />
+                            Send Tracking
                           </Button>
                         )}
+                        
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
                           onClick={() => {
                             setSelectedOrder(order);
-                            setDeliveryDialogOpen(true);
+                            setHistoryDialogOpen(true);
                           }}
                         >
-                          <Truck className="h-4 w-4 mr-2" />
-                          Manage Delivery
+                          <History className="w-4 h-4 mr-1" />
+                          History
                         </Button>
-                        {!['delivered', 'cancelled'].includes(order.status) && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => sendOrderTrackingLink(order)}
-                            className="bg-blue-50 text-blue-700 hover:bg-blue-100"
-                          >
-                            📧 Send Tracking Link
-                          </Button>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -623,12 +614,33 @@ const OrdersManagement = () => {
       </Tabs>
 
       {selectedOrder && (
-        <DeliveryManagementDialog
-          order={selectedOrder}
-          open={deliveryDialogOpen}
-          onOpenChange={setDeliveryDialogOpen}
-          onSuccess={fetchOrders}
-        />
+        <>
+          <DeliveryManagementDialog
+            order={selectedOrder}
+            open={deliveryDialogOpen}
+            onOpenChange={setDeliveryDialogOpen}
+            onSuccess={fetchOrders}
+          />
+          
+          <EditOrderDetailsDialog
+            order={selectedOrder}
+            open={editDetailsDialogOpen}
+            onOpenChange={setEditDetailsDialogOpen}
+            onSuccess={fetchOrders}
+          />
+          
+          <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Order Status History</DialogTitle>
+                <DialogDescription>
+                  Complete audit trail for order {selectedOrder.order_number}
+                </DialogDescription>
+              </DialogHeader>
+              <OrderStatusHistory orderId={selectedOrder.id} />
+            </DialogContent>
+          </Dialog>
+        </>
       )}
 
       {paymentConfirmOrder && (
