@@ -11,6 +11,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 
+interface QuoteItem {
+  id: string;
+  product_name: string;
+  product_description?: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  total_price: number;
+  specifications?: string;
+}
+
 interface Quote {
   id: string;
   title: string;
@@ -31,6 +42,7 @@ interface Quote {
     final_file_url?: string;
     sent_at?: string;
     customer_email?: string;
+    quote_items?: QuoteItem[];
   };
 }
 
@@ -64,10 +76,31 @@ export const CustomerQuotes: React.FC = () => {
 
       if (requestsError) throw requestsError;
 
-      // Fetch linked final quotes
+      // Fetch linked final quotes with items
       const { data: finalQuotes, error: quotesError } = await supabase
         .from('quotes')
-        .select('id, quote_number, status, total_amount, currency, valid_until, final_file_url, sent_at, linked_quote_request_id, customer_email')
+        .select(`
+          id, 
+          quote_number, 
+          status, 
+          total_amount, 
+          currency, 
+          valid_until, 
+          final_file_url, 
+          sent_at, 
+          linked_quote_request_id, 
+          customer_email,
+          quote_items (
+            id,
+            product_name,
+            product_description,
+            quantity,
+            unit,
+            unit_price,
+            total_price,
+            specifications
+          )
+        `)
         .or(`customer_email.eq.${profile.email},linked_quote_request_id.in.(${quoteRequests?.map(q => q.id).join(',') || 'null'})`);
 
       if (quotesError) throw quotesError;
@@ -364,15 +397,59 @@ export const CustomerQuotes: React.FC = () => {
                       </Badge>
                     </div>
                     
-                    <div className="bg-white/80 dark:bg-background/80 rounded-lg p-4 mb-4 backdrop-blur-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground font-medium">Total Amount:</span>
-                        <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                          {quote.final_quote.currency} {quote.final_quote.total_amount?.toLocaleString()}
-                        </span>
+                    {/* Quote Items Table */}
+                    {quote.final_quote.quote_items && quote.final_quote.quote_items.length > 0 && (
+                      <div className="bg-white/90 dark:bg-background/90 rounded-lg overflow-hidden mb-4">
+                        <table className="w-full text-sm">
+                          <thead className="bg-primary/10 border-b-2 border-primary/20">
+                            <tr>
+                              <th className="text-left p-3 font-semibold text-foreground">Item</th>
+                              <th className="text-right p-3 font-semibold text-foreground">Qty</th>
+                              <th className="text-right p-3 font-semibold text-foreground">Unit Price</th>
+                              <th className="text-right p-3 font-semibold text-foreground">Subtotal</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-muted">
+                            {quote.final_quote.quote_items.map((item, index) => (
+                              <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="p-3">
+                                  <div className="font-medium text-foreground">{item.product_name}</div>
+                                  {item.product_description && (
+                                    <div className="text-xs text-muted-foreground mt-0.5">{item.product_description}</div>
+                                  )}
+                                  {item.specifications && (
+                                    <div className="text-xs text-muted-foreground italic mt-0.5">{item.specifications}</div>
+                                  )}
+                                </td>
+                                <td className="p-3 text-right font-medium text-foreground whitespace-nowrap">
+                                  {item.quantity} {item.unit}
+                                </td>
+                                <td className="p-3 text-right font-medium text-foreground">
+                                  {quote.final_quote.currency} {item.unit_price.toLocaleString()}
+                                </td>
+                                <td className="p-3 text-right font-semibold text-foreground">
+                                  {quote.final_quote.currency} {item.total_price.toLocaleString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot className="bg-primary/5 border-t-2 border-primary/30">
+                            <tr>
+                              <td colSpan={3} className="p-3 text-right font-bold text-foreground">Total Amount:</td>
+                              <td className="p-3 text-right">
+                                <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                                  {quote.final_quote.currency} {quote.final_quote.total_amount?.toLocaleString()}
+                                </span>
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
                       </div>
-                      {quote.final_quote.valid_until && (
-                        <div className="flex items-center justify-between mt-2 pt-2 border-t">
+                    )}
+                    
+                    {quote.final_quote.valid_until && (
+                      <div className="bg-white/80 dark:bg-background/80 rounded-lg p-3 mb-4">
+                        <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             Valid Until:
@@ -385,8 +462,8 @@ export const CustomerQuotes: React.FC = () => {
                             })}
                           </span>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                     
                     {quote.final_quote.status === 'sent' && (
                       <div className="flex gap-3">
@@ -574,17 +651,17 @@ export const CustomerQuotes: React.FC = () => {
                 </div>
               </div>
 
-              {/* Final Quote Details - Enhanced */}
+              {/* Final Quote Details - Enhanced with Items */}
               {selectedQuote.final_quote && (
                 <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-2 border-primary/30 rounded-xl p-6 shadow-md">
                   <h4 className="font-bold text-xl mb-4 text-primary flex items-center gap-2">
                     <Package className="h-6 w-6" />
                     Final Quote Details
                   </h4>
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-6 mb-6">
                     <div>
                       <div className="text-sm text-muted-foreground mb-1">Quote Number</div>
-                      <div className="font-semibold">{selectedQuote.final_quote.quote_number}</div>
+                      <div className="font-semibold font-mono bg-primary/10 px-3 py-1 rounded inline-block">{selectedQuote.final_quote.quote_number}</div>
                     </div>
                     {selectedQuote.final_quote.valid_until && (
                       <div>
@@ -611,6 +688,56 @@ export const CustomerQuotes: React.FC = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Quote Items Table in Dialog */}
+                  {selectedQuote.final_quote.quote_items && selectedQuote.final_quote.quote_items.length > 0 && (
+                    <div className="bg-white dark:bg-background rounded-lg overflow-hidden border border-primary/20">
+                      <table className="w-full text-sm">
+                        <thead className="bg-primary/10 border-b-2 border-primary/20">
+                          <tr>
+                            <th className="text-left p-3 font-semibold">Item</th>
+                            <th className="text-right p-3 font-semibold">Qty</th>
+                            <th className="text-right p-3 font-semibold">Unit Price</th>
+                            <th className="text-right p-3 font-semibold">Subtotal</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-muted">
+                          {selectedQuote.final_quote.quote_items.map((item) => (
+                            <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+                              <td className="p-3">
+                                <div className="font-medium">{item.product_name}</div>
+                                {item.product_description && (
+                                  <div className="text-xs text-muted-foreground mt-0.5">{item.product_description}</div>
+                                )}
+                                {item.specifications && (
+                                  <div className="text-xs text-muted-foreground italic mt-0.5">{item.specifications}</div>
+                                )}
+                              </td>
+                              <td className="p-3 text-right font-medium whitespace-nowrap">
+                                {item.quantity} {item.unit}
+                              </td>
+                              <td className="p-3 text-right font-medium">
+                                {selectedQuote.final_quote.currency} {item.unit_price.toLocaleString()}
+                              </td>
+                              <td className="p-3 text-right font-semibold">
+                                {selectedQuote.final_quote.currency} {item.total_price.toLocaleString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot className="bg-primary/5 border-t-2 border-primary/30">
+                          <tr>
+                            <td colSpan={3} className="p-3 text-right font-bold">Total Amount:</td>
+                            <td className="p-3 text-right">
+                              <span className="text-lg font-bold text-primary">
+                                {selectedQuote.final_quote.currency} {selectedQuote.final_quote.total_amount?.toLocaleString()}
+                              </span>
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  )}
                 </div>
               )}
 
