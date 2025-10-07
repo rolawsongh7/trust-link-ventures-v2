@@ -228,12 +228,6 @@ const Home = () => {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button asChild size="lg" className="btn-hero text-lg px-8 py-4">
-                  <Link to="/quote-request">
-                    Get Quote
-                    <ArrowRight className="h-5 w-5 ml-2" />
-                  </Link>
-                </Button>
                 <Button asChild variant="outline" className="btn-outline text-lg px-8 py-4">
                   <Link to="/products">
                     View Products
