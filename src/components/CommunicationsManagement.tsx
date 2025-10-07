@@ -177,10 +177,18 @@ const CommunicationsManagement = () => {
 
   const onSubmit = async (data: any) => {
     try {
+      // Clean up empty string UUIDs to null
+      const cleanedData = {
+        ...data,
+        customer_id: data.customer_id || null,
+        lead_id: data.lead_id || null,
+        order_id: data.order_id || null,
+      };
+
       if (editingCommunication) {
         const { error } = await supabase
           .from('communications')
-          .update(data)
+          .update(cleanedData)
           .eq('id', editingCommunication.id);
 
         if (error) throw error;
@@ -193,12 +201,12 @@ const CommunicationsManagement = () => {
         // If replying, get customer info from the original communication
         const insertData = replyingToCommunication?.customers 
           ? {
-              ...data,
+              ...cleanedData,
               customer_id: (replyingToCommunication as any).customers.id,
               direction: 'inbound',
               contact_person: 'Admin Team'
             }
-          : data;
+          : cleanedData;
 
         const { error } = await supabase
           .from('communications')
