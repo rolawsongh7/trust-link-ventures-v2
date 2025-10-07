@@ -84,9 +84,7 @@ const App = () => (
             </Route>
             
             {/* Auth routes (standalone) */}
-            <Route path="/auth" element={<Auth />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-            <Route path="/login" element={<UnifiedAuth />} />
             
             {/* Customer Auth Routes - Separate from Admin */}
             <Route path="/customer-auth" element={<CustomerAuth />} />
@@ -115,7 +113,6 @@ const App = () => (
             
             {/* Admin Routes - Separate from Customer Portal */}
             <Route path="/admin/login" element={<AdminAuth />} />
-            <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             
             <Route path="/admin" element={
