@@ -105,24 +105,24 @@ export default function AddressSelectionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">{title}</DialogTitle>
+          <DialogDescription className="text-sm sm:text-base">{description}</DialogDescription>
         </DialogHeader>
 
         {loading ? (
-          <div className="flex items-center justify-center p-8">
-            <p className="text-muted-foreground">Loading addresses...</p>
+          <div className="flex items-center justify-center p-6 sm:p-8">
+            <p className="text-sm sm:text-base text-muted-foreground">Loading addresses...</p>
           </div>
         ) : addresses.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-8">
-            <MapPin className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No addresses found</h3>
-            <p className="text-muted-foreground text-center mb-4">
+          <div className="flex flex-col items-center justify-center p-6 sm:p-8">
+            <MapPin className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold mb-2">No addresses found</h3>
+            <p className="text-sm sm:text-base text-muted-foreground text-center mb-4">
               You need to add a delivery address before you can proceed
             </p>
-            <Button onClick={handleAddNew}>
+            <Button onClick={handleAddNew} className="h-11 sm:h-10 text-base sm:text-sm touch-manipulation">
               <Plus className="w-4 h-4 mr-2" />
               Add Delivery Address
             </Button>

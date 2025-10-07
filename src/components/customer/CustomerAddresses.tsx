@@ -191,11 +191,11 @@ export default function CustomerAddresses() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Delivery Addresses</h2>
-          <p className="text-muted-foreground">Manage your delivery addresses</p>
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold truncate">Delivery Addresses</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">Manage your delivery addresses</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);
@@ -205,30 +205,31 @@ export default function CustomerAddresses() {
           }
         }}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Address
+            <Button className="h-11 sm:h-10 w-full sm:w-auto touch-manipulation">
+              <Plus className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Add Address</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
             <DialogHeader>
-              <DialogTitle>{editingAddress ? 'Edit' : 'Add'} Delivery Address</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">{editingAddress ? 'Edit' : 'Add'} Delivery Address</DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 Enter the delivery address details. Ghana Digital Address is required.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
                 <FormField
                   control={form.control}
                   name="receiver_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Receiver Name *</FormLabel>
+                      <FormLabel className="text-sm sm:text-base">Receiver Name *</FormLabel>
                       <FormControl>
-                        <Input placeholder="John Doe" {...field} />
+                        <Input placeholder="John Doe" className="h-11 sm:h-10 text-base sm:text-sm" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-xs sm:text-sm" />
                     </FormItem>
                   )}
                 />
@@ -238,11 +239,11 @@ export default function CustomerAddresses() {
                   name="phone_number"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number *</FormLabel>
+                      <FormLabel className="text-sm sm:text-base">Phone Number *</FormLabel>
                       <FormControl>
-                        <Input placeholder="+233244123456 or 0244123456" {...field} />
+                        <Input placeholder="+233244123456 or 0244123456" className="h-11 sm:h-10 text-base sm:text-sm" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-xs sm:text-sm" />
                     </FormItem>
                   )}
                 />
@@ -252,37 +253,37 @@ export default function CustomerAddresses() {
                   name="ghana_digital_address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ghana Digital Address *</FormLabel>
+                      <FormLabel className="text-sm sm:text-base">Ghana Digital Address *</FormLabel>
                       <FormControl>
-                        <Input placeholder="GA-123-4567" {...field} />
+                        <Input placeholder="GA-123-4567" className="h-11 sm:h-10 text-base sm:text-sm" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-xs sm:text-sm" />
                     </FormItem>
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <FormField
                     control={form.control}
                     name="region"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Region *</FormLabel>
+                        <FormLabel className="text-sm sm:text-base">Region *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-11 sm:h-10 text-base sm:text-sm">
                               <SelectValue placeholder="Select region" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="max-h-60">
                             {GHANA_REGIONS.map((region) => (
-                              <SelectItem key={region} value={region}>
+                              <SelectItem key={region} value={region} className="h-11 sm:h-10">
                                 {region}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <FormMessage />
+                        <FormMessage className="text-xs sm:text-sm" />
                       </FormItem>
                     )}
                   />
@@ -292,11 +293,11 @@ export default function CustomerAddresses() {
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City *</FormLabel>
+                        <FormLabel className="text-sm sm:text-base">City *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Accra" {...field} />
+                          <Input placeholder="Accra" className="h-11 sm:h-10 text-base sm:text-sm" {...field} />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-xs sm:text-sm" />
                       </FormItem>
                     )}
                   />
@@ -307,11 +308,11 @@ export default function CustomerAddresses() {
                   name="area"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Area/Neighborhood</FormLabel>
+                      <FormLabel className="text-sm sm:text-base">Area/Neighborhood</FormLabel>
                       <FormControl>
-                        <Input placeholder="Osu" {...field} />
+                        <Input placeholder="Osu" className="h-11 sm:h-10 text-base sm:text-sm" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-xs sm:text-sm" />
                     </FormItem>
                   )}
                 />
@@ -321,11 +322,11 @@ export default function CustomerAddresses() {
                   name="street_address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Street Address *</FormLabel>
+                      <FormLabel className="text-sm sm:text-base">Street Address *</FormLabel>
                       <FormControl>
-                        <Input placeholder="123 Main Street, House Number" {...field} />
+                        <Input placeholder="123 Main Street, House Number" className="h-11 sm:h-10 text-base sm:text-sm" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-xs sm:text-sm" />
                     </FormItem>
                   )}
                 />
@@ -335,14 +336,15 @@ export default function CustomerAddresses() {
                   name="additional_directions"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Additional Directions</FormLabel>
+                      <FormLabel className="text-sm sm:text-base">Additional Directions</FormLabel>
                       <FormControl>
                         <Textarea 
                           placeholder="Landmark, special instructions, etc." 
+                          className="min-h-20 sm:min-h-16 text-base sm:text-sm resize-none"
                           {...field} 
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-xs sm:text-sm" />
                     </FormItem>
                   )}
                 />
@@ -351,25 +353,34 @@ export default function CustomerAddresses() {
                   control={form.control}
                   name="is_default"
                   render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                    <FormItem className="flex items-center justify-between rounded-lg border p-3 sm:p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Set as default address</FormLabel>
+                        <FormLabel className="text-sm sm:text-base">Set as default address</FormLabel>
                       </div>
                       <FormControl>
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          className="scale-110 sm:scale-100"
                         />
                       </FormControl>
                     </FormItem>
                   )}
                 />
 
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2 pt-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setDialogOpen(false)}
+                    className="h-11 sm:h-10 w-full sm:w-auto text-base sm:text-sm touch-manipulation"
+                  >
                     Cancel
                   </Button>
-                  <Button type="submit">
+                  <Button 
+                    type="submit"
+                    className="h-11 sm:h-10 w-full sm:w-auto text-base sm:text-sm touch-manipulation"
+                  >
                     {editingAddress ? 'Update' : 'Add'} Address
                   </Button>
                 </div>
@@ -381,37 +392,39 @@ export default function CustomerAddresses() {
 
       {addresses.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center p-12">
-            <MapPin className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No addresses yet</h3>
-            <p className="text-muted-foreground text-center mb-4">
+          <CardContent className="flex flex-col items-center justify-center p-8 sm:p-12">
+            <MapPin className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold mb-2">No addresses yet</h3>
+            <p className="text-sm sm:text-base text-muted-foreground text-center mb-4">
               Add your first delivery address to start requesting quotes
             </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 sm:gap-4">
           {addresses.map((address) => (
             <Card key={address.id} className={address.is_default ? 'border-primary' : ''}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="flex items-center gap-2">
-                      {address.receiver_name}
+              <CardHeader className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="flex flex-wrap items-center gap-2 text-base sm:text-lg">
+                      <span className="truncate">{address.receiver_name}</span>
                       {address.is_default && (
-                        <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+                        <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded flex-shrink-0">
                           Default
                         </span>
                       )}
                     </CardTitle>
-                    <CardDescription>{address.phone_number}</CardDescription>
+                    <CardDescription className="text-sm sm:text-base mt-1">{address.phone_number}</CardDescription>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 sm:gap-2 flex-shrink-0">
                     {!address.is_default && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleSetDefault(address.id)}
+                        className="h-9 w-9 sm:h-8 sm:w-8 touch-manipulation"
+                        title="Set as default"
                       >
                         <Check className="w-4 h-4" />
                       </Button>
@@ -420,6 +433,8 @@ export default function CustomerAddresses() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(address)}
+                      className="h-9 w-9 sm:h-8 sm:w-8 touch-manipulation"
+                      title="Edit address"
                     >
                       <Edit2 className="w-4 h-4" />
                     </Button>
@@ -427,18 +442,20 @@ export default function CustomerAddresses() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(address.id)}
+                      className="h-9 w-9 sm:h-8 sm:w-8 touch-manipulation"
+                      title="Delete address"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-2 p-4 sm:p-6 pt-0">
                 <div className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground" />
-                  <div className="flex-1">
-                    <p className="font-medium">Ghana Digital Address: {address.ghana_digital_address}</p>
-                    <p className="text-sm text-muted-foreground">
+                  <MapPin className="w-4 h-4 mt-1 text-muted-foreground flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm sm:text-base break-words">Ghana Digital Address: {address.ghana_digital_address}</p>
+                    <p className="text-sm text-muted-foreground break-words">
                       {address.street_address}
                       {address.area && `, ${address.area}`}
                     </p>
@@ -446,7 +463,7 @@ export default function CustomerAddresses() {
                       {address.city}, {address.region}
                     </p>
                     {address.additional_directions && (
-                      <p className="text-sm text-muted-foreground mt-2">
+                      <p className="text-sm text-muted-foreground mt-2 break-words">
                         Directions: {address.additional_directions}
                       </p>
                     )}
