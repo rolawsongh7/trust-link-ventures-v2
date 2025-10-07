@@ -18,6 +18,9 @@ interface Invoice {
   currency: string;
   status: string;
   order_id: string;
+  orders?: {
+    order_number: string;
+  };
 }
 
 export const CustomerInvoices = () => {
@@ -28,6 +31,22 @@ export const CustomerInvoices = () => {
 
   useEffect(() => {
     fetchInvoices();
+
+    // Set up real-time subscription
+    const subscription = supabase
+      .channel('customer-invoices-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'invoices' },
+        (payload) => {
+          console.log('Invoice change detected:', payload);
+          fetchInvoices();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchInvoices = async () => {
@@ -46,7 +65,10 @@ export const CustomerInvoices = () => {
 
       const { data, error } = await supabase
         .from('invoices')
-        .select('*')
+        .select(`
+          *,
+          orders(order_number)
+        `)
         .eq('customer_id', customer.id)
         .order('created_at', { ascending: false });
 
@@ -173,6 +195,7 @@ export const CustomerInvoices = () => {
                 </CardTitle>
                 <CardDescription>
                   {getInvoiceTypeLabel(invoice.invoice_type)}
+                  {invoice.orders && ` • Order: ${invoice.orders.order_number}`}
                 </CardDescription>
               </div>
               <div className="text-right">

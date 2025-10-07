@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Package, Truck, CheckCircle, Clock, AlertCircle, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeliveryManagementDialog } from './DeliveryManagementDialog';
+import { PaymentConfirmationDialog } from './PaymentConfirmationDialog';
 
 interface Order {
   id: string;
@@ -19,6 +20,8 @@ interface Order {
   expected_delivery_date?: string;
   notes?: string;
   created_at: string;
+  delivery_address_id?: string;
+  payment_reference?: string;
   quotes: {
     quote_number: string;
     title: string;
@@ -26,6 +29,7 @@ interface Order {
   customers: {
     company_name: string;
     contact_name?: string;
+    email?: string;
   };
   order_items: any[];
 }
@@ -37,6 +41,8 @@ const OrdersManagement = () => {
   const [selectedTab, setSelectedTab] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [paymentConfirmOrder, setPaymentConfirmOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -62,7 +68,7 @@ const OrdersManagement = () => {
         .select(`
           *,
           quotes(quote_number, title),
-          customers(company_name, contact_name)
+          customers(company_name, contact_name, email)
         `)
         .order('created_at', { ascending: false });
 
@@ -92,6 +98,11 @@ const OrdersManagement = () => {
     }
   };
 
+  const handlePaymentConfirmation = (order: Order) => {
+    setPaymentConfirmOrder(order);
+    setPaymentDialogOpen(true);
+  };
+
   const updateOrderStatus = async (orderId: string, status: any) => {
     try {
       // Get order details first
@@ -115,7 +126,7 @@ const OrdersManagement = () => {
       if (error) throw error;
 
       // Send tracking email for specific statuses
-      const emailStatuses = ['shipped', 'delivered', 'ready_to_ship', 'processing', 'payment_received'];
+      const emailStatuses = ['shipped', 'delivered', 'ready_to_ship', 'processing'];
       if (emailStatuses.includes(status) && orderData?.quotes?.customers?.email) {
         try {
           await supabase.functions.invoke('send-order-tracking-link', {
@@ -129,29 +140,6 @@ const OrdersManagement = () => {
         } catch (emailError) {
           console.error('Error sending tracking email:', emailError);
           // Don't fail the status update if email fails
-        }
-      }
-
-      // Generate invoice when payment is received
-      if (status === 'payment_received') {
-        try {
-          toast.loading('Generating invoice...');
-          
-          const { data: invoiceData, error: invoiceError } = await supabase.functions.invoke('generate-invoice-pdf', {
-            body: {
-              orderId,
-              invoiceType: 'commercial',
-            },
-          });
-
-          if (invoiceError) throw invoiceError;
-
-          toast.success('Invoice generated successfully');
-          console.log('Invoice generated:', invoiceData);
-        } catch (invoiceError) {
-          console.error('Error generating invoice:', invoiceError);
-          toast.error('Failed to generate invoice. You can generate it manually later.');
-          // Don't fail the status update if invoice generation fails
         }
       }
 
@@ -378,7 +366,7 @@ const OrdersManagement = () => {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => updateOrderStatus(order.id, 'payment_received')}
+                            onClick={() => handlePaymentConfirmation(order)}
                           >
                             Confirm Payment
                           </Button>
@@ -474,6 +462,18 @@ const OrdersManagement = () => {
           order={selectedOrder}
           open={deliveryDialogOpen}
           onOpenChange={setDeliveryDialogOpen}
+          onSuccess={fetchOrders}
+        />
+      )}
+
+      {paymentConfirmOrder && (
+        <PaymentConfirmationDialog
+          open={paymentDialogOpen}
+          onOpenChange={setPaymentDialogOpen}
+          orderId={paymentConfirmOrder.id}
+          orderNumber={paymentConfirmOrder.order_number}
+          customerEmail={paymentConfirmOrder.customers?.email || ''}
+          deliveryAddressId={paymentConfirmOrder.delivery_address_id}
           onSuccess={fetchOrders}
         />
       )}
