@@ -45,6 +45,7 @@ const LeadsManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const { toast } = useToast();
@@ -208,8 +209,9 @@ const LeadsManagement = () => {
       (lead.source?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
     
     const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
+    const matchesSource = sourceFilter === 'all' || lead.source === sourceFilter;
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesSource;
   });
 
   // Calculate metrics
@@ -582,6 +584,20 @@ const LeadsManagement = () => {
                 <SelectItem value="closed_lost">Closed Lost</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <SelectTrigger className="w-48">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="All Sources" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sources</SelectItem>
+                <SelectItem value="contact_form">📧 Contact Form</SelectItem>
+                <SelectItem value="product_quote_form">📦 Product Quote</SelectItem>
+                <SelectItem value="referral">👥 Referral</SelectItem>
+                <SelectItem value="website">🌐 Website</SelectItem>
+                <SelectItem value="social_media">📱 Social Media</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Table */}
@@ -618,7 +634,15 @@ const LeadsManagement = () => {
                         {lead.lead_score || 0}
                       </Badge>
                     </TableCell>
-                    <TableCell>{lead.source || '-'}</TableCell>
+                    <TableCell>
+                      {lead.source === 'contact_form' ? (
+                        <Badge variant="default" className="bg-blue-500">
+                          📧 Contact Form
+                        </Badge>
+                      ) : (
+                        lead.source || '-'
+                      )}
+                    </TableCell>
                     <TableCell>
                       {lead.expected_close_date ? new Date(lead.expected_close_date).toLocaleDateString() : '-'}
                     </TableCell>

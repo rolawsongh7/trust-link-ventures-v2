@@ -43,6 +43,7 @@ const CommunicationsManagement = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCommunication, setEditingCommunication] = useState<Communication | null>(null);
   const [replyingToCommunication, setReplyingToCommunication] = useState<Communication | null>(null);
@@ -250,12 +251,19 @@ const CommunicationsManagement = () => {
     setIsDialogOpen(true);
   };
 
-  const filteredCommunications = communications.filter(comm =>
-    comm.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    comm.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    comm.customers?.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    comm.leads?.title?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCommunications = communications.filter(comm => {
+    const matchesSearch = comm.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      comm.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      comm.customers?.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      comm.leads?.title?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesType = typeFilter === 'all' || comm.communication_type === typeFilter;
+    const matchesContactForm = typeFilter === 'contact_form' 
+      ? comm.subject?.includes('Contact Form:')
+      : true;
+    
+    return matchesSearch && (matchesType || matchesContactForm);
+  });
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -492,6 +500,19 @@ const CommunicationsManagement = () => {
             className="pl-8"
           />
         </div>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Filter by type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="contact_form">📧 Contact Forms</SelectItem>
+            <SelectItem value="email">Email</SelectItem>
+            <SelectItem value="call">Phone Call</SelectItem>
+            <SelectItem value="meeting">Meeting</SelectItem>
+            <SelectItem value="note">Note</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-4">
@@ -505,12 +526,22 @@ const CommunicationsManagement = () => {
                     <CardTitle className="text-lg flex items-center gap-2">
                       <TypeIcon className="h-4 w-4" />
                       {comm.subject}
+                      {comm.subject?.includes('Contact Form:') && (
+                        <Badge variant="default" className="bg-blue-500 ml-2">
+                          📧 Contact Form
+                        </Badge>
+                      )}
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       {(comm.customers?.company_name || comm.leads?.title) && (
                         <CardDescription>
                           {comm.customers?.company_name || comm.leads?.title}
                         </CardDescription>
+                      )}
+                      {comm.leads?.title && (
+                        <Badge variant="outline" className="text-xs">
+                          Lead: {comm.leads.title}
+                        </Badge>
                       )}
                     </div>
                   </div>
