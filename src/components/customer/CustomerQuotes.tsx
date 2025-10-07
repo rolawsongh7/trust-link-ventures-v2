@@ -53,6 +53,8 @@ export const CustomerQuotes: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [selectedPaymentQuote, setSelectedPaymentQuote] = useState<any>(null);
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
 
@@ -178,12 +180,23 @@ export const CustomerQuotes: React.FC = () => {
 
       if (error) throw error;
 
+      // Fetch the newly created order
+      const { data: order } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('quote_id', quoteId)
+        .single();
+
       toast({
-        title: "Quote Approved",
-        description: "Thank you! Please see payment instructions below.",
+        title: "Quote Approved Successfully! ✓",
+        description: order 
+          ? `Order ${order.order_number} has been created. Payment instructions are shown below.`
+          : "Thank you! Payment instructions are shown below.",
       });
 
       fetchQuotes(); // Refresh the list
+      setPaymentDialogOpen(true); // Show payment instructions
+      setSelectedPaymentQuote(quotes.find(q => q.final_quote?.id === quoteId)?.final_quote || null);
     } catch (error) {
       console.error('Error approving quote:', error);
       toast({
@@ -605,6 +618,106 @@ export const CustomerQuotes: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Payment Instructions Dialog */}
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <DollarSign className="h-6 w-6 text-primary" />
+              Payment Instructions
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedPaymentQuote && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-2 border-green-200 dark:border-green-800 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center">
+                    <span className="text-white text-xl">✓</span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">Quote Approved!</h3>
+                    <p className="text-sm text-muted-foreground">Quote #{selectedPaymentQuote.quote_number}</p>
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+                  Total: {selectedPaymentQuote.currency} {selectedPaymentQuote.total_amount?.toLocaleString()}
+                </div>
+              </div>
+
+              <div className="bg-muted/50 rounded-lg p-6 space-y-4">
+                <h4 className="font-bold text-lg flex items-center gap-2">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  Bank Transfer Details
+                </h4>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-sm text-muted-foreground">Bank Name:</span>
+                    <span className="font-semibold">Trust Link Bank Ghana</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-sm text-muted-foreground">Account Name:</span>
+                    <span className="font-semibold">Trust Link Ventures Limited</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-sm text-muted-foreground">Account Number:</span>
+                    <span className="font-semibold font-mono">1234567890</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-sm text-muted-foreground">Swift Code:</span>
+                    <span className="font-semibold font-mono">TLBKGHAC</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-sm text-muted-foreground">Reference:</span>
+                    <span className="font-semibold font-mono">{selectedPaymentQuote.quote_number}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <h5 className="font-semibold mb-2 flex items-center gap-2">
+                  <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Important Notes:
+                </h5>
+                <ul className="text-sm space-y-1 ml-7 list-disc text-muted-foreground">
+                  <li>Please include the quote number ({selectedPaymentQuote.quote_number}) in your payment reference</li>
+                  <li>Payment must be received within 7 days to maintain pricing</li>
+                  <li>An order will be created automatically upon payment confirmation</li>
+                  <li>You will receive a confirmation email once payment is verified</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-2">
+                <Button 
+                  className="flex-1"
+                  onClick={() => setPaymentDialogOpen(false)}
+                >
+                  Close
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    const details = `Bank: Trust Link Bank Ghana\nAccount: Trust Link Ventures Limited\nAccount #: 1234567890\nSwift: TLBKGHAC\nReference: ${selectedPaymentQuote.quote_number}\nAmount: ${selectedPaymentQuote.currency} ${selectedPaymentQuote.total_amount?.toLocaleString()}`;
+                    navigator.clipboard.writeText(details);
+                    toast({
+                      title: "Copied!",
+                      description: "Payment details copied to clipboard",
+                    });
+                  }}
+                >
+                  Copy Details
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Details Dialog - Enhanced */}
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
