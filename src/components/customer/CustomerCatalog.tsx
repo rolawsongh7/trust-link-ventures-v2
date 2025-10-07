@@ -85,12 +85,28 @@ export const CustomerCatalog: React.FC = () => {
             const name = product.name.toLowerCase();
             const imageUrl = product.image_public_url?.toLowerCase() || '';
             
-            // Filter out products with packaging-related keywords
-            if (name.includes('carton') || 
-                name.includes('package') || 
-                name.includes('box') ||
-                imageUrl.includes('carton') ||
-                imageUrl.includes('package')) {
+            // Enhanced filtering for packaging products - any product name containing these terms
+            const packagingKeywords = [
+              'carton', 'package', 'box', 'bag', 'frozen', 'seph', 'china', 'norway', 
+              'japan', 'chile', 'ireland', 'peru', 'oman', 'namibia', 'irish', 
+              'atlantic', 'antarctic', 'oceana', 'kamoyasu', 'daikokuya', 'abecho',
+              'exalmar', 'kontiki', 'diamante', 'premier', 'sunshine', 'lech drob',
+              'koch foods', 'killybegs', 'marr box', 'oshongo', 'pelican', 
+              'fosnavaag', 'global', 'sperre', 'vikomar', 'yamada', 'yelpi',
+              'nabejyu', 'olav', 'casings', 'da yang', 'animex'
+            ];
+            
+            // Check if any packaging keyword is found in the product name
+            const isPackagingProduct = packagingKeywords.some(keyword => 
+              name.includes(keyword)
+            );
+            
+            // Also check image URL for packaging indicators
+            const hasPackagingImage = imageUrl.includes('carton') || 
+                                    imageUrl.includes('package') || 
+                                    imageUrl.includes('box');
+            
+            if (isPackagingProduct || hasPackagingImage) {
               return false;
             }
           }
