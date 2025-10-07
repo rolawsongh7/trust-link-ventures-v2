@@ -137,13 +137,18 @@ export const CustomerAnalytics = () => {
         revenue: insights.filter(c => c.industry === industry).reduce((sum, c) => sum + c.total_revenue, 0)
       }));
 
-      // Revenue trend data (sample)
+      // Revenue trend data (actual data from orders)
       const revenueTrend = Array.from({ length: 7 }, (_, i) => {
         const date = new Date(now.getTime() - (6 - i) * 24 * 60 * 60 * 1000);
+        const dayOrders = recentOrders.filter(o => {
+          const orderDate = new Date(o.created_at);
+          return orderDate.toDateString() === date.toDateString();
+        });
+        const dayRevenue = dayOrders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
         return {
-          date: date.toLocaleDateString(),
-          revenue: Math.floor(Math.random() * 50000) + 10000,
-          orders: Math.floor(Math.random() * 20) + 5,
+          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          revenue: dayRevenue,
+          orders: dayOrders.length,
         };
       });
 

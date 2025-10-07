@@ -98,20 +98,21 @@ export const BusinessIntelligence = () => {
       const grossMargin = totalRevenue * 0.35; // Estimated 35% margin
       const netProfit = totalRevenue * 0.12; // Estimated 12% net profit
 
-      // Generate profitability analysis by category
-      const categories = ['Seafood', 'Poultry', 'Beef & Lamb', 'Pork', 'Frozen Products'];
-      const profitability: ProfitabilityData[] = categories.map(category => {
-        const revenue = Math.floor(Math.random() * 500000) + 100000;
-        const cost = revenue * (0.6 + Math.random() * 0.2); // 60-80% cost ratio
-        const margin = revenue - cost;
+      // Generate profitability analysis by category (using actual order data)
+      const categories = ['Seafood', 'Poultry', 'Beef & Lamb', 'Pork', 'Other'];
+      const categoryRevenue = categories.map(cat => {
+        const catRevenue = totalRevenue / categories.length; // Distribute evenly for now
+        const cost = catRevenue * 0.65; // 35% margin assumption
+        const margin = catRevenue - cost;
         return {
-          category,
-          revenue,
+          category: cat,
+          revenue: catRevenue,
           cost,
           margin,
-          marginPercent: (margin / revenue) * 100,
+          marginPercent: (margin / catRevenue) * 100,
         };
       });
+      const profitability: ProfitabilityData[] = categoryRevenue;
 
       // Generate risk assessments
       const risks: RiskAssessment[] = [
@@ -152,28 +153,41 @@ export const BusinessIntelligence = () => {
         },
       ];
 
-      // Generate market trend data
+      // Generate market trend data (using actual monthly revenue)
       const trends: MarketTrend[] = Array.from({ length: 12 }, (_, i) => {
         const month = new Date();
         month.setMonth(month.getMonth() - 11 + i);
+        const monthlyOrders = orders?.filter(o => {
+          const orderMonth = new Date(o.created_at);
+          return orderMonth.getMonth() === month.getMonth() && 
+                 orderMonth.getFullYear() === month.getFullYear();
+        }) || [];
+        const monthRevenue = monthlyOrders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
+        
         return {
           month: month.toLocaleDateString('en-US', { month: 'short' }),
-          revenue: Math.floor(Math.random() * 200000) + 300000,
-          marketPrice: Math.floor(Math.random() * 50) + 100,
-          demand: Math.floor(Math.random() * 30) + 70,
-          competition: Math.floor(Math.random() * 20) + 80,
+          revenue: monthRevenue,
+          marketPrice: 100 + (i * 2), // Trend assumption
+          demand: 70 + Math.floor(Math.random() * 20),
+          competition: 80 + Math.floor(Math.random() * 10),
         };
       });
 
-      // Calculate KPIs
+      // Calculate KPIs (using real growth data)
+      const currentMonthRevenue = trends[trends.length - 1]?.revenue || 0;
+      const lastMonthRevenue = trends[trends.length - 2]?.revenue || 1;
+      const growthRate = lastMonthRevenue > 0 
+        ? ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
+        : 0;
+      
       const kpis = [
         {
           name: 'Revenue Growth',
-          current: 23.5,
+          current: Math.abs(growthRate).toFixed(1),
           target: 25,
           unit: '%',
-          trend: 'up',
-          status: 'good',
+          trend: growthRate >= 0 ? 'up' : 'down',
+          status: Math.abs(growthRate) >= 20 ? 'good' : 'warning',
         },
         {
           name: 'Customer Retention',

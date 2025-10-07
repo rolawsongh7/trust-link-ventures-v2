@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,18 +6,52 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import AnalyticsReports from '@/components/AnalyticsReports';
 import { CustomerAnalytics } from '@/components/analytics/CustomerAnalytics';
-
 import { BusinessIntelligence } from '@/components/analytics/BusinessIntelligence';
-import { Users, Factory, TrendingUp, BarChart3, Download, RefreshCw } from 'lucide-react';
+import { Users, TrendingUp, BarChart3, Download, RefreshCw } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const AnalyticsPage = () => {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [refreshing, setRefreshing] = useState(false);
+  const [overviewMetrics, setOverviewMetrics] = useState({
+    activeCustomers: 0,
+    totalRevenue: 0,
+    avgOrderValue: 0,
+    totalOrders: 0,
+  });
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    fetchOverviewMetrics();
+  }, [refreshKey]);
+
+  const fetchOverviewMetrics = async () => {
+    try {
+      const [customersRes, ordersRes] = await Promise.all([
+        supabase.from('customers').select('*'),
+        supabase.from('orders').select('total_amount'),
+      ]);
+
+      const activeCustomers = customersRes.data?.filter(c => c.customer_status === 'active').length || 0;
+      const totalRevenue = ordersRes.data?.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0) || 0;
+      const totalOrders = ordersRes.data?.length || 0;
+      const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+      setOverviewMetrics({
+        activeCustomers,
+        totalRevenue,
+        avgOrderValue,
+        totalOrders,
+      });
+    } catch (error) {
+      console.error('Error fetching overview metrics:', error);
+    }
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    // Simulate refresh delay
+    setRefreshKey(prev => prev + 1);
     await new Promise(resolve => setTimeout(resolve, 1000));
     setRefreshing(false);
   };
@@ -87,13 +121,12 @@ const AnalyticsPage = () => {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">1,234</div>
+                  <div className="text-2xl font-bold">{overviewMetrics.activeCustomers.toLocaleString()}</div>
                   <p className="text-xs text-muted-foreground">
-                    +20.1% from last month
+                    Currently active status
                   </p>
                 </CardContent>
               </Card>
-              
               
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -101,9 +134,9 @@ const AnalyticsPage = () => {
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$2.4M</div>
+                  <div className="text-2xl font-bold">${overviewMetrics.totalRevenue.toLocaleString()}</div>
                   <p className="text-xs text-muted-foreground">
-                    +12.5% growth rate
+                    All orders to date
                   </p>
                 </CardContent>
               </Card>
@@ -114,23 +147,36 @@ const AnalyticsPage = () => {
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$15,670</div>
+                  <div className="text-2xl font-bold">${overviewMetrics.avgOrderValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
                   <p className="text-xs text-muted-foreground">
-                    +8.2% from last month
+                    Per order average
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{overviewMetrics.totalOrders.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground">
+                    All time
                   </p>
                 </CardContent>
               </Card>
             </div>
             
-            <AnalyticsReports />
+            <AnalyticsReports key={refreshKey} />
           </TabsContent>
 
           <TabsContent value="customers">
-            <CustomerAnalytics />
+            <CustomerAnalytics key={refreshKey} />
           </TabsContent>
 
           <TabsContent value="business">
-            <BusinessIntelligence />
+            <BusinessIntelligence key={refreshKey} />
           </TabsContent>
         </Tabs>
       </div>
