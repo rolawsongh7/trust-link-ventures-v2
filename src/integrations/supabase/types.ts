@@ -1293,7 +1293,9 @@ export type Database = {
           currency: string | null
           customer_id: string | null
           delivered_at: string | null
+          delivery_address_confirmed_at: string | null
           delivery_address_id: string | null
+          delivery_address_requested_at: string | null
           delivery_notes: string | null
           delivery_proof_url: string | null
           delivery_signature: string | null
@@ -1329,7 +1331,9 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           delivered_at?: string | null
+          delivery_address_confirmed_at?: string | null
           delivery_address_id?: string | null
+          delivery_address_requested_at?: string | null
           delivery_notes?: string | null
           delivery_proof_url?: string | null
           delivery_signature?: string | null
@@ -1365,7 +1369,9 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           delivered_at?: string | null
+          delivery_address_confirmed_at?: string | null
           delivery_address_id?: string | null
+          delivery_address_requested_at?: string | null
           delivery_notes?: string | null
           delivery_proof_url?: string | null
           delivery_signature?: string | null

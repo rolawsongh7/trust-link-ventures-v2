@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Package, Truck, CheckCircle, Clock, AlertCircle, Mail } from 'lucide-react';
+import { Search, Package, Truck, CheckCircle, Clock, AlertCircle, Mail, MapPin, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeliveryManagementDialog } from './DeliveryManagementDialog';
 import { PaymentConfirmationDialog } from './PaymentConfirmationDialog';
@@ -22,6 +22,14 @@ interface Order {
   created_at: string;
   delivery_address_id?: string;
   payment_reference?: string;
+  delivery_address_requested_at?: string;
+  delivery_address_confirmed_at?: string;
+  customer_addresses?: {
+    street_address: string;
+    city: string;
+    region: string;
+    ghana_digital_address?: string;
+  };
   quotes: {
     quote_number: string;
     title: string;
@@ -68,7 +76,8 @@ const OrdersManagement = () => {
         .select(`
           *,
           quotes(quote_number, title),
-          customers(company_name, contact_name, email)
+          customers(company_name, contact_name, email),
+          customer_addresses(street_address, city, region, ghana_digital_address)
         `)
         .order('created_at', { ascending: false });
 
@@ -123,7 +132,14 @@ const OrdersManagement = () => {
         .update({ status } as any)
         .eq('id', orderId);
 
-      if (error) throw error;
+      if (error) {
+        // Check if it's the delivery address validation error
+        if (error.message?.includes('delivery address')) {
+          toast.error("Cannot ship without delivery address. Please request address from customer first.");
+          return;
+        }
+        throw error;
+      }
 
       // Send tracking email for specific statuses
       const emailStatuses = ['shipped', 'delivered', 'ready_to_ship', 'processing'];
@@ -215,6 +231,34 @@ const OrdersManagement = () => {
     }
   };
 
+  const handleRequestAddress = async (order: Order) => {
+    try {
+      const { error } = await supabase.functions.invoke('request-delivery-address', {
+        body: {
+          orderId: order.id,
+          orderNumber: order.order_number,
+          customerEmail: order.customers?.email,
+          customerName: order.customers?.contact_name,
+          companyName: order.customers?.company_name,
+        },
+      });
+
+      if (error) throw error;
+
+      // Update order to track request
+      await supabase
+        .from('orders')
+        .update({ delivery_address_requested_at: new Date().toISOString() })
+        .eq('id', order.id);
+
+      toast.success('Delivery address request sent to customer');
+      fetchOrders();
+    } catch (error) {
+      console.error('Error requesting delivery address:', error);
+      toast.error('Failed to request delivery address');
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'quote_pending': return <Clock className="h-4 w-4" />;
@@ -236,7 +280,14 @@ const OrdersManagement = () => {
                          order.customers.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.quotes.title.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesTab = selectedTab === 'all' || order.status === selectedTab;
+    let matchesTab = false;
+    if (selectedTab === 'all') {
+      matchesTab = true;
+    } else if (selectedTab === 'pending_address') {
+      matchesTab = !order.delivery_address_id && ['payment_received', 'processing'].includes(order.status);
+    } else {
+      matchesTab = order.status === selectedTab;
+    }
     
     return matchesSearch && matchesTab;
   });
@@ -280,8 +331,11 @@ const OrdersManagement = () => {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid grid-cols-7 w-full">
+        <TabsList className="grid grid-cols-8 w-full">
           <TabsTrigger value="all">All ({orders.length})</TabsTrigger>
+          <TabsTrigger value="pending_address">
+            Pending Address ({orders.filter(o => !o.delivery_address_id && ['payment_received', 'processing'].includes(o.status)).length})
+          </TabsTrigger>
           <TabsTrigger value="order_confirmed">Confirmed ({orders.filter(o => o.status === 'order_confirmed').length})</TabsTrigger>
           <TabsTrigger value="payment_received">Payment ({orders.filter(o => o.status === 'payment_received').length})</TabsTrigger>
           <TabsTrigger value="processing">Processing ({orders.filter(o => o.status === 'processing').length})</TabsTrigger>
@@ -315,6 +369,18 @@ const OrdersManagement = () => {
                         <Badge className={getStatusColor(order.status)}>
                           {order.status.replace(/_/g, ' ')}
                         </Badge>
+                        {!order.delivery_address_id && ['payment_received', 'processing', 'ready_to_ship'].includes(order.status) && (
+                          <Badge variant="destructive">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            No Delivery Address
+                          </Badge>
+                        )}
+                        {order.delivery_address_id && (
+                          <Badge variant="default" className="bg-green-100 text-green-800">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Address Confirmed
+                          </Badge>
+                        )}
                         <Badge variant="outline" className="bg-blue-50">
                           Related Quote: {order.quotes?.quote_number || 'N/A'}
                         </Badge>
@@ -335,6 +401,24 @@ const OrdersManagement = () => {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-4">
+                    {order.customer_addresses && (
+                      <div className="bg-muted/50 p-3 rounded-md">
+                        <div className="flex items-start gap-2">
+                          <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                          <div className="text-sm">
+                            <p className="font-medium">Delivery Address:</p>
+                            <p className="text-muted-foreground">
+                              {order.customer_addresses.street_address}, {order.customer_addresses.city}, {order.customer_addresses.region}
+                              {order.customer_addresses.ghana_digital_address && (
+                                <span className="ml-2 font-mono text-xs bg-background px-2 py-0.5 rounded">
+                                  {order.customer_addresses.ghana_digital_address}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <div>
                       <h4 className="font-medium mb-2">Order Items:</h4>
                       <div className="space-y-1">
@@ -362,6 +446,17 @@ const OrdersManagement = () => {
                         )}
                       </div>
                       <div className="flex flex-wrap gap-2">
+                        {!order.delivery_address_id && ['payment_received', 'processing'].includes(order.status) && (
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            onClick={() => handleRequestAddress(order)}
+                            className="bg-orange-500 hover:bg-orange-600"
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            Request Delivery Address
+                          </Button>
+                        )}
                         {order.status === 'order_confirmed' && (
                           <Button 
                             variant="outline" 
@@ -385,6 +480,8 @@ const OrdersManagement = () => {
                             variant="outline" 
                             size="sm"
                             onClick={() => updateOrderStatus(order.id, 'ready_to_ship')}
+                            disabled={!order.delivery_address_id}
+                            title={!order.delivery_address_id ? 'Delivery address required before shipping' : ''}
                           >
                             Mark Ready to Ship
                           </Button>

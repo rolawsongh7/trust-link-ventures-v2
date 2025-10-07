@@ -49,3 +49,6 @@ verify_jwt = false
 
 [functions.send-tracking-link]
 verify_jwt = false
+
+[functions.request-delivery-address]
+verify_jwt = false

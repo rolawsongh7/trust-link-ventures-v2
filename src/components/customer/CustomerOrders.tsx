@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign, Download } from 'lucide-react';
+import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign, Download, MapPin, AlertCircle } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import AddressSelectionDialog from './AddressSelectionDialog';
 
 
 // Order interface matching database schema
@@ -21,6 +22,7 @@ interface Order {
   created_at: string;
   estimated_delivery_date?: string;
   tracking_number?: string;
+  delivery_address_id?: string;
   order_items?: any[];
   quotes?: {
     quote_number: string;
@@ -36,6 +38,8 @@ export const CustomerOrders: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [addressDialogOpen, setAddressDialogOpen] = useState(false);
+  const [selectedOrderForAddress, setSelectedOrderForAddress] = useState<Order | null>(null);
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -203,6 +207,38 @@ export const CustomerOrders: React.FC = () => {
     }
   };
 
+  const handleAddressSelect = async (addressId: string) => {
+    if (!selectedOrderForAddress) return;
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          delivery_address_id: addressId,
+          delivery_address_confirmed_at: new Date().toISOString()
+        })
+        .eq('id', selectedOrderForAddress.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Address Updated",
+        description: "Your delivery address has been confirmed.",
+      });
+
+      setAddressDialogOpen(false);
+      setSelectedOrderForAddress(null);
+      fetchOrders();
+    } catch (error) {
+      console.error('Error updating delivery address:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update delivery address",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDownloadInvoice = async (orderId: string, orderNumber: string) => {
     try {
       toast({
@@ -260,6 +296,23 @@ export const CustomerOrders: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
+      {/* Address needed banner */}
+      {orders.some(o => !o.delivery_address_id && ['payment_received', 'processing'].includes(o.status)) && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-orange-900">Delivery Address Required</h3>
+                <p className="text-sm text-orange-800 mt-1">
+                  Some of your orders are waiting for delivery address information. Please provide your delivery address to proceed with shipping.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
@@ -402,6 +455,21 @@ export const CustomerOrders: React.FC = () => {
                   )}
 
                   <div className="flex flex-wrap items-center gap-2">
+                    {!order.delivery_address_id && ['payment_received', 'processing'].includes(order.status) && (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedOrderForAddress(order);
+                          setAddressDialogOpen(true);
+                        }}
+                        className="bg-orange-500 hover:bg-orange-600"
+                      >
+                        <MapPin className="h-4 w-4 mr-2" />
+                        Add Delivery Address
+                      </Button>
+                    )}
+                    
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -435,6 +503,13 @@ export const CustomerOrders: React.FC = () => {
           })}
         </div>
       )}
+
+      {/* Address Selection Dialog */}
+      <AddressSelectionDialog
+        open={addressDialogOpen}
+        onOpenChange={setAddressDialogOpen}
+        onSelect={handleAddressSelect}
+      />
     </div>
   );
 };

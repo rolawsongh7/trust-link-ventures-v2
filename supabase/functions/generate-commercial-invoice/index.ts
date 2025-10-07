@@ -50,6 +50,16 @@ serve(async (req) => {
       throw new Error('Order not found');
     }
 
+    // Validate delivery address exists
+    if (!order.delivery_address_id) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Cannot generate commercial invoice without delivery address. Please ensure delivery address is confirmed first.' 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('[Commercial Invoice] Creating invoice for order:', order.order_number);
 
     // Create commercial invoice

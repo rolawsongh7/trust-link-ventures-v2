@@ -50,6 +50,16 @@ serve(async (req) => {
       throw new Error('Order not found');
     }
 
+    // Validate delivery address exists
+    if (!order.delivery_address_id) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Cannot generate packing list without delivery address. Please request delivery address from customer first.' 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('[Packing List] Creating invoice for order:', order.order_number);
 
     // Create packing list invoice
