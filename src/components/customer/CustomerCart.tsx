@@ -96,6 +96,26 @@ export const CustomerCart: React.FC = () => {
 
       if (itemsError) throw itemsError;
 
+      // Send confirmation email
+      try {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            to: profile.email,
+            type: 'quote_confirmation',
+            data: {
+              customerName: profile.full_name,
+              companyName: profile.company_name,
+              quoteNumber: quoteRequest.quote_number,
+              itemCount: items.length,
+              message: message || 'No additional notes provided'
+            }
+          }
+        });
+      } catch (emailError) {
+        console.error('Error sending confirmation email:', emailError);
+        // Don't fail the whole request if email fails
+      }
+
       // Clear cart and show success
       await clearCart();
       setMessage('');
