@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,12 +7,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Search, Edit, Eye, Mail, Phone, Building, Users, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Eye, Mail, Phone, Building, Users, Trash2, Download, Filter, X } from 'lucide-react';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { DataTable, Column } from '@/components/ui/data-table';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import CustomerDetailView from './CustomerDetailView';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Customer {
   id: string;
@@ -36,7 +39,11 @@ const CustomerManagement = () => {
   const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [industryFilter, setIndustryFilter] = useState<string>('all');
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const form = useForm({
     defaultValues: {
@@ -211,11 +218,58 @@ const CustomerManagement = () => {
     setDeleteDialogOpen(true);
   };
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Get unique industries for filter
+  const industries = useMemo(() => {
+    const uniqueIndustries = [...new Set(customers.map(c => c.industry).filter(Boolean))];
+    return uniqueIndustries.sort();
+  }, [customers]);
+
+  // Apply all filters
+  const filteredCustomers = useMemo(() => {
+    return customers.filter(customer => {
+      const matchesSearch = 
+        customer.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.email.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || customer.customer_status === statusFilter;
+      const matchesPriority = priorityFilter === 'all' || customer.priority === priorityFilter;
+      const matchesIndustry = industryFilter === 'all' || customer.industry === industryFilter;
+      
+      return matchesSearch && matchesStatus && matchesPriority && matchesIndustry;
+    });
+  }, [customers, searchTerm, statusFilter, priorityFilter, industryFilter]);
+
+  const hasActiveFilters = statusFilter !== 'all' || priorityFilter !== 'all' || industryFilter !== 'all';
+
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setIndustryFilter('all');
+  };
+
+  const exportToCSV = () => {
+    const headers = ['Company Name', 'Contact Name', 'Email', 'Phone', 'Industry', 'Status', 'Priority', 'Annual Revenue'];
+    const csvData = filteredCustomers.map(c => [
+      c.company_name,
+      c.contact_name,
+      c.email,
+      c.phone,
+      c.industry,
+      c.customer_status,
+      c.priority,
+      c.annual_revenue
+    ]);
+    
+    const csv = [headers, ...csvData].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `customers-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -258,6 +312,82 @@ const CustomerManagement = () => {
     );
   }
 
+  // Define table columns
+  const columns: Column<Customer>[] = [
+    {
+      key: 'company_name',
+      label: 'Company',
+      sortable: true,
+      filterable: true,
+      render: (value, row) => (
+        <div className="flex items-center gap-2">
+          <Building className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">{value}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'contact_name',
+      label: 'Contact',
+      sortable: true,
+      filterable: true,
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <Mail className="h-3 w-3 text-muted-foreground" />
+          <span className="text-sm">{value}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'phone',
+      label: 'Phone',
+      render: (value) => value ? (
+        <div className="flex items-center gap-2">
+          <Phone className="h-3 w-3 text-muted-foreground" />
+          <span className="text-sm">{value}</span>
+        </div>
+      ) : '-',
+    },
+    {
+      key: 'industry',
+      label: 'Industry',
+      sortable: true,
+      filterable: true,
+    },
+    {
+      key: 'customer_status',
+      label: 'Status',
+      sortable: true,
+      render: (value) => (
+        <Badge variant={getStatusColor(value)}>
+          {value}
+        </Badge>
+      ),
+    },
+    {
+      key: 'priority',
+      label: 'Priority',
+      sortable: true,
+      render: (value) => (
+        <Badge variant={getPriorityColor(value)}>
+          {value}
+        </Badge>
+      ),
+    },
+    {
+      key: 'annual_revenue',
+      label: 'Revenue',
+      sortable: true,
+      render: (value) => value ? `$${Number(value).toLocaleString()}` : '-',
+    },
+  ];
+
   if (viewingCustomer) {
     return (
       <CustomerDetailView 
@@ -274,13 +404,18 @@ const CustomerManagement = () => {
           <h2 className="text-2xl font-bold text-foreground">Customer Management</h2>
           <p className="text-muted-foreground">Manage your customer relationships and information</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingCustomer(null)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Customer
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportToCSV}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setEditingCustomer(null)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Customer
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingCustomer ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>
@@ -440,7 +575,7 @@ const CustomerManagement = () => {
                   )}
                 />
 
-                <div className="flex justify-end space-x-2">
+                 <div className="flex justify-end space-x-2">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                     Cancel
                   </Button>
@@ -452,101 +587,164 @@ const CustomerManagement = () => {
             </Form>
           </DialogContent>
         </Dialog>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search customers..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredCustomers.map((customer) => (
-          <Card key={customer.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Building className="h-4 w-4" />
-                    {customer.company_name}
-                  </CardTitle>
-                  <CardDescription>{customer.contact_name}</CardDescription>
-                </div>
-                <div className="flex space-x-1">
-                  <Badge variant={getPriorityColor(customer.priority)}>
-                    {customer.priority}
-                  </Badge>
-                  <Badge variant={getStatusColor(customer.customer_status)}>
-                    {customer.customer_status}
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-2">
-                {customer.email && (
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Mail className="h-3 w-3 mr-2" />
-                    {customer.email}
-                  </div>
-                )}
-                {customer.phone && (
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Phone className="h-3 w-3 mr-2" />
-                    {customer.phone}
-                  </div>
-                )}
-                {customer.industry && (
-                  <div className="text-sm text-muted-foreground">
-                    Industry: {customer.industry}
-                  </div>
-                )}
-                {customer.annual_revenue > 0 && (
-                  <div className="text-sm text-muted-foreground">
-                    Revenue: ${customer.annual_revenue.toLocaleString()}
-                  </div>
-                )}
-              </div>
-              <div className="flex space-x-2 mt-4">
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => {
-                    setEditingCustomer(customer);
-                    setIsDialogOpen(true);
-                  }}
-                >
-                  <Edit className="h-3 w-3 mr-1" />
-                  Edit
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => setViewingCustomer(customer)}
-                >
-                  <Eye className="h-3 w-3 mr-1" />
-                  View
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => openDeleteDialog(customer)}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Filters Bar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Filter by Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Filter by Priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Priorities</SelectItem>
+            <SelectItem value="high">High</SelectItem>
+            <SelectItem value="medium">Medium</SelectItem>
+            <SelectItem value="low">Low</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={industryFilter} onValueChange={setIndustryFilter}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Filter by Industry" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Industries</SelectItem>
+            {industries.map((industry) => (
+              <SelectItem key={industry} value={industry}>
+                {industry}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {hasActiveFilters && (
+          <Button variant="ghost" onClick={clearFilters}>
+            <X className="h-4 w-4 mr-2" />
+            Clear Filters
+          </Button>
+        )}
       </div>
+
+      {/* Table or Mobile Cards */}
+      {isMobile ? (
+        <div className="grid gap-4">
+          {filteredCustomers.map((customer) => (
+            <Card key={customer.id} className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      {customer.company_name}
+                    </CardTitle>
+                    <CardDescription>{customer.contact_name}</CardDescription>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Badge variant={getPriorityColor(customer.priority)}>
+                      {customer.priority}
+                    </Badge>
+                    <Badge variant={getStatusColor(customer.customer_status)}>
+                      {customer.customer_status}
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  {customer.email && (
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Mail className="h-3 w-3 mr-2" />
+                      {customer.email}
+                    </div>
+                  )}
+                  {customer.phone && (
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Phone className="h-3 w-3 mr-2" />
+                      {customer.phone}
+                    </div>
+                  )}
+                  {customer.industry && (
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Building className="h-3 w-3 mr-2" />
+                      {customer.industry}
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-end space-x-1 mt-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setViewingCustomer(customer)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setEditingCustomer(customer);
+                      setIsDialogOpen(true);
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openDeleteDialog(customer)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <DataTable
+          data={filteredCustomers}
+          columns={columns}
+          searchable={true}
+          searchPlaceholder="Search by company, contact, or email..."
+          onRowClick={(customer) => setViewingCustomer(customer)}
+          actions={(customer) => (
+            <>
+              <DropdownMenuItem onClick={() => setViewingCustomer(customer)}>
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setEditingCustomer(customer);
+                  setIsDialogOpen(true);
+                }}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => openDeleteDialog(customer)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </>
+          )}
+        />
+      )}
 
       {filteredCustomers.length === 0 && !loading && (
         <Card>
