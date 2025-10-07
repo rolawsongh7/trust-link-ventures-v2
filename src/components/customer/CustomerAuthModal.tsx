@@ -12,6 +12,7 @@ import { signInSchema, signUpSchema, type SignInFormData, type SignUpFormData } 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { performBotCheck } from '@/lib/botDetection';
+import { RECAPTCHA_SITE_KEY } from '@/config/recaptcha';
 
 interface CustomerAuthModalProps {
   open: boolean;
@@ -281,7 +282,7 @@ export const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({
               <div className="flex justify-center">
                 <ReCAPTCHA
                   ref={recaptchaRef}
-                  sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"}
+                  sitekey={RECAPTCHA_SITE_KEY}
                   onChange={(token) => setRecaptchaToken(token)}
                   onExpired={() => setRecaptchaToken(null)}
                 />
@@ -392,7 +393,7 @@ export const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({
               <div className="flex justify-center">
                 <ReCAPTCHA
                   ref={recaptchaRef}
-                  sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"}
+                  sitekey={RECAPTCHA_SITE_KEY}
                   onChange={(token) => setRecaptchaToken(token)}
                   onExpired={() => setRecaptchaToken(null)}
                 />
