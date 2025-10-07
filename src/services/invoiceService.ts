@@ -250,17 +250,24 @@ export class InvoiceService {
    */
   static async downloadInvoice(invoiceId: string): Promise<Blob | null> {
     try {
-      const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
-        body: { invoiceId },
-      });
+      // Use direct fetch to get PDF blob
+      const response = await fetch(
+        `https://ppyfrftmexvgnsxlhdbz.supabase.co/functions/v1/generate-invoice-pdf`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ invoiceId }),
+        }
+      );
 
-      if (error) {
-        console.error('Error generating invoice PDF:', error);
-        return null;
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
       }
 
-      // Create HTML blob for download
-      return new Blob([data], { type: 'text/html' });
+      const blob = await response.blob();
+      return blob;
     } catch (error) {
       console.error('Error downloading invoice:', error);
       return null;

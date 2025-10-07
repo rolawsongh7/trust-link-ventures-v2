@@ -178,10 +178,22 @@ export const CustomerInvoices = () => {
     );
   }
 
+  const getInvoiceTypeBadge = (type: string) => {
+    const colors: Record<string, string> = {
+      proforma: 'bg-blue-100 text-blue-800',
+      commercial: 'bg-green-100 text-green-800',
+      packing_list: 'bg-purple-100 text-purple-800',
+    };
+    return colors[type] || 'bg-gray-100 text-gray-800';
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Your Invoices</h2>
+        <Badge variant="secondary">
+          {invoices.length} Invoice{invoices.length !== 1 ? 's' : ''}
+        </Badge>
       </div>
 
       {invoices.map((invoice) => (
@@ -190,12 +202,15 @@ export const CustomerInvoices = () => {
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
                   {invoice.invoice_number}
+                  <Badge className={getInvoiceTypeBadge(invoice.invoice_type)}>
+                    {getInvoiceTypeLabel(invoice.invoice_type)}
+                  </Badge>
                   {getStatusBadge(invoice.status)}
                 </CardTitle>
                 <CardDescription>
-                  {getInvoiceTypeLabel(invoice.invoice_type)}
-                  {invoice.orders && ` • Order: ${invoice.orders.order_number}`}
+                  {invoice.orders && `Order: ${invoice.orders.order_number}`}
                 </CardDescription>
               </div>
               <div className="text-right">

@@ -423,10 +423,10 @@ export const CustomerOrders: React.FC = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => handleDownloadInvoice(order.id, order.order_number)}
+                      onClick={() => navigate('/customer/invoices')}
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Invoice
+                      View Invoices
                     </Button>
                   </div>
                 </CardContent>
