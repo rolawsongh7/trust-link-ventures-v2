@@ -37,6 +37,7 @@ interface Quote {
   file_url?: string;
   final_file_url?: string;
   customer_email?: string;
+  customer_id?: string;
   linked_quote_request_id?: string;
   supplier_quote_uploaded_at?: string;
   approved_by?: string;
@@ -252,8 +253,20 @@ const UnifiedQuoteManagement = () => {
     try {
       // Check if customer email is available
       let customerEmail = quote.customer_email || quote.customers?.email;
+      
+      // If still no email, fetch from customers table
+      if (!customerEmail && quote.customers) {
+        const { data: customerData } = await supabase
+          .from('customers')
+          .select('email')
+          .eq('id', quote.customer_id)
+          .single();
+        
+        customerEmail = customerData?.email;
+      }
+      
       if (!customerEmail) {
-        // Prompt for email
+        // Prompt for email as last resort
         customerEmail = prompt('Please enter the customer email address:');
         if (!customerEmail) return;
       }
