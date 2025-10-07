@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { checkAuthRateLimit, recordAuthAttempt, resetAuthRateLimit, formatRateLimitMessage } from '@/lib/authRateLimiter';
 
 interface CustomerProfile {
   id: string;
@@ -170,16 +171,47 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Sanitize inputs (defense in depth)
     const sanitizedEmail = email.trim().toLowerCase();
     
+    // Check rate limit BEFORE attempting login
+    const rateLimitCheck = await checkAuthRateLimit(sanitizedEmail);
+    if (!rateLimitCheck.allowed) {
+      const message = formatRateLimitMessage(rateLimitCheck);
+      return {
+        error: {
+          message,
+          status: 429,
+          name: 'RateLimitError'
+        }
+      };
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email: sanitizedEmail,
       password,
     });
 
+    // Record the attempt
+    await recordAuthAttempt(sanitizedEmail, !error);
+
     if (!error) {
+      // Clear rate limit on success
+      resetAuthRateLimit(sanitizedEmail);
+      
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in to your account.",
       });
+    } else {
+      // Show remaining attempts warning if applicable
+      const updatedLimit = await checkAuthRateLimit(sanitizedEmail);
+      const warningMessage = formatRateLimitMessage(updatedLimit);
+      
+      if (warningMessage && updatedLimit.allowed) {
+        toast({
+          title: "Sign in failed",
+          description: warningMessage,
+          variant: "destructive",
+        });
+      }
     }
 
     return { error };

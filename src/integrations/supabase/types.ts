@@ -733,6 +733,7 @@ export type Database = {
           email: string
           id: string
           ip_address: unknown | null
+          reason: string | null
           user_agent: string | null
         }
         Insert: {
@@ -741,6 +742,7 @@ export type Database = {
           email: string
           id?: string
           ip_address?: unknown | null
+          reason?: string | null
           user_agent?: string | null
         }
         Update: {
@@ -749,6 +751,7 @@ export type Database = {
           email?: string
           id?: string
           ip_address?: unknown | null
+          reason?: string | null
           user_agent?: string | null
         }
         Relationships: []
@@ -2677,6 +2680,10 @@ export type Database = {
       }
       cleanup_expired_sessions: {
         Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      count_recent_failed_logins: {
+        Args: { p_identifier: string; p_minutes?: number }
         Returns: number
       }
       create_audit_log: {
