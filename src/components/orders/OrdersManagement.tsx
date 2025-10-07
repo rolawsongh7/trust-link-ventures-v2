@@ -132,6 +132,29 @@ const OrdersManagement = () => {
         }
       }
 
+      // Generate invoice when payment is received
+      if (status === 'payment_received') {
+        try {
+          toast.loading('Generating invoice...');
+          
+          const { data: invoiceData, error: invoiceError } = await supabase.functions.invoke('generate-invoice-pdf', {
+            body: {
+              orderId,
+              invoiceType: 'commercial',
+            },
+          });
+
+          if (invoiceError) throw invoiceError;
+
+          toast.success('Invoice generated successfully');
+          console.log('Invoice generated:', invoiceData);
+        } catch (invoiceError) {
+          console.error('Error generating invoice:', invoiceError);
+          toast.error('Failed to generate invoice. You can generate it manually later.');
+          // Don't fail the status update if invoice generation fails
+        }
+      }
+
       toast.success(`Order status updated to ${status.replace(/_/g, ' ')}`);
 
       fetchOrders();
