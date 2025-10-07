@@ -165,98 +165,176 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Create approval and rejection links
-    const baseUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '') + '.supabase.co';
-    const approvalLink = `${baseUrl}/functions/v1/quote-approval?token=${token}&action=approve`;
-    const rejectionLink = `${baseUrl}/functions/v1/quote-approval?token=${token}&action=reject`;
+    // Generate PDF first by invoking the generate-quote-title-page function
+    console.log(`[Quote Approval] Generating PDF for quote ${quoteId}`);
+    
+    let pdfUrl = quote.final_file_url;
+    
+    // Only generate PDF if it doesn't exist
+    if (!pdfUrl) {
+      try {
+        const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-quote-title-page', {
+          body: { quoteId }
+        });
 
-    // Prepare quote items for email
-    const itemsHtml = quote.quote_items.map((item: any) => `
-      <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.product_name}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity} ${item.unit}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${quote.currency} ${item.unit_price.toLocaleString()}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${quote.currency} ${item.total_price.toLocaleString()}</td>
-      </tr>
-    `).join('');
+        if (pdfError) {
+          console.error('[Quote Approval] PDF generation error:', pdfError);
+          // Continue without PDF - don't fail the email
+        } else if (pdfData?.file_url) {
+          pdfUrl = pdfData.file_url;
+          console.log('[Quote Approval] PDF generated successfully:', pdfUrl);
+        }
+      } catch (pdfGenError) {
+        console.error('[Quote Approval] Exception during PDF generation:', pdfGenError);
+        // Continue without PDF
+      }
+    } else {
+      console.log('[Quote Approval] Using existing PDF:', pdfUrl);
+    }
 
+    // Create customer portal link
+    const portalUrl = `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}.supabase.co`;
+    const customerPortalLink = `${portalUrl}/customer-portal/quotes`;
+
+    // Prepare quote items summary (simple list)
+    const itemsSummary = quote.quote_items.map((item: any) => 
+      `• ${item.product_name} - ${item.quantity} ${item.unit} @ ${quote.currency} ${item.unit_price.toLocaleString()}`
+    ).join('\n');
+
+    // Plain text version
+    const textContent = `
+Dear ${customerName || 'Valued Customer'},
+
+We have prepared a quote for your consideration.
+
+QUOTE DETAILS:
+Quote Number: ${quote.quote_number}
+Title: ${quote.title}
+${quote.description ? 'Description: ' + quote.description : ''}
+Valid Until: ${quote.valid_until ? new Date(quote.valid_until).toLocaleDateString() : 'N/A'}
+Total Amount: ${quote.currency} ${quote.total_amount.toLocaleString()}
+
+ITEMS:
+${itemsSummary}
+
+To view the complete quote details and respond, please sign in to your customer portal:
+${customerPortalLink}
+
+Once you sign in, you can:
+- Download the quote PDF
+- Approve or reject the quote
+- Receive payment instructions (if approved)
+
+If you have any questions, please contact us.
+
+Best regards,
+Trust Link Ventures Team
+Email: info@trustlinkventures.com
+Phone: +233 123 456 789
+
+---
+This is an automated message from Trust Link Ventures Limited.
+`;
+
+    // Simple HTML email (minimal styling to avoid spam triggers)
     const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-        <div style="background: linear-gradient(135deg, #1e40af, #3b82f6); padding: 30px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">Quote Approval Request</h1>
-        </div>
-        
-        <div style="padding: 30px;">
-          <p style="font-size: 16px; margin-bottom: 20px;">Dear ${customerName || 'Valued Customer'},</p>
-          
-          <p style="margin-bottom: 20px;">We have prepared a quote for your consideration. Please review the details below:</p>
-          
-          <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #1e40af;">Quote Details</h3>
-            <p><strong>Quote Number:</strong> ${quote.quote_number}</p>
-            <p><strong>Title:</strong> ${quote.title}</p>
-            ${quote.description ? `<p><strong>Description:</strong> ${quote.description}</p>` : ''}
-            <p><strong>Valid Until:</strong> ${quote.valid_until ? new Date(quote.valid_until).toLocaleDateString() : 'N/A'}</p>
-          </div>
-
-          <div style="margin: 20px 0;">
-            <h4 style="color: #1e40af; margin-bottom: 10px;">Quote Items</h4>
-            <table style="width: 100%; border-collapse: collapse; border: 1px solid #eee;">
-              <thead>
-                <tr style="background-color: #f8fafc;">
-                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Product</th>
-                  <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">Quantity</th>
-                  <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Unit Price</th>
-                  <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${itemsHtml}
-                <tr style="background-color: #f8fafc; font-weight: bold;">
-                  <td colspan="3" style="padding: 12px; text-align: right; border-top: 2px solid #ddd;">Total Amount:</td>
-                  <td style="padding: 12px; text-align: right; border-top: 2px solid #ddd;">${quote.currency} ${quote.total_amount.toLocaleString()}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <p style="margin: 30px 0 20px 0; font-weight: 500;">To review and respond to this quote, please sign in to your customer portal:</p>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${approvalLink.split('/quote-approval')[0]}/customer/quotes" 
-               style="display: inline-block; background-color: #2563eb; color: white; padding: 15px 40px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
-              Sign In to Review Quote
-            </a>
-          </div>
-          
-          <div style="background-color: #e0f2fe; border-left: 4px solid #0ea5e9; padding: 15px; margin: 20px 0;">
-            <p style="margin: 0; color: #0c4a6e;"><strong>Next Steps:</strong> Once you sign in, you can view the complete quote details, approve or reject the quote, and receive payment instructions if you approve.</p>
-          </div>
-          
-          <p style="margin-top: 30px;">If you have any questions about this quote, please don't hesitate to contact us.</p>
-          
-          <p style="margin-bottom: 0;">Best regards,<br>
-          <strong>Trust Link Ventures Team</strong><br>
-          Email: info@trustlinkventures.com<br>
-          Phone: +233 123 456 789</p>
-        </div>
-        
-        <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
-          <p style="margin: 0; color: #6b7280; font-size: 12px;">
-            This is an automated message. Please do not reply to this email.
-          </p>
-        </div>
-      </div>
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+            <tr>
+              <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+                  <!-- Header -->
+                  <tr>
+                    <td style="background-color: #1e40af; padding: 30px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 24px;">New Quote Available</h1>
+                    </td>
+                  </tr>
+                  
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 30px;">
+                      <p style="margin: 0 0 20px 0; color: #333333;">Dear ${customerName || 'Valued Customer'},</p>
+                      
+                      <p style="margin: 0 0 20px 0; color: #333333;">We have prepared a quote for your consideration.</p>
+                      
+                      <!-- Quote Details -->
+                      <table width="100%" cellpadding="10" style="border: 1px solid #e5e7eb; border-radius: 4px; margin: 20px 0;">
+                        <tr>
+                          <td style="background-color: #f9fafb; padding: 15px;">
+                            <p style="margin: 0 0 10px 0; color: #111827;"><strong>Quote Number:</strong> ${quote.quote_number}</p>
+                            <p style="margin: 0 0 10px 0; color: #111827;"><strong>Title:</strong> ${quote.title}</p>
+                            ${quote.description ? `<p style="margin: 0 0 10px 0; color: #111827;"><strong>Description:</strong> ${quote.description}</p>` : ''}
+                            <p style="margin: 0 0 10px 0; color: #111827;"><strong>Valid Until:</strong> ${quote.valid_until ? new Date(quote.valid_until).toLocaleDateString() : 'N/A'}</p>
+                            <p style="margin: 0; color: #111827; font-size: 18px;"><strong>Total Amount:</strong> ${quote.currency} ${quote.total_amount.toLocaleString()}</p>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- CTA Button -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                        <tr>
+                          <td align="center">
+                            <a href="${customerPortalLink}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Quote in Portal</a>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Instructions -->
+                      <table width="100%" cellpadding="15" style="background-color: #eff6ff; border-left: 4px solid #3b82f6; margin: 20px 0;">
+                        <tr>
+                          <td>
+                            <p style="margin: 0; color: #1e40af;"><strong>Next Steps:</strong></p>
+                            <p style="margin: 10px 0 0 0; color: #1e40af;">Sign in to your customer portal to download the quote PDF, approve or reject the quote, and receive payment instructions if you approve.</p>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <p style="margin: 20px 0 0 0; color: #666666;">If you have any questions about this quote, please contact us.</p>
+                      
+                      <p style="margin: 20px 0 0 0; color: #333333;">
+                        Best regards,<br>
+                        <strong>Trust Link Ventures Team</strong><br>
+                        Email: info@trustlinkventures.com<br>
+                        Phone: +233 123 456 789
+                      </p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                      <p style="margin: 0; color: #6b7280; font-size: 12px;">
+                        This is an automated transactional message from Trust Link Ventures Limited.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
     `;
 
     console.log(`[Quote Approval] Attempting to send email via Resend to ${customerEmail}`);
     
-    // Send email with approval/rejection links
+    // Send simplified email with proper headers to avoid spam
     const emailResponse = await resend.emails.send({
       from: FROM_EMAIL,
       to: [customerEmail],
-      subject: `Quote Approval Request: ${quote.quote_number}`,
+      subject: `New Quote Available for Review - ${quote.quote_number}`,
       html: emailHtml,
+      text: textContent,
+      headers: {
+        'X-Entity-Ref-ID': quote.quote_number,
+        'List-Unsubscribe': '<mailto:unsubscribe@trustlinkventureslimited.com>',
+      },
     });
 
     if (emailResponse.error) {
@@ -275,17 +353,30 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('[Quote Approval] Email sent successfully via Resend:', emailResponse.data);
     
+    // Update quote status to 'sent' if not already
+    if (quote.status !== 'sent') {
+      const { error: statusUpdateError } = await supabase
+        .from('quotes')
+        .update({ status: 'sent', sent_at: new Date().toISOString() })
+        .eq('id', quoteId);
+      
+      if (statusUpdateError) {
+        console.error('[Quote Approval] Failed to update quote status:', statusUpdateError);
+      }
+    }
+
     // Log successful email send
     await logEmailAttempt({
       email_type: 'quote_approval',
       recipient_email: customerEmail,
-      subject: `Quote Approval Request: ${quote.quote_number}`,
+      subject: `New Quote Available for Review - ${quote.quote_number}`,
       status: 'sent',
       resend_id: emailResponse.data?.id,
       quote_id: quoteId,
       metadata: { 
         quote_number: quote.quote_number, 
         customer_name: customerName,
+        pdf_url: pdfUrl || null,
         resend_response: emailResponse.data
       },
     });
