@@ -777,37 +777,48 @@ const UnifiedQuoteManagement = () => {
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (!quote.total_amount || quote.total_amount === 0) {
+                        toast({
+                          title: 'Please edit prices first',
+                          description: 'You need to set unit prices before generating the quote',
+                          variant: 'destructive'
+                        });
+                        return;
+                      }
                       setSelectedQuoteForGenerate(quote);
                       setIsGenerateDialogOpen(true);
                     }}
+                    disabled={!quote.total_amount || quote.total_amount === 0}
                   >
                     <FileCheck className="mr-2 h-4 w-4" />
-                    Generate Quote
+                    Generate Quote PDF
                   </DropdownMenuItem>
                 )}
                 
                 {quote.status === 'pending_review' && quote.final_file_url && (
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedQuoteForPreview(quote);
-                      setIsPreviewDialogOpen(true);
-                    }}
-                  >
-                    <Eye className="mr-2 h-4 w-4" />
-                    Review Quote
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedQuoteForPreview(quote);
+                        setIsPreviewDialogOpen(true);
+                      }}
+                    >
+                      <Eye className="mr-2 h-4 w-4" />
+                      Review & Approve
+                    </DropdownMenuItem>
+                  </>
                 )}
                 
-                {quote.final_file_url && quote.status === 'approved' && (
+                {quote.final_file_url && (quote.status === 'approved' || quote.status === 'sent') && (
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleApprove(quote);
+                      sendQuoteApprovalLink(quote);
                     }}
                   >
                     <Mail className="mr-2 h-4 w-4" />
-                    Send to Customer
+                    Submit to Customer
                   </DropdownMenuItem>
                 )}
 
@@ -819,19 +830,7 @@ const UnifiedQuoteManagement = () => {
                     }}
                   >
                     <Download className="mr-2 h-4 w-4" />
-                    Download Quote
-                  </DropdownMenuItem>
-                )}
-
-                {quote.status === 'sent' && (
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      sendQuoteApprovalLink(quote);
-                    }}
-                  >
-                    <Mail className="mr-2 h-4 w-4" />
-                    Submit to Customer
+                    Download Quote PDF
                   </DropdownMenuItem>
                 )}
                 
