@@ -9,6 +9,23 @@ import { Search, Package, Truck, CheckCircle, Clock, AlertCircle, Mail, MapPin, 
 import { toast } from 'sonner';
 import { DeliveryManagementDialog } from './DeliveryManagementDialog';
 import { PaymentConfirmationDialog } from './PaymentConfirmationDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Order {
   id: string;
@@ -51,6 +68,28 @@ const OrdersManagement = () => {
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [paymentConfirmOrder, setPaymentConfirmOrder] = useState<Order | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {}
+  });
+
+  const getValidNextStatuses = (currentStatus: string): string[] => {
+    const statusFlow: Record<string, string[]> = {
+      'order_confirmed': ['pending_payment', 'cancelled'],
+      'pending_payment': ['payment_received', 'cancelled'],
+      'payment_received': ['processing', 'cancelled'],
+      'processing': ['ready_to_ship', 'cancelled'],
+      'ready_to_ship': ['shipped', 'cancelled'],
+      'shipped': ['delivered', 'delivery_failed'],
+      'delivered': [],
+      'cancelled': [],
+      'delivery_failed': ['shipped']
+    };
+    
+    return statusFlow[currentStatus] || [];
+  };
 
   useEffect(() => {
     fetchOrders();
@@ -112,7 +151,27 @@ const OrdersManagement = () => {
     setPaymentDialogOpen(true);
   };
 
-  const updateOrderStatus = async (orderId: string, status: any) => {
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    // Show confirmation for critical status changes
+    if (newStatus === 'ready_to_ship' || newStatus === 'shipped') {
+      setConfirmDialog({
+        open: true,
+        title: `Confirm ${newStatus.replace(/_/g, ' ').toUpperCase()}`,
+        description: newStatus === 'ready_to_ship' 
+          ? 'This will:\n• Generate a Packing List\n• Validate delivery address exists\n\nAre you sure you want to proceed?'
+          : 'This will:\n• Generate a Commercial Invoice\n• Send tracking email to customer\n• Create tracking token for customer\n\nAre you sure you want to proceed?',
+        onConfirm: async () => {
+          await performStatusUpdate(orderId, newStatus);
+          setConfirmDialog({ ...confirmDialog, open: false });
+        }
+      });
+      return;
+    }
+
+    await performStatusUpdate(orderId, newStatus);
+  };
+
+  const performStatusUpdate = async (orderId: string, status: string) => {
     try {
       // Get order details first
       const { data: orderData } = await supabase
@@ -138,6 +197,13 @@ const OrdersManagement = () => {
           toast.error("Cannot ship without delivery address. Please request address from customer first.");
           return;
         }
+        
+        // Check if it's a status transition validation error
+        if (error.message?.includes('Invalid order status transition')) {
+          toast.error(error.message);
+          return;
+        }
+        
         throw error;
       }
 
@@ -162,9 +228,9 @@ const OrdersManagement = () => {
       toast.success(`Order status updated to ${status.replace(/_/g, ' ')}`);
 
       fetchOrders();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating order status:', error);
-      toast.error("Failed to update order status");
+      toast.error(error.message || "Failed to update order status");
     }
   };
 
@@ -574,6 +640,23 @@ const OrdersManagement = () => {
           onSuccess={fetchOrders}
         />
       )}
+
+      <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmDialog.title}</AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-line">
+              {confirmDialog.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDialog.onConfirm}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

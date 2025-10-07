@@ -1281,6 +1281,50 @@ export type Database = {
           },
         ]
       }
+      order_status_history: {
+        Row: {
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          ip_address: unknown | null
+          new_status: string
+          old_status: string | null
+          order_id: string
+          reason: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_status: string
+          old_status?: string | null
+          order_id: string
+          reason?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_status?: string
+          old_status?: string | null
+          order_id?: string
+          reason?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           actual_delivery_date: string | null
@@ -1801,6 +1845,50 @@ export type Database = {
             columns: ["delivery_address_id"]
             isOneToOne: false
             referencedRelation: "customer_addresses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_status_history: {
+        Row: {
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          ip_address: unknown | null
+          new_status: string
+          old_status: string | null
+          quote_id: string
+          reason: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_status: string
+          old_status?: string | null
+          quote_id: string
+          reason?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_status?: string
+          old_status?: string | null
+          quote_id?: string
+          reason?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_status_history_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
             referencedColumns: ["id"]
           },
         ]
