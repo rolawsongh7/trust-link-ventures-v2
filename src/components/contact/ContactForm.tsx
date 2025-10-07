@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import ReCAPTCHA from 'react-google-recaptcha';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,6 +10,8 @@ import { Send, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { supabase } from '@/integrations/supabase/client';
+import { RECAPTCHA_SITE_KEY } from '@/config/recaptcha';
+import { performBotCheck } from '@/lib/botDetection';
 
 interface ContactFormProps {
   initialInquiryType?: string;
@@ -22,12 +25,16 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
     email: '',
     country: '',
     inquiryType: initialInquiryType,
-    message: ''
+    message: '',
+    honeypot: '' // Hidden field for bot detection
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const formStartTime = useRef<number>(Date.now());
 
   const inquiryResponseTimes = {
     'Request a Quote': '4-6 hours',
@@ -88,6 +95,21 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
       setErrors(newErrors);
       setIsLoading(false);
       toast.error('Please fix the form errors before submitting.');
+      return;
+    }
+
+    // Bot detection check
+    const botCheckResult = await performBotCheck(
+      recaptchaToken,
+      formData.honeypot,
+      formStartTime.current
+    );
+
+    if (!botCheckResult.allowed) {
+      setIsLoading(false);
+      toast.error(botCheckResult.reason || 'Security check failed. Please try again.');
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
       return;
     }
     
@@ -162,7 +184,8 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
           country: formData.country,
           inquiryType: formData.inquiryType,
           message: formData.message,
-          leadId: lead.id
+          leadId: lead.id,
+          recaptchaToken: recaptchaToken
         }
       }).then(({ data, error }) => {
         if (error) {
@@ -177,9 +200,15 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
     } catch (error: any) {
       console.error('Error submitting contact form:', error);
       toast.error('There was an issue submitting your inquiry. Please try again or email us directly.');
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRecaptchaChange = (token: string | null) => {
+    setRecaptchaToken(token);
   };
 
   const getEstimatedResponseTime = () => {
@@ -315,11 +344,31 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
             />
           </div>
 
+          {/* Honeypot field - hidden from users */}
+          <input
+            type="text"
+            name="honeypot"
+            value={formData.honeypot}
+            onChange={handleInputChange}
+            style={{ position: 'absolute', left: '-9999px' }}
+            tabIndex={-1}
+            autoComplete="off"
+          />
+
+          {/* reCAPTCHA */}
+          <div className="flex justify-center">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={RECAPTCHA_SITE_KEY}
+              onChange={handleRecaptchaChange}
+            />
+          </div>
+
           <Button 
             type="submit" 
             className="w-full relative min-h-[48px] sm:min-h-[52px] touch-manipulation text-base sm:text-lg" 
             size={isMobile ? "default" : "lg"}
-            disabled={isLoading}
+            disabled={isLoading || !recaptchaToken}
           >
             {isLoading ? (
               <>

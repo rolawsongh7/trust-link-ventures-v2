@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const recaptchaSecretKey = Deno.env.get("RECAPTCHA_SECRET_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +17,29 @@ interface ContactFormData {
   inquiryType: string;
   message: string;
   leadId: string;
+  recaptchaToken: string;
+}
+
+async function verifyRecaptcha(token: string): Promise<boolean> {
+  if (!recaptchaSecretKey) {
+    console.error('[Contact Form] RECAPTCHA_SECRET_KEY not configured');
+    return false;
+  }
+
+  try {
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `secret=${recaptchaSecretKey}&response=${token}`,
+    });
+
+    const data = await response.json();
+    console.log('[Contact Form] reCAPTCHA verification result:', data.success);
+    return data.success === true;
+  } catch (error) {
+    console.error('[Contact Form] reCAPTCHA verification error:', error);
+    return false;
+  }
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -26,6 +50,22 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const formData: ContactFormData = await req.json();
     console.log('[Contact Form] Processing submission for:', formData.email);
+
+    // Verify reCAPTCHA token
+    const isValidRecaptcha = await verifyRecaptcha(formData.recaptchaToken);
+    if (!isValidRecaptcha) {
+      console.error('[Contact Form] reCAPTCHA verification failed');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'reCAPTCHA verification failed. Please try again.' 
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
 
     // Send admin notification email
     const adminEmailPromise = resend.emails.send({
