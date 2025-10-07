@@ -101,7 +101,8 @@ export const CustomerCart: React.FC = () => {
         await supabase.functions.invoke('send-email', {
           body: {
             to: profile.email,
-            type: 'quote_confirmation',
+            subject: `Quote Request Received - ${quoteRequest.quote_number}`,
+            type: 'quote-confirmation',
             data: {
               customerName: profile.full_name,
               companyName: profile.company_name,
