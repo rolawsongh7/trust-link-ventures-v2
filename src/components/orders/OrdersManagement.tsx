@@ -311,12 +311,12 @@ const OrdersManagement = () => {
                         {getStatusIcon(order.status)}
                         {order.order_number}
                       </CardTitle>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 flex-wrap">
                         <Badge className={getStatusColor(order.status)}>
-                          {order.status}
+                          {order.status.replace(/_/g, ' ')}
                         </Badge>
-                        <Badge variant="outline">
-                          From Quote: {order.quotes.quote_number}
+                        <Badge variant="outline" className="bg-blue-50">
+                          Related Quote: {order.quotes?.quote_number || 'N/A'}
                         </Badge>
                         <Badge variant="outline">
                           {order.order_items.length} Item(s)
