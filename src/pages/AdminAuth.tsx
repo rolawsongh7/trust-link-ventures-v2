@@ -126,9 +126,21 @@ const AdminAuth = () => {
           variant: 'destructive',
         });
       } else {
+        // Get the current session to access the user ID
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (!currentSession?.user?.id) {
+          toast({
+            title: 'Authentication Error',
+            description: 'Unable to verify user session.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
         // Check if user has admin role
         const { data: isAdmin } = await supabase.rpc('check_user_role', {
-          check_user_id: user?.id,
+          check_user_id: currentSession.user.id,
           required_role: 'admin'
         });
 
@@ -146,9 +158,7 @@ const AdminAuth = () => {
         await recordAuthAttempt(formData.email, true);
         
         // Send notification for successful admin login
-        if (user) {
-          await sendLoginNotification(user.id, formData.email, true);
-        }
+        await sendLoginNotification(currentSession.user.id, formData.email, true);
 
         // Reset failed attempts
         setFailedAttempts(0);
