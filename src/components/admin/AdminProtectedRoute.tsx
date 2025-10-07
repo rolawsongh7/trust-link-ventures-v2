@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdminProtectedRouteProps {
   children: React.ReactNode;
@@ -12,8 +13,39 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
   const { user, loading: authLoading } = useAuth();
   const { hasAdminAccess, loading: roleLoading } = useRoleAuth();
   const location = useLocation();
+  const [mfaRequired, setMfaRequired] = React.useState<boolean | null>(null);
+  const [checkingMFA, setCheckingMFA] = React.useState(true);
 
-  const loading = authLoading || roleLoading;
+  // Check if admin user has MFA enabled
+  React.useEffect(() => {
+    const checkMFARequirement = async () => {
+      if (!user || !hasAdminAccess) {
+        setCheckingMFA(false);
+        return;
+      }
+
+      try {
+        const { data: mfaSettings } = await supabase
+          .from('user_mfa_settings')
+          .select('enabled')
+          .eq('user_id', user.id)
+          .single();
+
+        // For admin users, MFA should be enabled
+        const mfaEnabled = mfaSettings?.enabled || false;
+        setMfaRequired(!mfaEnabled);
+      } catch (error) {
+        console.error('Error checking MFA:', error);
+        setMfaRequired(false);
+      } finally {
+        setCheckingMFA(false);
+      }
+    };
+
+    checkMFARequirement();
+  }, [user, hasAdminAccess]);
+
+  const loading = authLoading || roleLoading || checkingMFA;
 
   if (loading) {
     return (
@@ -43,6 +75,14 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
   if (!hasAdminAccess) {
     return <Navigate to="/unauthorized" replace />;
   }
+
+  // Show MFA setup warning if required (but allow access)
+  // The actual MFA enforcement happens in the Settings page
+  React.useEffect(() => {
+    if (mfaRequired && user) {
+      console.warn('[Security] Admin user should enable MFA:', user.email);
+    }
+  }, [mfaRequired, user]);
 
   return <>{children}</>;
 };

@@ -1,25 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Shield } from 'lucide-react';
+import { Loader2, Shield, AlertCircle } from 'lucide-react';
+import { checkAuthRateLimit, recordAuthAttempt, formatRateLimitMessage } from '@/lib/authRateLimiter';
+import ReCAPTCHA from 'react-google-recaptcha';
+import { RECAPTCHA_SITE_KEY } from '@/config/recaptcha';
+import { supabase } from '@/integrations/supabase/client';
+import { useRoleAuth } from '@/hooks/useRoleAuth';
 
 const AdminAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
+  const { hasAdminAccess, loading: roleLoading } = useRoleAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
 
-  const from = (location.state as any)?.from?.pathname || '/admin/dashboard';
+  const from = (location.state as any)?.from?.pathname || '/dashboard';
+
+  // Redirect if already authenticated as admin
+  useEffect(() => {
+    if (user && !roleLoading && hasAdminAccess) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, hasAdminAccess, roleLoading, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -29,25 +48,128 @@ const AdminAuth = () => {
     }));
   };
 
+  const sendLoginNotification = async (userId: string, email: string, success: boolean) => {
+    try {
+      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const { ip } = await ipResponse.json();
+
+      await supabase.functions.invoke('admin-login-notification', {
+        body: {
+          userId,
+          email,
+          ipAddress: ip,
+          userAgent: navigator.userAgent,
+          success,
+          location: {
+            // Could integrate with geolocation API here
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Failed to send login notification:', error);
+    }
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setRateLimitError(null);
+
+    // Check rate limiting
+    const rateLimitCheck = await checkAuthRateLimit(formData.email);
+    if (!rateLimitCheck.allowed) {
+      const message = formatRateLimitMessage(rateLimitCheck);
+      setRateLimitError(message);
+      toast({
+        title: 'Too Many Attempts',
+        description: message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Show CAPTCHA after 2 failed attempts
+    if (failedAttempts >= 2 && !recaptchaToken) {
+      setShowCaptcha(true);
+      toast({
+        title: 'Verification Required',
+        description: 'Please complete the CAPTCHA verification.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { error } = await signIn(formData.email, formData.password);
+      const { error, requiresMFA } = await signIn(formData.email, formData.password);
       
       if (error) {
+        const newFailedAttempts = failedAttempts + 1;
+        setFailedAttempts(newFailedAttempts);
+        
+        // Record failed attempt
+        await recordAuthAttempt(formData.email, false, 'Invalid credentials');
+        
+        // Send notification for failed admin login
+        if (user) {
+          await sendLoginNotification(user.id, formData.email, false);
+        }
+
+        // Show CAPTCHA after 2 failed attempts
+        if (newFailedAttempts >= 2) {
+          setShowCaptcha(true);
+        }
+
         toast({
           title: 'Authentication Failed',
           description: error.message || 'Invalid credentials. Please check your email and password.',
           variant: 'destructive',
         });
       } else {
-        toast({
-          title: 'Welcome Back',
-          description: 'Successfully signed in to admin portal.',
+        // Check if user has admin role
+        const { data: isAdmin } = await supabase.rpc('check_user_role', {
+          check_user_id: user?.id,
+          required_role: 'admin'
         });
-        navigate(from, { replace: true });
+
+        if (!isAdmin) {
+          await supabase.auth.signOut();
+          toast({
+            title: 'Access Denied',
+            description: 'You do not have permission to access the admin portal.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        // Record successful attempt
+        await recordAuthAttempt(formData.email, true);
+        
+        // Send notification for successful admin login
+        if (user) {
+          await sendLoginNotification(user.id, formData.email, true);
+        }
+
+        // Reset failed attempts
+        setFailedAttempts(0);
+        setShowCaptcha(false);
+        
+        // Reset CAPTCHA
+        if (recaptchaRef.current) {
+          recaptchaRef.current.reset();
+          setRecaptchaToken(null);
+        }
+
+        toast({
+          title: requiresMFA ? 'MFA Required' : 'Welcome Back',
+          description: requiresMFA 
+            ? 'Please complete two-factor authentication.' 
+            : 'Successfully signed in to admin portal.',
+        });
+        
+        if (!requiresMFA) {
+          navigate(from, { replace: true });
+        }
       }
     } catch (error: any) {
       toast({
@@ -69,10 +191,26 @@ const AdminAuth = () => {
           </div>
           <CardTitle className="text-2xl font-bold">Admin Portal</CardTitle>
           <CardDescription>
-            Sign in to access the administrative dashboard
+            Secure access for authorized administrators only
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {rateLimitError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{rateLimitError}</AlertDescription>
+            </Alert>
+          )}
+
+          {failedAttempts > 0 && failedAttempts < 5 && (
+            <Alert className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {5 - failedAttempts} attempt(s) remaining before account lockout.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={handleSignIn} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -85,6 +223,7 @@ const AdminAuth = () => {
                 onChange={handleInputChange}
                 required
                 disabled={loading}
+                autoComplete="email"
               />
             </div>
 
@@ -99,10 +238,22 @@ const AdminAuth = () => {
                 onChange={handleInputChange}
                 required
                 disabled={loading}
+                autoComplete="current-password"
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            {showCaptcha && (
+              <div className="flex justify-center">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={RECAPTCHA_SITE_KEY}
+                  onChange={(token) => setRecaptchaToken(token)}
+                  onExpired={() => setRecaptchaToken(null)}
+                />
+              </div>
+            )}
+
+            <Button type="submit" className="w-full" disabled={loading || (showCaptcha && !recaptchaToken)}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -117,8 +268,10 @@ const AdminAuth = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>Authorized personnel only</p>
+          <div className="mt-6 space-y-2 text-center text-sm text-muted-foreground">
+            <p>🔒 Secured with multi-layer authentication</p>
+            <p>🛡️ All login attempts are monitored and logged</p>
+            <p className="text-xs">Authorized personnel only</p>
           </div>
         </CardContent>
       </Card>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
@@ -7,11 +7,36 @@ import { CommandPalette } from './CommandPalette';
 import Footer from './Footer';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import { SessionTimeoutWarning } from '@/components/admin/SessionTimeoutWarning';
+import { initializeAdminSessionManager, destroyAdminSessionManager } from '@/lib/sessionManager';
+import { useRoleAuth } from '@/hooks/useRoleAuth';
+import { useToast } from '@/hooks/use-toast';
 
 export const AppLayout = () => {
   const { user, loading, session } = useAuth();
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { hasAdminAccess } = useRoleAuth();
+  const { toast } = useToast();
+
+  // Initialize session timeout for admin users
+  useEffect(() => {
+    if (hasAdminAccess && user) {
+      const sessionManager = initializeAdminSessionManager(() => {
+        toast({
+          title: 'Session Expired',
+          description: 'You have been logged out due to inactivity.',
+          variant: 'destructive',
+        });
+        navigate('/admin/login');
+      });
+
+      return () => {
+        destroyAdminSessionManager();
+      };
+    }
+  }, [hasAdminAccess, user, navigate, toast]);
 
   // Validate session health
   useEffect(() => {
@@ -68,6 +93,7 @@ export const AppLayout = () => {
           open={commandPaletteOpen} 
           onOpenChange={setCommandPaletteOpen} 
         />
+        {hasAdminAccess && <SessionTimeoutWarning />}
       </div>
     </SidebarProvider>
   );
