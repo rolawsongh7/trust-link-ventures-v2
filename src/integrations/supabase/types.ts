@@ -2883,6 +2883,7 @@ export type Database = {
         | "delivered"
         | "cancelled"
         | "delivery_failed"
+        | "pending_payment"
       order_status_new:
         | "quote_pending"
         | "quote_sent"
@@ -3062,6 +3063,7 @@ export const Constants = {
         "delivered",
         "cancelled",
         "delivery_failed",
+        "pending_payment",
       ],
       order_status_new: [
         "quote_pending",
