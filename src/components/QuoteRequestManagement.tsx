@@ -238,15 +238,21 @@ const QuoteRequestManagement = () => {
 
   const createQuoteFromRequest = async (request: QuoteRequest) => {
     try {
-      // 1. Create quote record
+      // Determine customer info
+      const customerEmail = request.lead_email || request.customer?.email;
+      
+      // 1. Create quote record WITH linked_quote_request_id
       const quoteData = {
         title: `Quote for: ${request.title}`,
         customer_id: request.customer_id,
+        customer_email: customerEmail, // Store email for easy access
+        linked_quote_request_id: request.id, // CRITICAL: Link to quote request
         status: 'draft',
         quote_number: `Q-${Date.now()}`,
         total_amount: 0,
         currency: 'USD',
         notes: request.message,
+        description: `Quote generated from request: ${request.quote_number || request.id}`,
         created_by: (await supabase.auth.getUser()).data.user?.id
       };
 
@@ -267,7 +273,8 @@ const QuoteRequestManagement = () => {
           unit: item.unit,
           unit_price: 0,
           total_price: 0,
-          product_description: item.specifications
+          product_description: item.specifications,
+          specifications: item.preferred_grade
         }));
 
         const { error: itemsError } = await supabase
@@ -280,10 +287,9 @@ const QuoteRequestManagement = () => {
       // 3. Update request status
       await updateRequestStatus(request.id, 'quoted');
 
-      toast.success('Quote created! Now add prices in the Quotes page to complete it.');
+      toast.success('Quote created and linked to request! Add prices to complete it.');
+      fetchQuoteRequests();
       
-      // Optional: Navigate to quotes page
-      // navigate('/crm?tab=quotes');
     } catch (error) {
       console.error('Error creating quote:', error);
       toast.error('Failed to create quote from request');

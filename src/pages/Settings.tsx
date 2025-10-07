@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { SupabaseHealthCheck } from '@/components/utils/SupabaseHealthCheck';
 import { JMarrManualUpdater } from '@/components/admin/JMarrManualUpdater';
+import { LinkOrphanedQuotes } from '@/components/admin/LinkOrphanedQuotes';
 import { MultiFactorAuth } from '@/components/security/MultiFactorAuth';
 import { AuditLogViewer } from '@/components/security/AuditLogViewer';
 import { SecurityMonitoring } from '@/components/security/SecurityMonitoring';
@@ -11,7 +12,7 @@ import { NetworkSecurity } from '@/components/security/NetworkSecurity';
 import { AnomalyDetection } from '@/components/security/AnomalyDetection';
 import { AdminSecurityDashboard } from '@/components/admin/AdminSecurityDashboard';
 import { IPWhitelistManagement } from '@/components/admin/IPWhitelistManagement';
-import { Settings as SettingsIcon, Database, Bell, Users, Shield, FileText, Network, Activity, ShieldAlert } from 'lucide-react';
+import { Settings as SettingsIcon, Database, Bell, Users, Shield, FileText, Network, Activity, ShieldAlert, Link2 } from 'lucide-react';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 
 const Settings = () => {
@@ -42,12 +43,18 @@ const Settings = () => {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <Tabs defaultValue={hasAdminAccess ? "admin-security" : "system-status"} className="space-y-6">
-            <TabsList className={hasAdminAccess ? "grid w-full grid-cols-9 lg:w-auto" : "grid w-full grid-cols-8 lg:w-auto"}>
+            <TabsList className={hasAdminAccess ? "grid w-full grid-cols-10 lg:w-auto" : "grid w-full grid-cols-8 lg:w-auto"}>
               {hasAdminAccess && (
-                <TabsTrigger value="admin-security" className="flex items-center gap-2">
-                  <ShieldAlert className="h-4 w-4" />
-                  <span className="hidden sm:inline">Admin Security</span>
-                </TabsTrigger>
+                <>
+                  <TabsTrigger value="admin-security" className="flex items-center gap-2">
+                    <ShieldAlert className="h-4 w-4" />
+                    <span className="hidden sm:inline">Admin Security</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="quote-linking" className="flex items-center gap-2">
+                    <Link2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Quote Linking</span>
+                  </TabsTrigger>
+                </>
               )}
               <TabsTrigger value="system-status" className="flex items-center gap-2">
                 <Database className="h-4 w-4" />
@@ -116,6 +123,26 @@ const Settings = () => {
                       </p>
                       <MultiFactorAuth />
                     </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
+            {/* Quote Linking Tab - Only for Admins */}
+            {hasAdminAccess && (
+              <TabsContent value="quote-linking" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Link2 className="h-5 w-5" />
+                      Quote Request Linking
+                    </CardTitle>
+                    <CardDescription>
+                      Link orphaned quotes to their corresponding quote requests to prevent duplicate displays in customer portal
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <LinkOrphanedQuotes />
                   </CardContent>
                 </Card>
               </TabsContent>
