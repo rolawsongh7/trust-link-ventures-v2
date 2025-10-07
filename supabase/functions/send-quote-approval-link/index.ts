@@ -220,21 +220,17 @@ const handler = async (req: Request): Promise<Response> => {
             </table>
           </div>
           
-          <p style="margin: 30px 0 20px 0; font-weight: 500;">Please choose one of the following options:</p>
+          <p style="margin: 30px 0 20px 0; font-weight: 500;">To review and respond to this quote, please sign in to your customer portal:</p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${approvalLink}" 
-               style="display: inline-block; background-color: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 0 10px;">
-              ✓ APPROVE QUOTE
-            </a>
-            <a href="${rejectionLink}" 
-               style="display: inline-block; background-color: #ef4444; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 0 10px;">
-              ✗ REJECT QUOTE
+            <a href="${approvalLink.split('/quote-approval')[0]}/customer/quotes" 
+               style="display: inline-block; background-color: #2563eb; color: white; padding: 15px 40px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
+              Sign In to Review Quote
             </a>
           </div>
           
-          <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
-            <p style="margin: 0; color: #92400e;"><strong>Important:</strong> This link will expire in 30 days. If you need more time to review, please contact us.</p>
+          <div style="background-color: #e0f2fe; border-left: 4px solid #0ea5e9; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0; color: #0c4a6e;"><strong>Next Steps:</strong> Once you sign in, you can view the complete quote details, approve or reject the quote, and receive payment instructions if you approve.</p>
           </div>
           
           <p style="margin-top: 30px;">If you have any questions about this quote, please don't hesitate to contact us.</p>

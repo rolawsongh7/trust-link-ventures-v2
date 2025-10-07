@@ -123,6 +123,56 @@ export const CustomerQuotes: React.FC = () => {
     }
   };
 
+  const handleApproveQuote = async (quoteId: string) => {
+    try {
+      const { error } = await supabase
+        .from('quotes')
+        .update({ status: 'accepted' })
+        .eq('id', quoteId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Quote Approved",
+        description: "Thank you! Please see payment instructions below.",
+      });
+
+      fetchQuotes(); // Refresh the list
+    } catch (error) {
+      console.error('Error approving quote:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to approve quote. Please try again.",
+      });
+    }
+  };
+
+  const handleRejectQuote = async (quoteId: string) => {
+    try {
+      const { error } = await supabase
+        .from('quotes')
+        .update({ status: 'rejected' })
+        .eq('id', quoteId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Quote Rejected",
+        description: "We've recorded your response. We'll be in touch if needed.",
+      });
+
+      fetchQuotes(); // Refresh the list
+    } catch (error) {
+      console.error('Error rejecting quote:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to reject quote. Please try again.",
+      });
+    }
+  };
+
   const downloadQuote = async (fileUrl: string, quoteNumber: string) => {
     try {
       console.log('Attempting to download quote PDF:', fileUrl);
@@ -306,7 +356,13 @@ export const CustomerQuotes: React.FC = () => {
                         {quote.final_quote.quote_number}
                       </Badge>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                      <div>
+                        <span className="text-muted-foreground">Total Amount:</span>
+                        <span className="ml-2 font-semibold">
+                          {quote.final_quote.currency} {quote.final_quote.total_amount?.toLocaleString()}
+                        </span>
+                      </div>
                       {quote.final_quote.valid_until && (
                         <div>
                           <span className="text-muted-foreground">Valid Until:</span>
@@ -316,6 +372,30 @@ export const CustomerQuotes: React.FC = () => {
                         </div>
                       )}
                     </div>
+                    {quote.final_quote.status === 'sent' && (
+                      <div className="flex gap-2 mt-3">
+                        <Button 
+                          size="sm" 
+                          className="bg-green-600 hover:bg-green-700"
+                          onClick={() => handleApproveQuote(quote.final_quote!.id)}
+                        >
+                          ✓ Approve Quote
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive"
+                          onClick={() => handleRejectQuote(quote.final_quote!.id)}
+                        >
+                          ✗ Reject Quote
+                        </Button>
+                      </div>
+                    )}
+                    {quote.final_quote.status === 'accepted' && (
+                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
+                        <p className="text-green-800 font-semibold text-sm">✓ Quote Approved</p>
+                        <p className="text-sm text-muted-foreground mt-1">See payment instructions below</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -364,11 +444,33 @@ export const CustomerQuotes: React.FC = () => {
                     </Button>
                   )}
                   
-                  {quote.status === 'approved' && quote.final_quote && (
-                    <Button size="sm" className="bg-gradient-to-r from-primary to-primary/90">
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      Place Order
-                    </Button>
+                  {(quote.status === 'approved' || quote.final_quote?.status === 'accepted') && quote.final_quote && (
+                    <div className="w-full mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="font-semibold text-blue-900 mb-2">Payment Instructions</h4>
+                      <div className="space-y-2 text-sm">
+                        <p className="text-blue-800">
+                          <strong>Payment Method:</strong> Mobile Money (MTN/Vodafone/AirtelTigo)
+                        </p>
+                        <div className="bg-white p-3 rounded border border-blue-200">
+                          <p className="font-semibold text-blue-900 mb-1">Trust Link Ventures</p>
+                          <p className="text-blue-800">
+                            <strong>Phone:</strong> +233 123 456 789
+                          </p>
+                          <p className="text-blue-800">
+                            <strong>Email:</strong> info@trustlinkventures.com
+                          </p>
+                          <p className="text-blue-800 mt-2">
+                            <strong>Amount to Pay:</strong> {quote.final_quote.currency} {quote.final_quote.total_amount?.toLocaleString()}
+                          </p>
+                          <p className="text-blue-800">
+                            <strong>Reference:</strong> {quote.final_quote.quote_number}
+                          </p>
+                        </div>
+                        <p className="text-blue-700 text-xs mt-2">
+                          Please send payment confirmation to info@trustlinkventures.com with the reference number.
+                        </p>
+                      </div>
+                    </div>
                   )}
                 </div>
               </CardContent>
