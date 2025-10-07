@@ -115,7 +115,7 @@ const OrdersManagement = () => {
       if (error) throw error;
 
       // Send tracking email for specific statuses
-      const emailStatuses = ['shipped', 'delivered', 'ready_to_ship', 'processing'];
+      const emailStatuses = ['shipped', 'delivered', 'ready_to_ship', 'processing', 'payment_received'];
       if (emailStatuses.includes(status) && orderData?.quotes?.customers?.email) {
         try {
           await supabase.functions.invoke('send-order-tracking-link', {

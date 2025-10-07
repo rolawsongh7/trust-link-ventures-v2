@@ -43,6 +43,22 @@ export const CustomerOrders: React.FC = () => {
   useEffect(() => {
     if (profile?.email) {
       fetchOrders();
+
+      // Set up real-time subscription for order updates
+      const subscription = supabase
+        .channel('customer-orders-changes')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'orders' },
+          (payload) => {
+            console.log('Order change detected:', payload);
+            fetchOrders(); // Refresh orders when any change occurs
+          }
+        )
+        .subscribe();
+
+      return () => {
+        subscription.unsubscribe();
+      };
     }
   }, [profile]);
 
