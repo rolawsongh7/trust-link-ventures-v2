@@ -153,6 +153,25 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
       
       if (commError) throw commError;
       
+      // Step 4: Send email notifications (background task)
+      supabase.functions.invoke('submit-contact-form', {
+        body: {
+          name: formData.name,
+          company: formData.company,
+          email: formData.email,
+          country: formData.country,
+          inquiryType: formData.inquiryType,
+          message: formData.message,
+          leadId: lead.id
+        }
+      }).then(({ data, error }) => {
+        if (error) {
+          console.error('Email notification error:', error);
+        } else {
+          console.log('Email notifications sent:', data);
+        }
+      });
+      
       toast.success('Thank you! We\'ve received your inquiry and will be in touch shortly.');
       setIsSubmitted(true);
     } catch (error: any) {
