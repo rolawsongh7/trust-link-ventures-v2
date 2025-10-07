@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Calculator, Save, Send, DollarSign } from 'lucide-react';
 
 interface QuoteItem {
@@ -44,6 +45,7 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
   const [currency, setCurrency] = useState('USD');
   const [notes, setNotes] = useState('');
   const [terms, setTerms] = useState('Payment terms: Net 30 days\nDelivery: FOB destination\nValidity: 30 days from quote date');
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   useEffect(() => {
     if (open && quoteId) {
@@ -149,14 +151,12 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
       toast({
         title: "Success",
         description: sendToCustomer 
-          ? "Quote saved and ready to send to customer" 
+          ? "Quote saved and marked as ready to send" 
           : "Quote saved successfully",
       });
 
       if (onSuccess) onSuccess();
-      if (sendToCustomer) {
-        onOpenChange(false);
-      }
+      onOpenChange(false);
     } catch (error) {
       console.error('Error saving quote:', error);
       toast({
@@ -331,7 +331,7 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
                   Save Draft
                 </Button>
                 <Button
-                  onClick={() => handleSave(true)}
+                  onClick={() => setShowConfirmDialog(true)}
                   disabled={saving || calculateTotal() === 0}
                 >
                   <Send className="h-4 w-4 mr-2" />
@@ -342,6 +342,35 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
           </div>
         )}
       </DialogContent>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Quote Ready to Send</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to mark this quote as ready to send? This will:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Save all changes to the quote</li>
+                <li>Mark the quote status as "sent"</li>
+                <li>Make it available for the next step: Generate Quote PDF → Review & Approve → Submit to Customer</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowConfirmDialog(false);
+                handleSave(true);
+              }}
+              disabled={saving}
+            >
+              Yes, Mark as Ready
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
