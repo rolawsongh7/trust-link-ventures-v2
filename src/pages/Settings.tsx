@@ -9,9 +9,14 @@ import { AuditLogViewer } from '@/components/security/AuditLogViewer';
 import { SecurityMonitoring } from '@/components/security/SecurityMonitoring';
 import { NetworkSecurity } from '@/components/security/NetworkSecurity';
 import { AnomalyDetection } from '@/components/security/AnomalyDetection';
-import { Settings as SettingsIcon, Database, Bell, Users, Shield, FileText, Network, Activity } from 'lucide-react';
+import { AdminSecurityDashboard } from '@/components/admin/AdminSecurityDashboard';
+import { IPWhitelistManagement } from '@/components/admin/IPWhitelistManagement';
+import { Settings as SettingsIcon, Database, Bell, Users, Shield, FileText, Network, Activity, ShieldAlert } from 'lucide-react';
+import { useRoleAuth } from '@/hooks/useRoleAuth';
 
 const Settings = () => {
+  const { hasAdminAccess } = useRoleAuth();
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -36,8 +41,14 @@ const Settings = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <Tabs defaultValue="system-status" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-8 lg:w-auto">
+          <Tabs defaultValue={hasAdminAccess ? "admin-security" : "system-status"} className="space-y-6">
+            <TabsList className={hasAdminAccess ? "grid w-full grid-cols-9 lg:w-auto" : "grid w-full grid-cols-8 lg:w-auto"}>
+              {hasAdminAccess && (
+                <TabsTrigger value="admin-security" className="flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4" />
+                  <span className="hidden sm:inline">Admin Security</span>
+                </TabsTrigger>
+              )}
               <TabsTrigger value="system-status" className="flex items-center gap-2">
                 <Database className="h-4 w-4" />
                 <span className="hidden sm:inline">System</span>
@@ -71,6 +82,44 @@ const Settings = () => {
                 <span className="hidden sm:inline">Notifications</span>
               </TabsTrigger>
             </TabsList>
+
+            {/* Admin Security Dashboard Tab - Only for Admins */}
+            {hasAdminAccess && (
+              <TabsContent value="admin-security" className="space-y-6">
+                <AdminSecurityDashboard />
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Admin Account Security Requirements
+                    </CardTitle>
+                    <CardDescription>
+                      Enhanced security measures for administrative access
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                      <h4 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-2">
+                        ⚠️ Security Recommendation
+                      </h4>
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                        Admin accounts should always have multi-factor authentication enabled. 
+                        This adds an extra layer of protection against unauthorized access.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h4 className="font-medium">Two-Factor Authentication</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Configure your authenticator app below to enable MFA for your admin account.
+                      </p>
+                      <MultiFactorAuth />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
 
             {/* System Status Tab */}
             <TabsContent value="system-status" className="space-y-6">
@@ -139,6 +188,11 @@ const Settings = () => {
             {/* Network Security Tab */}
             <TabsContent value="network" className="space-y-6">
               <NetworkSecurity />
+              {hasAdminAccess && (
+                <>
+                  <IPWhitelistManagement />
+                </>
+              )}
             </TabsContent>
 
             {/* Audit Logs Tab */}
