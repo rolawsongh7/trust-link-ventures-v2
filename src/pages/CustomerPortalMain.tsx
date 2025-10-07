@@ -19,6 +19,7 @@ import {
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { supabase } from '@/integrations/supabase/client';
+import { PullToRefresh } from '@/components/customer/PullToRefresh';
 
 interface DashboardStats {
   totalQuotes: number;
@@ -133,11 +134,12 @@ const CustomerPortalMain = () => {
           </div>
         </div>
       </div>
-    );
+  );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+    <PullToRefresh onRefresh={fetchDashboardData}>
+      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
       {/* Welcome Section */}
       <div className="text-center space-y-2 px-4">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
@@ -258,7 +260,8 @@ const CustomerPortalMain = () => {
           </Card>
         </div>
       )}
-    </div>
+      </div>
+    </PullToRefresh>
   );
 };
 
