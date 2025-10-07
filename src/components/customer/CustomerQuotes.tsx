@@ -187,16 +187,38 @@ export const CustomerQuotes: React.FC = () => {
         .eq('quote_id', quoteId)
         .single();
 
+      // Get customer email from the quote
+      const approvedQuote = quotes.find(q => q.final_quote?.id === quoteId);
+      const customerEmail = profile?.email || approvedQuote?.final_quote?.customer_email;
+
+      // Send payment instructions email
+      if (customerEmail && approvedQuote?.final_quote) {
+        try {
+          await supabase.functions.invoke('send-payment-instructions', {
+            body: {
+              quoteId: approvedQuote.final_quote.id,
+              customerEmail: customerEmail,
+              customerName: profile?.full_name,
+              orderNumber: order?.order_number,
+            }
+          });
+          console.log('Payment instructions email sent');
+        } catch (emailError) {
+          console.error('Failed to send payment instructions email:', emailError);
+          // Don't fail the approval if email fails
+        }
+      }
+
       toast({
         title: "Quote Approved Successfully! ✓",
         description: order 
-          ? `Order ${order.order_number} has been created. Payment instructions are shown below.`
-          : "Thank you! Payment instructions are shown below.",
+          ? `Order ${order.order_number} created. Check your email for payment instructions.`
+          : "Check your email for payment instructions.",
       });
 
       fetchQuotes(); // Refresh the list
       setPaymentDialogOpen(true); // Show payment instructions
-      setSelectedPaymentQuote(quotes.find(q => q.final_quote?.id === quoteId)?.final_quote || null);
+      setSelectedPaymentQuote(approvedQuote?.final_quote || null);
     } catch (error) {
       console.error('Error approving quote:', error);
       toast({
