@@ -2,11 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { LogIn, Menu, X, Shield } from 'lucide-react';
+import { LogIn, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import trustLinkLogo from '@/assets/trust-link-logo.png';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
-import { getAdminUrl } from '@/utils/domainUtils';
 
 export const PublicHeader = () => {
   const { user } = useAuth();
@@ -63,17 +62,6 @@ export const PublicHeader = () => {
                 <span className="hidden md:inline">Sign In</span>
                 <span className="md:hidden">Login</span>
               </Link>
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              asChild
-              className="hidden md:flex touch-manipulation"
-            >
-              <a href={getAdminUrl('/')}>
-                <Shield className="mr-2 h-4 w-4" />
-                Admin
-              </a>
             </Button>
             
             {/* Mobile menu button */}
