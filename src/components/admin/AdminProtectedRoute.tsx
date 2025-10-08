@@ -53,6 +53,13 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
     checkMFARequirement();
   }, [user, hasAdminAccess]);
 
+  // Show MFA setup warning if required (but allow access)
+  React.useEffect(() => {
+    if (mfaRequired && user) {
+      console.warn('[Security] Admin user should enable MFA:', user.email);
+    }
+  }, [mfaRequired, user]);
+
   const loading = authLoading || roleLoading || checkingMFA;
 
   if (loading) {
@@ -87,14 +94,6 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
   if (!hasAdminAccess) {
     return <Navigate to="/unauthorized" replace />;
   }
-
-  // Show MFA setup warning if required (but allow access)
-  // The actual MFA enforcement happens in the Settings page
-  React.useEffect(() => {
-    if (mfaRequired && user) {
-      console.warn('[Security] Admin user should enable MFA:', user.email);
-    }
-  }, [mfaRequired, user]);
 
   return <>{children}</>;
 };
