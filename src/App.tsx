@@ -62,10 +62,16 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const isAdmin = useMemo(() => isAdminDomain(), []);
+  const isLovablePreview = useMemo(() => window.location.hostname.includes('lovableproject.com'), []);
 
-  // Security: Prevent admin routes from being accessible on main domain
+  // Security: Prevent admin routes from being accessible on main domain (except on preview for testing)
   useEffect(() => {
     const currentPath = window.location.pathname;
+    
+    // Skip redirects on Lovable preview for testing purposes
+    if (isLovablePreview) {
+      return;
+    }
     
     // If on main domain but trying to access admin routes
     if (!isAdmin && currentPath.startsWith('/admin')) {
@@ -77,7 +83,7 @@ const App = () => {
     if (isAdmin && !currentPath.startsWith('/admin') && currentPath !== '/' && currentPath !== '/unauthorized') {
       window.location.href = getMainUrl(currentPath);
     }
-  }, [isAdmin]);
+  }, [isAdmin, isLovablePreview]);
 
   return (
     <HelmetProvider>
@@ -90,8 +96,8 @@ const App = () => {
               <BrowserRouter>
                 <ScrollToTop />
                 <Routes>
-                  {isAdmin ? (
-                    // ADMIN DOMAIN ROUTES ONLY
+                  {isAdmin || (isLovablePreview && window.location.pathname.startsWith('/admin')) ? (
+                    // ADMIN DOMAIN ROUTES (and preview for testing)
                     <>
                       <Route path="/" element={<AdminAuth />} />
                       <Route path="/admin/login" element={<AdminAuth />} />
