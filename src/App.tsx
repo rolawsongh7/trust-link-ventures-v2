@@ -63,6 +63,7 @@ const queryClient = new QueryClient();
 const App = () => {
   const isAdmin = useMemo(() => isAdminDomain(), []);
   const isLovablePreview = useMemo(() => window.location.hostname.includes('lovableproject.com'), []);
+  const shouldShowAdminRoutes = isAdmin || isLovablePreview;
 
   // Security: Prevent admin routes from being accessible on main domain (except on preview for testing)
   useEffect(() => {
@@ -96,7 +97,7 @@ const App = () => {
               <BrowserRouter>
                 <ScrollToTop />
                 <Routes>
-                  {isAdmin || (isLovablePreview && window.location.pathname.startsWith('/admin')) ? (
+                  {shouldShowAdminRoutes ? (
                     // ADMIN DOMAIN ROUTES (and preview for testing)
                     <>
                       <Route path="/" element={<AdminAuth />} />
