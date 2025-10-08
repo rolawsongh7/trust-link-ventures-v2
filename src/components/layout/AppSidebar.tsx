@@ -29,19 +29,19 @@ import {
 } from '@/components/ui/sidebar';
 
 const navigationItems = [
-  { title: 'Analytics', url: '/analytics', icon: BarChart3 },
-  { title: 'Customers', url: '/customers', icon: Users },
-  { title: 'Leads', url: '/leads', icon: Target },
-  { title: 'Orders', url: '/orders', icon: ShoppingCart },
-  { title: 'Quotes', url: '/quotes', icon: FileText },
-  { title: 'Customer Quote Inquiries', url: '/quote-inquiries', icon: MessageSquare },
-  { title: 'Communication', url: '/communication', icon: Phone },
+  { title: 'Analytics', url: '/admin/analytics', icon: BarChart3 },
+  { title: 'Customers', url: '/admin/customers', icon: Users },
+  { title: 'Leads', url: '/admin/leads', icon: Target },
+  { title: 'Orders', url: '/admin/orders', icon: ShoppingCart },
+  { title: 'Quotes', url: '/admin/quotes', icon: FileText },
+  { title: 'Customer Quote Inquiries', url: '/admin/quote-inquiries', icon: MessageSquare },
+  { title: 'Communication', url: '/admin/communication', icon: Phone },
 ];
 
 
 const systemItems = [
-  { title: 'Virtual Assistant', url: '/virtual-assistant', icon: Bot },
-  { title: 'Settings', url: '/settings', icon: Settings },
+  { title: 'Virtual Assistant', url: '/admin/virtual-assistant', icon: Bot },
+  { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];
 
 export function AppSidebar() {
