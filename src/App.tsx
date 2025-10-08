@@ -109,6 +109,7 @@ const App = () => {
                           <AdminLayout />
                         </AdminProtectedRoute>
                       }>
+                        <Route index element={<Navigate to="/admin/dashboard" replace />} />
                         <Route path="dashboard" element={<Dashboard />} />
                         <Route path="customers" element={<CustomersPage />} />
                         <Route path="leads" element={<LeadsPage />} />
