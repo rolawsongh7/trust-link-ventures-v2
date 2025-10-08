@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -24,11 +25,9 @@ interface AppHeaderProps {
 
 export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) => {
   const { user, signOut } = useAuth();
+  const { hasAdminAccess } = useRoleAuth();
   const location = useLocation();
   const navigate = useNavigate();
-
-  const ADMIN_EMAIL = 'trustlventuresghana_a01@yahoo.com';
-  const isAdmin = user?.email === ADMIN_EMAIL;
 
   const handleSignOut = async () => {
     await signOut();
@@ -45,9 +44,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
       .slice(0, 2);
   };
 
-  // Use admin email prefix for display name  
+  // Use role-based display name  
   const getDisplayName = () => {
-    if (isAdmin) {
+    if (hasAdminAccess) {
       return 'Admin';
     }
     return user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
@@ -113,7 +112,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
               <DropdownMenuSeparator />
               
               {/* Enhanced dropdown items based on admin/customer status */}
-              {!isAdmin && (
+              {!hasAdminAccess && (
                 <>
                   <DropdownMenuItem asChild>
                     <Link to="/customer-portal" className="flex items-center space-x-2 cursor-pointer">
