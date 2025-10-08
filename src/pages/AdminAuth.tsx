@@ -44,8 +44,13 @@ const AdminAuth = () => {
 
   // Redirect if already authenticated as admin
   useEffect(() => {
-    if (user && !roleLoading && hasAdminAccess) {
-      navigate('/admin/dashboard', { replace: true });
+    if (user && !roleLoading) {
+      if (hasAdminAccess) {
+        navigate('/admin/dashboard', { replace: true });
+      } else if (user) {
+        // User is logged in but not an admin
+        navigate('/unauthorized', { replace: true });
+      }
     }
   }, [user, hasAdminAccess, roleLoading, navigate]);
 
