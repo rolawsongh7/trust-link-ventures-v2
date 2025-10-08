@@ -44,15 +44,19 @@ const AdminAuth = () => {
 
   // Redirect if already authenticated as admin
   useEffect(() => {
-    if (user && !roleLoading) {
+    // Wait for both user and role to be loaded
+    if (roleLoading) return;
+    
+    if (user) {
       if (hasAdminAccess) {
-        navigate('/admin/dashboard', { replace: true });
-      } else if (user) {
+        // Admin user - redirect to intended page or dashboard
+        navigate(from, { replace: true });
+      } else {
         // User is logged in but not an admin
         navigate('/unauthorized', { replace: true });
       }
     }
-  }, [user, hasAdminAccess, roleLoading, navigate]);
+  }, [user, hasAdminAccess, roleLoading, navigate, from]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
