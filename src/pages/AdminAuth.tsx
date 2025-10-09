@@ -220,6 +220,7 @@ const AdminAuth = () => {
       
       <InteractiveCard 
         variant="glass" 
+        hapticFeedback={true}
         className="w-full max-w-md relative z-10 animate-fade-in border-primary-200/20 shadow-2xl hover:shadow-primary-500/20 transition-all duration-500"
       >
         <CardHeader className="space-y-4 text-center pb-4">
@@ -248,24 +249,32 @@ const AdminAuth = () => {
         </CardHeader>
         <CardContent>
           {rateLimitError && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
+            <Alert variant="destructive" className="mb-4 animate-scale-in">
+              <AlertCircle className="h-4 w-4 animate-pulse" />
               <AlertDescription>{rateLimitError}</AlertDescription>
             </Alert>
           )}
 
           {failedAttempts > 0 && failedAttempts < 5 && (
-            <Alert className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {5 - failedAttempts} attempt(s) remaining before account lockout.
+            <Alert className="mb-4 border-amber-500/20 bg-amber-500/10 animate-fade-in">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-700">
+                <div className="space-y-2">
+                  <p>{5 - failedAttempts} attempt(s) remaining before account lockout.</p>
+                  <div className="w-full h-1.5 bg-amber-200/30 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-amber-500 to-red-500 transition-all duration-500"
+                      style={{ width: `${(failedAttempts / 5) * 100}%` }}
+                    />
+                  </div>
+                </div>
               </AlertDescription>
             </Alert>
           )}
 
           <form onSubmit={handleSignIn} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <div className="space-y-2 group">
+              <Label htmlFor="email" className="text-sm font-semibold">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -276,11 +285,12 @@ const AdminAuth = () => {
                 required
                 disabled={loading}
                 autoComplete="email"
+                className="transition-all duration-300 focus:ring-2 focus:ring-primary-500/20"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            <div className="space-y-2 group">
+              <Label htmlFor="password" className="text-sm font-semibold">Password</Label>
               <Input
                 id="password"
                 name="password"
@@ -291,6 +301,7 @@ const AdminAuth = () => {
                 required
                 disabled={loading}
                 autoComplete="current-password"
+                className="transition-all duration-300 focus:ring-2 focus:ring-primary-500/20"
               />
             </div>
 
@@ -309,7 +320,7 @@ const AdminAuth = () => {
               type="submit" 
               className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white shadow-lg hover:shadow-primary-500/50 transition-all duration-300" 
               disabled={loading || (showCaptcha && !recaptchaToken)}
-              animation="glow"
+              animation="magnetic"
               loading={loading}
               loadingText="Signing In..."
             >
@@ -322,18 +333,25 @@ const AdminAuth = () => {
             </AnimatedButton>
           </form>
 
-          <div className="mt-8 space-y-3 text-center">
+          <div className="mt-8 space-y-4 text-center">
             <div className="flex items-center justify-center gap-6 text-sm">
-              <div className="flex items-center gap-2 text-primary-600">
-                <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
+              <div className="group flex items-center gap-2 text-primary-600 transition-all hover:scale-110">
+                <div className="relative">
+                  <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
+                  <div className="absolute inset-0 w-2 h-2 bg-primary-400 rounded-full animate-ping opacity-75" />
+                </div>
                 <span className="font-medium">Multi-Layer Security</span>
               </div>
-              <div className="flex items-center gap-2 text-secondary-600">
-                <div className="w-2 h-2 bg-secondary-500 rounded-full animate-pulse" />
+              <div className="group flex items-center gap-2 text-secondary-600 transition-all hover:scale-110">
+                <div className="relative">
+                  <div className="w-2 h-2 bg-secondary-500 rounded-full animate-pulse" />
+                  <div className="absolute inset-0 w-2 h-2 bg-secondary-400 rounded-full animate-ping opacity-75" />
+                </div>
                 <span className="font-medium">24/7 Monitoring</span>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground/80 font-medium tracking-wide uppercase">
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-primary-300/30 to-transparent" />
+            <p className="text-xs text-muted-foreground/80 font-semibold tracking-wider uppercase">
               Authorized Personnel Only
             </p>
           </div>
