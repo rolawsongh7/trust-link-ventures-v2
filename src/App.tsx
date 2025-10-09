@@ -35,6 +35,7 @@ import { CustomerOrders } from "@/components/customer/CustomerOrders";
 import { CustomerProfile } from "@/components/customer/CustomerProfile";
 import { CustomerCommunications } from "@/components/customer/CustomerCommunications";
 import { CustomerInvoices } from "@/components/customer/CustomerInvoices";
+import CustomerAddresses from "@/components/customer/CustomerAddresses";
 import OrderTracking from "@/pages/OrderTracking";
 import AdminLogin from "./pages/AdminLogin";
 import Cookies from "./pages/Cookies";
@@ -161,6 +162,7 @@ const App = () => {
                         <Route path="orders/:orderId" element={<OrderTracking />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="communications" element={<CustomerCommunications />} />
+                        <Route path="addresses" element={<CustomerAddresses />} />
                         <Route path="profile" element={<CustomerProfile />} />
                       </Route>
                       
@@ -238,6 +240,7 @@ const App = () => {
                         <Route path="orders/:orderId" element={<OrderTracking />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="communications" element={<CustomerCommunications />} />
+                        <Route path="addresses" element={<CustomerAddresses />} />
                         <Route path="profile" element={<CustomerProfile />} />
                       </Route>
                       
