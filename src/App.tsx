@@ -35,7 +35,7 @@ import { CustomerOrders } from "@/components/customer/CustomerOrders";
 import { CustomerProfile } from "@/components/customer/CustomerProfile";
 import { CustomerCommunications } from "@/components/customer/CustomerCommunications";
 import { CustomerInvoices } from "@/components/customer/CustomerInvoices";
-import CustomerAddresses from "@/components/customer/CustomerAddresses";
+import { CustomerAddresses } from "@/components/customer/CustomerAddresses";
 import OrderTracking from "@/pages/OrderTracking";
 import AdminLogin from "./pages/AdminLogin";
 import Cookies from "./pages/Cookies";

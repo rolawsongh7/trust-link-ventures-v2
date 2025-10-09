@@ -42,7 +42,7 @@ interface Address extends AddressFormData {
   updated_at: string;
 }
 
-export default function CustomerAddresses() {
+export const CustomerAddresses = () => {
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const [addresses, setAddresses] = useState<Address[]>([]);
