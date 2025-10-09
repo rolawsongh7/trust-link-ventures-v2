@@ -63,7 +63,12 @@ const queryClient = new QueryClient();
 const App = () => {
   const isAdmin = useMemo(() => isAdminDomain(), []);
   const isLovablePreview = useMemo(() => window.location.hostname.includes('lovableproject.com'), []);
-  const shouldShowAdminRoutes = isAdmin || isLovablePreview;
+
+  // In preview mode, we show ALL routes (both admin and public)
+  // In production, we show either admin OR public based on subdomain
+  const showBothRoutes = isLovablePreview;
+  const showOnlyAdminRoutes = !isLovablePreview && isAdmin;
+  const showOnlyPublicRoutes = !isLovablePreview && !isAdmin;
 
   // Security: Prevent admin routes from being accessible on main domain (except on preview for testing)
   useEffect(() => {
@@ -97,8 +102,78 @@ const App = () => {
               <BrowserRouter>
                 <ScrollToTop />
                 <Routes>
-                  {shouldShowAdminRoutes ? (
-                    // ADMIN DOMAIN ROUTES (and preview for testing)
+                  {/* LOVABLE PREVIEW MODE - Show both admin and public routes */}
+                  {showBothRoutes && (
+                    <>
+                      {/* Admin routes */}
+                      <Route path="/admin/login" element={<AdminAuth />} />
+                      <Route path="/unauthorized" element={<Unauthorized />} />
+                      
+                      <Route path="/admin" element={
+                        <AdminProtectedRoute>
+                          <AdminLayout />
+                        </AdminProtectedRoute>
+                      }>
+                        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                        <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="customers" element={<CustomersPage />} />
+                        <Route path="leads" element={<LeadsPage />} />
+                        <Route path="quotes" element={<QuotesPage />} />
+                        <Route path="orders" element={<UnifiedOrdersManagement />} />
+                        <Route path="analytics" element={<AnalyticsPage />} />
+                        <Route path="crm" element={<CRM />} />
+                        <Route path="quote-inquiries" element={<QuoteRequestManagement />} />
+                        <Route path="communication" element={<CommunicationPage />} />
+                        <Route path="quote-system" element={<QuoteSystem />} />
+                        <Route path="settings" element={<Settings />} />
+                        <Route path="virtual-assistant" element={<VirtualAssistant />} />
+                      </Route>
+                      
+                      {/* Public routes */}
+                      <Route element={<PublicLayout />}>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/contact" element={<Contact />} />
+                        <Route path="/products" element={<Products />} />
+                        <Route path="/partners" element={<Partners />} />
+                        <Route path="/quote-request" element={<QuoteRequest />} />
+                        <Route path="/privacy" element={<Privacy />} />
+                        <Route path="/terms" element={<Terms />} />
+                        <Route path="/cookies" element={<Cookies />} />
+                        <Route path="/notifications" element={<NotificationDemo />} />
+                      </Route>
+                      
+                      {/* Customer Auth Routes */}
+                      <Route path="/customer-auth" element={<CustomerAuth />} />
+                      <Route path="/customer-portal" element={<CustomerPortal />} />
+                      
+                      {/* Customer Portal Protected Routes */}
+                      <Route path="/customer/*" element={
+                        <CustomerProtectedRoute>
+                          <CustomerLayout />
+                        </CustomerProtectedRoute>
+                      }>
+                        <Route index element={<CustomerPortalMain />} />
+                        <Route path="catalog" element={<CustomerCatalog />} />
+                        <Route path="cart" element={<CustomerCart />} />
+                        <Route path="quotes" element={<CustomerQuotes />} />
+                        <Route path="orders" element={<CustomerOrders />} />
+                        <Route path="orders/:orderId" element={<OrderTracking />} />
+                        <Route path="invoices" element={<CustomerInvoices />} />
+                        <Route path="communications" element={<CustomerCommunications />} />
+                        <Route path="profile" element={<CustomerProfile />} />
+                      </Route>
+                      
+                      {/* Public order tracking */}
+                      <Route path="/track" element={<OrderTracking />} />
+                      
+                      {/* Catch all */}
+                      <Route path="*" element={<NotFound />} />
+                    </>
+                  )}
+                  
+                  {/* ADMIN DOMAIN ONLY (Production) */}
+                  {showOnlyAdminRoutes && (
                     <>
                       <Route path="/" element={<AdminAuth />} />
                       <Route path="/admin/login" element={<AdminAuth />} />
@@ -124,11 +199,12 @@ const App = () => {
                         <Route path="virtual-assistant" element={<VirtualAssistant />} />
                       </Route>
                       
-                      {/* Redirect all other paths to admin login */}
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </>
-                  ) : (
-                    // MAIN DOMAIN ROUTES (Public + Customer)
+                  )}
+                  
+                  {/* PUBLIC/CUSTOMER DOMAIN ONLY (Production) */}
+                  {showOnlyPublicRoutes && (
                     <>
                       {/* Public routes */}
                       <Route element={<PublicLayout />}>
@@ -165,10 +241,10 @@ const App = () => {
                         <Route path="profile" element={<CustomerProfile />} />
                       </Route>
                       
-                      {/* Public order tracking with magic link */}
+                      {/* Public order tracking */}
                       <Route path="/track" element={<OrderTracking />} />
                       
-                      {/* Catch all route */}
+                      {/* Catch all */}
                       <Route path="*" element={<NotFound />} />
                     </>
                   )}

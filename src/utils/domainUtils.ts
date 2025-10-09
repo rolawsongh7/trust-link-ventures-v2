@@ -55,9 +55,8 @@ export const redirectToMainDomain = (path: string = '/') => {
 export const navigateToPublicSite = () => {
   const isLovablePreview = window.location.hostname.includes('lovableproject.com');
   if (isLovablePreview) {
-    // In Lovable preview, admin can't access public routes in same session
-    // Open public site in new tab
-    window.open('/', '_blank');
+    // In preview, navigate directly to home page (both routes available)
+    window.location.href = '/';
   } else {
     // In production, redirect to main domain
     window.location.href = getMainUrl('/');
