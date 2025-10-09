@@ -17,7 +17,7 @@ export const AdminLayout: React.FC = () => {
         <AppSidebar />
         <div className="flex-1 flex flex-col">
           <AppHeader onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
-          <div className="fixed top-8 right-4 z-50">
+          <div className="fixed top-16 right-4 z-50">
             <RealtimeIndicator isSyncing={isSyncing} />
           </div>
           <main className="flex-1 overflow-auto">
