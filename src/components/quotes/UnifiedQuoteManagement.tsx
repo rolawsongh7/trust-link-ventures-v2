@@ -516,6 +516,28 @@ const UnifiedQuoteManagement = () => {
           {value}
         </Badge>
       )
+    },
+    {
+      key: 'final_file_url',
+      label: 'Quote PDF',
+      sortable: false,
+      width: '150px',
+      render: (value: any, row) => {
+        if (!value) return <span className="text-muted-foreground text-sm">No PDF</span>;
+        return (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              downloadQuote(value, `quote-${row.quote_number}.pdf`);
+            }}
+          >
+            <Download className="mr-2 h-3 w-3" />
+            Download
+          </Button>
+        );
+      }
     }
   ];
 
