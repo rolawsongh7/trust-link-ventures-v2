@@ -271,7 +271,7 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
   ];
 
   return (
-    <DataTable<Order>
+    <DataTable
       data={orders}
       columns={columns}
       searchable={true}
