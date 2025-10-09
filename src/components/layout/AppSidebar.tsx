@@ -33,6 +33,7 @@ import {
 const navigationItems = [
   { title: 'Analytics', url: '/admin/analytics', icon: BarChart3 },
   { title: 'Customers', url: '/admin/customers', icon: Users },
+  { title: 'CRM & Pipeline', url: '/admin/crm', icon: Target },
   { title: 'Leads', url: '/admin/leads', icon: Target },
   { title: 'Orders', url: '/admin/orders', icon: ShoppingCart },
   { title: 'Quotes', url: '/admin/quotes', icon: FileText },

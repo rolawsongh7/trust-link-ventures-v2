@@ -82,13 +82,20 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
     );
   }
 
-  // Not authenticated - redirect to admin login (root of admin domain)
+  // Not authenticated - redirect to admin login
   if (!user) {
+    const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+    
+    if (isLovablePreview) {
+      // In preview mode, redirect to /admin/login
+      return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    }
+    
     if (!isAdminDomain()) {
       redirectToAdminDomain('/');
       return null;
     }
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
   // IMPORTANT: Only check hasAdminAccess after loading is complete
