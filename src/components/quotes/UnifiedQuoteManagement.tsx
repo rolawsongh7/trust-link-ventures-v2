@@ -518,23 +518,40 @@ const UnifiedQuoteManagement = () => {
       )
     },
     {
+      key: 'total_amount',
+      label: 'Amount',
+      sortable: true,
+      width: '150px',
+      render: (value: any, row) => (
+        <div className="font-semibold">
+          {row.currency} {Number(value).toLocaleString()}
+        </div>
+      )
+    },
+    {
       key: 'final_file_url',
       label: 'Quote PDF',
       sortable: false,
-      width: '150px',
+      width: '180px',
       render: (value: any, row) => {
-        if (!value) return <span className="text-muted-foreground text-sm">No PDF</span>;
+        if (!value) {
+          return (
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">No PDF Generated</Badge>
+            </div>
+          );
+        }
         return (
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
               downloadQuote(value, `quote-${row.quote_number}.pdf`);
             }}
           >
-            <Download className="mr-2 h-3 w-3" />
-            Download
+            <Download className="mr-2 h-4 w-4" />
+            Download PDF
           </Button>
         );
       }
