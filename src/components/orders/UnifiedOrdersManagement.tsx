@@ -188,8 +188,6 @@ const UnifiedOrdersManagement = () => {
     let matchesTab = false;
     if (selectedTab === 'all') {
       matchesTab = true;
-    } else if (selectedTab === 'pending_address') {
-      matchesTab = !order.delivery_address_id && ['payment_received', 'processing'].includes(order.status);
     } else if (selectedTab === 'manual') {
       matchesTab = !order.quote_id;
     } else if (selectedTab === 'auto') {
@@ -250,13 +248,10 @@ const UnifiedOrdersManagement = () => {
       )}
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid grid-cols-9 w-full">
+        <TabsList className="grid grid-cols-8 w-full">
           <TabsTrigger value="all">All ({orders.length})</TabsTrigger>
           <TabsTrigger value="auto">Auto ({autoOrdersCount})</TabsTrigger>
           <TabsTrigger value="manual">Manual ({manualOrdersCount})</TabsTrigger>
-          <TabsTrigger value="pending_address">
-            Address ({pendingAddressCount})
-          </TabsTrigger>
           <TabsTrigger value="order_confirmed">Confirmed</TabsTrigger>
           <TabsTrigger value="payment_received">Payment</TabsTrigger>
           <TabsTrigger value="processing">Processing</TabsTrigger>
