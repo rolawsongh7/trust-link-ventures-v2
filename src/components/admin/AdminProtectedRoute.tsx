@@ -60,6 +60,7 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
     }
   }, [mfaRequired, user]);
 
+  // Wait for all loading states to complete
   const loading = authLoading || roleLoading || checkingMFA;
 
   if (loading) {
@@ -90,7 +91,8 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  // Authenticated but not admin - redirect to unauthorized page
+  // IMPORTANT: Only check hasAdminAccess after loading is complete
+  // This prevents showing "Access Denied" during role fetching
   if (!hasAdminAccess) {
     return <Navigate to="/unauthorized" replace />;
   }
