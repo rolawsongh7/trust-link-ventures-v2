@@ -13,7 +13,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
-import { isAdminDomain, getAdminUrl, getMainUrl } from "@/utils/domainUtils";
+import { isAdminDomain, isLovablePreview, getAdminUrl, getMainUrl } from "@/utils/domainUtils";
 import { useEffect, useMemo } from "react";
 import Home from "./pages/Home";
 import About from "./pages/About";
@@ -62,29 +62,29 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const isAdmin = useMemo(() => isAdminDomain(), []);
-  const isLovablePreview = useMemo(() => window.location.hostname.includes('lovableproject.com'), []);
-  const shouldShowAdminRoutes = isAdmin || isLovablePreview;
+  const isPreview = useMemo(() => isLovablePreview(), []);
+  const shouldShowAdminRoutes = isAdmin || isPreview;
 
-  // Security: Prevent admin routes from being accessible on main domain (except on preview for testing)
+  // Security: Prevent admin routes from being accessible on main domain in production
   useEffect(() => {
     const currentPath = window.location.pathname;
     
-    // Skip redirects on Lovable preview for testing purposes
-    if (isLovablePreview) {
+    // Skip redirects in Lovable preview - path-based routing works here
+    if (isPreview) {
       return;
     }
     
-    // If on main domain but trying to access admin routes
+    // Production subdomain enforcement:
+    // If on main domain but trying to access admin routes → redirect to admin subdomain
     if (!isAdmin && currentPath.startsWith('/admin')) {
-      const adminUrl = getAdminUrl(currentPath);
-      window.location.href = adminUrl;
+      window.location.href = getAdminUrl(currentPath);
     }
     
-    // If on admin domain but trying to access public/customer routes
+    // If on admin subdomain but trying to access public/customer routes → redirect to main domain
     if (isAdmin && !currentPath.startsWith('/admin') && currentPath !== '/' && currentPath !== '/unauthorized') {
       window.location.href = getMainUrl(currentPath);
     }
-  }, [isAdmin, isLovablePreview]);
+  }, [isAdmin, isPreview]);
 
   return (
     <HelmetProvider>

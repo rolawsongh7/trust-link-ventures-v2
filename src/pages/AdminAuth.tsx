@@ -36,14 +36,6 @@ const AdminAuth = () => {
 
   const from = (location.state as any)?.from?.pathname || '/admin/dashboard';
 
-  // Redirect to admin subdomain if not already there (skip on preview for testing)
-  useEffect(() => {
-    const isLovablePreview = window.location.hostname.includes('lovableproject.com');
-    if (!isAdminDomain() && !isLovablePreview) {
-      redirectToAdminDomain('/');
-    }
-  }, []);
-
   // Redirect if already authenticated as admin
   useEffect(() => {
     // Wait for both user and role to be loaded
