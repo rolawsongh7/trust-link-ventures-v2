@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
+import { AnimatedButton } from '@/components/ui/animated-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { InteractiveCard } from '@/components/ui/interactive-card';
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Shield, AlertCircle } from 'lucide-react';
@@ -14,6 +15,7 @@ import { RECAPTCHA_SITE_KEY } from '@/config/recaptcha';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { isAdminDomain, redirectToAdminDomain } from '@/utils/domainUtils';
+import trustLinkLogo from '@/assets/trust-link-logo.png';
 
 const AdminAuth = () => {
   const navigate = useNavigate();
@@ -211,16 +213,38 @@ const AdminAuth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-            <Shield className="w-8 h-8 text-primary" />
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden p-4">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 via-secondary-500/10 to-accent-500/20 animate-gradient-xy" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-400/20 via-transparent to-transparent" />
+      
+      <InteractiveCard 
+        variant="glass" 
+        className="w-full max-w-md relative z-10 animate-fade-in border-primary-200/20 shadow-2xl hover:shadow-primary-500/20 transition-all duration-500"
+      >
+        <CardHeader className="space-y-4 text-center pb-4">
+          {/* Logo */}
+          <div className="mx-auto w-24 h-24 animate-scale-in">
+            <img 
+              src={trustLinkLogo} 
+              alt="Trust Link Ventures" 
+              className="w-full h-full object-contain drop-shadow-lg"
+            />
           </div>
-          <CardTitle className="text-2xl font-bold">Admin Portal</CardTitle>
-          <CardDescription>
-            Secure access for authorized administrators only
-          </CardDescription>
+          
+          {/* Shield icon with pulse animation */}
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary-500/20 to-secondary-500/20 rounded-full flex items-center justify-center animate-pulse backdrop-blur-sm border border-primary-300/30">
+            <Shield className="w-8 h-8 text-primary-600 drop-shadow-glow" />
+          </div>
+          
+          <div className="space-y-2">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
+              Admin Portal
+            </CardTitle>
+            <CardDescription className="text-base">
+              Secure access for authorized administrators only
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           {rateLimitError && (
@@ -281,28 +305,40 @@ const AdminAuth = () => {
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading || (showCaptcha && !recaptchaToken)}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing In...
-                </>
-              ) : (
+            <AnimatedButton 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white shadow-lg hover:shadow-primary-500/50 transition-all duration-300" 
+              disabled={loading || (showCaptcha && !recaptchaToken)}
+              animation="glow"
+              loading={loading}
+              loadingText="Signing In..."
+            >
+              {!loading && (
                 <>
                   <Shield className="mr-2 h-4 w-4" />
                   Sign In to Admin
                 </>
               )}
-            </Button>
+            </AnimatedButton>
           </form>
 
-          <div className="mt-6 space-y-2 text-center text-sm text-muted-foreground">
-            <p>🔒 Secured with multi-layer authentication</p>
-            <p>🛡️ All login attempts are monitored and logged</p>
-            <p className="text-xs">Authorized personnel only</p>
+          <div className="mt-8 space-y-3 text-center">
+            <div className="flex items-center justify-center gap-6 text-sm">
+              <div className="flex items-center gap-2 text-primary-600">
+                <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
+                <span className="font-medium">Multi-Layer Security</span>
+              </div>
+              <div className="flex items-center gap-2 text-secondary-600">
+                <div className="w-2 h-2 bg-secondary-500 rounded-full animate-pulse" />
+                <span className="font-medium">24/7 Monitoring</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground/80 font-medium tracking-wide uppercase">
+              Authorized Personnel Only
+            </p>
           </div>
         </CardContent>
-      </Card>
+      </InteractiveCard>
     </div>
   );
 };
