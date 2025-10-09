@@ -46,8 +46,8 @@ import Terms from "./pages/Terms";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import CustomersPage from "./pages/CustomersPage";
 import LeadsPage from "./pages/LeadsPage";
-import OrdersPage from "./pages/OrdersPage";
 import QuotesPage from "./pages/QuotesPage";
+import UnifiedOrdersManagement from "./components/orders/UnifiedOrdersManagement";
 import CommunicationPage from "./pages/CommunicationPage";
 import Settings from "./pages/Settings";
 
@@ -114,7 +114,7 @@ const App = () => {
                         <Route path="customers" element={<CustomersPage />} />
                         <Route path="leads" element={<LeadsPage />} />
                         <Route path="quotes" element={<QuotesPage />} />
-                        <Route path="orders" element={<OrdersPage />} />
+                        <Route path="orders" element={<UnifiedOrdersManagement />} />
                         <Route path="analytics" element={<AnalyticsPage />} />
                         <Route path="crm" element={<CRM />} />
                         <Route path="quote-inquiries" element={<QuoteRequestManagement />} />
