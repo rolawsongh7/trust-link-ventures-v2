@@ -8,6 +8,8 @@ import { Users, TrendingUp, FileText, Phone, BarChart3, Target, Upload, Clipboar
 import CustomerManagement from '@/components/CustomerManagement';
 import LeadsManagement from '@/components/LeadsManagement';
 import QuotesManagement from '@/components/QuotesManagement';
+import { LeadScoringDashboard } from '@/components/crm/LeadScoringDashboard';
+import { QuoteToOrderPipeline } from '@/components/crm/QuoteToOrderPipeline';
 import CommunicationsManagement from '@/components/CommunicationsManagement';
 import CRMDashboard from '@/components/CRMDashboard';
 import QuoteRequestManagement from '@/components/QuoteRequestManagement';
@@ -46,7 +48,7 @@ const CRM = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-11">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Dashboard
@@ -59,13 +61,21 @@ const CRM = () => {
               <TrendingUp className="h-4 w-4" />
               Leads
             </TabsTrigger>
+            <TabsTrigger value="lead-scoring" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Scoring
+            </TabsTrigger>
             <TabsTrigger value="quote-requests" className="flex items-center gap-2">
               <ClipboardList className="h-4 w-4" />
-              Quote Requests
+              Requests
             </TabsTrigger>
             <TabsTrigger value="quotes" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Quotes
+            </TabsTrigger>
+            <TabsTrigger value="pipeline" className="flex items-center gap-2">
+              <LineChart className="h-4 w-4" />
+              Pipeline
             </TabsTrigger>
             <TabsTrigger value="direct-sales" className="flex items-center gap-2">
               <Zap className="h-4 w-4" />
@@ -93,12 +103,20 @@ const CRM = () => {
             <LeadsManagement />
           </TabsContent>
 
+          <TabsContent value="lead-scoring" className="mt-6">
+            <LeadScoringDashboard />
+          </TabsContent>
+
           <TabsContent value="quote-requests" className="mt-6">
             <QuoteRequestManagement />
           </TabsContent>
 
           <TabsContent value="quotes" className="mt-6">
             <QuotesManagement />
+          </TabsContent>
+
+          <TabsContent value="pipeline" className="mt-6">
+            <QuoteToOrderPipeline />
           </TabsContent>
 
           <TabsContent value="direct-sales" className="mt-6">

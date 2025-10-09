@@ -14,7 +14,7 @@ import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
-import CustomerDetailView from './CustomerDetailView';
+import { UnifiedCustomerView } from './crm/UnifiedCustomerView';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Customer {
@@ -390,8 +390,8 @@ const CustomerManagement = () => {
 
   if (viewingCustomer) {
     return (
-      <CustomerDetailView 
-        customer={viewingCustomer} 
+      <UnifiedCustomerView 
+        customerId={viewingCustomer.id}
         onBack={() => setViewingCustomer(null)} 
       />
     );
