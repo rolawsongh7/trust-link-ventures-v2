@@ -2837,6 +2837,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      force_order_status_change: {
+        Args: {
+          p_admin_id: string
+          p_new_status: string
+          p_order_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
       generate_invoice_number: {
         Args: { invoice_type: string }
         Returns: string

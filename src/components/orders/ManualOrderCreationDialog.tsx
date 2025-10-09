@@ -143,29 +143,145 @@ export const ManualOrderCreationDialog: React.FC<ManualOrderCreationDialogProps>
 
   const handleConfirmedSubmit = async () => {
     setLoading(true);
+    const submissionId = `order-${Date.now()}`;
 
     try {
-      const { error } = await supabase
+      // Pre-validation checks
+      if (!user?.id) {
+        throw new Error('User not authenticated. Please log in again.');
+      }
+
+      if (!formData.customer_id) {
+        throw new Error('Customer selection is required');
+      }
+
+      const amount = parseFloat(formData.total_amount);
+      if (isNaN(amount) || amount <= 0) {
+        throw new Error('Order amount must be greater than zero');
+      }
+
+      // Verify customer exists
+      const { data: customerCheck, error: customerError } = await supabase
+        .from('customers')
+        .select('id, company_name')
+        .eq('id', formData.customer_id)
+        .single();
+
+      if (customerError || !customerCheck) {
+        throw new Error('Selected customer not found. Please refresh and try again.');
+      }
+
+      // If quote linked, verify it exists and matches customer
+      if (formData.quote_id) {
+        const { data: quoteCheck, error: quoteError } = await supabase
+          .from('quotes')
+          .select('id, customer_id, status')
+          .eq('id', formData.quote_id)
+          .single();
+
+        if (quoteError || !quoteCheck) {
+          throw new Error('Selected quote not found. Please refresh and try again.');
+        }
+
+        if (quoteCheck.customer_id !== formData.customer_id) {
+          throw new Error('Quote does not belong to selected customer');
+        }
+
+        if (quoteCheck.status === 'accepted') {
+          const { data: existingOrder } = await supabase
+            .from('orders')
+            .select('order_number')
+            .eq('quote_id', formData.quote_id)
+            .maybeSingle();
+
+          if (existingOrder) {
+            throw new Error(`An order (${existingOrder.order_number}) already exists for this quote`);
+          }
+        }
+      }
+
+      // Insert order with comprehensive error handling
+      const { data: newOrder, error: insertError } = await supabase
         .from('orders')
-        .insert([{
+        .insert({
           customer_id: formData.customer_id,
           quote_id: formData.quote_id || null,
-          total_amount: parseFloat(formData.total_amount),
+          total_amount: amount,
           currency: formData.currency,
-          status: formData.status,
+          status: formData.status as any,
           notes: formData.notes || null,
-          created_by: user?.id,
-        } as any]);
+          created_by: user.id,
+        } as any)
+        .select('id, order_number')
+        .single();
 
-      if (error) throw error;
+      if (insertError) {
+        if (insertError.code === '23503') {
+          throw new Error('Invalid customer or quote reference. Please refresh and try again.');
+        } else if (insertError.code === '23505') {
+          throw new Error('An order with this information already exists');
+        } else {
+          throw new Error(`Database error: ${insertError.message}`);
+        }
+      }
 
-      toast.success('Manual order created successfully');
+      if (!newOrder) {
+        throw new Error('Order created but no data returned. Please check orders list.');
+      }
+
+      console.log(`✅ Order ${newOrder.order_number} created successfully (ID: ${newOrder.id})`);
+
+      // Log to audit
+      await supabase.from('audit_logs').insert({
+        user_id: user.id,
+        event_type: 'manual_order_created',
+        action: 'create',
+        resource_type: 'order',
+        resource_id: newOrder.id,
+        event_data: {
+          order_number: newOrder.order_number,
+          customer_id: formData.customer_id,
+          quote_id: formData.quote_id,
+          amount: amount,
+          is_manual: !formData.quote_id,
+        },
+        severity: 'low',
+      });
+
+      toast.success(
+        `Order ${newOrder.order_number} created successfully`,
+        { description: `Total: ${amount.toLocaleString()} ${formData.currency}` }
+      );
+
       onSuccess();
       onOpenChange(false);
       resetForm();
+
     } catch (error: any) {
-      console.error('Error creating manual order:', error);
-      toast.error(error.message || 'Failed to create manual order');
+      console.error('❌ Order creation failed:', error);
+
+      const errorMessage = error.message || 'An unexpected error occurred';
+      
+      toast.error('Failed to Create Order', {
+        description: errorMessage,
+        duration: 5000,
+      });
+
+      supabase.from('audit_logs').insert({
+        user_id: user?.id,
+        event_type: 'manual_order_creation_failed',
+        action: 'create_failed',
+        resource_type: 'order',
+        event_data: {
+          error: error.message,
+          form_data: formData,
+          submission_id: submissionId,
+        },
+        severity: 'medium',
+      }).then(({ error: logError }) => {
+        if (logError) console.error('Failed to log error:', logError);
+      });
+
     } finally {
       setLoading(false);
       setConfirmDialogOpen(false);
