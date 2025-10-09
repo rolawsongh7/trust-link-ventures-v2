@@ -2,13 +2,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { LogIn, Menu, X } from 'lucide-react';
+import { useRoleAuth } from '@/hooks/useRoleAuth';
+import { LogIn, Menu, X, Shield } from 'lucide-react';
 import { useState } from 'react';
 import trustLinkLogo from '@/assets/trust-link-logo.png';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { navigateToAdminPortal } from '@/utils/domainUtils';
 
 export const PublicHeader = () => {
   const { user } = useAuth();
+  const { hasAdminAccess } = useRoleAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Component refreshed to fix caching issue
@@ -56,6 +59,20 @@ export const PublicHeader = () => {
           {/* Auth Actions */}
           <div className="ml-4 md:ml-6 flex items-center space-x-2 md:space-x-4">
             {user && <NotificationCenter />}
+            
+            {/* Show Admin Portal button only for admin users */}
+            {hasAdminAccess && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={navigateToAdminPortal}
+                className="hidden sm:flex touch-manipulation"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                <span>Admin Portal</span>
+              </Button>
+            )}
+            
             <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hidden sm:flex touch-manipulation">
               <Link to="/customer-auth">
                 <LogIn className="h-4 w-4 mr-2" />
@@ -97,6 +114,21 @@ export const PublicHeader = () => {
                   {link.name}
                 </Link>
               ))}
+              
+              {/* Admin Portal button in mobile menu */}
+              {hasAdminAccess && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    navigateToAdminPortal();
+                  }}
+                  className="block w-full text-left px-3 py-3 text-base font-medium text-primary hover:text-primary/80 transition-colors rounded-md hover:bg-muted/50 touch-manipulation"
+                >
+                  <Shield className="inline h-4 w-4 mr-2" />
+                  Admin Portal
+                </button>
+              )}
+              
               <Link
                 to="/customer-auth"
                 className="block px-3 py-3 text-base font-medium text-primary hover:text-primary/80 transition-colors rounded-md hover:bg-muted/50 touch-manipulation sm:hidden"

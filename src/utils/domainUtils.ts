@@ -51,3 +51,25 @@ export const redirectToMainDomain = (path: string = '/') => {
     window.location.href = getMainUrl(path);
   }
 };
+
+export const navigateToPublicSite = () => {
+  const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+  if (isLovablePreview) {
+    // In preview, navigate to root (public site)
+    window.location.href = '/';
+  } else {
+    // In production, redirect to main domain
+    window.location.href = getMainUrl('/');
+  }
+};
+
+export const navigateToAdminPortal = () => {
+  const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+  if (isLovablePreview) {
+    // In preview, navigate to admin path
+    window.location.href = '/admin/dashboard';
+  } else {
+    // In production, redirect to admin subdomain
+    window.location.href = getAdminUrl('/admin/dashboard');
+  }
+};

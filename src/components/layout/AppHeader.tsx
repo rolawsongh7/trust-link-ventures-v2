@@ -4,9 +4,9 @@ import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Search, User, LogOut, MessageSquare, Shield, Package } from 'lucide-react';
+import { Search, User, LogOut, MessageSquare, Shield, Package, ExternalLink } from 'lucide-react';
 import trustLinkLogo from '@/assets/trust-link-logo.png';
-import { getMainUrl } from '@/utils/domainUtils';
+import { getMainUrl, navigateToPublicSite } from '@/utils/domainUtils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -144,6 +144,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
               )}
               
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={navigateToPublicSite}>
+                <ExternalLink className="mr-2 h-4 w-4" />
+                <span>View Public Site</span>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>

@@ -12,8 +12,10 @@ import {
   Settings,
   Bell,
   Clock,
-  Bot
+  Bot,
+  ExternalLink
 } from 'lucide-react';
+import { navigateToPublicSite } from '@/utils/domainUtils';
 
 import {
   Sidebar,
@@ -130,6 +132,19 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              {/* Public Site Link */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="View Public Site">
+                  <button
+                    onClick={navigateToPublicSite}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-sidebar-accent/50 text-sidebar-foreground hover:text-sidebar-accent-foreground w-full"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    {isExpanded && <span>View Public Site</span>}
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
