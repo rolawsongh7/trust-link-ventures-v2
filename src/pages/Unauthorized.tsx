@@ -1,11 +1,23 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldAlert, Home } from 'lucide-react';
 
 const Unauthorized = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { hasAdminAccess, loading } = useRoleAuth();
+
+  // Auto-redirect admin users to dashboard (fix for getting stuck here)
+  useEffect(() => {
+    if (!loading && user && hasAdminAccess) {
+      console.log('[Unauthorized] Admin user detected, auto-redirecting to dashboard');
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [user, hasAdminAccess, loading, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background/95 to-muted/20 p-4">
