@@ -532,7 +532,7 @@ const UnifiedQuoteManagement = () => {
       key: 'final_file_url',
       label: 'Quote PDF',
       sortable: false,
-      width: '180px',
+      width: '200px',
       render: (value: any, row) => {
         if (!value) {
           return (
@@ -542,17 +542,30 @@ const UnifiedQuoteManagement = () => {
           );
         }
         return (
-          <Button
-            variant="default"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              downloadQuote(value, `quote-${row.quote_number}.pdf`);
-            }}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Download PDF
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(value, '_blank');
+              }}
+            >
+              <Eye className="mr-1 h-3 w-3" />
+              Preview
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadQuote(value, `quote-${row.quote_number}.pdf`);
+              }}
+            >
+              <Download className="mr-1 h-3 w-3" />
+              Download
+            </Button>
+          </div>
         );
       }
     }
