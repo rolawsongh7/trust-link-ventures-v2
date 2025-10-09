@@ -7,13 +7,13 @@
 export const isAdminDomain = (): boolean => {
   if (typeof window === 'undefined') return false;
   
-  // Check if we're on the admin subdomain
+  // In Lovable preview mode, use path-based routing instead of subdomains
+  const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+  if (isLovablePreview) {
+    return window.location.pathname.startsWith('/admin');
+  }
+  
   return window.location.hostname.startsWith('admin.');
-};
-
-export const isLovablePreview = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  return window.location.hostname.includes('lovableproject.com');
 };
 
 export const isMainDomain = (): boolean => {
@@ -33,8 +33,9 @@ export const getMainUrl = (path: string = ''): string => {
 };
 
 export const redirectToAdminDomain = (path: string = '/') => {
-  // Skip redirect in Lovable preview - routing is handled by React Router
-  if (isLovablePreview()) return;
+  // Skip redirect in Lovable preview - use path-based routing
+  const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+  if (isLovablePreview) return;
   
   if (!isAdminDomain()) {
     window.location.href = getAdminUrl(path);
@@ -42,8 +43,9 @@ export const redirectToAdminDomain = (path: string = '/') => {
 };
 
 export const redirectToMainDomain = (path: string = '/') => {
-  // Skip redirect in Lovable preview - routing is handled by React Router  
-  if (isLovablePreview()) return;
+  // Skip redirect in Lovable preview - use path-based routing
+  const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+  if (isLovablePreview) return;
   
   if (isAdminDomain()) {
     window.location.href = getMainUrl(path);
