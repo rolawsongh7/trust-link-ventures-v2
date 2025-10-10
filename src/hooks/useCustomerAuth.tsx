@@ -23,6 +23,7 @@ interface CustomerAuthContextType {
   signUp: (email: string, password: string, companyName: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
   updateProfile: (updates: Partial<CustomerProfile>) => Promise<{ error: any }>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
 }
 
 const CustomerAuthContext = createContext<CustomerAuthContextType | undefined>(undefined);
@@ -223,7 +224,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const sanitizedCompanyName = companyName.trim();
     const sanitizedFullName = fullName.trim();
     
-    const redirectUrl = `${window.location.origin}/customer`;
+    const redirectUrl = `${window.location.origin}/customer-auth?confirmed=true`;
     
     const { data, error } = await supabase.auth.signUp({
       email: sanitizedEmail,
@@ -353,6 +354,13 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/customer-auth?reset=true`,
+    });
+    return { error };
+  };
+
   const value = {
     user,
     session,
@@ -362,6 +370,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     signUp,
     signOut,
     updateProfile,
+    resetPassword,
   };
 
   return <CustomerAuthContext.Provider value={value}>{children}</CustomerAuthContext.Provider>;
