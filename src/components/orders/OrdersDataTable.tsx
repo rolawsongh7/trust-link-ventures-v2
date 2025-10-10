@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,9 +21,13 @@ import {
   Eye,
   Lock,
   Unlock,
-  Link2
+  Link2,
+  Download,
+  FileText,
+  FileSpreadsheet
 } from 'lucide-react';
 import { Column } from '@/components/ui/data-table';
+import { DataExporter } from '@/lib/exportHelpers';
 
 interface Order {
   id: string;
@@ -109,6 +113,19 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
   onViewQuote,
   getStatusColor,
 }) => {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async (format: 'csv' | 'excel') => {
+    setIsExporting(true);
+    try {
+      await DataExporter.exportOrders(orders, { format });
+    } catch (error) {
+      console.error('Export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const columns: Column<Order>[] = [
     {
       key: 'order_number' as keyof Order,
@@ -271,11 +288,35 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
   ];
 
   return (
-    <DataTable
-      data={orders}
-      columns={columns}
-      searchable={true}
-      searchPlaceholder="Search by order number or customer..."
-    />
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" disabled={isExporting || orders.length === 0}>
+              <Download className="h-4 w-4 mr-2" />
+              {isExporting ? 'Exporting...' : 'Export'}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => handleExport('csv')}>
+              <FileText className="h-4 w-4 mr-2" />
+              Export as CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExport('excel')}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Export as Excel
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <DataTable
+        data={orders}
+        columns={columns}
+        searchable={true}
+        searchPlaceholder="Search by order number or customer..."
+      />
+    </div>
   );
 };

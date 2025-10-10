@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Package, Plus, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRealtimeOrders } from '@/hooks/useRealtimeOrders';
+import { useOrdersQuery } from '@/hooks/useOrdersQuery';
 import { OrdersDataTable } from './OrdersDataTable';
 import { DeliveryManagementDialog } from './DeliveryManagementDialog';
 import { EditOrderDetailsDialog } from './EditOrderDetailsDialog';
@@ -47,7 +48,16 @@ interface Order {
 }
 
 const UnifiedOrdersManagement = () => {
-  const { orders: realtimeOrders, loading, setOrders } = useRealtimeOrders();
+  // Use React Query for data fetching with caching
+  const { orders: queryOrders, isLoading: queryLoading, refetch } = useOrdersQuery();
+  
+  // Keep real-time updates for live notifications
+  const { orders: realtimeOrders, loading: realtimeLoading } = useRealtimeOrders();
+  
+  // Merge cached data with real-time updates (use queryOrders as the primary source)
+  const orders = queryOrders.length > 0 ? queryOrders : realtimeOrders;
+  const loading = queryLoading || realtimeLoading;
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -58,47 +68,12 @@ const UnifiedOrdersManagement = () => {
   const [viewQuoteDialogOpen, setViewQuoteDialogOpen] = useState(false);
   const [manualOrderDialogOpen, setManualOrderDialogOpen] = useState(false);
 
-  // Fetch detailed order data with relations
-  const [orders, setOrdersData] = useState<Order[]>([]);
-
+  // Refetch when real-time updates come in
   useEffect(() => {
-    fetchDetailedOrders();
-  }, [realtimeOrders]);
-
-  const fetchDetailedOrders = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          quotes(quote_number, title),
-          customers(company_name, contact_name, email),
-          customer_addresses(street_address, city, region, ghana_digital_address)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Fetch order items separately
-      const ordersWithItems = await Promise.all(
-        (data || []).map(async (order) => {
-          const { data: items } = await supabase
-            .from('order_items')
-            .select('*')
-            .eq('order_id', order.id);
-          
-          return {
-            ...order,
-            order_items: items || []
-          };
-        })
-      );
-
-      setOrdersData(ordersWithItems as Order[]);
-    } catch (error) {
-      console.error('Error fetching detailed orders:', error);
+    if (realtimeOrders.length > 0) {
+      refetch();
     }
-  };
+  }, [realtimeOrders.length, refetch]);
 
   const handleEditDetails = (order: Order) => {
     setSelectedOrder(order);
@@ -130,7 +105,7 @@ const UnifiedOrdersManagement = () => {
         .eq('id', order.id);
 
       toast.success('Delivery address request sent to customer');
-      fetchDetailedOrders();
+      refetch();
     } catch (error) {
       console.error('Error requesting delivery address:', error);
       toast.error('Failed to request delivery address');
@@ -276,7 +251,7 @@ const UnifiedOrdersManagement = () => {
             </Card>
           ) : (
             <OrdersDataTable
-              orders={filteredOrders}
+              orders={filteredOrders as any}
               onEditDetails={handleEditDetails}
               onViewHistory={handleViewHistory}
               onRequestAddress={handleRequestAddress}
@@ -294,7 +269,7 @@ const UnifiedOrdersManagement = () => {
         open={editDetailsDialogOpen}
         onOpenChange={setEditDetailsDialogOpen}
         order={selectedOrder}
-        onSuccess={fetchDetailedOrders}
+        onSuccess={refetch}
       />
 
       {selectedOrder && (
@@ -309,7 +284,7 @@ const UnifiedOrdersManagement = () => {
           orderNumber={selectedOrder.order_number}
           customerEmail={selectedOrder.customers?.email || ''}
           deliveryAddressId={selectedOrder.delivery_address_id}
-          onSuccess={fetchDetailedOrders}
+          onSuccess={refetch}
         />
       )}
 
@@ -322,7 +297,7 @@ const UnifiedOrdersManagement = () => {
       <ManualOrderCreationDialog
         open={manualOrderDialogOpen}
         onOpenChange={setManualOrderDialogOpen}
-        onSuccess={fetchDetailedOrders}
+        onSuccess={refetch}
       />
     </div>
   );
