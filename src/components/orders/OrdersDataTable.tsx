@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,10 @@ import {
 } from 'lucide-react';
 import { Column } from '@/components/ui/data-table';
 import { DataExporter } from '@/lib/exportHelpers';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
+import { OrderCard } from './OrderCard';
+import { OrdersSearchFilters } from './OrdersSearchFilters';
+import { SearchFilters } from '@/types/filters';
 
 interface Order {
   id: string;
@@ -114,6 +118,76 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
   getStatusColor,
 }) => {
   const [isExporting, setIsExporting] = useState(false);
+  const { isMobile, isTablet } = useMobileDetection();
+  const [filters, setFilters] = useState<SearchFilters>({
+    customer: '',
+    orderNumber: '',
+    status: [],
+    dateRange: null,
+    amountRange: null,
+    origin: 'all'
+  });
+
+  // Apply filters to orders
+  const filteredOrders = useMemo(() => {
+    return orders.filter(order => {
+      // Customer filter
+      if (filters.customer && !order.customers?.company_name?.toLowerCase().includes(filters.customer.toLowerCase())) {
+        return false;
+      }
+
+      // Order number filter
+      if (filters.orderNumber && !order.order_number.toLowerCase().includes(filters.orderNumber.toLowerCase())) {
+        return false;
+      }
+
+      // Status filter
+      if (filters.status.length > 0 && !filters.status.includes(order.status)) {
+        return false;
+      }
+
+      // Date range filter
+      if (filters.dateRange) {
+        const orderDate = new Date(order.created_at);
+        if (orderDate < filters.dateRange.from || orderDate > filters.dateRange.to) {
+          return false;
+        }
+      }
+
+      // Amount range filter
+      if (filters.amountRange && (filters.amountRange.min > 0 || filters.amountRange.max > 0)) {
+        if (filters.amountRange.min > 0 && order.total_amount < filters.amountRange.min) {
+          return false;
+        }
+        if (filters.amountRange.max > 0 && order.total_amount > filters.amountRange.max) {
+          return false;
+        }
+      }
+
+      // Origin filter
+      if (filters.origin !== 'all') {
+        if (filters.origin === 'auto' && !order.quote_id) {
+          return false;
+        }
+        if (filters.origin === 'manual' && order.quote_id) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [orders, filters]);
+
+  const handleClearFilters = () => {
+    setFilters({
+      customer: '',
+      orderNumber: '',
+      status: [],
+      dateRange: null,
+      amountRange: null,
+      origin: 'all'
+    });
+  };
 
   const handleExport = async (format: 'csv' | 'excel') => {
     setIsExporting(true);
@@ -287,35 +361,98 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
     },
   ];
 
+  // Mobile view
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3">
+          <OrdersSearchFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            onClearFilters={handleClearFilters}
+          />
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-muted-foreground">
+              {filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'}
+            </p>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={isExporting || filteredOrders.length === 0}>
+                  <Download className="h-4 w-4 mr-2" />
+                  {isExporting ? 'Exporting...' : 'Export'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleExport('csv')}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('excel')}>
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Excel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {filteredOrders.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No orders found</p>
+            </div>
+          ) : (
+            filteredOrders.map(order => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                onView={onEditDetails}
+                onEdit={onEditDetails}
+                onGenerateInvoice={() => {}}
+              />
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop/Tablet view
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" disabled={isExporting || orders.length === 0}>
-              <Download className="h-4 w-4 mr-2" />
-              {isExporting ? 'Exporting...' : 'Export'}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Export Format</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleExport('csv')}>
-              <FileText className="h-4 w-4 mr-2" />
-              Export as CSV
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleExport('excel')}>
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Export as Excel
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="flex flex-col gap-3">
+        <div className="flex justify-between items-center">
+          <OrdersSearchFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            onClearFilters={handleClearFilters}
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" disabled={isExporting || filteredOrders.length === 0}>
+                <Download className="h-4 w-4 mr-2" />
+                {isExporting ? 'Exporting...' : 'Export'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleExport('csv')}>
+                <FileText className="h-4 w-4 mr-2" />
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('excel')}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Export as Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <DataTable
-        data={orders}
+        data={filteredOrders}
         columns={columns}
         searchable={true}
-        searchPlaceholder="Search by order number or customer..."
+        searchPlaceholder="Quick search by order number or customer..."
       />
     </div>
   );
