@@ -64,7 +64,7 @@ export class EmailService {
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
           to: email,
-          subject: 'Reset Your Password - SeaPro SAS',
+          subject: 'Reset Your Password - Trust Link Ventures',
           type: 'password-reset',
           data: { 
             name: name || 'User',
@@ -89,7 +89,7 @@ export class EmailService {
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
           to: email,
-          subject: 'Verify Your Email - SeaPro SAS',
+          subject: 'Verify Your Email - Trust Link Ventures',
           type: 'verification',
           data: { 
             name: name || 'User',
