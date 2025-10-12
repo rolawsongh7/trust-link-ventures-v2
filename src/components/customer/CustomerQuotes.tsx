@@ -79,33 +79,69 @@ export const CustomerQuotes: React.FC = () => {
       if (requestsError) throw requestsError;
 
       // Fetch linked final quotes with items
-      const { data: finalQuotes, error: quotesError } = await supabase
-        .from('quotes')
-        .select(`
-          id, 
-          quote_number, 
-          status, 
-          total_amount, 
-          currency, 
-          valid_until, 
-          final_file_url, 
-          sent_at, 
-          linked_quote_request_id, 
-          customer_email,
-          quote_items (
-            id,
-            product_name,
-            product_description,
-            quantity,
-            unit,
-            unit_price,
-            total_price,
-            specifications
-          )
-        `)
-        .or(`customer_email.eq.${profile.email},linked_quote_request_id.in.(${quoteRequests?.map(q => q.id).join(',') || 'null'})`);
+      let finalQuotes = [];
+      
+      if (quoteRequests && quoteRequests.length > 0) {
+        // Customer has quote requests - fetch quotes by email OR linked request IDs
+        const { data, error: quotesError } = await supabase
+          .from('quotes')
+          .select(`
+            id, 
+            quote_number, 
+            status, 
+            total_amount, 
+            currency, 
+            valid_until, 
+            final_file_url, 
+            sent_at, 
+            linked_quote_request_id, 
+            customer_email,
+            quote_items (
+              id,
+              product_name,
+              product_description,
+              quantity,
+              unit,
+              unit_price,
+              total_price,
+              specifications
+            )
+          `)
+          .or(`customer_email.eq.${profile.email},linked_quote_request_id.in.(${quoteRequests.map(q => q.id).join(',')})`);
 
-      if (quotesError) throw quotesError;
+        if (quotesError) throw quotesError;
+        finalQuotes = data || [];
+      } else {
+        // New customer - only check for quotes by email (in case admin created one directly)
+        const { data, error: quotesError } = await supabase
+          .from('quotes')
+          .select(`
+            id, 
+            quote_number, 
+            status, 
+            total_amount, 
+            currency, 
+            valid_until, 
+            final_file_url, 
+            sent_at, 
+            linked_quote_request_id, 
+            customer_email,
+            quote_items (
+              id,
+              product_name,
+              product_description,
+              quantity,
+              unit,
+              unit_price,
+              total_price,
+              specifications
+            )
+          `)
+          .eq('customer_email', profile.email);
+
+        if (quotesError) throw quotesError;
+        finalQuotes = data || [];
+      }
 
       // Merge quote requests with their final quotes
       // IMPORTANT: Prioritize linked_quote_request_id to avoid duplicate matches
