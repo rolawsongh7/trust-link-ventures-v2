@@ -31,6 +31,25 @@ export const QuotePreviewDialog: React.FC<QuotePreviewDialogProps> = ({
     try {
       setApproving(true);
 
+      // If PDF doesn't exist, generate it first
+      if (!quote.final_file_url) {
+        toast({
+          title: 'Generating PDF...',
+          description: 'Creating quote PDF before approval'
+        });
+
+        const { error: generateError } = await supabase.functions.invoke('generate-quote-title-page', {
+          body: { quoteId: quote.id }
+        });
+
+        if (generateError) {
+          throw new Error('Failed to generate PDF: ' + generateError.message);
+        }
+
+        // Wait a moment for the PDF to be ready
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
       // Update quote status to approved
       const { error: updateError } = await supabase
         .from('quotes')

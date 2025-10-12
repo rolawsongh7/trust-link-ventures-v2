@@ -353,18 +353,6 @@ This is an automated message from Trust Link Ventures Limited.
 
     console.log('[Quote Approval] Email sent successfully via Resend:', emailResponse.data);
     
-    // Update quote status to 'sent' if not already
-    if (quote.status !== 'sent') {
-      const { error: statusUpdateError } = await supabase
-        .from('quotes')
-        .update({ status: 'sent', sent_at: new Date().toISOString() })
-        .eq('id', quoteId);
-      
-      if (statusUpdateError) {
-        console.error('[Quote Approval] Failed to update quote status:', statusUpdateError);
-      }
-    }
-
     // Log successful email send
     await logEmailAttempt({
       email_type: 'quote_approval',
@@ -381,10 +369,76 @@ This is an automated message from Trust Link Ventures Limited.
       },
     });
 
+    // Send copy to admin email
+    console.log('[Admin Copy] Sending copy to info@trustlinkventureslimited.com...');
+    try {
+      const adminEmailResponse = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: ['info@trustlinkventureslimited.com'],
+        subject: `[ADMIN COPY] Quote Sent: ${quote.quote_number} - ${companyName || customerEmail}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+            <div style="background-color: #0066cc; padding: 20px; border-radius: 8px 8px 0 0;">
+              <h2 style="color: white; margin: 0;">📧 Admin Notification - Quote Sent</h2>
+            </div>
+            <div style="background-color: white; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <p style="color: #666; margin-bottom: 20px;"><strong>This is a copy of the quote sent to the customer.</strong></p>
+              
+              <div style="background-color: #f0f7ff; padding: 15px; border-left: 4px solid #0066cc; margin-bottom: 20px;">
+                <p style="margin: 5px 0;"><strong>Quote Number:</strong> ${quote.quote_number}</p>
+                <p style="margin: 5px 0;"><strong>Customer Email:</strong> ${customerEmail}</p>
+                <p style="margin: 5px 0;"><strong>Company:</strong> ${companyName || 'N/A'}</p>
+                <p style="margin: 5px 0;"><strong>Sent At:</strong> ${new Date().toLocaleString()}</p>
+              </div>
+
+              <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
+              
+              <h3 style="color: #333; margin-bottom: 15px;">Customer Email Content Below:</h3>
+              ${emailHtml}
+            </div>
+          </div>
+        `,
+        text: `ADMIN NOTIFICATION - Quote Sent\n\nThis is a copy of the quote sent to: ${customerEmail}\n\nQuote Number: ${quote.quote_number}\nCompany: ${companyName || 'N/A'}\nSent At: ${new Date().toLocaleString()}\n\n---\n\nCUSTOMER EMAIL CONTENT:\n\n${textContent}`,
+      });
+
+      console.log('[Admin Copy] Admin email sent successfully:', adminEmailResponse.data?.id);
+
+      // Log admin email
+      await logEmailAttempt({
+        email_type: 'quote_approval_admin_copy',
+        recipient_email: 'info@trustlinkventureslimited.com',
+        subject: `[ADMIN COPY] Quote Sent: ${quote.quote_number}`,
+        status: 'sent',
+        resend_id: adminEmailResponse.data?.id,
+        quote_id: quoteId,
+        metadata: { 
+          quote_number: quote.quote_number,
+          original_recipient: customerEmail,
+          company_name: companyName
+        }
+      });
+    } catch (adminEmailError) {
+      console.error('[Admin Copy] Failed to send admin notification:', adminEmailError);
+      // Don't fail the main request if admin email fails
+      await logEmailAttempt({
+        email_type: 'quote_approval_admin_copy',
+        recipient_email: 'info@trustlinkventureslimited.com',
+        subject: `[ADMIN COPY] Quote Sent: ${quote.quote_number}`,
+        status: 'failed',
+        error_message: adminEmailError instanceof Error ? adminEmailError.message : 'Unknown error',
+        quote_id: quoteId,
+        metadata: { 
+          quote_number: quote.quote_number,
+          original_recipient: customerEmail
+        }
+      });
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
-      message: "Quote approval email sent successfully",
-      emailId: emailResponse.data?.id 
+      message: "Quote approval email sent successfully to customer and admin",
+      emailId: emailResponse.data?.id,
+      adminEmail: 'info@trustlinkventureslimited.com'
     }), {
       status: 200,
       headers: {

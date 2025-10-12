@@ -251,6 +251,16 @@ const UnifiedQuoteManagement = () => {
 
   const sendQuoteApprovalLink = async (quote: Quote) => {
     try {
+      // CRITICAL: Validate PDF exists before sending
+      if (!quote.final_file_url) {
+        toast({
+          title: 'Cannot send quote',
+          description: 'Please generate the quote PDF first before sending to customer',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       // Check if customer email is available
       let customerEmail = quote.customer_email || quote.customers?.email;
       
@@ -273,7 +283,7 @@ const UnifiedQuoteManagement = () => {
 
       toast({
         title: "Sending approval link...",
-        description: "Please wait while we send the quote approval link.",
+        description: "Please wait while we send the quote to customer and admin.",
       });
 
       const { data, error } = await supabase.functions.invoke('send-quote-approval-link', {
@@ -285,17 +295,23 @@ const UnifiedQuoteManagement = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to send email');
+      }
 
-      // Update sent timestamp
+      // Update sent timestamp and status
       await supabase
         .from('quotes')
-        .update({ sent_at: new Date().toISOString() })
+        .update({ 
+          sent_at: new Date().toISOString(),
+          status: 'sent'
+        })
         .eq('id', quote.id);
 
       toast({
         title: "Success",
-        description: "Quote approval link sent successfully to " + customerEmail,
+        description: `Quote sent to ${customerEmail} and copy sent to info@trustlinkventureslimited.com`,
       });
       
       fetchQuotes();
@@ -303,7 +319,7 @@ const UnifiedQuoteManagement = () => {
       console.error('Error sending quote approval link:', error);
       toast({
         title: "Error",
-        description: "Failed to send quote approval link",
+        description: error.message || "Failed to send quote approval link",
         variant: "destructive",
       });
     }
@@ -532,15 +548,42 @@ const UnifiedQuoteManagement = () => {
       key: 'final_file_url',
       label: 'Quote PDF',
       sortable: false,
-      width: '200px',
+      width: '250px',
       render: (value: any, row) => {
         if (!value) {
+          // No PDF exists - show action based on status
+          if (row.status === 'draft' || row.status === 'pending_review') {
+            return (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!row.total_amount || row.total_amount === 0) {
+                    toast({
+                      title: 'Please edit prices first',
+                      description: 'Set unit prices before generating PDF',
+                      variant: 'destructive'
+                    });
+                    return;
+                  }
+                  setSelectedQuoteForGenerate(row);
+                  setIsGenerateDialogOpen(true);
+                }}
+              >
+                <FileCheck className="mr-1 h-3 w-3" />
+                Generate PDF
+              </Button>
+            );
+          }
           return (
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">No PDF Generated</Badge>
-            </div>
+            <Badge variant="destructive" className="text-xs">
+              No PDF Generated
+            </Badge>
           );
         }
+        
+        // PDF exists - show preview and download
         return (
           <div className="flex items-center gap-2">
             <Button
@@ -548,7 +591,8 @@ const UnifiedQuoteManagement = () => {
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(value, '_blank');
+                setSelectedQuoteForPreview(row);
+                setIsPreviewDialogOpen(true);
               }}
             >
               <Eye className="mr-1 h-3 w-3" />
@@ -814,16 +858,26 @@ const UnifiedQuoteManagement = () => {
             searchable={false}
             actions={(quote) => (
               <>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingQuote(quote);
-                    setIsEditorOpen(true);
-                  }}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Prices
-                </DropdownMenuItem>
+                {/* Lock Edit Prices after quote is sent */}
+                {(quote.status === 'draft' || quote.status === 'pending_review') ? (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingQuote(quote);
+                      setIsEditorOpen(true);
+                    }}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Prices
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem disabled>
+                    <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
+                      Edit Prices (Locked - {quote.status})
+                    </span>
+                  </DropdownMenuItem>
+                )}
 
                 {quote.status === 'draft' && !quote.final_file_url && (
                   <DropdownMenuItem
@@ -862,7 +916,8 @@ const UnifiedQuoteManagement = () => {
                   </>
                 )}
                 
-                {quote.final_file_url && (quote.status === 'approved' || quote.status === 'sent') && (
+                {/* Only allow sending if status is approved */}
+                {quote.final_file_url && quote.status === 'approved' && (
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
@@ -871,6 +926,38 @@ const UnifiedQuoteManagement = () => {
                   >
                     <Mail className="mr-2 h-4 w-4" />
                     Submit to Customer
+                  </DropdownMenuItem>
+                )}
+
+                {/* Allow resending if already sent */}
+                {quote.final_file_url && quote.status === 'sent' && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      sendQuoteApprovalLink(quote);
+                    }}
+                  >
+                    <Mail className="mr-2 h-4 w-4" />
+                    Resend to Customer
+                  </DropdownMenuItem>
+                )}
+
+                {/* Show why action is disabled */}
+                {!quote.final_file_url && (quote.status === 'draft' || quote.status === 'pending_review') && (
+                  <DropdownMenuItem disabled>
+                    <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
+                      Submit to Customer (Generate PDF first)
+                    </span>
+                  </DropdownMenuItem>
+                )}
+
+                {quote.status === 'pending_review' && quote.final_file_url && (
+                  <DropdownMenuItem disabled>
+                    <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
+                      Submit to Customer (Approve quote first)
+                    </span>
                   </DropdownMenuItem>
                 )}
 
