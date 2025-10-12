@@ -140,7 +140,7 @@ export const CustomerCart: React.FC = () => {
 
       if (itemsError) throw itemsError;
 
-      // Send confirmation email
+      // Send customer confirmation email
       try {
         await supabase.functions.invoke('send-email', {
           body: {
@@ -150,15 +150,58 @@ export const CustomerCart: React.FC = () => {
             data: {
               customerName: profile.full_name,
               companyName: profile.company_name,
+              contactName: profile.full_name,
+              industry: profile.industry || 'Food & Beverage',
               quoteNumber: quoteRequest.quote_number,
+              quoteId: quoteRequest.id,
               itemCount: items.length,
+              items: items.map(item => ({
+                productName: item.productName,
+                quantity: item.quantity,
+                unit: item.unit,
+                specifications: item.specifications,
+                preferredGrade: item.preferredGrade
+              })),
               message: message || 'No additional notes provided'
             }
           }
         });
       } catch (emailError) {
-        console.error('Error sending confirmation email:', emailError);
-        // Don't fail the whole request if email fails
+        console.error('Error sending customer confirmation email:', emailError);
+      }
+
+      // Send admin notification email
+      try {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            to: 'info@trustlinkventureslimited.com',
+            subject: `New Quote Request from ${profile.company_name} - ${quoteRequest.quote_number}`,
+            type: 'new_quote_request_admin',
+            data: {
+              quoteNumber: quoteRequest.quote_number,
+              quoteId: quoteRequest.id,
+              customerName: profile.full_name,
+              companyName: profile.company_name,
+              customerEmail: profile.email,
+              customerPhone: profile.phone || 'Not provided',
+              country: profile.country || 'Not provided',
+              industry: profile.industry || 'Food & Beverage',
+              itemCount: items.length,
+              items: items.map(item => ({
+                productName: item.productName,
+                quantity: item.quantity,
+                unit: item.unit,
+                specifications: item.specifications,
+                preferredGrade: item.preferredGrade
+              })),
+              message: message || 'No additional notes',
+              urgency: 'medium',
+              dashboardLink: `${window.location.origin}/admin/quote-requests`
+            }
+          }
+        });
+      } catch (adminEmailError) {
+        console.error('Error sending admin notification email:', adminEmailError);
       }
 
       // Clear cart and show success

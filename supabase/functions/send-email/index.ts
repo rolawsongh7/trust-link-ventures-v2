@@ -11,7 +11,7 @@ const corsHeaders = {
 interface EmailRequest {
   to: string;
   subject: string;
-  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification' | 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered';
+  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification' | 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered' | 'new_quote_request_admin';
   data?: Record<string, any>;
 }
 
@@ -56,6 +56,9 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'order_delivered':
         html = generateOrderDeliveredEmail(data);
+        break;
+      case 'new_quote_request_admin':
+        html = generateAdminQuoteNotificationEmail(data);
         break;
       default:
         throw new Error('Invalid email type');
@@ -215,6 +218,16 @@ function generateSecurityAlertEmail(alertType: string, details: Record<string, a
 }
 
 function generateQuoteConfirmationEmail(data: any): string {
+  const itemsHtml = data?.items?.map((item: any) => `
+    <tr>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">${item.productName}</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0; text-align: center;">${item.quantity}</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0; text-align: center;">${item.unit}</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">${item.preferredGrade || 'Standard'}</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">${item.specifications || '-'}</td>
+    </tr>
+  `).join('') || '';
+
   return `
     <!DOCTYPE html>
     <html>
@@ -226,27 +239,61 @@ function generateQuoteConfirmationEmail(data: any): string {
         .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
         .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
         .quote-details { background: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0; }
+        .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .items-table th { background: #28a745; color: white; padding: 12px; text-align: left; }
+        .message-box { background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 6px; margin: 20px 0; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h1>Quote Request Confirmed</h1>
+          <h1>✅ Quote Request Confirmed</h1>
         </div>
         <div class="content">
           <p>Dear ${data?.customerName || 'Valued Customer'},</p>
-          <p>Thank you for your quote request. We have received your inquiry and our team will review it shortly.</p>
+          <p>Thank you for your quote request! We have received your inquiry and our team will review it shortly.</p>
+          
           <div class="quote-details">
             <h3>Quote Details:</h3>
-            <p><strong>Request ID:</strong> #${data?.quoteId || 'QR' + Date.now()}</p>
+            <p><strong>Request Number:</strong> ${data?.quoteNumber || 'N/A'}</p>
             <p><strong>Company:</strong> ${data?.companyName || 'N/A'}</p>
-            <p><strong>Contact:</strong> ${data?.contactName || 'N/A'}</p>
+            <p><strong>Contact:</strong> ${data?.contactName || data?.customerName || 'N/A'}</p>
             <p><strong>Industry:</strong> ${data?.industry || 'N/A'}</p>
           </div>
+
+          ${data?.items && data.items.length > 0 ? `
+            <div style="margin: 20px 0;">
+              <h3>Requested Products (${data.items.length} items):</h3>
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th style="text-align: center;">Quantity</th>
+                    <th style="text-align: center;">Unit</th>
+                    <th>Grade</th>
+                    <th>Specifications</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsHtml}
+                </tbody>
+              </table>
+            </div>
+          ` : ''}
+
+          ${data?.message && data.message !== 'No additional notes provided' ? `
+            <div class="message-box">
+              <h4 style="margin-top: 0;">Your Message:</h4>
+              <p style="margin-bottom: 0;">${data.message}</p>
+            </div>
+          ` : ''}
+
           <p>Our team will contact you within 24-48 hours with a detailed quote and partnership proposal.</p>
+          <p>If you have any urgent questions, please contact us at <a href="mailto:info@trustlinkventureslimited.com">info@trustlinkventureslimited.com</a></p>
         </div>
         <div class="footer">
           <p>Thank you for choosing Trust Link Ventures</p>
+          <p style="font-size: 12px; color: #666;">This is an automated confirmation. Please do not reply to this email.</p>
         </div>
       </div>
     </body>
@@ -449,6 +496,108 @@ function generateOrderDeliveredEmail(data: any): string {
         </div>
         <div class="footer">
           <p>Thank you for choosing Trust Link Ventures!<br>We look forward to serving you again.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateAdminQuoteNotificationEmail(data: any): string {
+  const itemsHtml = data?.items?.map((item: any) => `
+    <tr>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">${item.productName}</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0; text-align: center;">${item.quantity}</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0; text-align: center;">${item.unit}</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">${item.preferredGrade || 'Standard'}</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">${item.specifications || '-'}</td>
+    </tr>
+  `).join('') || '';
+
+  const urgencyColor = data?.urgency === 'high' ? '#dc3545' : data?.urgency === 'low' ? '#28a745' : '#ffc107';
+  const urgencyLabel = (data?.urgency || 'medium').toUpperCase();
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+        .customer-card { background: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0; }
+        .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .items-table th { background: #667eea; color: white; padding: 12px; text-align: left; }
+        .urgency-badge { display: inline-block; padding: 5px 12px; border-radius: 4px; color: white; font-weight: bold; font-size: 12px; }
+        .button { display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
+        .message-box { background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 6px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🔔 New Quote Request</h1>
+          <p style="margin: 0; font-size: 18px;">Quote ${data?.quoteNumber || 'N/A'}</p>
+        </div>
+        <div class="content">
+          <div style="margin-bottom: 20px;">
+            <span class="urgency-badge" style="background-color: ${urgencyColor};">
+              ${urgencyLabel} PRIORITY
+            </span>
+          </div>
+
+          <h3>Customer Information:</h3>
+          <div class="customer-card">
+            <p><strong>Company:</strong> ${data?.companyName || 'N/A'}</p>
+            <p><strong>Contact:</strong> ${data?.customerName || 'N/A'}</p>
+            <p><strong>Email:</strong> <a href="mailto:${data?.customerEmail}">${data?.customerEmail || 'N/A'}</a></p>
+            <p><strong>Phone:</strong> ${data?.customerPhone || 'Not provided'}</p>
+            <p><strong>Country:</strong> ${data?.country || 'Not provided'}</p>
+            <p><strong>Industry:</strong> ${data?.industry || 'N/A'}</p>
+          </div>
+
+          ${data?.items && data.items.length > 0 ? `
+            <h3>Requested Products (${data.items.length} items):</h3>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th style="text-align: center;">Quantity</th>
+                  <th style="text-align: center;">Unit</th>
+                  <th>Grade</th>
+                  <th>Specifications</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+          ` : ''}
+
+          ${data?.message && data.message !== 'No additional notes' ? `
+            <div class="message-box">
+              <h4 style="margin-top: 0;">Customer Message:</h4>
+              <p style="margin-bottom: 0;">${data.message}</p>
+            </div>
+          ` : ''}
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${data?.dashboardLink}" class="button">View in Dashboard</a>
+            <a href="mailto:${data?.customerEmail}?subject=Re: Quote Request ${data?.quoteNumber}" class="button" style="background: #28a745;">Respond to Customer</a>
+          </div>
+
+          <p style="font-size: 14px; color: #666;">
+            <strong>Next Steps:</strong><br>
+            1. Review customer requirements and product specifications<br>
+            2. Prepare a detailed quote with pricing and terms<br>
+            3. Send quote to customer within 24-48 hours
+          </p>
+        </div>
+        <div class="footer">
+          <p>Trust Link Ventures Admin System</p>
+          <p style="font-size: 12px; color: #666;">This is an automated notification from your quote management system.</p>
         </div>
       </div>
     </body>
