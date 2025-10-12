@@ -9,7 +9,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const FROM_EMAIL = 'Trust Link Ventures <noreply@trustlinkventureslimited.com>';
+const FROM_EMAIL = 'Trust Link Ventures <info@trustlinkventureslimited.com>';
 
 interface SendPaymentInstructionsRequest {
   quoteId: string;

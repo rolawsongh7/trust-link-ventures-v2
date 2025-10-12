@@ -141,7 +141,7 @@ serve(async (req) => {
 
     // Send email
     const emailData: any = {
-      from: 'Trust Link Ventures <orders@trustlinkventureslimited.com>',
+      from: 'Trust Link Ventures <info@trustlinkventureslimited.com>',
       to: [customer.email],
       subject: `Your Order Has Shipped - ${order.order_number}`,
       html: emailHtml,

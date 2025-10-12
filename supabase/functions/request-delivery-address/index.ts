@@ -105,7 +105,7 @@ serve(async (req) => {
         console.log(`📤 [${requestId}] Email attempt ${emailAttempts}/${maxEmailAttempts}`);
 
         emailResult = await resend.emails.send({
-          from: 'Trust Link Ventures <orders@trustlinkventures.com>',
+          from: 'Trust Link Ventures <info@trustlinkventureslimited.com>',
           to: [customerEmail],
           subject: `Delivery Address Required for Order ${orderNumber}`,
           html: `
