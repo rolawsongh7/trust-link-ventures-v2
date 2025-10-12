@@ -42,6 +42,8 @@ interface Order {
   created_at: string;
   delivery_address_id?: string;
   quote_id?: string;
+  payment_reference?: string;
+  payment_proof_url?: string;
   customers: {
     company_name: string;
   };
@@ -284,6 +286,41 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
           {value.replace(/_/g, ' ')}
         </Badge>
       ),
+    },
+    {
+      key: 'payment_reference' as keyof Order,
+      label: 'Payment Details',
+      sortable: false,
+      width: '200px',
+      render: (value: any, row: Order) => {
+        if (!value && !row.payment_proof_url) {
+          return <Badge variant="secondary">Not Confirmed</Badge>;
+        }
+        
+        return (
+          <div className="space-y-1">
+            {value && (
+              <div className="font-mono text-xs font-semibold text-primary">
+                {value}
+              </div>
+            )}
+            {row.payment_proof_url && (
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(row.payment_proof_url, '_blank');
+                }}
+              >
+                <FileText className="mr-1 h-3 w-3" />
+                View Receipt
+              </Button>
+            )}
+          </div>
+        );
+      }
     },
     {
       key: 'delivery_address_id' as keyof Order,

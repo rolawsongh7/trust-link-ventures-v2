@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { Clock, User, ArrowRight } from "lucide-react";
+import { Clock, User, ArrowRight, Download } from "lucide-react";
 
 interface StatusHistoryEntry {
   id: string;
@@ -18,9 +19,14 @@ interface StatusHistoryEntry {
 
 interface OrderStatusHistoryProps {
   orderId: string;
+  order?: {
+    payment_reference?: string;
+    payment_proof_url?: string;
+    payment_confirmed_at?: string;
+  };
 }
 
-const OrderStatusHistory = ({ orderId }: OrderStatusHistoryProps) => {
+const OrderStatusHistory = ({ orderId, order }: OrderStatusHistoryProps) => {
   const [history, setHistory] = useState<StatusHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -101,6 +107,44 @@ const OrderStatusHistory = ({ orderId }: OrderStatusHistoryProps) => {
         <CardTitle>Status History</CardTitle>
       </CardHeader>
       <CardContent>
+        {order?.payment_reference && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <h4 className="font-semibold text-green-900 mb-2">
+                  Payment Confirmed
+                </h4>
+                <div className="space-y-1 text-sm">
+                  <div>
+                    <span className="text-green-700">Reference:</span>
+                    <span className="ml-2 font-mono font-semibold">
+                      {order.payment_reference}
+                    </span>
+                  </div>
+                  {order.payment_confirmed_at && (
+                    <div>
+                      <span className="text-green-700">Confirmed:</span>
+                      <span className="ml-2">
+                        {new Date(order.payment_confirmed_at).toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {order.payment_proof_url && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(order.payment_proof_url, '_blank')}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  View Receipt
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+        
         <div className="space-y-6">
           {history.map((entry, index) => (
             <div key={entry.id} className="relative">
