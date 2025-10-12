@@ -21,7 +21,7 @@ const CustomerAuth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [activeTab, setActiveTab] = useState('signin');
-  const { signIn, signUp, user, resetPassword } = useCustomerAuth();
+  const { signIn, signUp, user, resetPassword, resendConfirmationEmail } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -58,11 +58,42 @@ const CustomerAuth = () => {
     const { error } = await signIn(signInData.email, signInData.password);
 
     if (error) {
-      toast({
-        variant: "destructive",
-        title: "Sign in failed",
-        description: error.message,
-      });
+      // Check if error is due to unconfirmed email
+      if (error.message?.toLowerCase().includes('email not confirmed')) {
+        toast({
+          variant: "destructive",
+          title: "Email not confirmed",
+          description: "Please check your email and click the confirmation link. Don't see it? Check your spam folder.",
+          action: (
+            <button
+              onClick={async () => {
+                const { error: resendError } = await resendConfirmationEmail(signInData.email);
+                if (!resendError) {
+                  toast({
+                    title: "Confirmation email sent",
+                    description: "Please check your email inbox.",
+                  });
+                } else {
+                  toast({
+                    variant: "destructive",
+                    title: "Failed to resend email",
+                    description: resendError.message,
+                  });
+                }
+              }}
+              className="text-sm underline hover:no-underline"
+            >
+              Resend
+            </button>
+          ),
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Sign in failed",
+          description: error.message,
+        });
+      }
     } else {
       navigate(from, { replace: true });
     }
@@ -89,10 +120,14 @@ const CustomerAuth = () => {
       });
     } else {
       toast({
-        title: "Account created successfully!",
-        description: "You can now access your customer portal.",
+        title: "Check your email to verify your account",
+        description: "We've sent a confirmation link to your email address. Please click the link to activate your account.",
+        duration: 7000,
       });
-      navigate(from, { replace: true });
+      // Switch to sign-in tab so users know where to go after confirming
+      setActiveTab('signin');
+      // Clear the form
+      setSignUpData({ fullName: '', companyName: '', email: '', password: '' });
     }
 
     setIsLoading(false);

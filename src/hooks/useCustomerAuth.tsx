@@ -24,6 +24,7 @@ interface CustomerAuthContextType {
   signOut: () => Promise<{ error: any }>;
   updateProfile: (updates: Partial<CustomerProfile>) => Promise<{ error: any }>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  resendConfirmationEmail: (email: string) => Promise<{ error: any }>;
 }
 
 const CustomerAuthContext = createContext<CustomerAuthContextType | undefined>(undefined);
@@ -361,6 +362,25 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return { error };
   };
 
+  const resendConfirmationEmail = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+      
+      if (error) {
+        console.error('Resend confirmation error:', error);
+        return { error };
+      }
+      
+      return { error: null };
+    } catch (error: any) {
+      console.error('Unexpected error resending confirmation:', error);
+      return { error };
+    }
+  };
+
   const value = {
     user,
     session,
@@ -371,6 +391,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     signOut,
     updateProfile,
     resetPassword,
+    resendConfirmationEmail,
   };
 
   return <CustomerAuthContext.Provider value={value}>{children}</CustomerAuthContext.Provider>;
