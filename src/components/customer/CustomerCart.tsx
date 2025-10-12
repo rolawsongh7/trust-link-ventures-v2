@@ -56,12 +56,56 @@ export const CustomerCart: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Create quote request
+      // Step 1: Check if customer record exists
+      const { data: existingCustomer, error: customerCheckError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', profile.email)
+        .maybeSingle();
+
+      if (customerCheckError) throw customerCheckError;
+
+      let customerId = user.id;
+
+      // Step 2: Create customer record if it doesn't exist
+      if (!existingCustomer) {
+        console.log('Creating customer record for:', profile.email);
+        
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert([{
+            id: user.id,
+            email: profile.email,
+            company_name: profile.company_name,
+            contact_name: profile.full_name,
+            phone: profile.phone || null,
+            country: profile.country || null,
+            industry: profile.industry || 'Food & Beverage',
+            customer_status: 'active',
+            priority: 'medium',
+            notes: 'Customer created automatically via customer portal'
+          }])
+          .select()
+          .single();
+
+        if (customerError) {
+          console.error('Error creating customer:', customerError);
+          throw new Error('Failed to create customer record. Please try again.');
+        }
+        
+        customerId = newCustomer.id;
+        console.log('Customer record created successfully:', customerId);
+      } else {
+        customerId = existingCustomer.id;
+        console.log('Using existing customer record:', customerId);
+      }
+
+      // Step 3: Create quote request with verified customer_id
       const { data: quoteRequest, error: quoteError } = await supabase
         .from('quote_requests')
         .insert([
           {
-            customer_id: user.id,
+            customer_id: customerId,
             title: `Quote Request from ${profile.company_name}`,
             message: message || `Quote request for ${items.length} product(s)`,
             request_type: 'customer',
