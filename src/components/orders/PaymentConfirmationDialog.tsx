@@ -116,17 +116,34 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
           console.error('Error sending delivery address request:', emailError);
         }
 
-        toast.info('Delivery address request sent to customer. Invoice will be generated once address is provided.');
+        toast.success('Payment confirmed! Delivery address request sent to customer.');
         
-        // Update order with payment reference but keep in payment_received status
+        // Update order with payment reference and status
         await supabase
           .from('orders')
           .update({
+            status: 'payment_received',
             payment_reference: paymentReference,
             payment_proof_url: paymentProofUrl,
             delivery_notes: deliveryNotes,
           })
           .eq('id', orderId);
+
+        // Send payment confirmation emails
+        const { error: confirmEmailError } = await supabase.functions.invoke('send-payment-confirmation', {
+          body: {
+            orderId,
+            orderNumber,
+            customerEmail,
+            paymentReference,
+            paymentProofUrl,
+            hasDeliveryAddress: false,
+          },
+        });
+
+        if (confirmEmailError) {
+          console.error('Error sending payment confirmation email:', confirmEmailError);
+        }
 
         onSuccess();
         onOpenChange(false);
@@ -172,6 +189,22 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
       if (sendError) {
         console.error('Error sending invoice email:', sendError);
         toast.warning('Invoice generated but email failed to send');
+      }
+
+      // Send payment confirmation emails
+      const { error: confirmEmailError } = await supabase.functions.invoke('send-payment-confirmation', {
+        body: {
+          orderId,
+          orderNumber,
+          customerEmail,
+          paymentReference,
+          paymentProofUrl,
+          hasDeliveryAddress: true,
+        },
+      });
+
+      if (confirmEmailError) {
+        console.error('Error sending payment confirmation email:', confirmEmailError);
       }
 
       toast.success('Payment confirmed and invoice generated successfully');
