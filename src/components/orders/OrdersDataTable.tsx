@@ -379,10 +379,10 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
               </DropdownMenuItem>
             )}
             
-            {row.status === 'order_confirmed' && (
+            {!['shipped', 'delivered', 'cancelled'].includes(row.status) && (
               <DropdownMenuItem onClick={() => onConfirmPayment(row)}>
                 <DollarSign className="mr-2 h-4 w-4" />
-                Confirm Payment
+                {row.payment_reference ? 'Update Payment Info' : 'Confirm Payment'}
               </DropdownMenuItem>
             )}
             
