@@ -73,7 +73,7 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
           const filePath = `payment-proofs/${fileName}`;
           
           const { error: uploadError } = await supabase.storage
-            .from('invoices')
+            .from('payment-proofs')
             .upload(filePath, paymentProofFile, {
               cacheControl: '3600',
               upsert: false
@@ -81,12 +81,14 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
           
           if (uploadError) throw uploadError;
           
-          // Get public URL
-          const { data: urlData } = supabase.storage
-            .from('invoices')
-            .getPublicUrl(filePath);
+          // Get public URL (signed URL for private bucket)
+          const { data: signedUrlData, error: urlError } = await supabase.storage
+            .from('payment-proofs')
+            .createSignedUrl(filePath, 31536000); // 1 year expiry
           
-          paymentProofUrl = urlData.publicUrl;
+          if (urlError) throw urlError;
+          
+          paymentProofUrl = signedUrlData.signedUrl;
           
           console.log('Payment proof uploaded:', paymentProofUrl);
         } catch (uploadError) {
