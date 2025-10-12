@@ -5,10 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { FileText, Search, Download, Eye, Calendar, DollarSign, Clock, Package } from 'lucide-react';
+import { FileText, Search, Download, Eye, Calendar, DollarSign, Clock, Package, LayoutGrid, Table as TableIcon } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CustomerQuotesTable } from './CustomerQuotesTable';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 
 interface QuoteItem {
@@ -55,8 +57,17 @@ export const CustomerQuotes: React.FC = () => {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedPaymentQuote, setSelectedPaymentQuote] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // Force card view on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setViewMode('cards');
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     fetchQuotes();
@@ -370,10 +381,10 @@ export const CustomerQuotes: React.FC = () => {
         </Badge>
       </div>
 
-      {/* Filters */}
+      {/* Filters and View Toggle */}
       <Card>
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -407,6 +418,30 @@ export const CustomerQuotes: React.FC = () => {
             >
               Clear Filters
             </Button>
+
+            {/* View Toggle - Desktop only */}
+            {!isMobile && (
+              <div className="flex gap-2">
+                <Button
+                  variant={viewMode === 'table' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                  className="flex-1"
+                >
+                  <TableIcon className="h-4 w-4 mr-2" />
+                  Table
+                </Button>
+                <Button
+                  variant={viewMode === 'cards' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('cards')}
+                  className="flex-1"
+                >
+                  <LayoutGrid className="h-4 w-4 mr-2" />
+                  Cards
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -430,6 +465,13 @@ export const CustomerQuotes: React.FC = () => {
             )}
           </CardContent>
         </Card>
+      ) : viewMode === 'table' ? (
+        <CustomerQuotesTable
+          quotes={filteredQuotes}
+          onApprove={handleApproveQuote}
+          onReject={handleRejectQuote}
+          onDownload={(url) => downloadQuote(url, 'quote')}
+        />
       ) : (
         <div className="space-y-4">
           {filteredQuotes.map((quote) => (
