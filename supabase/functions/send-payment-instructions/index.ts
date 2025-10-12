@@ -115,8 +115,10 @@ const handler = async (req: Request): Promise<Response> => {
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
         <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 30px; text-align: center;">
-          <div style="display: inline-block; background: white; border-radius: 50%; width: 60px; height: 60px; line-height: 60px; margin-bottom: 15px;">
-            <span style="color: #10b981; font-size: 36px; font-weight: bold;">✓</span>
+          <div style="display: inline-block; background: white; border-radius: 50%; width: 70px; height: 70px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center;">
+            <svg width="40" height="40" viewBox="0 0 24 24" style="display: block;">
+              <path fill="#10b981" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
           </div>
           <h1 style="color: white; margin: 0; font-size: 28px;">Quote Approved!</h1>
           <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Payment Instructions</p>
@@ -263,7 +265,153 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
 
-    return new Response(JSON.stringify({ 
+    // Send admin notification
+    console.log('[Payment Instructions] Sending admin notification to info@trustlinkventureslimited.com');
+    
+    try {
+      const adminEmailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">🔔 Quote Approved - Action Required</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Customer approved quote and received payment instructions</p>
+          </div>
+          
+          <div style="padding: 30px;">
+            <div style="background: linear-gradient(135deg, #dcfce7, #bbf7d0); border-left: 4px solid #10b981; padding: 20px; margin: 20px 0; border-radius: 6px;">
+              <h3 style="margin: 0 0 10px 0; color: #15803d;">📋 Quote Details</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">Quote Number:</td>
+                  <td style="padding: 8px 0; font-weight: 700; text-align: right;">${quote.quote_number}</td>
+                </tr>
+                ${order ? `
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">Order Number:</td>
+                  <td style="padding: 8px 0; font-weight: 700; text-align: right;">${order.order_number}</td>
+                </tr>
+                ` : ''}
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">Customer:</td>
+                  <td style="padding: 8px 0; font-weight: 600; text-align: right;">${customerName || quote.customers?.contact_name || 'N/A'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">Company:</td>
+                  <td style="padding: 8px 0; font-weight: 600; text-align: right;">${quote.customers?.company_name || 'N/A'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">Customer Email:</td>
+                  <td style="padding: 8px 0; font-weight: 600; text-align: right;">${customerEmail}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">Total Amount:</td>
+                  <td style="padding: 8px 0; font-size: 20px; font-weight: 700; color: #10b981; text-align: right;">${quote.currency} ${quote.total_amount.toLocaleString()}</td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 6px;">
+              <h4 style="margin: 0 0 10px 0; color: #92400e;">⚠️ Next Steps Required:</h4>
+              <ol style="margin: 0; padding-left: 20px; color: #78350f;">
+                <li style="margin-bottom: 8px;">Monitor for incoming payment with reference: <strong>${quote.quote_number}</strong></li>
+                <li style="margin-bottom: 8px;">Verify payment amount: <strong>${quote.currency} ${quote.total_amount.toLocaleString()}</strong></li>
+                <li style="margin-bottom: 8px;">Once payment confirmed, update order status to "payment_received"</li>
+                <li style="margin-bottom: 8px;">Begin order processing and procurement</li>
+              </ol>
+            </div>
+
+            <div style="margin: 30px 0;">
+              <h4 style="color: #1e40af; margin-bottom: 15px;">Order Items Summary:</h4>
+              <table style="width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                <thead>
+                  <tr style="background-color: #f1f5f9;">
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #cbd5e1;">Item</th>
+                    <th style="padding: 10px; text-align: center; border-bottom: 2px solid #cbd5e1;">Qty</th>
+                    <th style="padding: 10px; text-align: right; border-bottom: 2px solid #cbd5e1;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${quote.quote_items.map((item: any) => `
+                    <tr>
+                      <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
+                        <div style="font-weight: 600;">${item.product_name}</div>
+                        ${item.specifications ? `<div style="font-size: 12px; color: #666;">${item.specifications}</div>` : ''}
+                      </td>
+                      <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity} ${item.unit}</td>
+                      <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600;">${quote.currency} ${item.total_price.toLocaleString()}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://trustlinkventureslimited.lovable.app/admin/orders" 
+                 style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-right: 10px;">
+                View Order in Dashboard
+              </a>
+              <a href="mailto:${customerEmail}" 
+                 style="display: inline-block; background-color: #059669; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600;">
+                Contact Customer
+              </a>
+            </div>
+
+            <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">
+              <strong>Note:</strong> This is an automated notification. The customer has received payment instructions and is waiting to make payment.
+            </p>
+          </div>
+          
+          <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+            <p style="margin: 0; color: #6b7280; font-size: 12px;">
+              Trust Link Ventures - Internal Admin Notification<br>
+              This email was sent to info@trustlinkventureslimited.com
+            </p>
+          </div>
+        </div>
+      `;
+
+      const adminEmailResponse = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: ['info@trustlinkventureslimited.com'],
+        subject: `[ADMIN] Quote Approved: ${quote.quote_number} - ${customerName || quote.customers?.contact_name || 'Customer'}`,
+        html: adminEmailHtml,
+      });
+
+      if (adminEmailResponse.error) {
+        console.error('[Admin Notification] Failed to send:', adminEmailResponse.error);
+        await logEmailAttempt({
+          email_type: 'payment_instructions_admin',
+          recipient_email: 'info@trustlinkventureslimited.com',
+          subject: `[ADMIN] Quote Approved: ${quote.quote_number}`,
+          status: 'failed',
+          error_message: adminEmailResponse.error.message || JSON.stringify(adminEmailResponse.error),
+          quote_id: quoteId,
+          order_id: order?.id,
+          metadata: { quote_number: quote.quote_number, order_number: order?.order_number },
+        });
+      } else {
+        console.log('[Admin Notification] Email sent successfully:', adminEmailResponse.data);
+        await logEmailAttempt({
+          email_type: 'payment_instructions_admin',
+          recipient_email: 'info@trustlinkventureslimited.com',
+          subject: `[ADMIN] Quote Approved: ${quote.quote_number}`,
+          status: 'sent',
+          resend_id: adminEmailResponse.data?.id,
+          quote_id: quoteId,
+          order_id: order?.id,
+          metadata: { 
+            quote_number: quote.quote_number, 
+            order_number: order?.order_number,
+            customer_email: customerEmail,
+            resend_response: adminEmailResponse.data
+          },
+        });
+      }
+    } catch (adminEmailError) {
+      console.error('[Admin Notification] Exception while sending admin email:', adminEmailError);
+      // Don't fail the main request if admin email fails
+    }
+
+    return new Response(JSON.stringify({
       success: true, 
       message: "Payment instructions sent successfully",
       emailId: emailResponse.data?.id 

@@ -721,7 +721,7 @@ export const CustomerQuotes: React.FC = () => {
 
       {/* Payment Instructions Dialog */}
       <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
               <DollarSign className="h-6 w-6 text-primary" />
