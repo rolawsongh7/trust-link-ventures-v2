@@ -1,5 +1,8 @@
 project_id = "ppyfrftmexvgnsxlhdbz"
 
+[functions.get-customer-addresses]
+verify_jwt = true
+
 [functions.quote-submission]
 verify_jwt = false
 

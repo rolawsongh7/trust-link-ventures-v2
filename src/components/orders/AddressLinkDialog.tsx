@@ -55,19 +55,19 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
 
   const fetchAddresses = async () => {
     try {
-      const { data, error } = await supabase
-        .from('customer_addresses')
-        .select('*')
-        .eq('customer_id', customerId)
-        .order('is_default', { ascending: false })
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.functions.invoke('get-customer-addresses', {
+        body: { customerId },
+      });
 
       if (error) throw error;
-      setAddresses(data || []);
+      if (data?.error) throw new Error(data.error);
+      
+      setAddresses(data?.addresses || []);
     } catch (error: any) {
+      console.error('Error fetching addresses:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load addresses',
+        description: error.message || 'Failed to load addresses',
         variant: 'destructive',
       });
     } finally {
