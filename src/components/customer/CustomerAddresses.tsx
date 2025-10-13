@@ -149,12 +149,25 @@ export const CustomerAddresses = () => {
       setTimeout(() => {
         navigate(`/customer/orders?highlight=${orderId}`);
       }, 1500);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error linking address to order:', error);
+      
+      // Log detailed error information for debugging
+      if (error?.code) {
+        console.error('Supabase error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Error details:', error.details);
+      }
+      
+      const errorMessage = error?.message || 'Unknown error occurred';
+      const isRLSError = errorMessage.includes('row-level security') || errorMessage.includes('policy');
+      
       toast({
-        title: 'Warning',
-        description: 'Address saved but failed to link to order. Please select it manually.',
-        variant: 'default',
+        title: isRLSError ? 'Permission Error' : 'Warning',
+        description: isRLSError 
+          ? 'Unable to link address. Please contact support if this persists.'
+          : 'Address saved but failed to link to order. Please select it manually.',
+        variant: isRLSError ? 'destructive' : 'default',
       });
     }
   };
