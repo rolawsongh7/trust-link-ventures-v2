@@ -27,9 +27,11 @@ export const DeliveryManagementDialog = ({
     tracking_number: order?.tracking_number || '',
     carrier: order?.carrier || '',
     estimated_delivery_date: order?.estimated_delivery_date || '',
+    delivery_window: order?.delivery_window || '',
     delivery_notes: order?.delivery_notes || '',
     status: order?.status || '',
   });
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
@@ -57,9 +59,28 @@ export const DeliveryManagementDialog = ({
       return '⚠️ This will:\n• Generate a Packing List\n• Validate delivery address\n• Mark order as ready for shipping';
     }
     if (status === 'shipped') {
-      return '⚠️ This will:\n• Generate a Commercial Invoice\n• Send tracking email to customer\n• Create delivery tracking link';
+      return '⚠️ This will:\n• Generate a Commercial Invoice\n• Send tracking email to customer\n• Create delivery tracking link\n• REQUIRED: Carrier, tracking number, and estimated delivery date';
     }
     return null;
+  };
+
+  const validateShippingRequirements = (): boolean => {
+    const errors: string[] = [];
+    
+    if (formData.status === 'shipped') {
+      if (!formData.carrier || formData.carrier.trim() === '') {
+        errors.push('Carrier is required for shipped status');
+      }
+      if (!formData.tracking_number || formData.tracking_number.trim() === '') {
+        errors.push('Tracking number is required for shipped status');
+      }
+      if (!formData.estimated_delivery_date) {
+        errors.push('Estimated delivery date is required for shipped status');
+      }
+    }
+    
+    setValidationErrors(errors);
+    return errors.length === 0;
   };
 
   const handleStatusChange = (newStatus: string) => {
@@ -82,6 +103,13 @@ export const DeliveryManagementDialog = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate shipping requirements
+    if (!validateShippingRequirements()) {
+      toast.error('Please fill in all required fields before changing to shipped status');
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -96,6 +124,7 @@ export const DeliveryManagementDialog = ({
         tracking_number: formData.tracking_number || null,
         carrier: formData.carrier || null,
         estimated_delivery_date: formData.estimated_delivery_date || null,
+        delivery_window: formData.delivery_window || null,
         delivery_notes: formData.delivery_notes || null,
         status: formData.status,
       };
@@ -111,6 +140,8 @@ export const DeliveryManagementDialog = ({
           toast.error('Invalid status transition. Please select a valid next status.');
         } else if (error.message.includes('delivery address')) {
           toast.error('Delivery address required before shipping.');
+        } else if (error.message.includes('carrier') || error.message.includes('tracking') || error.message.includes('delivery date')) {
+          toast.error(error.message);
         } else {
           throw error;
         }
@@ -151,6 +182,22 @@ export const DeliveryManagementDialog = ({
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {validationErrors.length > 0 && (
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
+                  <div>
+                    <p className="font-medium text-destructive">Validation Errors:</p>
+                    <ul className="list-disc list-inside text-sm text-destructive/80 mt-1">
+                      {validationErrors.map((error, idx) => (
+                        <li key={idx}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="status">Order Status</Label>
@@ -183,19 +230,33 @@ export const DeliveryManagementDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="carrier">Carrier</Label>
-                <Input
-                  id="carrier"
-                  placeholder="e.g., DHL, FedEx, UPS"
+                <Label htmlFor="carrier">
+                  Carrier {formData.status === 'shipped' && <span className="text-destructive">*</span>}
+                </Label>
+                <Select
                   value={formData.carrier}
-                  onChange={(e) => setFormData({ ...formData, carrier: e.target.value })}
-                />
+                  onValueChange={(value) => setFormData({ ...formData, carrier: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select carrier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DHL">DHL</SelectItem>
+                    <SelectItem value="FedEx">FedEx</SelectItem>
+                    <SelectItem value="UPS">UPS</SelectItem>
+                    <SelectItem value="Ghana Post">Ghana Post</SelectItem>
+                    <SelectItem value="Speedaf">Speedaf</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="tracking_number">Tracking Number</Label>
+                <Label htmlFor="tracking_number">
+                  Tracking Number {formData.status === 'shipped' && <span className="text-destructive">*</span>}
+                </Label>
                 <Input
                   id="tracking_number"
                   placeholder="Enter tracking number"
@@ -205,14 +266,35 @@ export const DeliveryManagementDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="estimated_delivery_date">Estimated Delivery Date</Label>
+                <Label htmlFor="estimated_delivery_date">
+                  Estimated Delivery Date {formData.status === 'shipped' && <span className="text-destructive">*</span>}
+                </Label>
                 <Input
                   id="estimated_delivery_date"
                   type="date"
+                  min={new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                   value={formData.estimated_delivery_date}
                   onChange={(e) => setFormData({ ...formData, estimated_delivery_date: e.target.value })}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="delivery_window">Delivery Window</Label>
+              <Select
+                value={formData.delivery_window}
+                onValueChange={(value) => setFormData({ ...formData, delivery_window: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select delivery time window" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="morning">Morning (9 AM - 12 PM)</SelectItem>
+                  <SelectItem value="afternoon">Afternoon (12 PM - 5 PM)</SelectItem>
+                  <SelectItem value="evening">Evening (5 PM - 8 PM)</SelectItem>
+                  <SelectItem value="all_day">All Day (9 AM - 8 PM)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

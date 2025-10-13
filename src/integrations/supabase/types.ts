@@ -1343,6 +1343,7 @@ export type Database = {
           delivery_notes: string | null
           delivery_proof_url: string | null
           delivery_signature: string | null
+          delivery_window: string | null
           estimated_delivery_date: string | null
           failed_delivery_at: string | null
           failed_delivery_count: number | null
@@ -1381,6 +1382,7 @@ export type Database = {
           delivery_notes?: string | null
           delivery_proof_url?: string | null
           delivery_signature?: string | null
+          delivery_window?: string | null
           estimated_delivery_date?: string | null
           failed_delivery_at?: string | null
           failed_delivery_count?: number | null
@@ -1419,6 +1421,7 @@ export type Database = {
           delivery_notes?: string | null
           delivery_proof_url?: string | null
           delivery_signature?: string | null
+          delivery_window?: string | null
           estimated_delivery_date?: string | null
           failed_delivery_at?: string | null
           failed_delivery_count?: number | null
