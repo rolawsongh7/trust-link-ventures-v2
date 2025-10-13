@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { NotificationService } from '@/services/notificationService';
 
 interface OrderStatusUpdate {
   orderId: string;
@@ -64,6 +65,54 @@ export const useOrderTracking = () => {
         .single();
 
       if (updateError) throw updateError;
+
+      // Get customer_id for notifications
+      const { data: customerData } = await supabase
+        .from('orders')
+        .select('customer_id, order_number')
+        .eq('id', orderId)
+        .single();
+
+      // Send in-app and email notifications based on status
+      if (customerData?.customer_id) {
+        const orderNumber = customerData.order_number;
+        
+        switch (newStatus) {
+          case 'processing':
+            await NotificationService.sendOrderConfirmedNotification(
+              customerData.customer_id,
+              orderNumber,
+              orderId,
+              customerEmail
+            );
+            break;
+          case 'ready_to_ship':
+            await NotificationService.sendOrderReadyToShipNotification(
+              customerData.customer_id,
+              orderNumber,
+              orderId,
+              customerEmail
+            );
+            break;
+          case 'shipped':
+            await NotificationService.sendOrderShippedNotification(
+              customerData.customer_id,
+              orderNumber,
+              orderId,
+              customerEmail,
+              order.tracking_number || undefined
+            );
+            break;
+          case 'delivered':
+            await NotificationService.sendOrderDeliveredNotification(
+              customerData.customer_id,
+              orderNumber,
+              orderId,
+              customerEmail
+            );
+            break;
+        }
+      }
 
       // Send tracking email for specific status changes
       const emailStatuses = ['shipped', 'delivered', 'ready_to_ship', 'processing'];
