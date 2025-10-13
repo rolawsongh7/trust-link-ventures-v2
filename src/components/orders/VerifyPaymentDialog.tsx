@@ -48,8 +48,8 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
       
       if (!user) throw new Error('Not authenticated');
 
-      // Update order status and verification info
-      const { error: updateError } = await supabase
+      // Step 1: Verify payment and mark as payment_received
+      const { error: verifyError } = await supabase
         .from('orders')
         .update({
           status: 'payment_received',
@@ -58,7 +58,17 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
         })
         .eq('id', order.id);
 
-      if (updateError) throw updateError;
+      if (verifyError) throw verifyError;
+
+      // Step 2: Auto-progress to processing status
+      const { error: progressError } = await supabase
+        .from('orders')
+        .update({
+          status: 'processing',
+        })
+        .eq('id', order.id);
+
+      if (progressError) throw progressError;
 
       // Send payment confirmation email to customer
       await supabase.functions.invoke('send-payment-confirmation', {
@@ -71,13 +81,13 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
         console.error('Email notification error (non-blocking):', err);
       });
 
-      // Notify customer
+      // Notify customer with processing status
       if (order.customer_id) {
         const { error: notifError } = await supabase.from('user_notifications').insert({
           user_id: order.customer_id,
-          type: 'payment_verified',
-          title: 'Payment Verified',
-          message: `Your payment for order ${order.order_number} has been verified. Your order is now being processed.`,
+          type: 'order_processing',
+          title: 'Order Now Processing',
+          message: `Great news! Your payment for order ${order.order_number} has been verified and your order is now being processed. We'll notify you when it's ready to ship.`,
           link: '/customer/orders',
         });
         
@@ -87,8 +97,8 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
       }
 
       toast({
-        title: 'Payment Verified',
-        description: `Order ${order.order_number} status updated to "Payment Received" and is now being processed.`,
+        title: 'Payment Verified & Processing Started',
+        description: `Order ${order.order_number} is now being processed automatically.`,
       });
 
       onSuccess();
