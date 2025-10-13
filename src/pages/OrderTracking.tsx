@@ -3,8 +3,9 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Package, MapPin, Calendar, Truck, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { Package, MapPin, Calendar, Truck, CheckCircle2, Clock, AlertCircle, FileText, Download } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface OrderDetails {
@@ -21,12 +22,22 @@ interface OrderDetails {
   delivery_notes: string | null;
   customer_name: string;
   delivery_address: string;
+  delivery_window: string | null;
+}
+
+interface Invoice {
+  id: string;
+  invoice_number: string;
+  invoice_type: string;
+  file_url: string | null;
+  status: string;
 }
 
 const OrderTracking = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const [order, setOrder] = useState<OrderDetails | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +59,18 @@ const OrderTracking = () => {
       
       if (data && data.length > 0) {
         setOrder(data[0]);
+        
+        // Fetch invoices for this order
+        const { data: invoicesData } = await supabase
+          .from('invoices')
+          .select('id, invoice_number, invoice_type, file_url, status')
+          .eq('order_id', data[0].order_id)
+          .in('invoice_type', ['commercial', 'packing_list'])
+          .not('file_url', 'is', null);
+        
+        if (invoicesData) {
+          setInvoices(invoicesData);
+        }
       } else {
         setError('Invalid or expired tracking link');
       }
@@ -177,6 +200,13 @@ const OrderTracking = () => {
                   <p className="text-sm text-muted-foreground">
                     {format(new Date(order.estimated_delivery_date), 'PPPP')}
                   </p>
+                  {order.delivery_window && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Window: {order.delivery_window === 'morning' ? '9 AM - 12 PM' : 
+                               order.delivery_window === 'afternoon' ? '12 PM - 5 PM' :
+                               order.delivery_window === 'evening' ? '5 PM - 8 PM' : '9 AM - 8 PM'}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -204,6 +234,42 @@ const OrderTracking = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Invoices */}
+        {invoices.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Documents
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {invoices.map((invoice) => (
+                <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">
+                        {invoice.invoice_type === 'commercial' ? 'Commercial Invoice' : 'Packing List'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{invoice.invoice_number}</p>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => invoice.file_url && window.open(invoice.file_url, '_blank')}
+                    disabled={!invoice.file_url}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Timeline */}
         <Card>
