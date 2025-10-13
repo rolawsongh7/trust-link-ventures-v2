@@ -109,29 +109,70 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
   };
 
   const handleLinkAddress = async (addressId: string) => {
+    console.log('🔗 [AddressLinkDialog] Starting handleLinkAddress...', {
+      addressId,
+      orderId,
+      orderNumber,
+      customerId
+    });
+    
     setLinking(true);
+    
     try {
       // Update order with delivery address
-      const { error: updateError } = await supabase
+      console.log('📝 [AddressLinkDialog] Attempting to update order...');
+      const { data: updateData, error: updateError } = await supabase
         .from('orders')
         .update({
           delivery_address_id: addressId,
           delivery_address_confirmed_at: new Date().toISOString(),
         })
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .select();
 
-      if (updateError) throw updateError;
+      console.log('📥 [AddressLinkDialog] Update result:', { 
+        updateData, 
+        updateError,
+        hasData: !!updateData,
+        errorCode: updateError?.code,
+        errorMessage: updateError?.message,
+        errorDetails: updateError?.details
+      });
+
+      if (updateError) {
+        console.error('❌ [AddressLinkDialog] Update failed:', updateError);
+        throw updateError;
+      }
+
+      if (!updateData || updateData.length === 0) {
+        console.error('⚠️ [AddressLinkDialog] No rows updated');
+        throw new Error('Failed to update order - no rows affected. This may be an RLS policy issue.');
+      }
+
+      console.log('✅ [AddressLinkDialog] Order updated successfully');
 
       // Get customer email for confirmation
-      const { data: customerData } = await supabase
+      console.log('📧 [AddressLinkDialog] Fetching customer email...');
+      const { data: customerData, error: customerError } = await supabase
         .from('customers')
         .select('email')
         .eq('id', customerId)
         .single();
 
+      console.log('📥 [AddressLinkDialog] Customer data:', {
+        customerData,
+        customerError,
+        hasEmail: !!customerData?.email
+      });
+
+      if (customerError) {
+        console.error('❌ [AddressLinkDialog] Failed to fetch customer email:', customerError);
+      }
+
       // Send confirmation emails
       if (customerData?.email) {
-        await supabase.functions.invoke('confirm-delivery-address', {
+        console.log('📬 [AddressLinkDialog] Invoking confirm-delivery-address edge function...');
+        const { data: emailData, error: emailError } = await supabase.functions.invoke('confirm-delivery-address', {
           body: {
             orderId,
             orderNumber,
@@ -139,22 +180,46 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
             customerEmail: customerData.email,
           },
         });
+
+        console.log('📥 [AddressLinkDialog] Edge function result:', {
+          emailData,
+          emailError
+        });
+
+        if (emailError) {
+          console.error('⚠️ [AddressLinkDialog] Email sending failed (non-fatal):', emailError);
+        }
+      } else {
+        console.warn('⚠️ [AddressLinkDialog] No customer email found, skipping confirmation emails');
       }
+
+      console.log('✅ [AddressLinkDialog] Address linking complete');
 
       toast({
         title: 'Success',
-        description: `Address linked to order ${orderNumber}. Confirmation emails sent.`,
+        description: `Address linked to order ${orderNumber}${customerData?.email ? '. Confirmation emails sent.' : '.'}`,
       });
 
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
+      console.error('💥 [AddressLinkDialog] Fatal error in handleLinkAddress:', {
+        message: error.message,
+        name: error.name,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        stack: error.stack,
+        fullError: error
+      });
+      
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to link address',
+        title: 'Error Linking Address',
+        description: error.message || 'Failed to link address. Please check console for details.',
         variant: 'destructive',
       });
     } finally {
+      console.log('🏁 [AddressLinkDialog] handleLinkAddress finished');
       setLinking(false);
     }
   };
@@ -219,11 +284,14 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
                       className="shrink-0"
                     >
                       {linking ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Linking...
+                        </>
                       ) : (
                         <>
                           <Check className="h-4 w-4 mr-2" />
-                          Link
+                          Link Address
                         </>
                       )}
                     </Button>
