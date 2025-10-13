@@ -189,17 +189,17 @@ export const DeliveryManagementDialog = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {validNextStatuses.length === 0 ? (
-                      <SelectItem value={order?.status} disabled>
-                        {order?.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} (Final status)
+                    {/* Current status */}
+                    <SelectItem value={order?.status}>
+                      {order?.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} (Current)
+                    </SelectItem>
+                    
+                    {/* Valid next statuses */}
+                    {validNextStatuses.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </SelectItem>
-                    ) : (
-                      validNextStatuses.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </SelectItem>
-                      ))
-                    )}
+                    ))}
                   </SelectContent>
                 </Select>
                 {validNextStatuses.length === 0 && (
