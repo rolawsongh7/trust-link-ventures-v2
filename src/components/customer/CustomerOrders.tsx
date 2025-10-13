@@ -66,6 +66,22 @@ export const CustomerOrders: React.FC = () => {
     }
   }, [profile]);
 
+  // Check for addressNeeded query parameter to auto-open address dialog
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orderIdNeedingAddress = params.get('addressNeeded');
+    
+    if (orderIdNeedingAddress && orders.length > 0) {
+      const order = orders.find(o => o.id === orderIdNeedingAddress);
+      if (order && !order.delivery_address_id) {
+        setSelectedOrderForAddress(order);
+        setAddressDialogOpen(true);
+        // Clear the query param
+        window.history.replaceState({}, '', '/customer/orders');
+      }
+    }
+  }, [orders]);
+
   const fetchOrders = async () => {
     if (!profile?.email) return;
 

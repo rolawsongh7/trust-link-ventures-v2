@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Plus, MapPin, Edit2, Trash2, Check } from 'lucide-react';
+import { Plus, MapPin, Edit2, Trash2, Check, AlertCircle } from 'lucide-react';
 
 const GHANA_REGIONS = [
   'Greater Accra', 'Ashanti', 'Western', 'Central', 'Eastern', 'Volta',
@@ -45,10 +46,13 @@ interface Address extends AddressFormData {
 export const CustomerAddresses = () => {
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [pendingOrderNumber, setPendingOrderNumber] = useState<string | null>(null);
 
   const form = useForm<AddressFormData>({
     resolver: zodResolver(addressSchema),
@@ -68,6 +72,18 @@ export const CustomerAddresses = () => {
   useEffect(() => {
     if (profile) {
       fetchAddresses();
+    }
+    
+    // Check for orderId query parameter
+    const params = new URLSearchParams(window.location.search);
+    const orderIdParam = params.get('orderId');
+    const orderNumberParam = params.get('orderNumber');
+    
+    if (orderIdParam) {
+      setPendingOrderId(orderIdParam);
+      if (orderNumberParam) {
+        setPendingOrderNumber(decodeURIComponent(orderNumberParam));
+      }
     }
   }, [profile]);
 
@@ -95,10 +111,60 @@ export const CustomerAddresses = () => {
     }
   };
 
+  const linkAddressToOrder = async (addressId: string, orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          delivery_address_id: addressId,
+          delivery_address_confirmed_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Send confirmation emails
+      try {
+        await supabase.functions.invoke('confirm-delivery-address', {
+          body: {
+            orderId,
+            orderNumber: pendingOrderNumber,
+            addressId,
+            customerEmail: profile?.email,
+          }
+        });
+      } catch (emailError) {
+        console.warn('Failed to send confirmation emails:', emailError);
+      }
+
+      toast({
+        title: 'Address Linked!',
+        description: `Address successfully linked to order ${pendingOrderNumber || orderId}`,
+      });
+
+      // Clear pending order state and redirect
+      setPendingOrderId(null);
+      setPendingOrderNumber(null);
+      
+      setTimeout(() => {
+        navigate(`/customer/orders?highlight=${orderId}`);
+      }, 1500);
+    } catch (error) {
+      console.error('Error linking address to order:', error);
+      toast({
+        title: 'Warning',
+        description: 'Address saved but failed to link to order. Please select it manually.',
+        variant: 'default',
+      });
+    }
+  };
+
   const onSubmit = async (data: AddressFormData) => {
     if (!profile) return;
 
     try {
+      let addressId: string;
+      
       if (editingAddress) {
         const { error } = await supabase
           .from('customer_addresses')
@@ -106,9 +172,10 @@ export const CustomerAddresses = () => {
           .eq('id', editingAddress.id);
 
         if (error) throw error;
+        addressId = editingAddress.id;
         toast({ title: 'Success', description: 'Address updated successfully' });
       } else {
-        const { error } = await supabase
+        const { data: newAddress, error } = await supabase
           .from('customer_addresses')
           .insert([{ 
             customer_id: profile.id,
@@ -121,10 +188,18 @@ export const CustomerAddresses = () => {
             street_address: data.street_address,
             additional_directions: data.additional_directions,
             is_default: data.is_default
-          }]);
+          }])
+          .select()
+          .single();
 
         if (error) throw error;
+        addressId = newAddress.id;
         toast({ title: 'Success', description: 'Address added successfully' });
+      }
+
+      // If there's a pending order, link this address to it
+      if (pendingOrderId && addressId) {
+        await linkAddressToOrder(addressId, pendingOrderId);
       }
 
       setDialogOpen(false);
@@ -192,6 +267,25 @@ export const CustomerAddresses = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
+      {/* Pending Order Banner */}
+      {pendingOrderId && pendingOrderNumber && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-semibold text-blue-900">
+                  Delivery Address Needed for Order {pendingOrderNumber}
+                </h3>
+                <p className="text-sm text-blue-800 mt-1">
+                  Add a new address or select an existing one below. It will be automatically linked to your order.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div className="min-w-0">
           <h2 className="text-xl sm:text-2xl font-bold truncate">Delivery Addresses</h2>
@@ -418,6 +512,17 @@ export const CustomerAddresses = () => {
                     <CardDescription className="text-sm sm:text-base mt-1">{address.phone_number}</CardDescription>
                   </div>
                   <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                    {pendingOrderId && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => linkAddressToOrder(address.id, pendingOrderId)}
+                        className="bg-blue-500 hover:bg-blue-600 h-9 sm:h-8 touch-manipulation text-xs sm:text-sm"
+                      >
+                        <Check className="w-4 h-4 mr-1" />
+                        Use for Order {pendingOrderNumber}
+                      </Button>
+                    )}
                     {!address.is_default && (
                       <Button
                         variant="ghost"
