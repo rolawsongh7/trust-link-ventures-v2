@@ -231,7 +231,7 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
       ),
     },
     {
-      key: 'id' as keyof Order,
+      key: 'customer_name' as keyof Order,
       label: 'Customer',
       sortable: true,
       render: (value: any, row: Order) => (
@@ -272,7 +272,7 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
       },
     },
     {
-      key: 'id' as keyof Order,
+      key: 'origin' as keyof Order,
       label: 'Origin',
       sortable: false,
       width: '120px',
