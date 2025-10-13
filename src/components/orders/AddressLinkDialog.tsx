@@ -54,23 +54,81 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
   }, [open, customerId]);
 
   const fetchAddresses = async () => {
+    console.log('🔍 [AddressLinkDialog] Starting fetchAddresses...');
+    console.log('📋 Props:', { orderId, orderNumber, customerId });
+    
+    const timeout = setTimeout(() => {
+      console.error('⏰ Timeout: fetchAddresses took longer than 10 seconds');
+      toast({
+        title: 'Request Timeout',
+        description: 'Loading addresses is taking too long. Please try again.',
+        variant: 'destructive',
+      });
+      setLoading(false);
+    }, 10000);
+    
     try {
+      // Check auth state first
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔐 Auth session:', session ? 'Valid' : 'Missing');
+      console.log('👤 User ID:', session?.user?.id);
+      
+      console.log('📞 Invoking get-customer-addresses function...');
+      console.log('📤 Request body:', { customerId });
+      
       const { data, error } = await supabase.functions.invoke('get-customer-addresses', {
         body: { customerId },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      console.log('📥 Response received:', { data, error });
+
+      if (error) {
+        console.error('❌ Function invocation error:', error);
+        console.warn('⚠️ Edge function failed, trying direct query as fallback...');
+        
+        // Fallback to direct query
+        const { data: directData, error: directError } = await supabase
+          .from('customer_addresses')
+          .select('*')
+          .eq('customer_id', customerId)
+          .order('is_default', { ascending: false })
+          .order('created_at', { ascending: false });
+        
+        if (directError) {
+          console.error('❌ Fallback query also failed:', directError);
+          throw directError;
+        }
+        
+        console.log('✅ Fallback query successful, addresses:', directData?.length || 0);
+        setAddresses(directData || []);
+        clearTimeout(timeout);
+        return;
+      }
       
+      if (data?.error) {
+        console.error('❌ Server-side error:', data.error);
+        throw new Error(data.error);
+      }
+      
+      console.log('✅ Addresses fetched:', data?.addresses?.length || 0);
       setAddresses(data?.addresses || []);
+      
     } catch (error: any) {
-      console.error('Error fetching addresses:', error);
+      console.error('💥 Fatal error in fetchAddresses:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        details: error
+      });
+      
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to load addresses',
+        title: 'Error Loading Addresses',
+        description: error.message || 'Failed to load customer addresses. Check console for details.',
         variant: 'destructive',
       });
     } finally {
+      clearTimeout(timeout);
+      console.log('🏁 fetchAddresses complete, setting loading = false');
       setLoading(false);
     }
   };

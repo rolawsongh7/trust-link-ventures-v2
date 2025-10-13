@@ -7,11 +7,17 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('🚀 get-customer-addresses invoked');
+  console.log('📋 Request method:', req.method);
+  console.log('📋 Headers:', Object.fromEntries(req.headers));
+  
   if (req.method === 'OPTIONS') {
+    console.log('✅ CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('🔐 Creating Supabase client...');
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -22,40 +28,56 @@ serve(async (req) => {
       }
     );
 
-    // Verify the user is an admin
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    console.log('👤 Getting authenticated user...');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    
+    if (userError) {
+      console.error('❌ Auth error:', userError);
+    }
+    
+    console.log('👤 User:', user?.id || 'None');
+    
     if (!user) {
+      console.error('❌ No authenticated user');
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized - No user found' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { data: roleCheck } = await supabaseClient
+    console.log('🔒 Checking admin role...');
+    const { data: roleCheck, error: roleError } = await supabaseClient
       .rpc('check_user_role', { check_user_id: user.id, required_role: 'admin' });
 
+    console.log('🔒 Role check result:', roleCheck, 'Error:', roleError);
+
     if (!roleCheck) {
+      console.error('❌ User is not admin');
       return new Response(
         JSON.stringify({ error: 'Forbidden: Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    console.log('📦 Parsing request body...');
     const { customerId } = await req.json();
+    console.log('📦 Customer ID:', customerId);
 
     if (!customerId) {
+      console.error('❌ Missing customer ID');
       return new Response(
         JSON.stringify({ error: 'Customer ID is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Use service role to bypass RLS
+    console.log('🔧 Creating service role client...');
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    console.log('📍 Fetching addresses for customer:', customerId);
     const { data: addresses, error } = await supabaseAdmin
       .from('customer_addresses')
       .select('*')
@@ -64,14 +86,15 @@ serve(async (req) => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching addresses:', error);
+      console.error('❌ Database error:', error);
       return new Response(
         JSON.stringify({ error: error.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Fetched ${addresses?.length || 0} addresses for customer ${customerId}`);
+    console.log(`✅ Successfully fetched ${addresses?.length || 0} addresses`);
+    console.log('📍 Addresses:', addresses);
 
     return new Response(
       JSON.stringify({ addresses }),
@@ -79,9 +102,18 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Error in get-customer-addresses:', error);
+    console.error('💥 Fatal error in get-customer-addresses:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        type: error.name,
+        details: 'Check function logs for full error'
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
