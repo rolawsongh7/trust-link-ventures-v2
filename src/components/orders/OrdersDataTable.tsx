@@ -32,6 +32,7 @@ import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { OrderCard } from './OrderCard';
 import { OrdersSearchFilters } from './OrdersSearchFilters';
 import { SearchFilters } from '@/types/filters';
+import { AddressLinkDialog } from './AddressLinkDialog';
 
 interface Order {
   id: string;
@@ -41,11 +42,18 @@ interface Order {
   status: string;
   created_at: string;
   delivery_address_id?: string;
+  delivery_address_requested_at?: string;
+  customer_id: string;
   quote_id?: string;
   payment_reference?: string;
   payment_proof_url?: string;
+  notes?: string;
+  order_items: any[];
   customers: {
+    id: string;
     company_name: string;
+    contact_name?: string;
+    email?: string;
   };
   quotes?: {
     quote_number: string;
@@ -54,6 +62,8 @@ interface Order {
   customer_addresses?: {
     street_address: string;
     city: string;
+    region: string;
+    ghana_digital_address?: string;
   } | null;
 }
 
@@ -65,6 +75,7 @@ interface OrdersDataTableProps {
   onConfirmPayment: (order: Order) => void;
   onSendTracking: (order: Order) => void;
   onViewQuote: (order: Order) => void;
+  onRefresh: () => void;
   getStatusColor: (status: string) => string;
 }
 
@@ -117,10 +128,17 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
   onConfirmPayment,
   onSendTracking,
   onViewQuote,
+  onRefresh,
   getStatusColor,
 }) => {
   const [isExporting, setIsExporting] = useState(false);
   const { isMobile, isTablet } = useMobileDetection();
+  const [addressLinkDialog, setAddressLinkDialog] = useState<{
+    open: boolean;
+    orderId: string;
+    orderNumber: string;
+    customerId: string;
+  } | null>(null);
   const [filters, setFilters] = useState<SearchFilters>({
     customer: '',
     orderNumber: '',
@@ -379,6 +397,20 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
               </DropdownMenuItem>
             )}
             
+            {!row.delivery_address_id && row.delivery_address_requested_at && row.customers && (
+              <DropdownMenuItem 
+                onClick={() => setAddressLinkDialog({
+                  open: true,
+                  orderId: row.id,
+                  orderNumber: row.order_number,
+                  customerId: row.customers.id,
+                })}
+              >
+                <Link2 className="mr-2 h-4 w-4" />
+                Link Existing Address
+              </DropdownMenuItem>
+            )}
+            
             {!['shipped', 'delivered', 'cancelled'].includes(row.status) && (
               <DropdownMenuItem onClick={() => onConfirmPayment(row)}>
                 <DollarSign className="mr-2 h-4 w-4" />
@@ -491,6 +523,17 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
         searchable={true}
         searchPlaceholder="Quick search by order number or customer..."
       />
+
+      {addressLinkDialog && (
+        <AddressLinkDialog
+          open={addressLinkDialog.open}
+          onOpenChange={(open) => !open && setAddressLinkDialog(null)}
+          orderId={addressLinkDialog.orderId}
+          orderNumber={addressLinkDialog.orderNumber}
+          customerId={addressLinkDialog.customerId}
+          onSuccess={onRefresh}
+        />
+      )}
     </div>
   );
 };

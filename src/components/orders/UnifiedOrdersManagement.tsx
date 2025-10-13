@@ -258,6 +258,7 @@ const UnifiedOrdersManagement = () => {
               onConfirmPayment={handleConfirmPayment}
               onSendTracking={handleSendTracking}
               onViewQuote={handleViewQuote}
+              onRefresh={refetch}
               getStatusColor={getStatusColor}
             />
           )}

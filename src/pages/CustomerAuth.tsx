@@ -26,11 +26,35 @@ const CustomerAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Preserve query parameters through login for address requests
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const orderId = params.get('orderId');
+    const orderNumber = params.get('orderNumber');
+    
+    if (orderId && orderNumber) {
+      sessionStorage.setItem('pendingOrderId', orderId);
+      sessionStorage.setItem('pendingOrderNumber', orderNumber);
+    }
+  }, [location.search]);
+
   const from = (location.state as any)?.from?.pathname || '/customer';
 
   useEffect(() => {
     if (user) {
-      navigate(from, { replace: true });
+      // Check if we have stored order context
+      const storedOrderId = sessionStorage.getItem('pendingOrderId');
+      const storedOrderNumber = sessionStorage.getItem('pendingOrderNumber');
+      
+      if (storedOrderId && storedOrderNumber) {
+        // Clear from storage
+        sessionStorage.removeItem('pendingOrderId');
+        sessionStorage.removeItem('pendingOrderNumber');
+        // Navigate with order context
+        navigate(`/customer/addresses?orderId=${storedOrderId}&orderNumber=${encodeURIComponent(storedOrderNumber)}`, { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     }
   }, [user, navigate, from]);
 

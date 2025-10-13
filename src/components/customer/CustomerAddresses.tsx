@@ -177,17 +177,17 @@ export const CustomerAddresses = () => {
       } else {
         const { data: newAddress, error } = await supabase
           .from('customer_addresses')
-          .insert([{ 
+          .insert([{
             customer_id: profile.id,
             receiver_name: data.receiver_name,
             phone_number: data.phone_number,
             ghana_digital_address: data.ghana_digital_address,
             region: data.region,
             city: data.city,
-            area: data.area,
             street_address: data.street_address,
+            area: data.area,
             additional_directions: data.additional_directions,
-            is_default: data.is_default
+            is_default: data.is_default,
           }])
           .select()
           .single();
@@ -197,9 +197,28 @@ export const CustomerAddresses = () => {
         toast({ title: 'Success', description: 'Address added successfully' });
       }
 
-      // If there's a pending order, link this address to it
+      // If there's a pending order from URL params, link this address to it
       if (pendingOrderId && addressId) {
         await linkAddressToOrder(addressId, pendingOrderId);
+      } else if (!editingAddress && addressId) {
+        // Smart auto-linking: Check if customer has a single pending order that needs an address
+        const { data: pendingOrders } = await supabase
+          .from('orders')
+          .select('id, order_number')
+          .eq('customer_id', profile.id)
+          .not('delivery_address_requested_at', 'is', null)
+          .is('delivery_address_id', null)
+          .order('delivery_address_requested_at', { ascending: false })
+          .limit(1);
+
+        if (pendingOrders && pendingOrders.length === 1) {
+          const order = pendingOrders[0];
+          toast({
+            title: 'Auto-linking address...',
+            description: `Found pending order ${order.order_number} that needs an address`,
+          });
+          await linkAddressToOrder(addressId, order.id);
+        }
       }
 
       setDialogOpen(false);
