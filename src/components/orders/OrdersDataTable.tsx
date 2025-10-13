@@ -418,10 +418,17 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
               </DropdownMenuItem>
             )}
             
-            {['shipped', 'ready_to_ship', 'processing'].includes(row.status) && (
+            {row.delivery_address_id && ['payment_received', 'processing', 'ready_to_ship'].includes(row.status) && (
               <DropdownMenuItem onClick={() => onSendTracking(row)}>
                 <Send className="mr-2 h-4 w-4" />
-                Send Tracking Link
+                Set Delivery Details
+              </DropdownMenuItem>
+            )}
+            
+            {['shipped'].includes(row.status) && (
+              <DropdownMenuItem onClick={() => onSendTracking(row)}>
+                <Send className="mr-2 h-4 w-4" />
+                Update Tracking Info
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
