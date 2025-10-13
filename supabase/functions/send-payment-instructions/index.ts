@@ -135,34 +135,68 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
 
           <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #1e40af; display: flex; align-items: center; gap: 8px;">
-              <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-              Bank Transfer Details
-            </h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280;">Bank Name:</td>
-                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600; text-align: right;">Trust Link Bank Ghana</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280;">Account Name:</td>
-                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600; text-align: right;">Trust Link Ventures Limited</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280;">Account Number:</td>
-                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-family: monospace; font-weight: 600; text-align: right;">1234567890</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280;">Swift Code:</td>
-                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-family: monospace; font-weight: 600; text-align: right;">TLBKGHAC</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #6b7280;">Payment Reference:</td>
-                <td style="padding: 10px 0; font-family: monospace; font-weight: 700; color: #dc2626; text-align: right;">${quote.quote_number}</td>
-              </tr>
-            </table>
+            <h3 style="margin-top: 0; color: #1e40af; margin-bottom: 20px;">Payment Options - Choose ONE Method</h3>
+            
+            <!-- Option 1: Bank Transfer -->
+            <div style="margin-bottom: 25px;">
+              <h4 style="color: #0c4a6e; margin: 0 0 10px 0; font-size: 16px; font-weight: 600;">Option 1: Bank Transfer</h4>
+              <div style="background-color: #ffffff; padding: 15px; border-radius: 6px; border-left: 4px solid #3b82f6;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280;">Bank Name:</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600; text-align: right;">Trust Link Bank Ghana</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280;">Account Name:</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600; text-align: right;">Trust Link Ventures Limited</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280;">Account Number:</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-family: monospace; font-weight: 600; text-align: right;">1234567890</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; color: #6b7280;">Swift Code:</td>
+                    <td style="padding: 8px 0; font-family: monospace; font-weight: 600; text-align: right;">TLBKGHAC</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- Option 2: Mobile Money -->
+            <div style="margin-bottom: 20px;">
+              <h4 style="color: #065f46; margin: 0 0 10px 0; font-size: 16px; font-weight: 600;">Option 2: Mobile Money (Ghana)</h4>
+              <div style="background-color: #f0fdf4; padding: 15px; border-radius: 6px; border-left: 4px solid #10b981;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #d1fae5; color: #065f46;">Account Name:</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #d1fae5; font-weight: 600; text-align: right;">Trust Link Ventures Limited</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #d1fae5; color: #065f46;">MTN Mobile Money:</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #d1fae5; font-family: monospace; font-weight: 600; text-align: right;">+233 24 123 4567</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #d1fae5; color: #065f46;">Vodafone Cash:</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #d1fae5; font-family: monospace; font-weight: 600; text-align: right;">+233 20 123 4567</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; color: #065f46;">AirtelTigo Money:</td>
+                    <td style="padding: 8px 0; font-family: monospace; font-weight: 600; text-align: right;">+233 27 123 4567</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- Payment Reference -->
+            <div style="background-color: #fef3c7; padding: 12px; border-radius: 6px; border-left: 4px solid #f59e0b;">
+              <p style="margin: 0; color: #92400e; font-weight: 600;">
+                <strong>IMPORTANT - Payment Reference:</strong> 
+                <span style="font-family: monospace; font-size: 16px; color: #dc2626; margin-left: 8px;">${quote.quote_number}</span>
+              </p>
+              <p style="margin: 8px 0 0 0; color: #92400e; font-size: 13px;">
+                Include this reference in your payment to ensure proper processing
+              </p>
+            </div>
           </div>
 
           <div style="margin: 20px 0;">
@@ -194,7 +228,9 @@ const handler = async (req: Request): Promise<Response> => {
             <h4 style="margin: 0 0 10px 0; color: #0c4a6e; font-size: 16px;">⚠️ Important Payment Notes:</h4>
             <ul style="margin: 0; padding-left: 20px; color: #0c4a6e;">
               <li style="margin-bottom: 6px;"><strong>MUST include reference:</strong> ${quote.quote_number} in your payment transfer</li>
+              <li style="margin-bottom: 6px;">Choose <strong>ONE</strong> payment method (Bank Transfer OR Mobile Money)</li>
               <li style="margin-bottom: 6px;">Payment must be received within <strong>7 days</strong> to maintain pricing</li>
+              <li style="margin-bottom: 6px;">Upload proof of payment in your customer portal after completing the transfer</li>
               <li style="margin-bottom: 6px;">You will receive confirmation email once payment is verified</li>
               <li style="margin-bottom: 6px;">Processing begins immediately after payment confirmation</li>
             </ul>

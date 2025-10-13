@@ -675,38 +675,49 @@ export const CustomerQuotes: React.FC = () => {
                     </Button>
                   )}
                   
-                  {(quote.status === 'approved' || quote.final_quote?.status === 'accepted') && quote.final_quote && (
+          {(quote.status === 'approved' || quote.final_quote?.status === 'accepted') && quote.final_quote && (
                     <div className="w-full mt-4 bg-gradient-to-br from-blue-50 via-blue-50/80 to-blue-100/50 dark:from-blue-950/40 dark:via-blue-950/30 dark:to-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl p-5 shadow-md">
                       <h4 className="font-bold text-blue-900 dark:text-blue-200 mb-3 text-lg flex items-center gap-2">
                         <DollarSign className="h-5 w-5" />
-                        Payment Instructions
+                        Payment Options
                       </h4>
-                      <div className="space-y-3 text-sm">
-                        <p className="text-blue-800 dark:text-blue-300 font-semibold">
-                          Payment Method: Mobile Money (MTN/Vodafone/AirtelTigo)
-                        </p>
-                        <div className="bg-white dark:bg-background p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800 shadow-sm">
-                          <p className="font-bold text-blue-900 dark:text-blue-200 mb-2 text-base">Trust Link Ventures</p>
-                          <div className="space-y-1.5">
-                            <p className="text-blue-800 dark:text-blue-300">
-                              <strong className="inline-block min-w-[80px]">Phone:</strong> +233 123 456 789
-                            </p>
-                            <p className="text-blue-800 dark:text-blue-300">
-                              <strong className="inline-block min-w-[80px]">Email:</strong> info@trustlinkventures.com
-                            </p>
-                            <div className="border-t-2 border-blue-100 dark:border-blue-900 my-3"></div>
-                            <p className="text-blue-900 dark:text-blue-200 font-bold text-base">
-                              <strong className="inline-block min-w-[80px]">Amount:</strong> 
-                              <span className="text-xl ml-2">{quote.final_quote.currency} {quote.final_quote.total_amount?.toLocaleString()}</span>
-                            </p>
-                            <p className="text-blue-800 dark:text-blue-300 font-mono bg-blue-50 dark:bg-blue-950/50 p-2 rounded">
-                              <strong className="inline-block min-w-[80px]">Reference:</strong> {quote.final_quote.quote_number}
-                            </p>
+                      <div className="space-y-4 text-sm">
+                        {/* Option 1: Bank Transfer */}
+                        <div className="bg-white dark:bg-background p-4 rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow-sm">
+                          <p className="font-bold text-blue-900 dark:text-blue-200 mb-2">Option 1: Bank Transfer</p>
+                          <div className="space-y-1.5 text-blue-800 dark:text-blue-300">
+                            <p><strong className="inline-block min-w-[120px]">Bank:</strong> Trust Link Bank Ghana</p>
+                            <p><strong className="inline-block min-w-[120px]">Account Name:</strong> Trust Link Ventures Limited</p>
+                            <p><strong className="inline-block min-w-[120px]">Account #:</strong> 1234567890</p>
+                            <p><strong className="inline-block min-w-[120px]">Swift Code:</strong> TLBKGHAC</p>
                           </div>
                         </div>
-                        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-                          <p className="text-amber-900 dark:text-amber-300 text-xs font-medium">
-                            📧 Please send payment confirmation to <strong>info@trustlinkventures.com</strong> with the reference number.
+
+                        {/* Option 2: Mobile Money */}
+                        <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border-2 border-green-200 dark:border-green-800 shadow-sm">
+                          <p className="font-bold text-green-900 dark:text-green-200 mb-2">Option 2: Mobile Money (Ghana)</p>
+                          <div className="space-y-1.5 text-green-800 dark:text-green-300">
+                            <p><strong className="inline-block min-w-[120px]">Account Name:</strong> Trust Link Ventures Limited</p>
+                            <p><strong className="inline-block min-w-[120px]">MTN MoMo:</strong> +233 24 123 4567</p>
+                            <p><strong className="inline-block min-w-[120px]">Vodafone Cash:</strong> +233 20 123 4567</p>
+                            <p><strong className="inline-block min-w-[120px]">AirtelTigo:</strong> +233 27 123 4567</p>
+                          </div>
+                        </div>
+
+                        <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <p className="text-yellow-900 dark:text-yellow-200 text-sm mb-3">
+                            <strong>Important:</strong> Choose ONE payment method and include reference <span className="font-mono font-bold">{quote.final_quote.quote_number}</span>
+                          </p>
+                          <div className="border-t border-blue-200 dark:border-blue-700 my-3"></div>
+                          <p className="text-blue-900 dark:text-blue-200 font-bold text-base">
+                            <strong>Total Amount:</strong> 
+                            <span className="text-xl ml-2">{quote.final_quote.currency} {quote.final_quote.total_amount?.toLocaleString()}</span>
+                          </p>
+                          <p className="text-blue-800 dark:text-blue-300 font-mono bg-blue-100 dark:bg-blue-900/30 p-2 rounded mt-2">
+                            <strong>Reference:</strong> {quote.final_quote.quote_number}
+                          </p>
+                          <p className="text-amber-900 dark:text-amber-300 text-xs mt-3">
+                            📧 Send payment confirmation to <strong>info@trustlinkventures.com</strong>
                           </p>
                         </div>
                       </div>

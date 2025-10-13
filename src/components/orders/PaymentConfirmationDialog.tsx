@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -28,6 +29,7 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
   onSuccess,
 }) => {
   const [paymentReference, setPaymentReference] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'mobile_money'>('bank_transfer');
   const [deliveryNotes, setDeliveryNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
@@ -126,6 +128,7 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
           .update({
             status: 'payment_received',
             payment_reference: paymentReference,
+            payment_method: paymentMethod,
             payment_proof_url: paymentProofUrl,
             delivery_notes: deliveryNotes,
           })
@@ -158,6 +161,7 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
         .update({
           status: 'payment_received',
           payment_reference: paymentReference,
+          payment_method: paymentMethod,
           payment_proof_url: paymentProofUrl,
           delivery_notes: deliveryNotes,
         })
@@ -231,6 +235,31 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          <div className="space-y-3">
+            <Label>Payment Method <span className="text-red-500">*</span></Label>
+            <RadioGroup
+              value={paymentMethod}
+              onValueChange={(value) => setPaymentMethod(value as 'bank_transfer' | 'mobile_money')}
+              disabled={loading}
+              className="flex flex-col space-y-2"
+            >
+              <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-accent cursor-pointer">
+                <RadioGroupItem value="bank_transfer" id="bank" />
+                <Label htmlFor="bank" className="flex-1 cursor-pointer">
+                  <div className="font-medium">Bank Transfer</div>
+                  <div className="text-xs text-muted-foreground">Via Trust Link Bank Ghana</div>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-accent cursor-pointer">
+                <RadioGroupItem value="mobile_money" id="momo" />
+                <Label htmlFor="momo" className="flex-1 cursor-pointer">
+                  <div className="font-medium">Mobile Money</div>
+                  <div className="text-xs text-muted-foreground">MTN, Vodafone, or AirtelTigo</div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="payment-reference">
               Payment Reference Number <span className="text-red-500">*</span>
