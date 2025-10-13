@@ -26,7 +26,7 @@ serve(async (req) => {
     // Check if commercial invoice already exists
     const { data: existing } = await supabase
       .from('invoices')
-      .select('id, invoice_number')
+      .select('id, invoice_number, file_url')
       .eq('order_id', orderId)
       .eq('invoice_type', 'commercial')
       .maybeSingle();
@@ -34,15 +34,24 @@ serve(async (req) => {
     if (existing) {
       console.log('[Commercial Invoice] Already exists:', existing.invoice_number);
       return new Response(
-        JSON.stringify({ success: true, invoiceId: existing.id, message: 'Commercial invoice already exists' }),
+        JSON.stringify({ 
+          success: true, 
+          invoiceId: existing.id, 
+          fileUrl: existing.file_url,
+          message: 'Commercial invoice already exists' 
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Fetch order with items
+    // Fetch order with items and customer
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('*, order_items(*)')
+      .select(`
+        *,
+        order_items(*),
+        customers(*)
+      `)
       .eq('id', orderId)
       .single();
 
@@ -54,7 +63,17 @@ serve(async (req) => {
     if (!order.delivery_address_id) {
       return new Response(
         JSON.stringify({ 
-          error: 'Cannot generate commercial invoice without delivery address. Please ensure delivery address is confirmed first.' 
+          error: 'Cannot generate commercial invoice without delivery address. Please request delivery address from customer first.' 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate shipping information
+    if (!order.carrier || !order.tracking_number) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Cannot generate commercial invoice without shipping information (carrier and tracking number).' 
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -62,25 +81,30 @@ serve(async (req) => {
 
     console.log('[Commercial Invoice] Creating invoice for order:', order.order_number);
 
-    // Create commercial invoice
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 30); // 30 days from now
+    // Calculate totals
+    const subtotal = order.order_items.reduce((sum: number, item: any) => 
+      sum + (Number(item.total_price) || 0), 0
+    );
+    const taxAmount = 0; // Configure tax calculation as needed
+    const totalAmount = subtotal + taxAmount;
 
+    // Create commercial invoice
     const { data: invoice, error: invoiceError } = await supabase
       .from('invoices')
       .insert({
         invoice_type: 'commercial',
         order_id: orderId,
-        quote_id: order.quote_id,
         customer_id: order.customer_id,
-        subtotal: order.total_amount,
-        tax_amount: 0,
-        total_amount: order.total_amount,
+        subtotal: subtotal,
+        tax_amount: taxAmount,
+        total_amount: totalAmount,
         currency: order.currency || 'USD',
         status: 'sent',
-        payment_terms: '30 days net',
-        due_date: dueDate.toISOString().split('T')[0],
+        issue_date: new Date().toISOString().split('T')[0],
+        due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         sent_at: new Date().toISOString(),
+        payment_terms: '30 days',
+        notes: `Order: ${order.order_number}\nCarrier: ${order.carrier}\nTracking: ${order.tracking_number}`,
       })
       .select()
       .single();
@@ -91,12 +115,12 @@ serve(async (req) => {
 
     console.log('[Commercial Invoice] Created invoice:', invoice.invoice_number);
 
-    // Create invoice items
+    // Create invoice items from order items
     if (order.order_items && order.order_items.length > 0) {
       const invoiceItems = order.order_items.map((item: any) => ({
         invoice_id: invoice.id,
         product_name: item.product_name,
-        description: item.product_description,
+        description: item.product_description || item.specifications,
         quantity: item.quantity,
         unit_price: item.unit_price,
         total_price: item.total_price,
@@ -121,11 +145,13 @@ serve(async (req) => {
       body: JSON.stringify({ invoiceId: invoice.id }),
     });
 
+    let fileUrl = null;
+
     if (!pdfResponse.ok) {
       console.error('[Commercial Invoice] PDF generation failed');
     } else {
       const pdfBuffer = await pdfResponse.arrayBuffer();
-      const filePath = `commercial/${invoice.invoice_number}.pdf`;
+      const filePath = `commercial_invoice/${invoice.invoice_number}.pdf`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
@@ -147,22 +173,34 @@ serve(async (req) => {
           .update({ file_url: publicUrl })
           .eq('id', invoice.id);
 
+        fileUrl = publicUrl;
         console.log('[Commercial Invoice] PDF uploaded:', filePath);
       }
     }
 
-    // Trigger email notification with invoice
-    try {
-      await supabase.functions.invoke('send-invoice-email', {
-        body: { invoiceId: invoice.id, orderId },
-      });
-      console.log('[Commercial Invoice] Email notification sent');
-    } catch (emailError) {
-      console.error('[Commercial Invoice] Email failed:', emailError);
+    // Send commercial invoice email notification
+    if (order.customers?.email) {
+      try {
+        await supabase.functions.invoke('send-commercial-invoice-email', {
+          body: { 
+            invoiceId: invoice.id, 
+            orderId,
+            customerEmail: order.customers.email,
+          },
+        });
+        console.log('[Commercial Invoice] Email notification sent');
+      } catch (emailError) {
+        console.error('[Commercial Invoice] Email failed:', emailError);
+      }
     }
 
     return new Response(
-      JSON.stringify({ success: true, invoiceId: invoice.id, invoiceNumber: invoice.invoice_number }),
+      JSON.stringify({ 
+        success: true, 
+        invoiceId: invoice.id, 
+        invoiceNumber: invoice.invoice_number,
+        fileUrl: fileUrl,
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

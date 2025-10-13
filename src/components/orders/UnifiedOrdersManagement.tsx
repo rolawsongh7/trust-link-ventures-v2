@@ -118,21 +118,33 @@ const UnifiedOrdersManagement = () => {
   };
 
   const handleSendTracking = async (order: Order) => {
-    try {
-      const { error } = await supabase.functions.invoke('send-order-tracking-link', {
-        body: {
-          orderId: order.id,
-          customerEmail: order.customers?.email,
-          customerName: order.customers?.contact_name,
-          companyName: order.customers?.company_name,
-        },
-      });
+    setSelectedOrder(order);
+    setDeliveryDialogOpen(true);
+  };
 
-      if (error) throw error;
-      toast.success('Tracking link sent to customer');
+  const handleGenerateInvoices = async (order: Order) => {
+    try {
+      toast.loading('Generating invoices...');
+
+      // Generate packing list if ready_to_ship or later
+      if (['ready_to_ship', 'shipped', 'delivered'].includes(order.status)) {
+        await supabase.functions.invoke('generate-packing-list', {
+          body: { orderId: order.id },
+        });
+      }
+
+      // Generate commercial invoice if shipped or delivered
+      if (['shipped', 'delivered'].includes(order.status)) {
+        await supabase.functions.invoke('generate-commercial-invoice', {
+          body: { orderId: order.id },
+        });
+      }
+
+      toast.success('Invoices generated successfully');
+      refetch();
     } catch (error) {
-      console.error('Error sending tracking link:', error);
-      toast.error('Failed to send tracking link');
+      console.error('Error generating invoices:', error);
+      toast.error('Failed to generate invoices');
     }
   };
 
@@ -259,6 +271,7 @@ const UnifiedOrdersManagement = () => {
               onSendTracking={handleSendTracking}
               onViewQuote={handleViewQuote}
               onRefresh={refetch}
+              onGenerateInvoices={handleGenerateInvoices}
               getStatusColor={getStatusColor}
             />
           )}

@@ -76,6 +76,7 @@ interface OrdersDataTableProps {
   onSendTracking: (order: Order) => void;
   onViewQuote: (order: Order) => void;
   onRefresh: () => void;
+  onGenerateInvoices: (order: Order) => void;
   getStatusColor: (status: string) => string;
 }
 
@@ -129,6 +130,7 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
   onSendTracking,
   onViewQuote,
   onRefresh,
+  onGenerateInvoices,
   getStatusColor,
 }) => {
   const [isExporting, setIsExporting] = useState(false);
@@ -429,6 +431,13 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
               <DropdownMenuItem onClick={() => onSendTracking(row)}>
                 <Send className="mr-2 h-4 w-4" />
                 Update Tracking Info
+              </DropdownMenuItem>
+            )}
+            
+            {['ready_to_ship', 'shipped', 'delivered'].includes(row.status) && (
+              <DropdownMenuItem onClick={() => onGenerateInvoices(row)}>
+                <FileText className="mr-2 h-4 w-4" />
+                Generate Invoices
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
