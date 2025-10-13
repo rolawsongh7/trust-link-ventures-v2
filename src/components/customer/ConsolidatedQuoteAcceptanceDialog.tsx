@@ -260,6 +260,31 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
 
       // Send notification if payment proof was uploaded
       if (paymentProofUrl) {
+        // Notify all admins about payment proof upload
+        const { data: adminUsers } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'admin');
+
+        if (adminUsers && adminUsers.length > 0) {
+          const adminNotifications = adminUsers.map(admin => ({
+            user_id: admin.user_id,
+            type: 'payment_proof_uploaded',
+            title: 'New Payment Proof Uploaded',
+            message: `Payment proof uploaded for order ${orders.order_number}. Please verify the payment.`,
+            link: '/orders',
+          }));
+
+          const { error: notifError } = await supabase
+            .from('user_notifications')
+            .insert(adminNotifications);
+          
+          if (notifError) {
+            console.error('Failed to send admin notifications (non-blocking):', notifError);
+          }
+        }
+
+        // Also send email notification
         await supabase.functions.invoke('notify-payment-proof-uploaded', {
           body: {
             orderId: orders.id,
@@ -267,7 +292,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
             paymentMethod,
             paymentReference,
           },
-        }).catch(err => console.error('Notification error:', err));
+        }).catch(err => console.error('Email notification error (non-blocking):', err));
       }
 
       setUploadStatus('success');
