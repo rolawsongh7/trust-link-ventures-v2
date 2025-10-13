@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerQuotesTable } from './CustomerQuotesTable';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { ConsolidatedQuoteAcceptanceDialog } from './ConsolidatedQuoteAcceptanceDialog';
 
 
 interface QuoteItem {
@@ -58,6 +59,8 @@ export const CustomerQuotes: React.FC = () => {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedPaymentQuote, setSelectedPaymentQuote] = useState<any>(null);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [showAcceptanceDialog, setShowAcceptanceDialog] = useState(false);
+  const [quoteToAccept, setQuoteToAccept] = useState<any>(null);
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -218,62 +221,15 @@ export const CustomerQuotes: React.FC = () => {
     }
   };
 
-  const handleApproveQuote = async (quoteId: string) => {
-    try {
-      const { error } = await supabase
-        .from('quotes')
-        .update({ status: 'accepted' })
-        .eq('id', quoteId);
-
-      if (error) throw error;
-
-      // Fetch the newly created order
-      const { data: order } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('quote_id', quoteId)
-        .single();
-
-      // Get customer email from the quote
-      const approvedQuote = quotes.find(q => q.final_quote?.id === quoteId);
-      const customerEmail = profile?.email || approvedQuote?.final_quote?.customer_email;
-
-      // Send payment instructions email
-      if (customerEmail && approvedQuote?.final_quote) {
-        try {
-          await supabase.functions.invoke('send-payment-instructions', {
-            body: {
-              quoteId: approvedQuote.final_quote.id,
-              customerEmail: customerEmail,
-              customerName: profile?.full_name,
-              orderNumber: order?.order_number,
-            }
-          });
-          console.log('Payment instructions email sent');
-        } catch (emailError) {
-          console.error('Failed to send payment instructions email:', emailError);
-          // Don't fail the approval if email fails
-        }
-      }
-
-      toast({
-        title: "Quote Approved Successfully! ✓",
-        description: order 
-          ? `Order ${order.order_number} created. Check your email for payment instructions.`
-          : "Check your email for payment instructions.",
-      });
-
-      fetchQuotes(); // Refresh the list
-      setPaymentDialogOpen(true); // Show payment instructions
-      setSelectedPaymentQuote(approvedQuote?.final_quote || null);
-    } catch (error) {
-      console.error('Error approving quote:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to approve quote. Please try again.",
-      });
-    }
+  const handleApproveQuote = (finalQuote: any) => {
+    setQuoteToAccept({
+      id: finalQuote.id,
+      quote_number: finalQuote.quote_number,
+      total_amount: finalQuote.total_amount,
+      currency: finalQuote.currency,
+      customer_id: profile?.id
+    });
+    setShowAcceptanceDialog(true);
   };
 
   const handleRejectQuote = async (quoteId: string) => {
@@ -596,10 +552,10 @@ export const CustomerQuotes: React.FC = () => {
                         <Button 
                           size="lg" 
                           className="flex-1 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                          onClick={() => handleApproveQuote(quote.final_quote!.id)}
+                          onClick={() => handleApproveQuote(quote.final_quote!)}
                         >
                           <span className="text-lg mr-2">✓</span>
-                          Approve Quote
+                          Accept Quote
                         </Button>
                         <Button 
                           size="lg" 
@@ -1054,6 +1010,16 @@ export const CustomerQuotes: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Consolidated Quote Acceptance Dialog */}
+      {quoteToAccept && (
+        <ConsolidatedQuoteAcceptanceDialog
+          open={showAcceptanceDialog}
+          onOpenChange={setShowAcceptanceDialog}
+          quote={quoteToAccept}
+          onSuccess={fetchQuotes}
+        />
+      )}
     </div>
   );
 };
