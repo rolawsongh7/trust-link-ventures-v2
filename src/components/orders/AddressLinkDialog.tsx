@@ -78,6 +78,9 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
       
       const { data, error } = await supabase.functions.invoke('get-customer-addresses', {
         body: { customerId },
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       console.log('📥 Response received:', { data, error });
