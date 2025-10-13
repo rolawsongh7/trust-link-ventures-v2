@@ -57,6 +57,8 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
     console.log('🔍 [AddressLinkDialog] Starting fetchAddresses...');
     console.log('📋 Props:', { orderId, orderNumber, customerId });
     
+    setLoading(true);
+    
     const timeout = setTimeout(() => {
       console.error('⏰ Timeout: fetchAddresses took longer than 10 seconds');
       toast({
@@ -68,53 +70,24 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
     }, 10000);
     
     try {
-      // Check auth state first
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('🔐 Auth session:', session ? 'Valid' : 'Missing');
-      console.log('👤 User ID:', session?.user?.id);
+      // Direct query with admin RLS policy
+      console.log('📞 Fetching addresses directly from database...');
+      const { data: directData, error: directError } = await supabase
+        .from('customer_addresses')
+        .select('*')
+        .eq('customer_id', customerId)
+        .order('is_default', { ascending: false })
+        .order('created_at', { ascending: false });
       
-      console.log('📞 Invoking get-customer-addresses function...');
-      console.log('📤 Request body:', { customerId });
+      console.log('📥 Query result:', { data: directData, error: directError });
       
-      const { data, error } = await supabase.functions.invoke('get-customer-addresses', {
-        body: { customerId },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log('📥 Response received:', { data, error });
-
-      if (error) {
-        console.error('❌ Function invocation error:', error);
-        console.warn('⚠️ Edge function failed, trying direct query as fallback...');
-        
-        // Fallback to direct query
-        const { data: directData, error: directError } = await supabase
-          .from('customer_addresses')
-          .select('*')
-          .eq('customer_id', customerId)
-          .order('is_default', { ascending: false })
-          .order('created_at', { ascending: false });
-        
-        if (directError) {
-          console.error('❌ Fallback query also failed:', directError);
-          throw directError;
-        }
-        
-        console.log('✅ Fallback query successful, addresses:', directData?.length || 0);
-        setAddresses(directData || []);
-        clearTimeout(timeout);
-        return;
+      if (directError) {
+        console.error('❌ Database query failed:', directError);
+        throw directError;
       }
       
-      if (data?.error) {
-        console.error('❌ Server-side error:', data.error);
-        throw new Error(data.error);
-      }
-      
-      console.log('✅ Addresses fetched:', data?.addresses?.length || 0);
-      setAddresses(data?.addresses || []);
+      console.log('✅ Addresses fetched:', directData?.length || 0);
+      setAddresses(directData || []);
       
     } catch (error: any) {
       console.error('💥 Fatal error in fetchAddresses:', {
@@ -126,12 +99,11 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
       
       toast({
         title: 'Error Loading Addresses',
-        description: error.message || 'Failed to load customer addresses. Check console for details.',
+        description: error.message || 'Failed to load customer addresses. Please check your permissions.',
         variant: 'destructive',
       });
     } finally {
       clearTimeout(timeout);
-      console.log('🏁 fetchAddresses complete, setting loading = false');
       setLoading(false);
     }
   };
