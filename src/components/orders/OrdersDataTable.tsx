@@ -24,7 +24,9 @@ import {
   Link2,
   Download,
   FileText,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Package,
+  CheckCircle
 } from 'lucide-react';
 import { Column } from '@/components/ui/data-table';
 import { DataExporter } from '@/lib/exportHelpers';
@@ -77,6 +79,7 @@ interface OrdersDataTableProps {
   onViewQuote: (order: Order) => void;
   onRefresh: () => void;
   onGenerateInvoices: (order: Order) => void;
+  onQuickStatusChange: (order: Order, newStatus: 'processing' | 'ready_to_ship' | 'delivered') => void;
   getStatusColor: (status: string) => string;
 }
 
@@ -131,6 +134,7 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
   onViewQuote,
   onRefresh,
   onGenerateInvoices,
+  onQuickStatusChange,
   getStatusColor,
 }) => {
   const [isExporting, setIsExporting] = useState(false);
@@ -420,25 +424,58 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
               </DropdownMenuItem>
             )}
             
-            {row.delivery_address_id && ['payment_received', 'processing', 'ready_to_ship'].includes(row.status) && (
-              <DropdownMenuItem onClick={() => onSendTracking(row)}>
-                <Send className="mr-2 h-4 w-4" />
-                Set Delivery Details
+            <DropdownMenuSeparator />
+            
+            {/* Quick Status Actions */}
+            {row.status === 'payment_received' && (
+              <DropdownMenuItem onClick={() => onQuickStatusChange(row, 'processing')}>
+                <Package className="mr-2 h-4 w-4" />
+                Start Processing
               </DropdownMenuItem>
+            )}
+            
+            {row.status === 'processing' && (
+              <DropdownMenuItem onClick={() => onQuickStatusChange(row, 'ready_to_ship')}>
+                <Package className="mr-2 h-4 w-4" />
+                Mark Ready to Ship
+              </DropdownMenuItem>
+            )}
+            
+            {row.status === 'shipped' && (
+              <DropdownMenuItem onClick={() => onQuickStatusChange(row, 'delivered')}>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Mark as Delivered
+              </DropdownMenuItem>
+            )}
+            
+            {row.delivery_address_id && ['payment_received', 'processing', 'ready_to_ship'].includes(row.status) && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onSendTracking(row)}>
+                  <Send className="mr-2 h-4 w-4" />
+                  Manage Shipping & Status
+                </DropdownMenuItem>
+              </>
             )}
             
             {['shipped'].includes(row.status) && (
-              <DropdownMenuItem onClick={() => onSendTracking(row)}>
-                <Send className="mr-2 h-4 w-4" />
-                Update Tracking Info
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onSendTracking(row)}>
+                  <Send className="mr-2 h-4 w-4" />
+                  Update Tracking Info
+                </DropdownMenuItem>
+              </>
             )}
             
             {['ready_to_ship', 'shipped', 'delivered'].includes(row.status) && (
-              <DropdownMenuItem onClick={() => onGenerateInvoices(row)}>
-                <FileText className="mr-2 h-4 w-4" />
-                Generate Invoices
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onGenerateInvoices(row)}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Generate Invoices
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>

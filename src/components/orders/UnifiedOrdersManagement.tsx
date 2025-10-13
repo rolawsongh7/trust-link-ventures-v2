@@ -25,6 +25,7 @@ interface Order {
   status: string;
   created_at: string;
   delivery_address_id?: string;
+  delivery_address_requested_at?: string;
   quote_id?: string;
   payment_reference?: string;
   notes?: string;
@@ -112,14 +113,75 @@ const UnifiedOrdersManagement = () => {
     }
   };
 
-  const handleConfirmPayment = (order: Order) => {
+  const handleConfirmPayment = async (order: Order) => {
     setSelectedOrder(order);
     setPaymentDialogOpen(true);
+    
+    // Auto-request address if payment is being confirmed and no address exists
+    if (order.status === 'pending_payment' && !order.delivery_address_id && !order.delivery_address_requested_at) {
+      try {
+        const { error } = await supabase.functions.invoke('request-delivery-address', {
+          body: {
+            orderId: order.id,
+            orderNumber: order.order_number,
+            customerEmail: order.customers?.email,
+            customerName: order.customers?.contact_name,
+            companyName: order.customers?.company_name,
+          },
+        });
+
+        if (!error) {
+          await supabase
+            .from('orders')
+            .update({ delivery_address_requested_at: new Date().toISOString() })
+            .eq('id', order.id);
+          
+          toast.success('Delivery address request sent to customer', {
+            description: 'We\'ll notify you when the customer provides their address',
+          });
+        }
+      } catch (error) {
+        console.error('Error auto-requesting address:', error);
+        // Don't block payment confirmation if address request fails
+      }
+    }
   };
 
   const handleSendTracking = async (order: Order) => {
     setSelectedOrder(order);
     setDeliveryDialogOpen(true);
+  };
+
+  const handleQuickStatusChange = async (order: Order, newStatus: 'processing' | 'ready_to_ship' | 'delivered') => {
+    try {
+      // Validate address for ready_to_ship
+      if (newStatus === 'ready_to_ship' && !order.delivery_address_id) {
+        toast.error('Cannot mark as ready to ship without delivery address. Please request address first.');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', order.id);
+
+      if (error) {
+        if (error.message.includes('Invalid order status transition')) {
+          toast.error('Invalid status transition');
+        } else if (error.message.includes('delivery address')) {
+          toast.error('Delivery address required');
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      toast.success(`Order marked as ${newStatus.replace(/_/g, ' ')}`);
+      refetch();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update order status');
+    }
   };
 
   const handleGenerateInvoices = async (order: Order) => {
@@ -272,6 +334,7 @@ const UnifiedOrdersManagement = () => {
               onViewQuote={handleViewQuote}
               onRefresh={refetch}
               onGenerateInvoices={handleGenerateInvoices}
+              onQuickStatusChange={handleQuickStatusChange}
               getStatusColor={getStatusColor}
             />
           )}

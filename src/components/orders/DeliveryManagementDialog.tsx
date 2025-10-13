@@ -170,10 +170,10 @@ export const DeliveryManagementDialog = ({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Truck className="w-5 h-5" />
-              Manage Delivery & Tracking
+              Manage Shipping & Order Status
             </DialogTitle>
             <DialogDescription>
-              Update shipping and delivery information for order {order?.order_number}
+              Update order status, shipping details, and tracking information for {order?.order_number}
             </DialogDescription>
           </DialogHeader>
 
