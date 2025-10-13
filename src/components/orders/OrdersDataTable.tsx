@@ -49,6 +49,9 @@ interface Order {
   quote_id?: string;
   payment_reference?: string;
   payment_proof_url?: string;
+  payment_proof_uploaded_at?: string;
+  payment_verified_by?: string;
+  payment_verified_at?: string;
   notes?: string;
   order_items: any[];
   customers: {
@@ -80,6 +83,7 @@ interface OrdersDataTableProps {
   onRefresh: () => void;
   onGenerateInvoices: (order: Order) => void;
   onQuickStatusChange: (order: Order, newStatus: 'processing' | 'ready_to_ship' | 'delivered') => void;
+  onVerifyPayment: (order: Order) => void;
   getStatusColor: (status: string) => string;
 }
 
@@ -135,6 +139,7 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
   onRefresh,
   onGenerateInvoices,
   onQuickStatusChange,
+  onVerifyPayment,
   getStatusColor,
 }) => {
   const [isExporting, setIsExporting] = useState(false);
@@ -417,10 +422,18 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
               </DropdownMenuItem>
             )}
             
-            {!['shipped', 'delivered', 'cancelled'].includes(row.status) && (
+            {/* Payment actions based on status */}
+            {row.status === 'pending_payment' && row.payment_proof_url && !row.payment_verified_at && (
+              <DropdownMenuItem onClick={() => onVerifyPayment(row)} className="text-green-600">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Verify Payment Proof
+              </DropdownMenuItem>
+            )}
+            
+            {!['shipped', 'delivered', 'cancelled'].includes(row.status) && !row.payment_proof_url && (
               <DropdownMenuItem onClick={() => onConfirmPayment(row)}>
                 <DollarSign className="mr-2 h-4 w-4" />
-                {row.payment_reference ? 'Update Payment Info' : 'Confirm Payment'}
+                {row.payment_reference ? 'Update Payment Info' : 'Confirm Payment (Admin)'}
               </DropdownMenuItem>
             )}
             

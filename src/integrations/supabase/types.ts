@@ -1354,8 +1354,11 @@ export type Database = {
           order_number: string
           payment_confirmed_at: string | null
           payment_method: string | null
+          payment_proof_uploaded_at: string | null
           payment_proof_url: string | null
           payment_reference: string | null
+          payment_verified_at: string | null
+          payment_verified_by: string | null
           processing_started_at: string | null
           proof_of_delivery_url: string | null
           quote_id: string | null
@@ -1394,8 +1397,11 @@ export type Database = {
           order_number: string
           payment_confirmed_at?: string | null
           payment_method?: string | null
+          payment_proof_uploaded_at?: string | null
           payment_proof_url?: string | null
           payment_reference?: string | null
+          payment_verified_at?: string | null
+          payment_verified_by?: string | null
           processing_started_at?: string | null
           proof_of_delivery_url?: string | null
           quote_id?: string | null
@@ -1434,8 +1440,11 @@ export type Database = {
           order_number?: string
           payment_confirmed_at?: string | null
           payment_method?: string | null
+          payment_proof_uploaded_at?: string | null
           payment_proof_url?: string | null
           payment_reference?: string | null
+          payment_verified_at?: string | null
+          payment_verified_by?: string | null
           processing_started_at?: string | null
           proof_of_delivery_url?: string | null
           quote_id?: string | null

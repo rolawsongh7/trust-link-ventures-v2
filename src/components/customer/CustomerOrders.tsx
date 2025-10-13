@@ -5,17 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign, Download, MapPin, AlertCircle } from 'lucide-react';
+import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign, Download, MapPin, AlertCircle, Upload } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import AddressSelectionDialog from './AddressSelectionDialog';
+import { CustomerPaymentProofDialog } from './CustomerPaymentProofDialog';
 
 
 // Order interface matching database schema
 interface Order {
   id: string;
   order_number: string;
+  customer_id: string;
   total_amount: number;
   currency: string;
   status: string;
@@ -40,6 +42,8 @@ export const CustomerOrders: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [addressDialogOpen, setAddressDialogOpen] = useState(false);
   const [selectedOrderForAddress, setSelectedOrderForAddress] = useState<Order | null>(null);
+  const [paymentProofDialogOpen, setPaymentProofDialogOpen] = useState(false);
+  const [selectedOrderForPayment, setSelectedOrderForPayment] = useState<Order | null>(null);
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -471,6 +475,21 @@ export const CustomerOrders: React.FC = () => {
                   )}
 
                   <div className="flex flex-wrap items-center gap-2">
+                    {order.status === 'pending_payment' && !order.delivery_address_id && (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedOrderForPayment(order);
+                          setPaymentProofDialogOpen(true);
+                        }}
+                        className="bg-green-500 hover:bg-green-600"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Payment Proof
+                      </Button>
+                    )}
+                    
                     {!order.delivery_address_id && ['payment_received', 'processing'].includes(order.status) && (
                       <Button 
                         variant="default" 
@@ -526,6 +545,16 @@ export const CustomerOrders: React.FC = () => {
         onOpenChange={setAddressDialogOpen}
         onSelect={handleAddressSelect}
       />
+      
+      {/* Payment Proof Upload Dialog */}
+      {selectedOrderForPayment && (
+        <CustomerPaymentProofDialog
+          open={paymentProofDialogOpen}
+          onOpenChange={setPaymentProofDialogOpen}
+          order={selectedOrderForPayment}
+          onSuccess={fetchOrders}
+        />
+      )}
     </div>
   );
 };

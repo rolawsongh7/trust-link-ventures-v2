@@ -16,6 +16,7 @@ import OrderStatusHistory from './OrderStatusHistory';
 import { PaymentConfirmationDialog } from './PaymentConfirmationDialog';
 import { ViewRelatedQuoteDialog } from './ViewRelatedQuoteDialog';
 import { ManualOrderCreationDialog } from './ManualOrderCreationDialog';
+import { VerifyPaymentDialog } from './VerifyPaymentDialog';
 
 interface Order {
   id: string;
@@ -68,6 +69,7 @@ const UnifiedOrdersManagement = () => {
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [viewQuoteDialogOpen, setViewQuoteDialogOpen] = useState(false);
   const [manualOrderDialogOpen, setManualOrderDialogOpen] = useState(false);
+  const [verifyPaymentDialogOpen, setVerifyPaymentDialogOpen] = useState(false);
 
   // Refetch when real-time updates come in
   useEffect(() => {
@@ -215,6 +217,11 @@ const UnifiedOrdersManagement = () => {
     setViewQuoteDialogOpen(true);
   };
 
+  const handleVerifyPayment = (order: Order) => {
+    setSelectedOrder(order);
+    setVerifyPaymentDialogOpen(true);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'order_confirmed': return 'bg-cyan-100 text-cyan-800';
@@ -335,6 +342,7 @@ const UnifiedOrdersManagement = () => {
               onRefresh={refetch}
               onGenerateInvoices={handleGenerateInvoices}
               onQuickStatusChange={handleQuickStatusChange}
+              onVerifyPayment={handleVerifyPayment}
               getStatusColor={getStatusColor}
             />
           )}
@@ -376,6 +384,15 @@ const UnifiedOrdersManagement = () => {
         onOpenChange={setManualOrderDialogOpen}
         onSuccess={refetch}
       />
+
+      {selectedOrder && (
+        <VerifyPaymentDialog
+          open={verifyPaymentDialogOpen}
+          onOpenChange={setVerifyPaymentDialogOpen}
+          order={selectedOrder}
+          onSuccess={refetch}
+        />
+      )}
     </div>
   );
 };
