@@ -22,7 +22,7 @@ interface OrderDetails {
   delivery_notes: string | null;
   customer_name: string;
   delivery_address: string;
-  delivery_window: string | null;
+  delivery_window?: string | null;
 }
 
 interface Invoice {

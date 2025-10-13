@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Package, Truck, CheckCircle, Clock, AlertCircle, Mail, MapPin, Send, Link2, Edit, History, Lock, DollarSign } from 'lucide-react';
+import { Search, Package, Truck, CheckCircle, Clock, AlertCircle, Mail, MapPin, Send, Link2, Edit, History, Lock, DollarSign, FileText, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeliveryManagementDialog } from './DeliveryManagementDialog';
 import { EditOrderDetailsDialog } from './EditOrderDetailsDialog';
@@ -61,6 +61,13 @@ interface Order {
     email?: string;
   };
   order_items: any[];
+  invoices?: Array<{
+    id: string;
+    invoice_number: string;
+    invoice_type: string;
+    file_url: string | null;
+    status: string;
+  }>;
 }
 
 const OrdersManagement = () => {
@@ -128,7 +135,7 @@ const OrdersManagement = () => {
 
       if (error) throw error;
 
-      // Fetch order items separately to avoid join issues
+      // Fetch order items and invoices separately to avoid join issues
       const ordersWithItems = await Promise.all(
         (data || []).map(async (order) => {
           const { data: items } = await supabase
@@ -136,9 +143,17 @@ const OrdersManagement = () => {
             .select('*')
             .eq('order_id', order.id);
           
+          const { data: invoices } = await supabase
+            .from('invoices')
+            .select('id, invoice_number, invoice_type, file_url, status')
+            .eq('order_id', order.id)
+            .in('invoice_type', ['commercial', 'packing_list'])
+            .not('file_url', 'is', null);
+          
           return {
             ...order,
-            order_items: items || []
+            order_items: items || [],
+            invoices: invoices || []
           };
         })
       );
@@ -518,6 +533,42 @@ const OrdersManagement = () => {
                         ))}
                       </div>
                     </div>
+
+                    {order.invoices && order.invoices.length > 0 && (
+                      <div className="mt-4 pt-4 border-t">
+                        <h4 className="font-medium mb-2 flex items-center gap-2">
+                          <FileText className="h-4 w-4" />
+                          Documents
+                        </h4>
+                        <div className="space-y-2">
+                          {order.invoices
+                            .filter(inv => inv.file_url)
+                            .map(invoice => (
+                              <div key={invoice.id} className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-4 w-4 text-muted-foreground" />
+                                  <div>
+                                    <p className="text-sm font-medium">
+                                      {invoice.invoice_type === 'commercial' ? 'Commercial Invoice' : 
+                                       invoice.invoice_type === 'packing_list' ? 'Packing List' : 
+                                       invoice.invoice_type}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">{invoice.invoice_number}</p>
+                                  </div>
+                                </div>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => invoice.file_url && window.open(invoice.file_url, '_blank')}
+                                >
+                                  <Download className="h-4 w-4 mr-1" />
+                                  Download
+                                </Button>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between pt-4 border-t">
                       <div className="space-y-1">

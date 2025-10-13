@@ -2892,6 +2892,7 @@ export type Database = {
           delivered_at: string
           delivery_address: string
           delivery_notes: string
+          delivery_window: string
           estimated_delivery_date: string
           order_id: string
           order_number: string
