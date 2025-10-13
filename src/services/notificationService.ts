@@ -132,20 +132,28 @@ export class NotificationService {
       metadata: { orderId, orderNumber, trackingNumber }
     });
 
-    // Send email
-    await supabase.functions.invoke('send-email', {
-      body: {
-        to: customerEmail,
-        subject: `Order ${orderNumber} Shipped`,
-        type: 'order_shipped',
-        data: {
-          orderNumber,
-          orderId,
-          trackingNumber,
-          trackingLink: `${window.location.origin}/customer-portal/orders`
-        }
-      }
+    // Email is sent automatically by the generate-commercial-invoice function
+    // which includes the invoice PDF attachment
+  }
+
+  static async sendOrderReadyToShipNotification(
+    userId: string,
+    orderNumber: string,
+    orderId: string,
+    customerEmail: string
+  ): Promise<void> {
+    // Create in-app notification
+    await this.createNotification({
+      userId,
+      title: 'Order Ready to Ship',
+      message: `Your order ${orderNumber} is packed and ready for shipment`,
+      type: 'order_shipped',
+      link: `/customer-portal/orders`,
+      metadata: { orderId, orderNumber }
     });
+
+    // Email is sent automatically by the generate-packing-list function
+    // which includes the packing list PDF attachment
   }
 
   static async sendOrderDeliveredNotification(

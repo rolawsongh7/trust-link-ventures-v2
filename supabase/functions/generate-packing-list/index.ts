@@ -145,6 +145,16 @@ serve(async (req) => {
       }
     }
 
+    // Send packing list email notification
+    try {
+      await supabase.functions.invoke('send-packing-list-email', {
+        body: { invoiceId: invoice.id, orderId },
+      });
+      console.log('[Packing List] Email notification sent');
+    } catch (emailError) {
+      console.error('[Packing List] Email failed:', emailError);
+    }
+
     return new Response(
       JSON.stringify({ success: true, invoiceId: invoice.id, invoiceNumber: invoice.invoice_number }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
