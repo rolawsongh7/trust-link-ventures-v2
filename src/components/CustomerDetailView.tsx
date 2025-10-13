@@ -54,10 +54,24 @@ interface Quote {
   created_at: string;
 }
 
+interface Address {
+  id: string;
+  receiver_name: string;
+  phone_number: string;
+  ghana_digital_address: string;
+  region: string;
+  city: string;
+  street_address: string;
+  area?: string;
+  is_default: boolean;
+  created_at: string;
+}
+
 const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({ customer, onBack }) => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [createLeadOpen, setCreateLeadOpen] = useState(false);
   const [logCommunicationOpen, setLogCommunicationOpen] = useState(false);
@@ -113,9 +127,18 @@ const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({ customer, onBac
         .eq('customer_id', customer.id)
         .order('created_at', { ascending: false });
 
+      // Fetch customer addresses
+      const { data: addressesData } = await supabase
+        .from('customer_addresses')
+        .select('*')
+        .eq('customer_id', customer.id)
+        .order('is_default', { ascending: false })
+        .order('created_at', { ascending: false });
+
       setActivities(activitiesData || []);
       setLeads((leadsData || []) as any);
       setQuotes(quotesData || []);
+      setAddresses(addressesData || []);
     } catch (error) {
       console.error('Error fetching customer data:', error);
       toast({
@@ -346,6 +369,55 @@ const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({ customer, onBac
           </CardContent>
         </Card>
       </div>
+
+      {/* Delivery Addresses */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MapPin className="h-5 w-5" />
+            <span>Delivery Addresses</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {addresses.length > 0 ? (
+            <div className="space-y-4">
+              {addresses.map((address) => (
+                <div
+                  key={address.id}
+                  className="p-4 border rounded-lg bg-muted/30 space-y-2"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold">{address.receiver_name}</p>
+                        {address.is_default && (
+                          <Badge variant="default" className="text-xs">Default</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{address.phone_number}</p>
+                    </div>
+                  </div>
+                  <div className="text-sm space-y-1">
+                    <p className="font-medium">📍 {address.ghana_digital_address}</p>
+                    <p className="text-muted-foreground">{address.street_address}</p>
+                    {address.area && <p className="text-muted-foreground">{address.area}</p>}
+                    <p className="text-muted-foreground">{address.city}, {address.region}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Added {new Date(address.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <MapPin className="h-12 w-12 mx-auto mb-2 opacity-20" />
+              <p className="text-sm">No delivery addresses on file</p>
+              <p className="text-xs mt-1">Customer will be prompted to add address when needed</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Notes */}
       {customer.notes && (
