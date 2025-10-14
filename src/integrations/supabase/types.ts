@@ -1993,7 +1993,7 @@ export type Database = {
           status: string | null
           supplier_quote_uploaded_at: string | null
           terms: string | null
-          title: string
+          title: string | null
           total_amount: number | null
           updated_at: string
           valid_until: string | null
@@ -2019,7 +2019,7 @@ export type Database = {
           status?: string | null
           supplier_quote_uploaded_at?: string | null
           terms?: string | null
-          title: string
+          title?: string | null
           total_amount?: number | null
           updated_at?: string
           valid_until?: string | null
@@ -2045,7 +2045,7 @@ export type Database = {
           status?: string | null
           supplier_quote_uploaded_at?: string | null
           terms?: string | null
-          title?: string
+          title?: string | null
           total_amount?: number | null
           updated_at?: string
           valid_until?: string | null

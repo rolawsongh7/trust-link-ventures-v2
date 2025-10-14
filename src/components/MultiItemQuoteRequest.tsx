@@ -217,12 +217,15 @@ const MultiItemQuoteRequest = () => {
           {/* Quote Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Quote Title</label>
+              <label className="text-sm font-medium mb-2 block">Quote Title (Optional)</label>
               <Input
                 value={quoteDetails.title}
                 onChange={(e) => setQuoteDetails({...quoteDetails, title: e.target.value})}
-                placeholder="e.g., Seafood Supply Request"
+                placeholder="Leave blank for auto-generated title"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                If left blank, a title will be auto-generated based on your items
+              </p>
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Urgency</label>

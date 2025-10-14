@@ -668,10 +668,13 @@ const UnifiedQuoteManagement = () => {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Quote Title</FormLabel>
+                      <FormLabel>Quote Title (Optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter quote title" {...field} />
+                        <Input placeholder="Leave blank for auto-generated title" {...field} />
                       </FormControl>
+                      <p className="text-xs text-muted-foreground">
+                        If left blank, a title will be auto-generated based on items and customer
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
