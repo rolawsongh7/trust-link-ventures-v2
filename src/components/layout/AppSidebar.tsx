@@ -16,6 +16,9 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { navigateToPublicSite } from '@/utils/domainUtils';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { RealtimeIndicator } from '@/components/realtime/RealtimeIndicator';
+import { useBackgroundSync } from '@/hooks/useBackgroundSync';
 
 import {
   Sidebar,
@@ -50,6 +53,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
+  const { isSyncing } = useBackgroundSync();
 
   const isActive = (path: string) => currentPath === path;
   const isExpanded = state === 'expanded';
@@ -144,6 +148,20 @@ export function AppSidebar() {
                     {isExpanded && <span>View Public Site</span>}
                   </button>
                 </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Notifications */}
+              <SidebarMenuItem>
+                <div className={`${isExpanded ? 'px-3 py-2' : 'px-2 py-2 flex justify-center'}`}>
+                  <NotificationCenter />
+                </div>
+              </SidebarMenuItem>
+
+              {/* Live Indicator */}
+              <SidebarMenuItem>
+                <div className={`${isExpanded ? 'px-3 py-2' : 'px-2 py-2 flex justify-center'}`}>
+                  <RealtimeIndicator isSyncing={isSyncing} />
+                </div>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
