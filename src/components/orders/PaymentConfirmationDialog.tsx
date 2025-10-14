@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -226,7 +227,7 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Confirm Payment Received</DialogTitle>
           <DialogDescription>
@@ -234,93 +235,95 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-3">
-            <Label>Payment Method <span className="text-red-500">*</span></Label>
-            <RadioGroup
-              value={paymentMethod}
-              onValueChange={(value) => setPaymentMethod(value as 'bank_transfer' | 'mobile_money')}
-              disabled={loading}
-              className="flex flex-col space-y-2"
-            >
-              <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-accent cursor-pointer">
-                <RadioGroupItem value="bank_transfer" id="bank" />
-                <Label htmlFor="bank" className="flex-1 cursor-pointer">
-                  <div className="font-medium">Bank Transfer</div>
-                  <div className="text-xs text-muted-foreground">Via Trust Link Bank Ghana</div>
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-accent cursor-pointer">
-                <RadioGroupItem value="mobile_money" id="momo" />
-                <Label htmlFor="momo" className="flex-1 cursor-pointer">
-                  <div className="font-medium">Mobile Money</div>
-                  <div className="text-xs text-muted-foreground">MTN, Vodafone, or AirtelTigo</div>
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="payment-reference">
-              Payment Reference Number <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="payment-reference"
-              placeholder="Enter payment confirmation/reference number"
-              value={paymentReference}
-              onChange={(e) => setPaymentReference(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="payment-proof">
-              Payment Proof (Optional)
-              <span className="text-xs text-muted-foreground ml-2">
-                - Upload receipt or screenshot
-              </span>
-            </Label>
-            <div className="flex items-center gap-3">
-              <Input
-                id="payment-proof"
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                onChange={handleFileSelect}
-                disabled={loading || uploadingProof}
-                className="cursor-pointer"
-              />
-              {paymentProofFile && (
-                <Badge variant="secondary" className="whitespace-nowrap">
-                  {paymentProofFile.name.substring(0, 20)}
-                  {paymentProofFile.name.length > 20 ? '...' : ''}
-                </Badge>
-              )}
+        <ScrollArea className="flex-1 pr-4">
+          <div className="space-y-4 py-4">
+            <div className="space-y-3">
+              <Label>Payment Method <span className="text-red-500">*</span></Label>
+              <RadioGroup
+                value={paymentMethod}
+                onValueChange={(value) => setPaymentMethod(value as 'bank_transfer' | 'mobile_money')}
+                disabled={loading}
+                className="flex flex-col space-y-2"
+              >
+                <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-accent cursor-pointer">
+                  <RadioGroupItem value="bank_transfer" id="bank" />
+                  <Label htmlFor="bank" className="flex-1 cursor-pointer">
+                    <div className="font-medium">Bank Transfer</div>
+                    <div className="text-xs text-muted-foreground">Via Trust Link Bank Ghana</div>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-accent cursor-pointer">
+                  <RadioGroupItem value="mobile_money" id="momo" />
+                  <Label htmlFor="momo" className="flex-1 cursor-pointer">
+                    <div className="font-medium">Mobile Money</div>
+                    <div className="text-xs text-muted-foreground">MTN, Vodafone, or AirtelTigo</div>
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Accepted: JPG, PNG, PDF • Max size: 5MB
-            </p>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="delivery-notes">Delivery Instructions (Optional)</Label>
-            <Textarea
-              id="delivery-notes"
-              placeholder="Enter any special delivery instructions..."
-              value={deliveryNotes}
-              onChange={(e) => setDeliveryNotes(e.target.value)}
-              disabled={loading}
-              rows={3}
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="payment-reference">
+                Payment Reference Number <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="payment-reference"
+                placeholder="Enter payment confirmation/reference number"
+                value={paymentReference}
+                onChange={(e) => setPaymentReference(e.target.value)}
+                disabled={loading}
+              />
+            </div>
 
-          {!deliveryAddressId && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-              <p className="text-sm text-yellow-800">
-                ⚠️ No delivery address on file. Customer will be notified to provide delivery details before invoice can be generated.
+            <div className="space-y-2">
+              <Label htmlFor="payment-proof">
+                Payment Proof (Optional)
+                <span className="text-xs text-muted-foreground ml-2">
+                  - Upload receipt or screenshot
+                </span>
+              </Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  id="payment-proof"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={handleFileSelect}
+                  disabled={loading || uploadingProof}
+                  className="cursor-pointer"
+                />
+                {paymentProofFile && (
+                  <Badge variant="secondary" className="whitespace-nowrap">
+                    {paymentProofFile.name.substring(0, 20)}
+                    {paymentProofFile.name.length > 20 ? '...' : ''}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Accepted: JPG, PNG, PDF • Max size: 5MB
               </p>
             </div>
-          )}
-        </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="delivery-notes">Delivery Instructions (Optional)</Label>
+              <Textarea
+                id="delivery-notes"
+                placeholder="Enter any special delivery instructions..."
+                value={deliveryNotes}
+                onChange={(e) => setDeliveryNotes(e.target.value)}
+                disabled={loading}
+                rows={3}
+              />
+            </div>
+
+            {!deliveryAddressId && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ No delivery address on file. Customer will be notified to provide delivery details before invoice can be generated.
+                </p>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
 
         <DialogFooter>
           <Button
