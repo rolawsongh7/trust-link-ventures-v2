@@ -62,8 +62,12 @@ import VirtualAssistant from "./pages/VirtualAssistant";
 const queryClient = new QueryClient();
 
 const App = () => {
-  const isAdmin = useMemo(() => isAdminDomain(), []);
   const isLovablePreview = useMemo(() => window.location.hostname.includes('lovableproject.com'), []);
+  const isAdmin = useMemo(() => {
+    // In preview mode, don't use isAdminDomain for route logic
+    if (isLovablePreview) return false;
+    return isAdminDomain();
+  }, [isLovablePreview]);
 
   // In preview mode, we show ALL routes (both admin and public)
   // In production, we show either admin OR public based on subdomain
