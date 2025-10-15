@@ -9,7 +9,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const FROM_EMAIL = 'Trust Link Ventures <info@trustlinkventureslimited.com>';
+const FROM_EMAIL = 'Trust Link Ventures <info@trustlinkcompany.com>';
 
 interface SendPaymentInstructionsRequest {
   quoteId: string;
@@ -302,7 +302,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     // Send admin notification
-    console.log('[Payment Instructions] Sending admin notification to info@trustlinkventureslimited.com');
+    console.log('[Payment Instructions] Sending admin notification to info@trustlinkcompany.com');
     
     try {
       const adminEmailHtml = `
@@ -407,7 +407,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       const adminEmailResponse = await resend.emails.send({
         from: FROM_EMAIL,
-        to: ['info@trustlinkventureslimited.com'],
+        to: ['info@trustlinkcompany.com'],
         subject: `[ADMIN] Quote Approved: ${quote.quote_number} - ${customerName || quote.customers?.contact_name || 'Customer'}`,
         html: adminEmailHtml,
       });
@@ -416,7 +416,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.error('[Admin Notification] Failed to send:', adminEmailResponse.error);
         await logEmailAttempt({
           email_type: 'payment_instructions_admin',
-          recipient_email: 'info@trustlinkventureslimited.com',
+          recipient_email: 'info@trustlinkcompany.com',
           subject: `[ADMIN] Quote Approved: ${quote.quote_number}`,
           status: 'failed',
           error_message: adminEmailResponse.error.message || JSON.stringify(adminEmailResponse.error),
@@ -428,7 +428,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.log('[Admin Notification] Email sent successfully:', adminEmailResponse.data);
         await logEmailAttempt({
           email_type: 'payment_instructions_admin',
-          recipient_email: 'info@trustlinkventureslimited.com',
+          recipient_email: 'info@trustlinkcompany.com',
           subject: `[ADMIN] Quote Approved: ${quote.quote_number}`,
           status: 'sent',
           resend_id: adminEmailResponse.data?.id,

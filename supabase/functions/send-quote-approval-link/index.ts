@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 // Verified domain for email sending
-const FROM_EMAIL = 'Trust Link Ventures <info@trustlinkventureslimited.com>';
+const FROM_EMAIL = 'Trust Link Ventures <info@trustlinkcompany.com>';
 
 interface SendQuoteApprovalRequest {
   quoteId: string;
@@ -370,11 +370,11 @@ This is an automated message from Trust Link Ventures Limited.
     });
 
     // Send copy to admin email
-    console.log('[Admin Copy] Sending copy to info@trustlinkventureslimited.com...');
+    console.log('[Admin Copy] Sending copy to info@trustlinkcompany.com...');
     try {
       const adminEmailResponse = await resend.emails.send({
         from: FROM_EMAIL,
-        to: ['info@trustlinkventureslimited.com'],
+        to: ['info@trustlinkcompany.com'],
         subject: `[ADMIN COPY] Quote Sent: ${quote.quote_number} - ${companyName || customerEmail}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
@@ -406,7 +406,7 @@ This is an automated message from Trust Link Ventures Limited.
       // Log admin email
       await logEmailAttempt({
         email_type: 'quote_approval_admin_copy',
-        recipient_email: 'info@trustlinkventureslimited.com',
+        recipient_email: 'info@trustlinkcompany.com',
         subject: `[ADMIN COPY] Quote Sent: ${quote.quote_number}`,
         status: 'sent',
         resend_id: adminEmailResponse.data?.id,
@@ -422,7 +422,7 @@ This is an automated message from Trust Link Ventures Limited.
       // Don't fail the main request if admin email fails
       await logEmailAttempt({
         email_type: 'quote_approval_admin_copy',
-        recipient_email: 'info@trustlinkventureslimited.com',
+        recipient_email: 'info@trustlinkcompany.com',
         subject: `[ADMIN COPY] Quote Sent: ${quote.quote_number}`,
         status: 'failed',
         error_message: adminEmailError instanceof Error ? adminEmailError.message : 'Unknown error',
@@ -438,7 +438,7 @@ This is an automated message from Trust Link Ventures Limited.
       success: true, 
       message: "Quote approval email sent successfully to customer and admin",
       emailId: emailResponse.data?.id,
-      adminEmail: 'info@trustlinkventureslimited.com'
+      adminEmail: 'info@trustlinkcompany.com'
     }), {
       status: 200,
       headers: {

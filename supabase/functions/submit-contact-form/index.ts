@@ -69,7 +69,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send admin notification email
     const adminEmailPromise = resend.emails.send({
-      from: "Trust Link Ventures <info@trustlinkventureslimited.com>",
+      from: "Trust Link Ventures <info@trustlinkcompany.com>",
       to: ["trustlventuresghana_a01@yahoo.com"],
       subject: `New Contact Form: ${formData.inquiryType} - ${formData.name}`,
       html: `
@@ -89,7 +89,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send customer confirmation email
     const customerEmailPromise = resend.emails.send({
-      from: "Trust Link Ventures <info@trustlinkventureslimited.com>",
+      from: "Trust Link Ventures <info@trustlinkcompany.com>",
       to: [formData.email],
       subject: "Thank you for contacting Trust Link Ventures",
       html: `

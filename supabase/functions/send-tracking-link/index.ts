@@ -154,7 +154,7 @@ serve(async (req) => {
 
     // Send email using Resend
     const { error: emailError } = await resend.emails.send({
-      from: "Trust Link Ventures <info@trustlinkventureslimited.com>",
+      from: "Trust Link Ventures <info@trustlinkcompany.com>",
       to: [customerEmail],
       subject: `Your Order #${order.order_number} is on the Way! 🚚`,
       html: emailHtml,

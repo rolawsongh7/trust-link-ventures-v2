@@ -274,7 +274,7 @@ function generateInvoiceHTML(data: any): string {
           <p>P.O. Box KA 16498, Airport Residential Area</p>
           <p>Accra, Ghana</p>
           <p>Phone: +233 XXX XXX XXX</p>
-          <p>Email: info@trustlinkventureslimited.com</p>
+          <p>Email: info@trustlinkcompany.com</p>
         </div>
         <div class="invoice-details">
           <h2>${invoiceTypeTitle}</h2>
@@ -359,7 +359,7 @@ function generateInvoiceHTML(data: any): string {
 
       <div class="footer">
         <p>This ${invoiceTypeTitle.toLowerCase()} is computer generated and valid without signature.</p>
-        <p>For questions about this invoice, please contact us at info@trustlinkventureslimited.com</p>
+        <p>For questions about this invoice, please contact us at info@trustlinkcompany.com</p>
         <p style="margin-top: 15px; text-align: center;">&copy; ${new Date().getFullYear()} Trust Link Ventures Limited. All rights reserved.</p>
       </div>
     </body>

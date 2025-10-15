@@ -24,7 +24,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { to, subject, type, data }: EmailRequest = await req.json();
 
     let html = '';
-    let from = "Trust Link Ventures <info@trustlinkventureslimited.com>";
+    let from = "Trust Link Ventures <info@trustlinkcompany.com>";
 
     switch (type) {
       case 'welcome':
@@ -289,7 +289,7 @@ function generateQuoteConfirmationEmail(data: any): string {
           ` : ''}
 
           <p>Our team will contact you within 24-48 hours with a detailed quote and partnership proposal.</p>
-          <p>If you have any urgent questions, please contact us at <a href="mailto:info@trustlinkventureslimited.com">info@trustlinkventureslimited.com</a></p>
+          <p>If you have any urgent questions, please contact us at <a href="mailto:info@trustlinkcompany.com">info@trustlinkcompany.com</a></p>
         </div>
         <div class="footer">
           <p>Thank you for choosing Trust Link Ventures</p>

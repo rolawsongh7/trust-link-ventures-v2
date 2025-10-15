@@ -137,7 +137,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <div class="footer">
             <p>This is an automated notification from Trust Link Ventures Limited</p>
-            <p>info@trustlinkventureslimited.com</p>
+            <p>info@trustlinkcompany.com</p>
           </div>
         </div>
       </body>
@@ -195,7 +195,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <div class="footer">
             <p><strong>Contact Us:</strong></p>
-            <p>Email: info@trustlinkventureslimited.com</p>
+            <p>Email: info@trustlinkcompany.com</p>
             <p>© ${new Date().getFullYear()} Trust Link Ventures Limited. All rights reserved.</p>
           </div>
         </div>
@@ -205,8 +205,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send admin email
     const adminEmail = await resend.emails.send({
-      from: "Trust Link Ventures <orders@trustlinkventureslimited.com>",
-      to: ["info@trustlinkventureslimited.com"],
+      from: "Trust Link Ventures <orders@trustlinkcompany.com>",
+      to: ["info@trustlinkcompany.com"],
       subject: `[PAYMENT CONFIRMED] Order #${orderNumber} - ${customerName}`,
       html: adminEmailHtml,
     });
@@ -215,7 +215,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send customer email
     const customerEmailResponse = await resend.emails.send({
-      from: "Trust Link Ventures <orders@trustlinkventureslimited.com>",
+      from: "Trust Link Ventures <orders@trustlinkcompany.com>",
       to: [customerEmail],
       subject: `Payment Confirmed - Order #${orderNumber}`,
       html: customerEmailHtml,

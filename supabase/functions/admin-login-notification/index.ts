@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            from: 'TrustLink Security <security@trustlinkventureslimited.com>',
+            from: 'TrustLink Security <security@trustlinkcompany.com>',
             to: email,
             subject: '🔐 Admin Portal Login Detected',
             html: emailHtml
