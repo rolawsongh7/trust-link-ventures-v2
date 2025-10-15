@@ -7,13 +7,20 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Shield, AlertCircle } from 'lucide-react';
+import { Loader2, Shield, AlertCircle, TrendingUp, Users, Globe, Lock, Zap, CheckCircle } from 'lucide-react';
 import { checkAuthRateLimit, recordAuthAttempt, formatRateLimitMessage } from '@/lib/authRateLimiter';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { RECAPTCHA_SITE_KEY } from '@/config/recaptcha';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { isAdminDomain, redirectToAdminDomain } from '@/utils/domainUtils';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const AdminAuth = () => {
   const navigate = useNavigate();
@@ -210,99 +217,198 @@ const AdminAuth = () => {
     }
   };
 
+  const features = [
+    {
+      icon: TrendingUp,
+      title: "Real-Time Analytics",
+      description: "Monitor your business performance with comprehensive dashboards and insights",
+      stats: "98% Accuracy"
+    },
+    {
+      icon: Users,
+      title: "Customer Management",
+      description: "Streamline customer interactions and build lasting relationships",
+      stats: "10K+ Users"
+    },
+    {
+      icon: Globe,
+      title: "Global Operations",
+      description: "Manage international operations seamlessly across multiple regions",
+      stats: "50+ Countries"
+    },
+    {
+      icon: Lock,
+      title: "Enterprise Security",
+      description: "Bank-level encryption and multi-factor authentication protection",
+      stats: "ISO Certified"
+    },
+    {
+      icon: Zap,
+      title: "Lightning Fast",
+      description: "Optimized performance delivering results in milliseconds",
+      stats: "99.9% Uptime"
+    }
+  ];
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-            <Shield className="w-8 h-8 text-primary" />
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      {/* Left Side - Hero Section with Carousel */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary/90 to-primary/80 p-12 flex-col justify-between relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+        
+        {/* Logo and Branding */}
+        <div className="relative z-10">
+          <div className="flex items-center space-x-3 mb-2">
+            <Shield className="w-10 h-10 text-white" />
+            <h1 className="text-3xl font-bold text-white">Trust Link Ventures</h1>
           </div>
-          <CardTitle className="text-2xl font-bold">Admin Portal</CardTitle>
-          <CardDescription>
-            Secure access for authorized administrators only
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {rateLimitError && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{rateLimitError}</AlertDescription>
-            </Alert>
-          )}
+          <p className="text-white/90 text-lg">Admin Portal</p>
+        </div>
 
-          {failedAttempts > 0 && failedAttempts < 5 && (
-            <Alert className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {5 - failedAttempts} attempt(s) remaining before account lockout.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="admin@trustlinkventures.com"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-                disabled={loading}
-                autoComplete="email"
-              />
+        {/* Features Carousel */}
+        <div className="relative z-10 flex-1 flex items-center">
+          <Carousel className="w-full max-w-lg mx-auto" opts={{ loop: true, align: "start" }}>
+            <CarouselContent>
+              {features.map((feature, index) => (
+                <CarouselItem key={index}>
+                  <div className="p-8">
+                    <Card className="bg-white/10 backdrop-blur-lg border-white/20 text-white">
+                      <CardContent className="p-8 space-y-4">
+                        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                          <feature.icon className="w-8 h-8 text-white" />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="text-2xl font-bold">{feature.title}</h3>
+                          <p className="text-white/80 text-base leading-relaxed">
+                            {feature.description}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2 pt-4">
+                          <CheckCircle className="w-5 h-5 text-green-300" />
+                          <span className="text-lg font-semibold text-green-300">{feature.stats}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <div className="flex justify-center mt-4 space-x-2">
+              <CarouselPrevious className="relative left-0 translate-x-0 bg-white/20 hover:bg-white/30 border-white/30 text-white" />
+              <CarouselNext className="relative right-0 translate-x-0 bg-white/20 hover:bg-white/30 border-white/30 text-white" />
             </div>
+          </Carousel>
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleInputChange}
-                required
-                disabled={loading}
-                autoComplete="current-password"
-              />
+        {/* Security Badges */}
+        <div className="relative z-10 flex items-center justify-center space-x-6 text-white/80">
+          <div className="flex items-center space-x-2">
+            <Lock className="w-5 h-5" />
+            <span className="text-sm">SSL Secured</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Shield className="w-5 h-5" />
+            <span className="text-sm">SOC 2 Compliant</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Login Form */}
+      <div className="flex-1 flex items-center justify-center p-4 lg:p-12 bg-background">
+        <Card className="w-full max-w-md shadow-xl border-2">
+          <CardHeader className="space-y-3 text-center">
+            <div className="lg:hidden mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+              <Shield className="w-8 h-8 text-primary" />
             </div>
-
-            {showCaptcha && (
-              <div className="flex justify-center">
-                <ReCAPTCHA
-                  ref={recaptchaRef}
-                  sitekey={RECAPTCHA_SITE_KEY}
-                  onChange={(token) => setRecaptchaToken(token)}
-                  onExpired={() => setRecaptchaToken(null)}
-                />
-              </div>
+            <CardTitle className="text-2xl font-bold">Admin Portal</CardTitle>
+            <CardDescription>
+              Secure access for authorized administrators only
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {rateLimitError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{rateLimitError}</AlertDescription>
+              </Alert>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading || (showCaptcha && !recaptchaToken)}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing In...
-                </>
-              ) : (
-                <>
-                  <Shield className="mr-2 h-4 w-4" />
-                  Sign In to Admin
-                </>
-              )}
-            </Button>
-          </form>
+            {failedAttempts > 0 && failedAttempts < 5 && (
+              <Alert className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {5 - failedAttempts} attempt(s) remaining before account lockout.
+                </AlertDescription>
+              </Alert>
+            )}
 
-          <div className="mt-6 space-y-2 text-center text-sm text-muted-foreground">
-            <p>🔒 Secured with multi-layer authentication</p>
-            <p>🛡️ All login attempts are monitored and logged</p>
-            <p className="text-xs">Authorized personnel only</p>
-          </div>
-        </CardContent>
-      </Card>
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="admin@trustlinkcompany.com"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  disabled={loading}
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                  disabled={loading}
+                  autoComplete="current-password"
+                />
+              </div>
+
+              {showCaptcha && (
+                <div className="flex justify-center">
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={RECAPTCHA_SITE_KEY}
+                    onChange={(token) => setRecaptchaToken(token)}
+                    onExpired={() => setRecaptchaToken(null)}
+                  />
+                </div>
+              )}
+
+              <Button type="submit" className="w-full" disabled={loading || (showCaptcha && !recaptchaToken)}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing In...
+                  </>
+                ) : (
+                  <>
+                    <Shield className="mr-2 h-4 w-4" />
+                    Sign In to Admin
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 space-y-2 text-center text-sm text-muted-foreground">
+              <p>🔒 Secured with multi-layer authentication</p>
+              <p>🛡️ All login attempts are monitored and logged</p>
+              <p className="text-xs">Authorized personnel only</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
