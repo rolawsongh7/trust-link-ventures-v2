@@ -399,7 +399,7 @@ const handler = async (req: Request): Promise<Response> => {
           <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
             <p style="margin: 0; color: #6b7280; font-size: 12px;">
               Trust Link Ventures - Internal Admin Notification<br>
-              This email was sent to info@trustlinkventureslimited.com
+              This email was sent to info@trustlinkcompany.com
             </p>
           </div>
         </div>

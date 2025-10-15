@@ -174,7 +174,7 @@ export const CustomerCart: React.FC = () => {
       try {
         await supabase.functions.invoke('send-email', {
           body: {
-            to: 'info@trustlinkventureslimited.com',
+            to: 'info@trustlinkcompany.com',
             subject: `New Quote Request from ${profile.company_name} - ${quoteRequest.quote_number}`,
             type: 'new_quote_request_admin',
             data: {

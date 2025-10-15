@@ -130,7 +130,7 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               <div class="footer">
                 <p>TrustLink Ventures Limited<br>
-                Email: info@trustlinkventureslimited.com</p>
+                Email: info@trustlinkcompany.com</p>
               </div>
             </div>
           </body>

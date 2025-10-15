@@ -333,7 +333,7 @@ This is an automated message from Trust Link Ventures Limited.
       text: textContent,
       headers: {
         'X-Entity-Ref-ID': quote.quote_number,
-        'List-Unsubscribe': '<mailto:unsubscribe@trustlinkventureslimited.com>',
+        'List-Unsubscribe': '<mailto:unsubscribe@trustlinkcompany.com>',
       },
     });
 
