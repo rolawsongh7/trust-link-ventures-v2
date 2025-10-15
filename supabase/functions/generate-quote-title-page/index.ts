@@ -109,13 +109,13 @@ serve(async (req) => {
       .from('quotes')
       .getPublicUrl(uploadData.path);
     
-    // Update the quote record with the new file URL and set status to 'pending_review'
+    // Update the quote record with the new file URL and set status to 'sent'
     console.log('Updating quote record with final PDF URL:', publicUrl)
     const { error: updateError } = await supabase
       .from('quotes')
       .update({ 
         final_file_url: publicUrl,
-        status: 'pending_review'
+        status: 'sent'
       })
       .eq('id', quoteId)
 
