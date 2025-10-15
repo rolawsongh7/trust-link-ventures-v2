@@ -551,22 +551,14 @@ const UnifiedQuoteManagement = () => {
       width: '250px',
       render: (value: any, row) => {
         if (!value) {
-          // No PDF exists - show action based on status
-          if (row.status === 'draft' || row.status === 'pending_review') {
+          // No PDF exists - show Generate PDF button for quotes with prices
+          if (row.total_amount && row.total_amount > 0) {
             return (
               <Button
                 variant="default"
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!row.total_amount || row.total_amount === 0) {
-                    toast({
-                      title: 'Please edit prices first',
-                      description: 'Set unit prices before generating PDF',
-                      variant: 'destructive'
-                    });
-                    return;
-                  }
                   setSelectedQuoteForGenerate(row);
                   setIsGenerateDialogOpen(true);
                 }}
@@ -577,8 +569,8 @@ const UnifiedQuoteManagement = () => {
             );
           }
           return (
-            <Badge variant="destructive" className="text-xs">
-              No PDF Generated
+            <Badge variant="secondary" className="text-xs">
+              Add Prices First
             </Badge>
           );
         }
