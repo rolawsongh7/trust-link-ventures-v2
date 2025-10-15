@@ -55,3 +55,6 @@ verify_jwt = false
 
 [functions.request-delivery-address]
 verify_jwt = false
+
+[functions.send-quote-email]
+verify_jwt = false

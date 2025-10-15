@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Eye, Edit, CheckCircle, XCircle, Clock, FileText, FileImage, Upload, Download, ThumbsUp, FileCheck, Mail, Trash2 } from 'lucide-react';
+import { Search, Plus, Eye, Edit, CheckCircle, XCircle, Clock, FileText, FileImage, Upload, Download, ThumbsUp, FileCheck, Mail, Trash2, HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import QuoteUploadDialog from './QuoteUploadDialog';
@@ -282,11 +283,11 @@ const UnifiedQuoteManagement = () => {
       }
 
       toast({
-        title: "Sending approval link...",
+        title: "Sending quote email...",
         description: "Please wait while we send the quote to customer and admin.",
       });
 
-      const { data, error } = await supabase.functions.invoke('send-quote-approval-link', {
+      const { data, error } = await supabase.functions.invoke('send-quote-email', {
         body: {
           quoteId: quote.id,
           customerEmail: customerEmail,
@@ -300,18 +301,9 @@ const UnifiedQuoteManagement = () => {
         throw new Error(error.message || 'Failed to send email');
       }
 
-      // Update sent timestamp and status
-      await supabase
-        .from('quotes')
-        .update({ 
-          sent_at: new Date().toISOString(),
-          status: 'sent'
-        })
-        .eq('id', quote.id);
-
       toast({
         title: "Success",
-        description: `Quote sent to ${customerEmail} and copy sent to info@trustlinkventureslimited.com`,
+        description: `Quote sent to ${customerEmail} with PDF attachment. Copy sent to admin.`,
       });
       
       fetchQuotes();
@@ -636,7 +628,30 @@ const UnifiedQuoteManagement = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quote Management</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight">Quote Management</h1>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="text-muted-foreground hover:text-foreground transition-colors">
+                    <HelpCircle className="h-5 w-5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-sm">
+                  <div className="space-y-2">
+                    <p className="font-semibold">Quote Workflow:</p>
+                    <ol className="list-decimal list-inside space-y-1 text-sm">
+                      <li>Create quote and add line items (saves as <strong>draft</strong>)</li>
+                      <li>Generate PDF to create final quote document</li>
+                      <li>Send email to customer (marks as <strong>sent</strong>)</li>
+                      <li>Customer accepts/rejects quote</li>
+                      <li>Accepted quotes auto-convert to orders</li>
+                    </ol>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <p className="text-muted-foreground">
             Unified view of all quotes, RFQs, and order conversions
           </p>
