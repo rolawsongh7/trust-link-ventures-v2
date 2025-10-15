@@ -300,7 +300,7 @@ function generateSuccessPage(message: string): string {
         <p>${message}</p>
         <p>Thank you for submitting your quote. We will review it and get back to you soon.</p>
         <p><strong>Trust Link Ventures Limited</strong><br>
-        Email: info@trustlinkventures.com</p>
+        Email: info@trustlinkcompany.com</p>
       </div>
     </body>
     </html>
@@ -328,7 +328,7 @@ function generateErrorPage(message: string): string {
         <div class="error-icon">✗</div>
         <h1>Error</h1>
         <p>${message}</p>
-        <p>If you believe this is an error, please contact us at info@trustlinkventures.com</p>
+        <p>If you believe this is an error, please contact us at info@trustlinkcompany.com</p>
       </div>
     </body>
     </html>

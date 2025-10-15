@@ -229,7 +229,7 @@ If you have any questions, please contact us.
 
 Best regards,
 Trust Link Ventures Team
-Email: info@trustlinkventures.com
+Email: info@trustlinkcompany.com
 Phone: +233 123 456 789
 
 ---
@@ -300,7 +300,7 @@ This is an automated message from Trust Link Ventures Limited.
                       <p style="margin: 20px 0 0 0; color: #333333;">
                         Best regards,<br>
                         <strong>Trust Link Ventures Team</strong><br>
-                        Email: info@trustlinkventures.com<br>
+                        Email: info@trustlinkcompany.com<br>
                         Phone: +233 123 456 789
                       </p>
                     </td>

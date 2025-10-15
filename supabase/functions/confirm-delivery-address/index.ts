@@ -185,7 +185,7 @@ serve(async (req) => {
               
               <p style="font-size: 14px; color: #6b7280; margin-top: 30px;">
                 If you have any questions or need to update your delivery address, please contact us at 
-                <a href="mailto:orders@trustlinkventures.com" style="color: #667eea;">orders@trustlinkventures.com</a>
+                <a href="mailto:orders@trustlinkcompany.com" style="color: #667eea;">orders@trustlinkcompany.com</a>
               </p>
               
               <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">

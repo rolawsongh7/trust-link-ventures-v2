@@ -152,7 +152,7 @@ serve(async (req) => {
                 
                 <p style="font-size: 14px; color: #6b7280;">
                   If you have any questions, please don't hesitate to contact us at 
-                  <a href="mailto:orders@trustlinkventures.com" style="color: #667eea;">orders@trustlinkventures.com</a>
+                  <a href="mailto:orders@trustlinkcompany.com" style="color: #667eea;">orders@trustlinkcompany.com</a>
                 </p>
                 
                 <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">

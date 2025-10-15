@@ -131,7 +131,7 @@ serve(async (req) => {
 
             <p style="font-size: 16px; margin-top: 30px;">
               If you have any questions, please don't hesitate to contact us at 
-              <a href="mailto:support@trustlinkventures.com" style="color: #667eea;">support@trustlinkventures.com</a>
+              <a href="mailto:support@trustlinkcompany.com" style="color: #667eea;">support@trustlinkcompany.com</a>
             </p>
 
             <p style="font-size: 16px; margin-top: 20px;">

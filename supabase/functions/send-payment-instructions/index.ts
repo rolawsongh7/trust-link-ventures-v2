@@ -247,14 +247,14 @@ const handler = async (req: Request): Promise<Response> => {
           
           <p style="margin-bottom: 0;">Best regards,<br>
           <strong>Trust Link Ventures Team</strong><br>
-          Email: info@trustlinkventures.com<br>
+          Email: info@trustlinkcompany.com<br>
           Phone: +233 123 456 789</p>
         </div>
         
         <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
           <p style="margin: 0; color: #6b7280; font-size: 12px;">
             This is an automated message. Please do not reply to this email.<br>
-            For support, contact info@trustlinkventures.com
+            For support, contact info@trustlinkcompany.com
           </p>
         </div>
       </div>

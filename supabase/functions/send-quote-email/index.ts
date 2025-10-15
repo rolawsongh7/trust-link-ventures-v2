@@ -85,7 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email to customer
     const customerEmailResponse = await resend.emails.send({
-      from: "TrustLink Ventures <quotes@trustlinkventureslimited.com>",
+      from: "TrustLink Ventures <quotes@trustlinkcompany.com>",
       to: [customerEmail],
       subject: `Quote ${quote.quote_number} - ${finalCompanyName}`,
       html: `
@@ -153,8 +153,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send copy to admin
     const adminEmailResponse = await resend.emails.send({
-      from: "TrustLink Ventures <quotes@trustlinkventureslimited.com>",
-      to: ["info@trustlinkventureslimited.com"],
+      from: "TrustLink Ventures <quotes@trustlinkcompany.com>",
+      to: ["info@trustlinkcompany.com"],
       subject: `[COPY] Quote ${quote.quote_number} sent to ${finalCompanyName}`,
       html: `
         <!DOCTYPE html>
