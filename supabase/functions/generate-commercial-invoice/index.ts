@@ -131,8 +131,16 @@ serve(async (req) => {
       console.log('[Commercial Invoice] Using existing invoice:', invoice.invoice_number);
     }
 
-    // Create invoice items only if we just created the invoice
-    if (!existing && order.order_items && order.order_items.length > 0) {
+    // Check if invoice items already exist
+    const { data: existingItems } = await supabase
+      .from('invoice_items')
+      .select('id')
+      .eq('invoice_id', invoice.id)
+      .limit(1);
+
+    // Create invoice items only if they don't exist
+    if (!existingItems?.length && order.order_items && order.order_items.length > 0) {
+      console.log('[Commercial Invoice] Creating invoice items...');
       const invoiceItems = order.order_items.map((item: any) => ({
         invoice_id: invoice.id,
         product_name: item.product_name,
@@ -148,7 +156,11 @@ serve(async (req) => {
 
       if (itemsError) {
         console.error('[Commercial Invoice] Error creating items:', itemsError);
+        throw new Error(`Failed to create invoice items: ${itemsError.message}`);
       }
+      console.log('[Commercial Invoice] Invoice items created');
+    } else {
+      console.log('[Commercial Invoice] Invoice items already exist');
     }
 
     // Generate PDF using the edge function
