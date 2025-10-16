@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, FileText, CreditCard, Calendar } from 'lucide-react';
@@ -126,93 +127,14 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Payment Details */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="text-sm text-muted-foreground flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                Payment Method
-              </div>
-              <Badge variant="secondary">
-                {order.payment_method === 'mobile_money' ? 'Mobile Money' : 'Bank Transfer'}
-              </Badge>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">Reference Number</div>
-              <div className="font-mono text-sm font-semibold">{order.payment_reference}</div>
-            </div>
-
-            {order.payment_proof_uploaded_at && (
-              <div className="space-y-2 col-span-2">
-                <div className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Uploaded At
-                </div>
-                <div className="text-sm">
-                  {new Date(order.payment_proof_uploaded_at).toLocaleString()}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Payment Proof */}
-          {order.payment_proof_url && (
-            <div className="space-y-3">
-              <div className="text-sm font-medium">Payment Receipt</div>
-              <div className="border rounded-lg p-4">
-                {order.payment_proof_url.endsWith('.pdf') ? (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-10 w-10 text-red-500" />
-                      <div>
-                        <div className="font-medium">Payment Receipt (PDF)</div>
-                        <div className="text-sm text-muted-foreground">Click to view full document</div>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => window.open(order.payment_proof_url, '_blank')}
-                    >
-                      View PDF
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <img
-                      src={order.payment_proof_url}
-                      alt="Payment Proof"
-                      className="w-full rounded-lg border"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(order.payment_proof_url, '_blank')}
-                      className="w-full"
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      Open in New Tab
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Warning */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="text-sm text-blue-900">
-              <strong>Before verifying:</strong>
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Confirm the payment reference matches your records</li>
-                <li>Verify the receipt shows correct payment amount</li>
-                <li>Check that the payment method matches</li>
-                <li>Ensure the transaction is completed</li>
-              </ul>
+        <ScrollArea className="max-h-[60vh] pr-4">
+          <div className="space-y-6 py-4">
+            {/* Payment Details */}
+            <div className="grid grid-cols-2 gap-4">
+...
             </div>
           </div>
-        </div>
+        </ScrollArea>
 
         <DialogFooter>
           <Button
