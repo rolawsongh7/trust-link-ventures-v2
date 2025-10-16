@@ -188,11 +188,18 @@ serve(async (req) => {
 
     console.log('[PDF Generation] Step: Upload successful');
     
-    const { data: { publicUrl } } = supabase.storage
+    // Create signed URL (7 days expiry) for secure access to private bucket
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from('invoices')
-      .getPublicUrl(filePath);
+      .createSignedUrl(filePath, 604800); // 7 days in seconds
 
-    console.log('[PDF Generation] Step: Public URL generated:', publicUrl);
+    if (signedUrlError || !signedUrlData) {
+      console.error('[PDF Generation] Signed URL error:', signedUrlError);
+      throw new Error(`Failed to create signed URL: ${signedUrlError?.message}`);
+    }
+
+    const publicUrl = signedUrlData.signedUrl;
+    console.log('[PDF Generation] Step: Signed URL generated (expires in 7 days)');
 
     return new Response(
       JSON.stringify({ 
