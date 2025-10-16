@@ -14,7 +14,10 @@ import {
   Receipt,
   FileCheck,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  ArrowUpDown,
+  Calendar,
+  Filter
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -25,6 +28,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Invoice {
   id: string;
@@ -35,6 +46,7 @@ interface Invoice {
   status: string;
   file_url: string | null;
   created_at: string;
+  updated_at: string;
   order_id: string | null;
   quote_id: string | null;
   customer_id: string | null;
@@ -50,12 +62,20 @@ interface Invoice {
   } | null;
 }
 
+type SortField = 'created_at' | 'invoice_number' | 'total_amount' | 'status';
+type SortDirection = 'asc' | 'desc';
+
 export default function InvoiceManagement() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("all");
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<SortField>('created_at');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   const { data: invoices, isLoading, refetch } = useQuery({
     queryKey: ['admin-invoices'],
@@ -75,17 +95,87 @@ export default function InvoiceManagement() {
     },
   });
 
-  const filteredInvoices = invoices?.filter(invoice => {
-    const matchesSearch = 
-      invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.customers?.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.orders?.order_number?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesType = typeFilter === "all" || invoice.invoice_type === typeFilter;
-    const matchesStatus = statusFilter === "all" || invoice.status === statusFilter;
-    
-    return matchesSearch && matchesType && matchesStatus;
-  });
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getFilteredInvoices = () => {
+    let filtered = invoices?.filter(invoice => {
+      const matchesSearch = 
+        invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.customers?.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.orders?.order_number?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesType = typeFilter === "all" || invoice.invoice_type === typeFilter;
+      const matchesStatus = statusFilter === "all" || invoice.status === statusFilter;
+      
+      let matchesDate = true;
+      if (dateFilter !== "all") {
+        const invoiceDate = new Date(invoice.created_at);
+        const now = new Date();
+        
+        if (dateFilter === "today") {
+          matchesDate = invoiceDate.toDateString() === now.toDateString();
+        } else if (dateFilter === "week") {
+          const weekAgo = new Date(now.setDate(now.getDate() - 7));
+          matchesDate = invoiceDate >= weekAgo;
+        } else if (dateFilter === "month") {
+          const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+          matchesDate = invoiceDate >= monthAgo;
+        } else if (dateFilter === "failed") {
+          matchesDate = !invoice.file_url;
+        }
+      }
+      
+      return matchesSearch && matchesType && matchesStatus && matchesDate;
+    }) || [];
+
+    // Sort
+    filtered.sort((a, b) => {
+      let aValue: any, bValue: any;
+      
+      switch (sortField) {
+        case 'created_at':
+          aValue = new Date(a.created_at).getTime();
+          bValue = new Date(b.created_at).getTime();
+          break;
+        case 'invoice_number':
+          aValue = a.invoice_number;
+          bValue = b.invoice_number;
+          break;
+        case 'total_amount':
+          aValue = a.total_amount;
+          bValue = b.total_amount;
+          break;
+        case 'status':
+          aValue = a.status;
+          bValue = b.status;
+          break;
+        default:
+          return 0;
+      }
+
+      if (sortDirection === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    return filtered;
+  };
+
+  const filteredInvoices = getFilteredInvoices();
+  const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
+  const paginatedInvoices = filteredInvoices.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleDownload = async (invoice: Invoice) => {
     if (!invoice.file_url) {
@@ -143,31 +233,17 @@ export default function InvoiceManagement() {
     }
   };
 
-  const getInvoiceTypeIcon = (type: string) => {
-    switch (type) {
-      case 'packing_list': return <Package className="h-4 w-4" />;
-      case 'commercial': return <Receipt className="h-4 w-4" />;
-      case 'proforma': return <FileCheck className="h-4 w-4" />;
-      default: return <FileText className="h-4 w-4" />;
+  const getInvoiceTypeDisplay = (type: string) => {
+    return type.replace('_', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'sent': return 'default';
+      case 'paid': return 'secondary';
+      case 'draft': return 'outline';
+      default: return 'outline';
     }
-  };
-
-  const getInvoiceTypeBadge = (type: string) => {
-    const variants: Record<string, any> = {
-      packing_list: "secondary",
-      commercial: "default",
-      proforma: "outline",
-    };
-    return variants[type] || "outline";
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, any> = {
-      draft: "outline",
-      sent: "secondary",
-      paid: "default",
-    };
-    return variants[status] || "outline";
   };
 
   if (isLoading) {
@@ -186,10 +262,13 @@ export default function InvoiceManagement() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filters & Quick Views
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -223,109 +302,213 @@ export default function InvoiceManagement() {
                 <SelectItem value="paid">Paid</SelectItem>
               </SelectContent>
             </Select>
+
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Date Filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+                <SelectItem value="failed">Failed PDFs</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
-        {filteredInvoices?.map((invoice) => (
-          <Card key={invoice.id}>
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 space-y-3">
-                  <div className="flex items-center gap-3">
-                    {getInvoiceTypeIcon(invoice.invoice_type)}
-                    <h3 className="font-semibold text-lg">{invoice.invoice_number}</h3>
-                    <Badge variant={getInvoiceTypeBadge(invoice.invoice_type)}>
-                      {invoice.invoice_type.replace('_', ' ')}
-                    </Badge>
-                    <Badge variant={getStatusBadge(invoice.status)}>
-                      {invoice.status}
-                    </Badge>
-                    {!invoice.file_url && (
-                      <Badge variant="destructive" className="gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        No PDF
-                      </Badge>
-                    )}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('created_at')}
+                >
+                  <div className="flex items-center gap-2">
+                    Date
+                    <ArrowUpDown className="h-4 w-4" />
                   </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Customer:</span>
-                      <p className="font-medium">{invoice.customers?.company_name || 'N/A'}</p>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('invoice_number')}
+                >
+                  <div className="flex items-center gap-2">
+                    Invoice #
+                    <ArrowUpDown className="h-4 w-4" />
+                  </div>
+                </TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 text-right"
+                  onClick={() => handleSort('total_amount')}
+                >
+                  <div className="flex items-center justify-end gap-2">
+                    Amount
+                    <ArrowUpDown className="h-4 w-4" />
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('status')}
+                >
+                  <div className="flex items-center gap-2">
+                    Status
+                    <ArrowUpDown className="h-4 w-4" />
+                  </div>
+                </TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedInvoices.map((invoice) => (
+                <TableRow key={invoice.id}>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <span className="font-medium">
+                        {format(new Date(invoice.created_at), 'MMM dd, yyyy')}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(invoice.created_at), 'HH:mm')}
+                      </span>
                     </div>
-                    
-                    <div>
-                      <span className="text-muted-foreground">Amount:</span>
-                      <p className="font-medium">
-                        {invoice.currency} {invoice.total_amount.toFixed(2)}
-                      </p>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{invoice.invoice_number}</span>
+                      {!invoice.file_url && (
+                        <Badge variant="destructive" className="text-xs">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          No PDF
+                        </Badge>
+                      )}
                     </div>
-                    
                     {invoice.orders && (
-                      <div>
-                        <span className="text-muted-foreground">Order:</span>
-                        <p className="font-medium">{invoice.orders.order_number}</p>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Order: {invoice.orders.order_number}
                       </div>
                     )}
-                    
-                    <div>
-                      <span className="text-muted-foreground">Created:</span>
-                      <p className="font-medium">
-                        {format(new Date(invoice.created_at), 'MMM dd, yyyy')}
-                      </p>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="font-normal">
+                      {getInvoiceTypeDisplay(invoice.invoice_type)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <span className="font-medium">
+                        {invoice.customers?.company_name || 'N/A'}
+                      </span>
+                      {invoice.customers?.email && (
+                        <span className="text-xs text-muted-foreground">
+                          {invoice.customers.email}
+                        </span>
+                      )}
                     </div>
-                  </div>
-                </div>
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {invoice.currency} {invoice.total_amount.toFixed(2)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusColor(invoice.status)}>
+                      {invoice.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      {invoice.file_url && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDownload(invoice)}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      )}
+                      
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleRegenerate(invoice)}
+                        disabled={regeneratingId === invoice.id}
+                      >
+                        <RefreshCw className={`h-4 w-4 ${regeneratingId === invoice.id ? 'animate-spin' : ''}`} />
+                      </Button>
 
-                <div className="flex gap-2">
-                  {invoice.file_url ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDownload(invoice)}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                  ) : null}
-                  
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleRegenerate(invoice)}
-                    disabled={regeneratingId === invoice.id}
-                  >
-                    <RefreshCw className={`h-4 w-4 mr-2 ${regeneratingId === invoice.id ? 'animate-spin' : ''}`} />
-                    Regenerate
-                  </Button>
+                      {invoice.order_id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => window.location.href = `/admin/orders`}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
 
-                  {invoice.order_id && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => window.location.href = `/admin/orders`}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      View Order
-                    </Button>
-                  )}
-                </div>
+              {paginatedInvoices.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-64 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <FileText className="h-12 w-12 text-muted-foreground" />
+                      <p className="text-muted-foreground">No invoices found</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredInvoices.length)} of {filteredInvoices.length} invoices
               </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {filteredInvoices?.length === 0 && (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No invoices found</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

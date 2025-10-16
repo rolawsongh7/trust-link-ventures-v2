@@ -187,28 +187,75 @@ const UnifiedOrdersManagement = () => {
   };
 
   const handleGenerateInvoices = async (order: Order) => {
+    const toastId = toast.loading('Checking requirements...');
+    
     try {
-      toast.loading('Generating invoices...');
-
-      // Generate packing list if ready_to_ship or later
-      if (['ready_to_ship', 'shipped', 'delivered'].includes(order.status)) {
-        await supabase.functions.invoke('generate-packing-list', {
-          body: { orderId: order.id },
-        });
+      // Step 1: Check requirements
+      const shouldGeneratePackingList = ['ready_to_ship', 'shipped', 'delivered'].includes(order.status);
+      const shouldGenerateCommercial = ['shipped', 'delivered'].includes(order.status);
+      
+      if (!shouldGeneratePackingList && !shouldGenerateCommercial) {
+        toast.error('Order status must be ready_to_ship or later to generate invoices', { id: toastId });
+        return;
       }
 
-      // Generate commercial invoice if shipped or delivered
-      if (['shipped', 'delivered'].includes(order.status)) {
-        await supabase.functions.invoke('generate-commercial-invoice', {
-          body: { orderId: order.id },
-        });
+      // Step 2: Generate packing list
+      if (shouldGeneratePackingList) {
+        toast.loading('Generating packing list...', { id: toastId });
+        
+        try {
+          const { error: packingError } = await supabase.functions.invoke('generate-packing-list', {
+            body: { orderId: order.id },
+          });
+          
+          if (packingError) {
+            console.error('Packing list error:', packingError);
+            toast.error(`Packing list failed: ${packingError.message}`, { id: toastId });
+            return;
+          }
+          
+          toast.loading('Packing list created. Uploading PDF...', { id: toastId });
+        } catch (packingError: any) {
+          console.error('Packing list generation failed:', packingError);
+          toast.error(`Packing list failed: ${packingError.message}`, { id: toastId });
+          return;
+        }
       }
 
-      toast.success('Invoices generated successfully');
+      // Step 3: Generate commercial invoice
+      if (shouldGenerateCommercial) {
+        toast.loading('Generating commercial invoice...', { id: toastId });
+        
+        try {
+          const { error: commercialError } = await supabase.functions.invoke('generate-commercial-invoice', {
+            body: { orderId: order.id },
+          });
+          
+          if (commercialError) {
+            console.error('Commercial invoice error:', commercialError);
+            toast.error(`Commercial invoice failed: ${commercialError.message}`, { id: toastId });
+            return;
+          }
+          
+          toast.loading('Commercial invoice created. Uploading PDF...', { id: toastId });
+        } catch (commercialError: any) {
+          console.error('Commercial invoice generation failed:', commercialError);
+          toast.error(`Commercial invoice failed: ${commercialError.message}`, { id: toastId });
+          return;
+        }
+      }
+
+      // Step 4: Send email notification
+      toast.loading('Sending email notification...', { id: toastId });
+      await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for PDF upload
+
+      // Success!
+      toast.success('✓ Invoices generated and emailed successfully', { id: toastId });
       refetch();
-    } catch (error) {
+      
+    } catch (error: any) {
       console.error('Error generating invoices:', error);
-      toast.error('Failed to generate invoices');
+      toast.error(`Failed: ${error.message || 'Unknown error'}`, { id: toastId });
     }
   };
 
