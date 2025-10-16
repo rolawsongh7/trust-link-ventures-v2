@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const FUNCTION_VERSION = '3.1.0'; // Updated to force redeployment with correct API key
+const FUNCTION_VERSION = '3.2.0'; // Force complete redeployment with API key debugging
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,7 +37,17 @@ serve(async (req) => {
       );
     }
     
-    console.log('[PDF Generation] API key validated, length:', pdfshiftApiKey.length);
+    // Log key details for debugging (safe to log prefix)
+    const keyPrefix = pdfshiftApiKey.substring(0, 7);
+    console.log('[PDF Generation] API key validated, length:', pdfshiftApiKey.length, 'prefix:', keyPrefix);
+    
+    // Additional validation - correct key should be 48 chars starting with sk_aaa8
+    if (pdfshiftApiKey.length !== 48) {
+      console.warn('[PDF Generation] WARNING: API key length is', pdfshiftApiKey.length, 'but expected 48 characters');
+    }
+    if (!keyPrefix.startsWith('sk_aaa8')) {
+      console.warn('[PDF Generation] WARNING: API key prefix is', keyPrefix, 'but expected to start with sk_aaa8');
+    }
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
