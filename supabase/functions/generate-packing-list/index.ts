@@ -26,17 +26,30 @@ serve(async (req) => {
     // Check if packing list already exists
     const { data: existing } = await supabase
       .from('invoices')
-      .select('id, invoice_number')
+      .select('id, invoice_number, file_url')
       .eq('order_id', orderId)
       .eq('invoice_type', 'packing_list')
       .maybeSingle();
 
     if (existing) {
-      console.log('[Packing List] Already exists:', existing.invoice_number);
-      return new Response(
-        JSON.stringify({ success: true, invoiceId: existing.id, message: 'Packing list already exists' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      // Check if PDF was already generated
+      if (existing.file_url) {
+        console.log('[Packing List] Already exists with PDF:', existing.invoice_number);
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            invoiceId: existing.id, 
+            invoiceNumber: existing.invoice_number,
+            fileUrl: existing.file_url,
+            message: 'Packing list already exists' 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } else {
+        console.log('[Packing List] Exists but missing PDF, regenerating...');
+        // Continue to PDF generation using existing invoice
+        invoice = existing;
+      }
     }
 
     // Fetch order with items
@@ -60,33 +73,39 @@ serve(async (req) => {
       );
     }
 
-    console.log('[Packing List] Creating invoice for order:', order.order_number);
+    // Only create new invoice if it doesn't exist
+    if (!invoice) {
+      console.log('[Packing List] Creating invoice for order:', order.order_number);
 
-    // Create packing list invoice
-    const { data: invoice, error: invoiceError } = await supabase
-      .from('invoices')
-      .insert({
-        invoice_type: 'packing_list',
-        order_id: orderId,
-        customer_id: order.customer_id,
-        subtotal: 0,
-        tax_amount: 0,
-        total_amount: 0,
-        currency: order.currency || 'USD',
-        status: 'sent',
-        sent_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+      // Create packing list invoice
+      const { data: newInvoice, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert({
+          invoice_type: 'packing_list',
+          order_id: orderId,
+          customer_id: order.customer_id,
+          subtotal: 0,
+          tax_amount: 0,
+          total_amount: 0,
+          currency: order.currency || 'USD',
+          status: 'sent',
+          sent_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
 
-    if (invoiceError) {
-      throw new Error(`Failed to create packing list: ${invoiceError.message}`);
+      if (invoiceError) {
+        throw new Error(`Failed to create packing list: ${invoiceError.message}`);
+      }
+
+      invoice = newInvoice;
+      console.log('[Packing List] Created invoice:', invoice.invoice_number);
+    } else {
+      console.log('[Packing List] Using existing invoice:', invoice.invoice_number);
     }
 
-    console.log('[Packing List] Created invoice:', invoice.invoice_number);
-
-    // Create invoice items
-    if (order.order_items && order.order_items.length > 0) {
+    // Create invoice items only if we just created the invoice
+    if (!existing && order.order_items && order.order_items.length > 0) {
       const invoiceItems = order.order_items.map((item: any) => ({
         invoice_id: invoice.id,
         product_name: item.product_name,
@@ -172,7 +191,12 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, invoiceId: invoice.id, invoiceNumber: invoice.invoice_number }),
+      JSON.stringify({ 
+        success: true, 
+        invoiceId: invoice.id, 
+        invoiceNumber: invoice.invoice_number,
+        fileUrl: publicUrl,
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

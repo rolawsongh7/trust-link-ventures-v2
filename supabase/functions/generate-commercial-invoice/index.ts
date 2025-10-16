@@ -32,16 +32,24 @@ serve(async (req) => {
       .maybeSingle();
 
     if (existing) {
-      console.log('[Commercial Invoice] Already exists:', existing.invoice_number);
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          invoiceId: existing.id, 
-          fileUrl: existing.file_url,
-          message: 'Commercial invoice already exists' 
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      // Check if PDF was already generated
+      if (existing.file_url) {
+        console.log('[Commercial Invoice] Already exists with PDF:', existing.invoice_number);
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            invoiceId: existing.id, 
+            invoiceNumber: existing.invoice_number,
+            fileUrl: existing.file_url,
+            message: 'Commercial invoice already exists' 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } else {
+        console.log('[Commercial Invoice] Exists but missing PDF, regenerating...');
+        // Continue to PDF generation using existing invoice
+        invoice = existing;
+      }
     }
 
     // Fetch order with items and customer
@@ -79,44 +87,50 @@ serve(async (req) => {
       );
     }
 
-    console.log('[Commercial Invoice] Creating invoice for order:', order.order_number);
+    // Only create new invoice if it doesn't exist
+    if (!invoice) {
+      console.log('[Commercial Invoice] Creating invoice for order:', order.order_number);
 
-    // Calculate totals
-    const subtotal = order.order_items.reduce((sum: number, item: any) => 
-      sum + (Number(item.total_price) || 0), 0
-    );
-    const taxAmount = 0; // Configure tax calculation as needed
-    const totalAmount = subtotal + taxAmount;
+      // Calculate totals
+      const subtotal = order.order_items.reduce((sum: number, item: any) => 
+        sum + (Number(item.total_price) || 0), 0
+      );
+      const taxAmount = 0; // Configure tax calculation as needed
+      const totalAmount = subtotal + taxAmount;
 
-    // Create commercial invoice
-    const { data: invoice, error: invoiceError } = await supabase
-      .from('invoices')
-      .insert({
-        invoice_type: 'commercial',
-        order_id: orderId,
-        customer_id: order.customer_id,
-        subtotal: subtotal,
-        tax_amount: taxAmount,
-        total_amount: totalAmount,
-        currency: order.currency || 'USD',
-        status: 'sent',
-        issue_date: new Date().toISOString().split('T')[0],
-        due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        sent_at: new Date().toISOString(),
-        payment_terms: '30 days',
-        notes: `Order: ${order.order_number}\nCarrier: ${order.carrier}\nTracking: ${order.tracking_number}`,
-      })
-      .select()
-      .single();
+      // Create commercial invoice
+      const { data: newInvoice, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert({
+          invoice_type: 'commercial',
+          order_id: orderId,
+          customer_id: order.customer_id,
+          subtotal: subtotal,
+          tax_amount: taxAmount,
+          total_amount: totalAmount,
+          currency: order.currency || 'USD',
+          status: 'sent',
+          issue_date: new Date().toISOString().split('T')[0],
+          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          sent_at: new Date().toISOString(),
+          payment_terms: '30 days',
+          notes: `Order: ${order.order_number}\nCarrier: ${order.carrier}\nTracking: ${order.tracking_number}`,
+        })
+        .select()
+        .single();
 
-    if (invoiceError) {
-      throw new Error(`Failed to create commercial invoice: ${invoiceError.message}`);
+      if (invoiceError) {
+        throw new Error(`Failed to create commercial invoice: ${invoiceError.message}`);
+      }
+
+      invoice = newInvoice;
+      console.log('[Commercial Invoice] Created invoice:', invoice.invoice_number);
+    } else {
+      console.log('[Commercial Invoice] Using existing invoice:', invoice.invoice_number);
     }
 
-    console.log('[Commercial Invoice] Created invoice:', invoice.invoice_number);
-
-    // Create invoice items from order items
-    if (order.order_items && order.order_items.length > 0) {
+    // Create invoice items only if we just created the invoice
+    if (!existing && order.order_items && order.order_items.length > 0) {
       const invoiceItems = order.order_items.map((item: any) => ({
         invoice_id: invoice.id,
         product_name: item.product_name,
