@@ -13,7 +13,13 @@ interface QuotePreviewDialogProps {
     quote_number: string;
     final_file_url?: string;
     customer_email?: string;
+    customer_id?: string;
     status?: string;
+    customers?: {
+      email?: string;
+      contact_name?: string;
+      company_name?: string;
+    };
   };
   onSuccess: () => void;
 }
@@ -50,6 +56,28 @@ export const QuotePreviewDialog: React.FC<QuotePreviewDialogProps> = ({
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
 
+      // Get and validate customer email
+      let customerEmail = quote.customer_email;
+      let customerName = quote.customers?.contact_name;
+      let companyName = quote.customers?.company_name;
+
+      if (!customerEmail && quote.customer_id) {
+        // Fetch from customers table if not in quote
+        const { data: quoteData } = await supabase
+          .from('quotes')
+          .select('customers(email, contact_name, company_name)')
+          .eq('id', quote.id)
+          .single();
+        
+        customerEmail = quoteData?.customers?.email;
+        customerName = quoteData?.customers?.contact_name;
+        companyName = quoteData?.customers?.company_name;
+      }
+
+      if (!customerEmail) {
+        throw new Error('Customer email not found. Please add a customer email before sending.');
+      }
+
       // Update quote status to sent (admin approval tracked via approved_by/approved_at)
       const { error: updateError } = await supabase
         .from('quotes')
@@ -63,9 +91,29 @@ export const QuotePreviewDialog: React.FC<QuotePreviewDialogProps> = ({
 
       if (updateError) throw updateError;
 
+      // Send emails to customer and admin
       toast({
-        title: 'Quote sent to customer',
-        description: 'The quote has been sent. Customer can now accept or reject it.'
+        title: 'Sending emails...',
+        description: 'Sending quote to customer and admin copy.'
+      });
+
+      const { error: emailError } = await supabase.functions.invoke('send-quote-email', {
+        body: {
+          quoteId: quote.id,
+          customerEmail: customerEmail,
+          customerName: customerName,
+          companyName: companyName
+        }
+      });
+
+      if (emailError) {
+        console.error('Email sending error:', emailError);
+        throw new Error(`Failed to send emails: ${emailError.message}`);
+      }
+
+      toast({
+        title: 'Quote sent successfully',
+        description: `Quote sent to ${customerEmail} with PDF attachment. Copy sent to admin.`
       });
 
       onSuccess();
