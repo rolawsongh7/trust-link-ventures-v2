@@ -99,15 +99,11 @@ serve(async (req) => {
       );
     }
 
-    // Validate shipping information
-    if (!order.carrier || !order.tracking_number) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Cannot generate commercial invoice without shipping information (carrier and tracking number).' 
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Shipping information is optional - will be shown as "Pending" if not available
+    console.log('[Commercial Invoice] Shipping info:', { 
+      carrier: order.carrier || 'Pending', 
+      tracking: order.tracking_number || 'Pending' 
+    });
 
     // Only create new invoice if it doesn't exist
     if (!invoice) {
@@ -136,7 +132,7 @@ serve(async (req) => {
           due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           sent_at: new Date().toISOString(),
           payment_terms: '30 days',
-          notes: `Order: ${order.order_number}\nCarrier: ${order.carrier}\nTracking: ${order.tracking_number}`,
+          notes: `Order: ${order.order_number}\nCarrier: ${order.carrier || 'To be determined'}\nTracking: ${order.tracking_number || 'Will be provided upon shipment'}`,
         })
         .select()
         .single();

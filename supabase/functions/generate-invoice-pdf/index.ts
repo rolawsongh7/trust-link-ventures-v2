@@ -417,6 +417,10 @@ function generateInvoiceHTML(data: any): string {
           <p><strong>Status:</strong> ${invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}</p>
           <p><strong>Currency:</strong> ${invoice.currency}</p>
           ${invoice.payment_terms ? `<p><strong>Payment Terms:</strong> ${invoice.payment_terms}</p>` : ''}
+          ${invoice.invoice_type === 'commercial' && order ? `
+            <p><strong>Carrier:</strong> ${order.carrier || '<em>To be determined</em>'}</p>
+            <p><strong>Tracking:</strong> ${order.tracking_number || '<em>Pending shipment</em>'}</p>
+          ` : ''}
         </div>
       </div>
 
