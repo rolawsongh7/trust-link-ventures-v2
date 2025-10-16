@@ -129,7 +129,7 @@ serve(async (req) => {
         const pdfshiftResponse = await fetch('https://api.pdfshift.io/v3/convert/pdf', {
           method: 'POST',
           headers: {
-            'Authorization': `Basic ${btoa(pdfshiftApiKey + ':')}`,
+            'X-API-Key': pdfshiftApiKey,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
