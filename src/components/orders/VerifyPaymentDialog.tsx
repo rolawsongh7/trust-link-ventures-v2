@@ -49,27 +49,17 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
       
       if (!user) throw new Error('Not authenticated');
 
-      // Step 1: Verify payment and mark as payment_received
-      const { error: verifyError } = await supabase
+      // Update order status to processing and mark payment as verified
+      const { error: updateError } = await supabase
         .from('orders')
         .update({
-          status: 'payment_received',
+          status: 'processing',
           payment_verified_by: user.id,
           payment_verified_at: new Date().toISOString(),
         })
         .eq('id', order.id);
 
-      if (verifyError) throw verifyError;
-
-      // Step 2: Auto-progress to processing status
-      const { error: progressError } = await supabase
-        .from('orders')
-        .update({
-          status: 'processing',
-        })
-        .eq('id', order.id);
-
-      if (progressError) throw progressError;
+      if (updateError) throw updateError;
 
       // Send payment confirmation email to customer
       await supabase.functions.invoke('send-payment-confirmation', {
@@ -82,12 +72,12 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
         console.error('Email notification error (non-blocking):', err);
       });
 
-      // Notify customer with processing status
+      // Notify customer with system notification
       if (order.customer_id) {
         const { error: notifError } = await supabase.from('user_notifications').insert({
           user_id: order.customer_id,
-          type: 'order_processing',
-          title: 'Order Now Processing',
+          type: 'system',
+          title: 'Payment Verified - Order Processing',
           message: `Great news! Your payment for order ${order.order_number} has been verified and your order is now being processed. We'll notify you when it's ready to ship.`,
           link: '/customer/orders',
         });
