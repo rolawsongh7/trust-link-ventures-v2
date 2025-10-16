@@ -142,9 +142,7 @@ serve(async (req) => {
               right: '20px',
               bottom: '20px',
               left: '20px'
-            },
-            wait_for_network_idle: false,
-            sandbox: false
+            }
           }),
         });
 
