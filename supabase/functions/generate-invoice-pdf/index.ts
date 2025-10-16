@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
@@ -77,30 +76,69 @@ serve(async (req) => {
       order
     });
 
-    console.log('HTML generated, converting to PDF...');
+    console.log('HTML generated, converting to PDF with PDFShift...');
 
-    // Convert HTML to PDF using Puppeteer
-    const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    // Get PDFShift API key
+    const pdfshiftApiKey = Deno.env.get('PDFSHIFT_API_KEY');
+    if (!pdfshiftApiKey) {
+      throw new Error('PDFSHIFT_API_KEY environment variable is not set');
+    }
 
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20px',
-        right: '20px',
-        bottom: '20px',
-        left: '20px',
-      },
-    });
+    // Convert HTML to PDF using PDFShift API with retry logic
+    let pdfBuffer: ArrayBuffer | null = null;
+    let lastError: Error | null = null;
+    const maxRetries = 2;
 
-    await browser.close();
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        if (attempt > 0) {
+          console.log(`Retry attempt ${attempt} of ${maxRetries}...`);
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s before retry
+        }
 
-    console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes');
+        const pdfshiftResponse = await fetch('https://api.pdfshift.io/v3/convert/pdf', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${btoa(pdfshiftApiKey + ':')}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            source: html,
+            landscape: false,
+            use_print: true,
+            format: 'A4',
+            margin: {
+              top: '20px',
+              right: '20px',
+              bottom: '20px',
+              left: '20px'
+            },
+            wait_for_network_idle: false,
+            sandbox: false
+          }),
+        });
+
+        if (!pdfshiftResponse.ok) {
+          const errorText = await pdfshiftResponse.text();
+          throw new Error(`PDFShift API error (${pdfshiftResponse.status}): ${errorText}`);
+        }
+
+        pdfBuffer = await pdfshiftResponse.arrayBuffer();
+        console.log('PDF generated successfully via PDFShift, size:', pdfBuffer.byteLength, 'bytes');
+        break; // Success, exit retry loop
+      } catch (error) {
+        lastError = error as Error;
+        console.error(`PDF generation attempt ${attempt + 1} failed:`, error);
+        
+        if (attempt === maxRetries) {
+          throw new Error(`PDF generation failed after ${maxRetries + 1} attempts: ${lastError.message}`);
+        }
+      }
+    }
+
+    if (!pdfBuffer) {
+      throw new Error('PDF generation failed: No buffer returned');
+    }
 
     return new Response(pdfBuffer, {
       headers: {
