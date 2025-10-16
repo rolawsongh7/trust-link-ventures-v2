@@ -112,6 +112,8 @@ export const useRealtimeOrders = (customerId?: string) => {
               
               const oldStatus = (payload.old as Order)?.status;
               const newStatus = (payload.new as Order)?.status;
+              const orderId = (payload.new as Order)?.id;
+              const orderNumber = (payload.new as Order)?.order_number;
               
               if (oldStatus !== newStatus) {
                 const statusEmoji = {
@@ -128,9 +130,75 @@ export const useRealtimeOrders = (customerId?: string) => {
 
                 toast({
                   title: `${statusEmoji} Order Status Updated`,
-                  description: `Order ${(payload.new as Order).order_number} is now ${newStatus.replace(/_/g, ' ')}`,
+                  description: `Order ${orderNumber} is now ${newStatus.replace(/_/g, ' ')}`,
                   duration: 6000,
                 });
+
+                // Auto-generate packing list when status becomes ready_to_ship
+                if (newStatus === 'ready_to_ship' && oldStatus !== 'ready_to_ship') {
+                  console.log('🔄 Auto-generating packing list for order:', orderNumber);
+                  toast({
+                    title: '📄 Generating Packing List',
+                    description: `Auto-generating packing list for ${orderNumber}...`,
+                  });
+
+                  supabase.functions
+                    .invoke('generate-packing-list', {
+                      body: { orderId },
+                    })
+                    .then(({ data, error }) => {
+                      if (error) {
+                        console.error('Packing list generation error:', error);
+                        toast({
+                          title: '❌ Generation Failed',
+                          description: 'Failed to auto-generate packing list',
+                          variant: 'destructive',
+                        });
+                      } else {
+                        console.log('✅ Packing list generated:', data);
+                        toast({
+                          title: '✅ Packing List Generated',
+                          description: `Packing list created for ${orderNumber}`,
+                        });
+                      }
+                    })
+                    .catch((err) => {
+                      console.error('Packing list generation error:', err);
+                    });
+                }
+
+                // Auto-generate commercial invoice when status becomes shipped
+                if (newStatus === 'shipped' && oldStatus !== 'shipped') {
+                  console.log('🔄 Auto-generating commercial invoice for order:', orderNumber);
+                  toast({
+                    title: '📄 Generating Commercial Invoice',
+                    description: `Auto-generating invoice for ${orderNumber}...`,
+                  });
+
+                  supabase.functions
+                    .invoke('generate-commercial-invoice', {
+                      body: { orderId },
+                    })
+                    .then(({ data, error }) => {
+                      if (error) {
+                        console.error('Commercial invoice generation error:', error);
+                        toast({
+                          title: '❌ Generation Failed',
+                          description: 'Failed to auto-generate commercial invoice',
+                          variant: 'destructive',
+                        });
+                      } else {
+                        console.log('✅ Commercial invoice generated:', data);
+                        toast({
+                          title: '✅ Commercial Invoice Generated',
+                          description: `Invoice created for ${orderNumber}`,
+                        });
+                      }
+                    })
+                    .catch((err) => {
+                      console.error('Commercial invoice generation error:', err);
+                    });
+                }
               }
             } else if (payload.eventType === 'DELETE') {
               setOrders((prev) => prev.filter((order) => order.id !== payload.old.id));
