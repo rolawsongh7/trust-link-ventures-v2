@@ -124,53 +124,34 @@ serve(async (req) => {
       }
     }
 
-    // Generate PDF
-    console.log('[Packing List] Requesting PDF generation...');
-    const pdfResponse = await fetch(`${supabaseUrl}/functions/v1/generate-invoice-pdf`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseKey}`,
-      },
-      body: JSON.stringify({ invoiceId: invoice.id }),
+    // Generate PDF using the edge function
+    console.log('[Packing List] Step: Calling generate-invoice-pdf function...');
+    const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-invoice-pdf', {
+      body: { 
+        invoiceId: invoice.id,
+        invoiceType: 'packing_list'
+      }
     });
 
-    if (!pdfResponse.ok) {
-      const errorText = await pdfResponse.text();
-      console.error('[Packing List] PDF generation failed:', pdfResponse.status, errorText);
-      throw new Error(`PDF generation failed: ${pdfResponse.status} ${errorText}`);
+    if (pdfError) {
+      console.error('[Packing List] PDF generation error:', pdfError);
+      throw new Error(`PDF generation failed: ${pdfError.message}`);
     }
 
-    const pdfBuffer = await pdfResponse.arrayBuffer();
-    console.log('[Packing List] PDF generated, size:', pdfBuffer.byteLength);
-    
-    const filePath = `packing_list/${invoice.invoice_number}.pdf`;
-
-    // Upload to storage
-    console.log('[Packing List] Uploading to storage:', filePath);
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('invoices')
-      .upload(filePath, pdfBuffer, {
-        contentType: 'application/pdf',
-        upsert: true,
-      });
-
-    if (uploadError) {
-      console.error('[Packing List] Upload error:', uploadError);
-      throw new Error(`Storage upload failed: ${uploadError.message}`);
+    if (!pdfData?.fileUrl) {
+      console.error('[Packing List] No file URL returned from PDF generation');
+      throw new Error('PDF generation returned no file URL');
     }
 
-    console.log('[Packing List] Upload successful:', uploadData);
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from('invoices')
-      .getPublicUrl(filePath);
+    console.log('[Packing List] PDF generated successfully:', pdfData.fileUrl);
 
-    console.log('[Packing List] Public URL:', publicUrl);
-
+    // Update invoice with file URL
     const { error: updateError } = await supabase
       .from('invoices')
-      .update({ file_url: publicUrl })
+      .update({ 
+        file_url: pdfData.fileUrl,
+        status: 'sent'
+      })
       .eq('id', invoice.id);
 
     if (updateError) {
@@ -178,7 +159,7 @@ serve(async (req) => {
       throw new Error(`Failed to update invoice: ${updateError.message}`);
     }
 
-    console.log('[Packing List] PDF uploaded successfully:', filePath);
+    console.log('[Packing List] Invoice updated with PDF URL');
 
     // Send packing list email notification
     try {
@@ -195,7 +176,7 @@ serve(async (req) => {
         success: true, 
         invoiceId: invoice.id, 
         invoiceNumber: invoice.invoice_number,
-        fileUrl: publicUrl,
+        fileUrl: pdfData.fileUrl,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

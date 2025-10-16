@@ -149,55 +149,34 @@ serve(async (req) => {
       }
     }
 
-    // Generate PDF
-    console.log('[Commercial Invoice] Requesting PDF generation...');
-    const pdfResponse = await fetch(`${supabaseUrl}/functions/v1/generate-invoice-pdf`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseKey}`,
-      },
-      body: JSON.stringify({ invoiceId: invoice.id }),
+    // Generate PDF using the edge function
+    console.log('[Commercial Invoice] Step: Calling generate-invoice-pdf function...');
+    const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-invoice-pdf', {
+      body: { 
+        invoiceId: invoice.id,
+        invoiceType: 'commercial'
+      }
     });
 
-    let fileUrl = null;
-
-    if (!pdfResponse.ok) {
-      const errorText = await pdfResponse.text();
-      console.error('[Commercial Invoice] PDF generation failed:', pdfResponse.status, errorText);
-      throw new Error(`PDF generation failed: ${pdfResponse.status} ${errorText}`);
+    if (pdfError) {
+      console.error('[Commercial Invoice] PDF generation error:', pdfError);
+      throw new Error(`PDF generation failed: ${pdfError.message}`);
     }
 
-    const pdfBuffer = await pdfResponse.arrayBuffer();
-    console.log('[Commercial Invoice] PDF generated, size:', pdfBuffer.byteLength);
-    
-    const filePath = `commercial_invoice/${invoice.invoice_number}.pdf`;
-
-    // Upload to storage
-    console.log('[Commercial Invoice] Uploading to storage:', filePath);
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('invoices')
-      .upload(filePath, pdfBuffer, {
-        contentType: 'application/pdf',
-        upsert: true,
-      });
-
-    if (uploadError) {
-      console.error('[Commercial Invoice] Upload error:', uploadError);
-      throw new Error(`Storage upload failed: ${uploadError.message}`);
+    if (!pdfData?.fileUrl) {
+      console.error('[Commercial Invoice] No file URL returned from PDF generation');
+      throw new Error('PDF generation returned no file URL');
     }
 
-    console.log('[Commercial Invoice] Upload successful:', uploadData);
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from('invoices')
-      .getPublicUrl(filePath);
+    console.log('[Commercial Invoice] PDF generated successfully:', pdfData.fileUrl);
 
-    console.log('[Commercial Invoice] Public URL:', publicUrl);
-
+    // Update invoice with file URL
     const { error: updateError } = await supabase
       .from('invoices')
-      .update({ file_url: publicUrl })
+      .update({ 
+        file_url: pdfData.fileUrl,
+        status: 'sent'
+      })
       .eq('id', invoice.id);
 
     if (updateError) {
@@ -205,8 +184,7 @@ serve(async (req) => {
       throw new Error(`Failed to update invoice: ${updateError.message}`);
     }
 
-    fileUrl = publicUrl;
-    console.log('[Commercial Invoice] PDF uploaded successfully:', filePath);
+    console.log('[Commercial Invoice] Invoice updated with PDF URL');
 
     // Send commercial invoice email notification
     if (order.customers?.email) {
@@ -229,7 +207,7 @@ serve(async (req) => {
         success: true, 
         invoiceId: invoice.id, 
         invoiceNumber: invoice.invoice_number,
-        fileUrl: fileUrl,
+        fileUrl: pdfData.fileUrl,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

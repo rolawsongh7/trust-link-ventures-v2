@@ -14,10 +14,16 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const pdfshiftApiKey = Deno.env.get('PDFSHIFT_API_KEY');
+    
+    if (!pdfshiftApiKey) {
+      throw new Error('PDFSHIFT_API_KEY not configured');
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { invoiceId } = await req.json();
-    console.log('Generating PDF for invoice:', invoiceId);
+    const { invoiceId, invoiceType } = await req.json();
+    console.log('[PDF Generation] Processing invoice:', { invoiceId, invoiceType, timestamp: new Date().toISOString() });
 
     if (!invoiceId) {
       throw new Error('Invoice ID is required');
@@ -76,13 +82,7 @@ serve(async (req) => {
       order
     });
 
-    console.log('HTML generated, converting to PDF with PDFShift...');
-
-    // Get PDFShift API key
-    const pdfshiftApiKey = Deno.env.get('PDFSHIFT_API_KEY');
-    if (!pdfshiftApiKey) {
-      throw new Error('PDFSHIFT_API_KEY environment variable is not set');
-    }
+    console.log('[PDF Generation] Step: HTML generated, length:', html.length);
 
     // Convert HTML to PDF using PDFShift API with retry logic
     let pdfBuffer: ArrayBuffer | null = null;
@@ -92,10 +92,11 @@ serve(async (req) => {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         if (attempt > 0) {
-          console.log(`Retry attempt ${attempt} of ${maxRetries}...`);
+          console.log(`[PDF Generation] Retry attempt ${attempt} of ${maxRetries}...`);
           await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s before retry
         }
 
+        console.log(`[PDF Generation] Step: PDFShift attempt ${attempt + 1}/${maxRetries + 1}`);
         const pdfshiftResponse = await fetch('https://api.pdfshift.io/v3/convert/pdf', {
           method: 'POST',
           headers: {
@@ -120,15 +121,16 @@ serve(async (req) => {
 
         if (!pdfshiftResponse.ok) {
           const errorText = await pdfshiftResponse.text();
+          console.error(`[PDF Generation] PDFShift error (attempt ${attempt + 1}):`, pdfshiftResponse.status, errorText);
           throw new Error(`PDFShift API error (${pdfshiftResponse.status}): ${errorText}`);
         }
 
         pdfBuffer = await pdfshiftResponse.arrayBuffer();
-        console.log('PDF generated successfully via PDFShift, size:', pdfBuffer.byteLength, 'bytes');
+        console.log('[PDF Generation] Step: PDF generated successfully, size:', pdfBuffer.byteLength, 'bytes');
         break; // Success, exit retry loop
       } catch (error) {
         lastError = error as Error;
-        console.error(`PDF generation attempt ${attempt + 1} failed:`, error);
+        console.error(`[PDF Generation] Attempt ${attempt + 1} failed:`, error);
         
         if (attempt === maxRetries) {
           throw new Error(`PDF generation failed after ${maxRetries + 1} attempts: ${lastError.message}`);
@@ -140,13 +142,44 @@ serve(async (req) => {
       throw new Error('PDF generation failed: No buffer returned');
     }
 
-    return new Response(pdfBuffer, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${invoice.invoice_number}.pdf"`,
-      },
-    });
+    // Upload to storage
+    const folderName = invoiceType === 'packing_list' ? 'packing_list' : 'commercial_invoice';
+    const filePath = `${folderName}/${invoice.invoice_number}.pdf`;
+    
+    console.log('[PDF Generation] Step: Uploading to storage:', filePath);
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('invoices')
+      .upload(filePath, pdfBuffer, {
+        contentType: 'application/pdf',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error('[PDF Generation] Storage upload error:', uploadError);
+      throw new Error(`Storage upload failed: ${uploadError.message}`);
+    }
+
+    console.log('[PDF Generation] Step: Upload successful');
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from('invoices')
+      .getPublicUrl(filePath);
+
+    console.log('[PDF Generation] Step: Public URL generated:', publicUrl);
+
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        fileUrl: publicUrl,
+        invoiceNumber: invoice.invoice_number
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
   } catch (error) {
     console.error('Error generating PDF:', error);
