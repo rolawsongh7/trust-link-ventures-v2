@@ -180,7 +180,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Handle different auth events
         if (event === 'SIGNED_OUT') {
           console.log('[Auth] User signed out');
+          
+          // Check if this was an admin user being signed out
+          const wasAdmin = userRole === 'admin';
           clearAuthState();
+          
+          // Navigate to appropriate login if admin session expired
+          if (wasAdmin && typeof window !== 'undefined') {
+            console.log('[Auth] Admin user signed out, navigating to login');
+            const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+            const currentPath = window.location.pathname;
+            
+            // Only redirect if not already on a login page
+            if (!currentPath.includes('/login') && !currentPath.includes('/unauthorized')) {
+              setTimeout(() => {
+                if (isLovablePreview) {
+                  window.location.href = '/admin/login';
+                } else if (isAdminDomain()) {
+                  window.location.href = '/';
+                }
+              }, 0);
+            }
+          }
         } else if (event === 'SIGNED_IN' && session?.user) {
           console.log('[Auth] User signed in, fetching role');
           // Defer role fetching to prevent deadlock

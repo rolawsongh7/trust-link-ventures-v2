@@ -45,6 +45,8 @@ export class SessionManager {
 
   private async handleTimeout() {
     try {
+      console.log('[SessionManager] Starting timeout handling');
+      
       // Log the timeout event
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -62,11 +64,17 @@ export class SessionManager {
         });
       }
 
-      // Sign out the user
+      // Sign out the user and WAIT for completion
+      console.log('[SessionManager] Signing out user');
       await supabase.auth.signOut();
+      console.log('[SessionManager] Sign out complete');
 
-      // Call the timeout callback if provided
+      // Wait a moment to ensure auth state is cleared
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Call the timeout callback if provided (after signout completes)
       if (this.timeoutCallback) {
+        console.log('[SessionManager] Calling timeout callback');
         this.timeoutCallback();
       }
     } catch (error) {

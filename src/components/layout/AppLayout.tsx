@@ -24,12 +24,22 @@ export const AppLayout = () => {
   useEffect(() => {
     if (hasAdminAccess && user) {
       const sessionManager = initializeAdminSessionManager(() => {
+        console.log('[AppLayout] Session timeout callback triggered');
         toast({
           title: 'Session Expired',
           description: 'You have been logged out due to inactivity.',
           variant: 'destructive',
         });
-        navigate('/admin/login');
+        
+        // Domain-aware navigation for session timeout
+        const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+        if (isLovablePreview) {
+          // In preview mode, navigate to /admin/login
+          navigate('/admin/login', { replace: true });
+        } else {
+          // In production on admin subdomain, navigate to root (which renders AdminAuth)
+          navigate('/', { replace: true });
+        }
       });
 
       return () => {
