@@ -393,6 +393,15 @@ const UnifiedOrdersManagement = () => {
           onSuccess={refetch}
         />
       )}
+
+      {selectedOrder && (
+        <DeliveryManagementDialog
+          open={deliveryDialogOpen}
+          onOpenChange={setDeliveryDialogOpen}
+          order={selectedOrder}
+          onSuccess={refetch}
+        />
+      )}
     </div>
   );
 };
