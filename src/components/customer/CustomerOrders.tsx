@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign, Download, MapPin, AlertCircle, Upload } from 'lucide-react';
+import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign, Download, MapPin, AlertCircle, Upload, CreditCard } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import AddressSelectionDialog from './AddressSelectionDialog';
 import { CustomerPaymentProofDialog } from './CustomerPaymentProofDialog';
+import { OrderPaymentInstructions } from './OrderPaymentInstructions';
 
 
 // Order interface matching database schema
@@ -44,6 +45,7 @@ export const CustomerOrders: React.FC = () => {
   const [selectedOrderForAddress, setSelectedOrderForAddress] = useState<Order | null>(null);
   const [paymentProofDialogOpen, setPaymentProofDialogOpen] = useState(false);
   const [selectedOrderForPayment, setSelectedOrderForPayment] = useState<Order | null>(null);
+  const [showPaymentInstructions, setShowPaymentInstructions] = useState<string | null>(null);
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -474,63 +476,102 @@ export const CustomerOrders: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    {order.status === 'pending_payment' && !order.delivery_address_id && (
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedOrderForPayment(order);
-                          setPaymentProofDialogOpen(true);
-                        }}
-                        className="bg-green-500 hover:bg-green-600"
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Payment Proof
-                      </Button>
+                  <div className="space-y-4">
+                    {/* Payment Instructions for pending/payment_received orders */}
+                    {['pending_payment', 'payment_received'].includes(order.status) && (
+                      <div className="pt-4 border-t">
+                        {showPaymentInstructions === order.id ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold">Payment Instructions</h4>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowPaymentInstructions(null)}
+                              >
+                                Hide
+                              </Button>
+                            </div>
+                            <OrderPaymentInstructions
+                              orderNumber={order.order_number}
+                              quoteNumber={order.quotes?.quote_number}
+                              totalAmount={order.total_amount}
+                              currency={order.currency}
+                              emailSent={true}
+                            />
+                          </div>
+                        ) : (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => setShowPaymentInstructions(order.id)}
+                            className="w-full"
+                          >
+                            <CreditCard className="h-4 w-4 mr-2" />
+                            View Payment Instructions
+                          </Button>
+                        )}
+                      </div>
                     )}
-                    
-                    {!order.delivery_address_id && ['payment_received', 'processing'].includes(order.status) && (
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedOrderForAddress(order);
-                          setAddressDialogOpen(true);
-                        }}
-                        className="bg-orange-500 hover:bg-orange-600"
-                      >
-                        <MapPin className="h-4 w-4 mr-2" />
-                        Add Delivery Address
-                      </Button>
-                    )}
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => navigate(`/customer/orders/${order.id}`)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Track Order
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleReorder(order)}
-                    >
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      Reorder
-                    </Button>
 
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => navigate('/customer/invoices')}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      View Invoices
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {order.status === 'pending_payment' && (
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={() => {
+                            setSelectedOrderForPayment(order);
+                            setPaymentProofDialogOpen(true);
+                          }}
+                          className="bg-green-500 hover:bg-green-600"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Payment Proof
+                        </Button>
+                      )}
+                      
+                      {!order.delivery_address_id && ['payment_received', 'processing'].includes(order.status) && (
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={() => {
+                            setSelectedOrderForAddress(order);
+                            setAddressDialogOpen(true);
+                          }}
+                          className="bg-orange-500 hover:bg-orange-600"
+                        >
+                          <MapPin className="h-4 w-4 mr-2" />
+                          Add Delivery Address
+                        </Button>
+                      )}
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => navigate(`/customer/orders/${order.id}`)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Track Order
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleReorder(order)}
+                      >
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Reorder
+                      </Button>
+
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => navigate('/customer/invoices')}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        View Invoices
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

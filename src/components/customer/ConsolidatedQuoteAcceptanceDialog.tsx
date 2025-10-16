@@ -22,7 +22,9 @@ import {
   Upload,
   FileText,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Mail,
+  DollarSign
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,6 +49,7 @@ interface Quote {
   total_amount: number;
   currency: string;
   customer_id?: string;
+  customer_email?: string;
 }
 
 interface ConsolidatedQuoteAcceptanceDialogProps {
@@ -258,6 +261,24 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
 
       if (orderUpdateError) throw orderUpdateError;
 
+      // Send payment instructions email
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-payment-instructions', {
+          body: {
+            quoteId: quote.id,
+            customerEmail: profile?.email,
+            customerName: addresses.find(a => a.id === selectedAddressId)?.receiver_name,
+            orderNumber: orders.order_number
+          }
+        });
+
+        if (emailError) {
+          console.error('Failed to send payment email:', emailError);
+        }
+      } catch (emailError) {
+        console.error('Payment email error:', emailError);
+      }
+
       // Send notification if payment proof was uploaded
       if (paymentProofUrl) {
         // Notify all admins about payment proof upload
@@ -457,41 +478,144 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
         ) : (
           // Payment Step
           <div className="space-y-6">
-            {/* Payment Instructions */}
-            <div className="bg-muted p-4 rounded-lg space-y-3">
-              <h4 className="font-semibold flex items-center gap-2">
-                <CreditCard className="w-5 h-5" />
-                Payment Instructions
-              </h4>
-              <Separator />
-              
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <Building2 className="w-5 h-5 text-muted-foreground mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-medium">Bank Transfer</p>
-                    <p className="text-muted-foreground">Bank: Zenith Bank Ghana</p>
-                    <p className="text-muted-foreground">Account: 9070077717</p>
-                    <p className="text-muted-foreground">Name: TRUSTLINK VENTURES LIMITED</p>
+            {/* Success Banner */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-green-100 flex-shrink-0">
+                  <CheckCircle2 className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-green-900 mb-1">Quote Accepted Successfully!</h3>
+                  <p className="text-sm text-green-800">
+                    Your order has been created. Payment instructions have been sent to your email.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Email Confirmation Alert */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-blue-900 mb-1">📧 Payment Instructions Emailed</h4>
+                  <p className="text-sm text-blue-800">
+                    We've sent detailed payment instructions to <strong>{profile?.email}</strong>. 
+                    You can also view them below for your convenience.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Enhanced Payment Instructions */}
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/30 rounded-lg p-5 space-y-5">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-6 w-6 text-primary" />
+                <h3 className="text-xl font-semibold">Payment Instructions</h3>
+              </div>
+
+              {/* Payment Reference - Prominent */}
+              <div className="bg-primary/10 border-2 border-primary/40 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertCircle className="h-5 w-5 text-primary" />
+                  <p className="text-sm font-semibold text-primary">REQUIRED PAYMENT REFERENCE</p>
+                </div>
+                <div className="bg-white p-3 rounded border-2 border-primary/20">
+                  <p className="text-xs text-muted-foreground mb-1">Use this reference for your payment:</p>
+                  <p className="font-mono text-2xl font-bold text-primary tracking-wide">
+                    {quote.quote_number}
+                  </p>
+                </div>
+              </div>
+
+              {/* Total Amount */}
+              <div className="bg-muted/50 rounded-lg p-4 border">
+                <p className="text-sm text-muted-foreground mb-1">Total Amount to Pay</p>
+                <p className="text-3xl font-bold">
+                  {quote.total_amount.toLocaleString()} {quote.currency}
+                </p>
+              </div>
+
+              {/* Payment Methods */}
+              <div className="space-y-4">
+                {/* Bank Transfer - Blue theme */}
+                <div className="border-2 border-blue-200 rounded-lg bg-blue-50/50 p-4">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-blue-900 text-lg">
+                    <Building2 className="h-5 w-5" />
+                    Option 1: Bank Transfer
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div className="bg-white p-2 rounded border border-blue-100">
+                      <p className="text-xs text-blue-700 font-medium">Bank Name</p>
+                      <p className="font-semibold text-blue-900">Ecobank Ghana</p>
+                    </div>
+                    <div className="bg-white p-2 rounded border border-blue-100">
+                      <p className="text-xs text-blue-700 font-medium">Account Name</p>
+                      <p className="font-semibold text-blue-900 text-xs">Trust Link Ventures Limited</p>
+                    </div>
+                    <div className="bg-white p-2 rounded border border-blue-100">
+                      <p className="text-xs text-blue-700 font-medium">Account Number (GHS)</p>
+                      <p className="font-mono text-lg font-bold text-blue-900">1641001593405</p>
+                    </div>
+                    <div className="bg-white p-2 rounded border border-blue-100">
+                      <p className="text-xs text-blue-700 font-medium">Swift Code</p>
+                      <p className="font-mono font-semibold text-blue-900">ECOCGHAC</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <Smartphone className="w-5 h-5 text-muted-foreground mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-medium">Mobile Money</p>
-                    <p className="text-muted-foreground">MTN: 0553506647</p>
-                    <p className="text-muted-foreground">Vodafone: 0507040648</p>
-                    <p className="text-muted-foreground">Name: TRUSTLINK VENTURES LIMITED</p>
+                {/* Mobile Money - Green theme */}
+                <div className="border-2 border-green-200 rounded-lg bg-green-50/50 p-4">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-green-900 text-lg">
+                    <Smartphone className="h-5 w-5" />
+                    Option 2: Mobile Money
+                  </h4>
+                  <p className="text-sm text-green-800 mb-3">
+                    <strong>Account Name:</strong> Trust Link Ventures Limited
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                    <div className="bg-white p-3 rounded border border-green-100">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-6 h-6 bg-yellow-400 rounded flex items-center justify-center text-xs font-bold">M</div>
+                        <p className="text-xs text-green-700 font-medium">MTN MoMo</p>
+                      </div>
+                      <p className="font-mono text-base font-bold text-green-900">0244690607</p>
+                    </div>
+                    <div className="bg-white p-3 rounded border border-green-100">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-6 h-6 bg-red-600 rounded flex items-center justify-center text-xs font-bold text-white">V</div>
+                        <p className="text-xs text-green-700 font-medium">Vodafone Cash</p>
+                      </div>
+                      <p className="font-mono text-base font-bold text-green-900">0506690607</p>
+                    </div>
+                    <div className="bg-white p-3 rounded border border-green-100">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center text-xs font-bold text-white">A</div>
+                        <p className="text-xs text-green-700 font-medium">AirtelTigo</p>
+                      </div>
+                      <p className="font-mono text-base font-bold text-green-900">0276690607</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-background p-3 rounded border">
-                <p className="text-sm font-medium">Amount to Pay:</p>
-                <p className="text-2xl font-bold text-primary">
-                  {quote.currency} {quote.total_amount.toLocaleString()}
-                </p>
+              {/* Important Notes */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm font-semibold mb-2 text-amber-900">⚠️ Important Payment Notes:</p>
+                <ul className="text-sm space-y-1 text-amber-800">
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-600 mt-0.5">•</span>
+                    <span>Payment must be completed within <strong>7 days</strong></span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-600 mt-0.5">•</span>
+                    <span>Upload proof of payment below after completing transaction</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-600 mt-0.5">•</span>
+                    <span>Processing begins after payment verification (24-48 hours)</span>
+                  </li>
+                </ul>
               </div>
             </div>
 
