@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
+const FUNCTION_VERSION = '3.0.0'; // Updated to force redeployment
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -12,13 +14,30 @@ serve(async (req) => {
   }
 
   try {
+    console.log(`[PDF Generation] Function Version: ${FUNCTION_VERSION}`);
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const pdfshiftApiKey = Deno.env.get('PDFSHIFT_API_KEY');
     
-    if (!pdfshiftApiKey) {
-      throw new Error('PDFSHIFT_API_KEY not configured');
+    // Critical validation: API key must be present
+    if (!pdfshiftApiKey || pdfshiftApiKey.trim() === '') {
+      const errorMsg = 'PDFSHIFT_API_KEY not configured or empty. Please add the secret in Supabase dashboard.';
+      console.error('[PDF Generation] CRITICAL:', errorMsg);
+      return new Response(
+        JSON.stringify({ 
+          error: errorMsg,
+          code: 'MISSING_API_KEY',
+          version: FUNCTION_VERSION
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
+    
+    console.log('[PDF Generation] API key validated, length:', pdfshiftApiKey.length);
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -182,9 +201,20 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    console.error('[PDF Generation] Fatal Error:', {
+      error: error.message,
+      stack: error.stack,
+      version: FUNCTION_VERSION,
+      timestamp: new Date().toISOString()
+    });
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        stack: import.meta.env?.DEV ? error.stack : undefined,
+        version: FUNCTION_VERSION,
+        timestamp: new Date().toISOString()
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

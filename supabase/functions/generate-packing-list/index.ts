@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const FUNCTION_VERSION = '2.1.0';
+const FUNCTION_VERSION = '3.0.0'; // Updated to force redeployment
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -174,39 +174,50 @@ serve(async (req) => {
       invoiceType: 'packing_list'
     });
     
-    try {
-      const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-invoice-pdf', {
-        body: { 
-          invoiceId: invoice.id,
-          invoiceType: 'packing_list'
-        }
-      });
-
-      if (pdfError) {
-        console.error('[Packing List] PDF generation error:', {
-          error: pdfError.message,
-          invoiceId: invoice.id,
-          stack: pdfError.stack
-        });
-        throw new Error(`PDF generation failed: ${pdfError.message}`);
-      }
-
-      if (!pdfData?.fileUrl) {
-        console.error('[Packing List] No file URL returned:', { pdfData });
-        throw new Error('PDF generation returned no file URL');
-      }
-      
-      console.log('[Packing List] PDF generated successfully:', pdfData.fileUrl);
-    } catch (pdfError) {
-      console.error('[Packing List] PDF Generation Exception:', {
-        error: pdfError.message,
-        stack: pdfError.stack,
+    const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-invoice-pdf', {
+      body: { 
         invoiceId: invoice.id,
         invoiceType: 'packing_list'
+      }
+    });
+
+    if (pdfError) {
+      const detailedError = `PDF generation failed: ${pdfError.message || 'Unknown error'}`;
+      console.error('[Packing List] PDF generation error:', {
+        error: pdfError.message,
+        context: pdfError.context,
+        invoiceId: invoice.id
       });
-      throw new Error(`PDF generation exception: ${pdfError.message}`);
+      
+      return new Response(
+        JSON.stringify({ 
+          error: detailedError,
+          details: pdfError.message,
+          invoiceId: invoice.id,
+          version: FUNCTION_VERSION
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
+    if (!pdfData?.fileUrl) {
+      console.error('[Packing List] No file URL returned:', { pdfData });
+      return new Response(
+        JSON.stringify({ 
+          error: 'PDF generation returned no file URL',
+          pdfData,
+          version: FUNCTION_VERSION
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
     console.log('[Packing List] PDF generated successfully:', pdfData.fileUrl);
 
     // Update invoice with file URL
