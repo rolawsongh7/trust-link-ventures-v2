@@ -71,9 +71,17 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
       if (paymentProofFile) {
         setUploadingProof(true);
         try {
+          // Verify authentication
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            throw new Error('Not authenticated. Please log in and try again.');
+          }
+          
           const fileExt = paymentProofFile.name.split('.').pop();
           const fileName = `${orderId}-payment-proof-${Date.now()}.${fileExt}`;
           const filePath = `payment-proofs/${fileName}`;
+          
+          console.log('Attempting upload as:', session.user.id, 'to path:', filePath);
           
           const { error: uploadError } = await supabase.storage
             .from('payment-proofs')
@@ -82,7 +90,10 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
               upsert: false
             });
           
-          if (uploadError) throw uploadError;
+          if (uploadError) {
+            console.error('Storage upload error:', uploadError);
+            throw new Error(`Upload failed: ${uploadError.message}`);
+          }
           
           // Get public URL (signed URL for private bucket)
           const { data: signedUrlData, error: urlError } = await supabase.storage
