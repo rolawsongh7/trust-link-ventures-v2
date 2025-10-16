@@ -27,7 +27,7 @@ export const QuotePreviewDialog: React.FC<QuotePreviewDialogProps> = ({
   const { toast } = useToast();
   const [approving, setApproving] = React.useState(false);
 
-  const handleApprove = async () => {
+  const handleSendQuote = async () => {
     try {
       setApproving(true);
 
@@ -35,7 +35,7 @@ export const QuotePreviewDialog: React.FC<QuotePreviewDialogProps> = ({
       if (!quote.final_file_url) {
         toast({
           title: 'Generating PDF...',
-          description: 'Creating quote PDF before approval'
+          description: 'Creating quote PDF before sending'
         });
 
         const { error: generateError } = await supabase.functions.invoke('generate-quote-title-page', {
@@ -50,31 +50,32 @@ export const QuotePreviewDialog: React.FC<QuotePreviewDialogProps> = ({
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
 
-      // Update quote status to approved
+      // Update quote status to sent (admin approval tracked via approved_by/approved_at)
       const { error: updateError } = await supabase
         .from('quotes')
         .update({ 
-          status: 'approved',
+          status: 'sent',
           approved_by: (await supabase.auth.getUser()).data.user?.id,
-          approved_at: new Date().toISOString()
+          approved_at: new Date().toISOString(),
+          sent_at: new Date().toISOString()
         })
         .eq('id', quote.id);
 
       if (updateError) throw updateError;
 
       toast({
-        title: 'Quote approved',
-        description: 'Quote has been approved. You can now send it to the customer.'
+        title: 'Quote sent to customer',
+        description: 'The quote has been sent. Customer can now accept or reject it.'
       });
 
       onSuccess();
       onOpenChange(false);
       
     } catch (error: any) {
-      console.error('Error approving quote:', error);
+      console.error('Error sending quote:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to approve quote',
+        description: error.message || 'Failed to send quote',
         variant: 'destructive'
       });
     } finally {
@@ -117,9 +118,9 @@ export const QuotePreviewDialog: React.FC<QuotePreviewDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Review Quote - {quote.quote_number}</DialogTitle>
+          <DialogTitle>Send Quote - {quote.quote_number}</DialogTitle>
           <DialogDescription>
-            Preview the generated quote before sending it to the customer.
+            Review the quote and send it to the customer for acceptance.
           </DialogDescription>
         </DialogHeader>
 
@@ -150,18 +151,18 @@ export const QuotePreviewDialog: React.FC<QuotePreviewDialogProps> = ({
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={handleReject}
+              onClick={() => onOpenChange(false)}
               disabled={approving}
             >
               <X className="mr-2 h-4 w-4" />
-              Reject & Edit
+              Cancel
             </Button>
             <Button
-              onClick={handleApprove}
+              onClick={handleSendQuote}
               disabled={approving}
             >
               <Check className="mr-2 h-4 w-4" />
-              Approve Quote
+              Send Quote to Customer
             </Button>
           </div>
         </DialogFooter>
