@@ -13,7 +13,8 @@ import {
   Bell,
   Clock,
   Bot,
-  ExternalLink
+  ExternalLink,
+  Receipt
 } from 'lucide-react';
 import { navigateToPublicSite } from '@/utils/domainUtils';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
@@ -39,6 +40,7 @@ const navigationItems = [
   { title: 'Leads', url: '/admin/leads', icon: Target },
   { title: 'Orders', url: '/admin/orders', icon: ShoppingCart },
   { title: 'Quotes', url: '/admin/quotes', icon: FileText },
+  { title: 'Invoices', url: '/admin/invoices', icon: Receipt },
   { title: 'Customer Quote Inquiries', url: '/admin/quote-inquiries', icon: MessageSquare },
   { title: 'Communication', url: '/admin/communication', icon: Phone },
 ];

@@ -51,6 +51,7 @@ import QuotesPage from "./pages/QuotesPage";
 import UnifiedOrdersManagement from "./components/orders/UnifiedOrdersManagement";
 import CommunicationPage from "./pages/CommunicationPage";
 import Settings from "./pages/Settings";
+import InvoicesPage from "./pages/InvoicesPage";
 
 import UnifiedAuth from "./pages/UnifiedAuth";
 import AdminAuth from "./pages/AdminAuth";
@@ -125,6 +126,7 @@ const App = () => {
                         <Route path="leads" element={<LeadsPage />} />
                         <Route path="quotes" element={<QuotesPage />} />
                         <Route path="orders" element={<UnifiedOrdersManagement />} />
+                        <Route path="invoices" element={<InvoicesPage />} />
                         <Route path="analytics" element={<AnalyticsPage />} />
                         <Route path="crm" element={<CRM />} />
                         <Route path="quote-inquiries" element={<QuoteRequestManagement />} />
@@ -196,6 +198,7 @@ const App = () => {
                         <Route path="leads" element={<LeadsPage />} />
                         <Route path="quotes" element={<QuotesPage />} />
                         <Route path="orders" element={<UnifiedOrdersManagement />} />
+                        <Route path="invoices" element={<InvoicesPage />} />
                         <Route path="analytics" element={<AnalyticsPage />} />
                         <Route path="crm" element={<CRM />} />
                         <Route path="quote-inquiries" element={<QuoteRequestManagement />} />
