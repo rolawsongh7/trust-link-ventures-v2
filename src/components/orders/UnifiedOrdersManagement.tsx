@@ -187,12 +187,40 @@ const UnifiedOrdersManagement = () => {
   };
 
   const handleGenerateInvoices = async (order: Order) => {
+    // CRITICAL: Log function entry immediately
+    console.log('=== INVOICE GENERATION STARTED ===', {
+      orderId: order?.id,
+      orderNumber: order?.order_number,
+      orderStatus: order?.status,
+      timestamp: new Date().toISOString(),
+      hasOrderItems: !!order?.order_items?.length
+    });
+
+    // Validate order object exists
+    if (!order) {
+      console.error('[CRITICAL] No order object passed to handleGenerateInvoices');
+      toast.error('Invalid order data - cannot generate invoices');
+      return;
+    }
+
+    // Validate order has required fields
+    if (!order.id || !order.order_number) {
+      console.error('[CRITICAL] Order missing required fields:', {
+        hasId: !!order.id,
+        hasOrderNumber: !!order.order_number,
+        order
+      });
+      toast.error('Order data incomplete - cannot generate invoices');
+      return;
+    }
+
     const toastId = toast.loading('Generating invoices...');
     let operationComplete = false;
     
     // Set a timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
       if (!operationComplete) {
+        console.error('[TIMEOUT] Invoice generation exceeded 60 seconds');
         toast.error('Invoice generation timed out. Please try again.', { id: toastId });
       }
     }, 60000); // 60 second timeout
