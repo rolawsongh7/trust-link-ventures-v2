@@ -188,10 +188,13 @@ const UnifiedOrdersManagement = () => {
 
   const handleGenerateInvoices = async (order: Order) => {
     const toastId = toast.loading('Generating invoices...');
+    let operationComplete = false;
     
     // Set a timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
-      toast.error('Invoice generation timed out. Please try again.', { id: toastId });
+      if (!operationComplete) {
+        toast.error('Invoice generation timed out. Please try again.', { id: toastId });
+      }
     }, 60000); // 60 second timeout
     
     try {
@@ -215,6 +218,7 @@ const UnifiedOrdersManagement = () => {
       });
 
       if (packingError) {
+        operationComplete = true;
         clearTimeout(timeoutId);
         console.error('[UI] Packing list error details:', {
           error: packingError,
@@ -229,6 +233,7 @@ const UnifiedOrdersManagement = () => {
       }
 
       if (!packingData?.success) {
+        operationComplete = true;
         clearTimeout(timeoutId);
         console.error('[UI] Packing list generation failed:', {
           packingData,
@@ -266,6 +271,7 @@ const UnifiedOrdersManagement = () => {
       });
 
       if (commercialError) {
+        operationComplete = true;
         clearTimeout(timeoutId);
         console.error('[UI] Commercial invoice error details:', {
           error: commercialError,
@@ -280,6 +286,7 @@ const UnifiedOrdersManagement = () => {
       }
 
       if (!commercialData?.success) {
+        operationComplete = true;
         clearTimeout(timeoutId);
         console.error('[UI] Commercial invoice generation failed:', {
           commercialData,
@@ -292,6 +299,7 @@ const UnifiedOrdersManagement = () => {
         return;
       }
 
+      operationComplete = true;
       clearTimeout(timeoutId);
       console.log('[UI] All invoices generated successfully:', {
         packingList: packingData.invoiceNumber,
@@ -308,6 +316,7 @@ const UnifiedOrdersManagement = () => {
       }, 1500);
       
     } catch (error: any) {
+      operationComplete = true;
       clearTimeout(timeoutId);
       console.error('[UI] Exception generating invoices:', {
         error,
