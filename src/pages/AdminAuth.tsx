@@ -14,13 +14,6 @@ import { RECAPTCHA_SITE_KEY } from '@/config/recaptcha';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { isAdminDomain, redirectToAdminDomain } from '@/utils/domainUtils';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 
 const AdminAuth = () => {
   const navigate = useNavigate();
@@ -267,39 +260,29 @@ const AdminAuth = () => {
           <p className="text-white/90 text-lg">Admin Portal</p>
         </div>
 
-        {/* Features Carousel */}
+        {/* Features Grid */}
         <div className="relative z-10 flex-1 flex items-center">
-          <Carousel className="w-full max-w-lg mx-auto" opts={{ loop: true, align: "start" }}>
-            <CarouselContent>
-              {features.map((feature, index) => (
-                <CarouselItem key={index}>
-                  <div className="p-8">
-                    <Card className="bg-white/10 backdrop-blur-lg border-white/20 text-white">
-                      <CardContent className="p-8 space-y-4">
-                        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-                          <feature.icon className="w-8 h-8 text-white" />
-                        </div>
-                        <div className="space-y-2">
-                          <h3 className="text-2xl font-bold">{feature.title}</h3>
-                          <p className="text-white/80 text-base leading-relaxed">
-                            {feature.description}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2 pt-4">
-                          <CheckCircle className="w-5 h-5 text-green-300" />
-                          <span className="text-lg font-semibold text-green-300">{feature.stats}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
+          <div className="w-full max-w-2xl mx-auto grid grid-cols-1 gap-6">
+            {features.slice(0, 3).map((feature, index) => (
+              <Card key={index} className="bg-white/10 backdrop-blur-lg border-white/20 text-white">
+                <CardContent className="p-6 flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <feature.icon className="w-6 h-6 text-white" />
                   </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <div className="flex justify-center mt-4 space-x-2">
-              <CarouselPrevious className="relative left-0 translate-x-0 bg-white/20 hover:bg-white/30 border-white/30 text-white" />
-              <CarouselNext className="relative right-0 translate-x-0 bg-white/20 hover:bg-white/30 border-white/30 text-white" />
-            </div>
-          </Carousel>
+                  <div className="space-y-1 flex-1">
+                    <h3 className="text-lg font-bold">{feature.title}</h3>
+                    <p className="text-white/80 text-sm leading-relaxed">
+                      {feature.description}
+                    </p>
+                    <div className="flex items-center space-x-2 pt-2">
+                      <CheckCircle className="w-4 h-4 text-green-300" />
+                      <span className="text-sm font-semibold text-green-300">{feature.stats}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
         {/* Security Badges */}
