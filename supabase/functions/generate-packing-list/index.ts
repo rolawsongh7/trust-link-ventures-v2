@@ -23,6 +23,8 @@ serve(async (req) => {
       throw new Error('Order ID is required');
     }
 
+    let invoice: any = null;
+
     // Check if packing list already exists
     const { data: existing } = await supabase
       .from('invoices')
