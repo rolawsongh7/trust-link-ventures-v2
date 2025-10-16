@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
+const FUNCTION_VERSION = '2.1.0';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -12,12 +14,21 @@ serve(async (req) => {
   }
 
   try {
+    console.log(`[Commercial Invoice] Function Version: ${FUNCTION_VERSION}`);
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { orderId } = await req.json();
-    console.log('[Commercial Invoice] Processing order:', orderId);
+    
+    const logContext = {
+      orderId,
+      timestamp: new Date().toISOString(),
+      version: FUNCTION_VERSION
+    };
+    
+    console.log('[Commercial Invoice] Processing order:', logContext);
 
     if (!orderId) {
       throw new Error('Order ID is required');
@@ -49,8 +60,17 @@ serve(async (req) => {
         );
       } else {
         console.log('[Commercial Invoice] Exists but missing PDF, regenerating...');
-        // Continue to PDF generation using existing invoice
         invoice = existing;
+        
+        // Validate invoice object
+        if (!invoice || !invoice.id) {
+          throw new Error('Invalid invoice data retrieved from database. Invoice object is null or missing ID.');
+        }
+        
+        console.log('[Commercial Invoice] Using existing invoice for regeneration:', {
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.invoice_number
+        });
       }
     }
 
@@ -163,23 +183,53 @@ serve(async (req) => {
       console.log('[Commercial Invoice] Invoice items already exist');
     }
 
-    // Generate PDF using the edge function
-    console.log('[Commercial Invoice] Step: Calling generate-invoice-pdf function...');
-    const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-invoice-pdf', {
-      body: { 
-        invoiceId: invoice.id,
-        invoiceType: 'commercial'
-      }
-    });
-
-    if (pdfError) {
-      console.error('[Commercial Invoice] PDF generation error:', pdfError);
-      throw new Error(`PDF generation failed: ${pdfError.message}`);
+    // Final validation before PDF generation
+    if (!invoice) {
+      throw new Error('Invoice object is null. Cannot proceed with PDF generation.');
+    }
+    
+    if (!invoice.id) {
+      throw new Error('Invoice ID is missing. Cannot generate PDF.');
     }
 
-    if (!pdfData?.fileUrl) {
-      console.error('[Commercial Invoice] No file URL returned from PDF generation');
-      throw new Error('PDF generation returned no file URL');
+    // Generate PDF using the edge function
+    console.log('[Commercial Invoice] Calling PDF generation:', {
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoice_number,
+      invoiceType: 'commercial'
+    });
+    
+    try {
+      const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-invoice-pdf', {
+        body: { 
+          invoiceId: invoice.id,
+          invoiceType: 'commercial'
+        }
+      });
+
+      if (pdfError) {
+        console.error('[Commercial Invoice] PDF generation error:', {
+          error: pdfError.message,
+          invoiceId: invoice.id,
+          stack: pdfError.stack
+        });
+        throw new Error(`PDF generation failed: ${pdfError.message}`);
+      }
+
+      if (!pdfData?.fileUrl) {
+        console.error('[Commercial Invoice] No file URL returned:', { pdfData });
+        throw new Error('PDF generation returned no file URL');
+      }
+      
+      console.log('[Commercial Invoice] PDF generated successfully:', pdfData.fileUrl);
+    } catch (pdfError) {
+      console.error('[Commercial Invoice] PDF Generation Exception:', {
+        error: pdfError.message,
+        stack: pdfError.stack,
+        invoiceId: invoice.id,
+        invoiceType: 'commercial'
+      });
+      throw new Error(`PDF generation exception: ${pdfError.message}`);
     }
 
     console.log('[Commercial Invoice] PDF generated successfully:', pdfData.fileUrl);
@@ -227,9 +277,19 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[Commercial Invoice] Error:', error);
+    console.error('[Commercial Invoice] Fatal Error:', {
+      error: error.message,
+      stack: error.stack,
+      version: FUNCTION_VERSION,
+      timestamp: new Date().toISOString()
+    });
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        version: FUNCTION_VERSION,
+        timestamp: new Date().toISOString()
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

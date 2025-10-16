@@ -134,9 +134,22 @@ export const useRealtimeOrders = (customerId?: string) => {
                   duration: 6000,
                 });
 
+                // Validate before auto-generating invoices
+                if (!orderId || !orderNumber) {
+                  console.error('[Realtime] Missing order data for auto-generation:', { orderId, orderNumber });
+                  return;
+                }
+
                 // Auto-generate packing list when status becomes ready_to_ship
                 if (newStatus === 'ready_to_ship' && oldStatus !== 'ready_to_ship') {
-                  console.log('🔄 Auto-generating packing list for order:', orderNumber);
+                  console.log('[Realtime] Auto-generating packing list:', {
+                    orderId,
+                    orderNumber,
+                    oldStatus,
+                    newStatus,
+                    timestamp: new Date().toISOString()
+                  });
+                  
                   toast({
                     title: '📄 Generating Packing List',
                     description: `Auto-generating packing list for ${orderNumber}...`,
@@ -148,28 +161,56 @@ export const useRealtimeOrders = (customerId?: string) => {
                     })
                     .then(({ data, error }) => {
                       if (error) {
-                        console.error('Packing list generation error:', error);
+                        console.error('[Realtime] Packing list generation error:', {
+                          error,
+                          message: error.message,
+                          orderId,
+                          orderNumber
+                        });
                         toast({
                           title: '❌ Generation Failed',
-                          description: 'Failed to auto-generate packing list',
+                          description: `Failed to generate packing list: ${error.message}`,
                           variant: 'destructive',
                         });
-                      } else {
-                        console.log('✅ Packing list generated:', data);
+                      } else if (data?.success) {
+                        console.log('[Realtime] Packing list generated:', {
+                          data,
+                          invoiceNumber: data.invoiceNumber,
+                          orderId
+                        });
                         toast({
                           title: '✅ Packing List Generated',
-                          description: `Packing list created for ${orderNumber}`,
+                          description: `${data.invoiceNumber} created for ${orderNumber}`,
+                        });
+                      } else {
+                        console.error('[Realtime] Packing list generation - no success:', data);
+                        toast({
+                          title: '⚠️ Generation Warning',
+                          description: 'Packing list may not have generated correctly',
+                          variant: 'destructive',
                         });
                       }
                     })
                     .catch((err) => {
-                      console.error('Packing list generation error:', err);
+                      console.error('[Realtime] Packing list exception:', {
+                        error: err,
+                        message: err.message,
+                        orderId,
+                        orderNumber
+                      });
                     });
                 }
 
                 // Auto-generate commercial invoice when status becomes shipped
                 if (newStatus === 'shipped' && oldStatus !== 'shipped') {
-                  console.log('🔄 Auto-generating commercial invoice for order:', orderNumber);
+                  console.log('[Realtime] Auto-generating commercial invoice:', {
+                    orderId,
+                    orderNumber,
+                    oldStatus,
+                    newStatus,
+                    timestamp: new Date().toISOString()
+                  });
+                  
                   toast({
                     title: '📄 Generating Commercial Invoice',
                     description: `Auto-generating invoice for ${orderNumber}...`,
@@ -181,22 +222,43 @@ export const useRealtimeOrders = (customerId?: string) => {
                     })
                     .then(({ data, error }) => {
                       if (error) {
-                        console.error('Commercial invoice generation error:', error);
+                        console.error('[Realtime] Commercial invoice generation error:', {
+                          error,
+                          message: error.message,
+                          orderId,
+                          orderNumber
+                        });
                         toast({
                           title: '❌ Generation Failed',
-                          description: 'Failed to auto-generate commercial invoice',
+                          description: `Failed to generate invoice: ${error.message}`,
                           variant: 'destructive',
                         });
-                      } else {
-                        console.log('✅ Commercial invoice generated:', data);
+                      } else if (data?.success) {
+                        console.log('[Realtime] Commercial invoice generated:', {
+                          data,
+                          invoiceNumber: data.invoiceNumber,
+                          orderId
+                        });
                         toast({
                           title: '✅ Commercial Invoice Generated',
-                          description: `Invoice created for ${orderNumber}`,
+                          description: `${data.invoiceNumber} created for ${orderNumber}`,
+                        });
+                      } else {
+                        console.error('[Realtime] Commercial invoice generation - no success:', data);
+                        toast({
+                          title: '⚠️ Generation Warning',
+                          description: 'Commercial invoice may not have generated correctly',
+                          variant: 'destructive',
                         });
                       }
                     })
                     .catch((err) => {
-                      console.error('Commercial invoice generation error:', err);
+                      console.error('[Realtime] Commercial invoice exception:', {
+                        error: err,
+                        message: err.message,
+                        orderId,
+                        orderNumber
+                      });
                     });
                 }
               }

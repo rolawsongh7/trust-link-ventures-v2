@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
+const FUNCTION_VERSION = '2.1.0';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -12,12 +14,21 @@ serve(async (req) => {
   }
 
   try {
+    console.log(`[Packing List] Function Version: ${FUNCTION_VERSION}`);
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { orderId } = await req.json();
-    console.log('[Packing List] Processing order:', orderId);
+    
+    const logContext = {
+      orderId,
+      timestamp: new Date().toISOString(),
+      version: FUNCTION_VERSION
+    };
+    
+    console.log('[Packing List] Processing order:', logContext);
 
     if (!orderId) {
       throw new Error('Order ID is required');
@@ -49,8 +60,17 @@ serve(async (req) => {
         );
       } else {
         console.log('[Packing List] Exists but missing PDF, regenerating...');
-        // Continue to PDF generation using existing invoice
         invoice = existing;
+        
+        // Validate invoice object
+        if (!invoice || !invoice.id) {
+          throw new Error('Invalid invoice data retrieved from database. Invoice object is null or missing ID.');
+        }
+        
+        console.log('[Packing List] Using existing invoice for regeneration:', {
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.invoice_number
+        });
       }
     }
 
@@ -138,23 +158,53 @@ serve(async (req) => {
       console.log('[Packing List] Invoice items already exist');
     }
 
-    // Generate PDF using the edge function
-    console.log('[Packing List] Step: Calling generate-invoice-pdf function...');
-    const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-invoice-pdf', {
-      body: { 
-        invoiceId: invoice.id,
-        invoiceType: 'packing_list'
-      }
-    });
-
-    if (pdfError) {
-      console.error('[Packing List] PDF generation error:', pdfError);
-      throw new Error(`PDF generation failed: ${pdfError.message}`);
+    // Final validation before PDF generation
+    if (!invoice) {
+      throw new Error('Invoice object is null. Cannot proceed with PDF generation.');
+    }
+    
+    if (!invoice.id) {
+      throw new Error('Invoice ID is missing. Cannot generate PDF.');
     }
 
-    if (!pdfData?.fileUrl) {
-      console.error('[Packing List] No file URL returned from PDF generation');
-      throw new Error('PDF generation returned no file URL');
+    // Generate PDF using the edge function
+    console.log('[Packing List] Calling PDF generation:', {
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoice_number,
+      invoiceType: 'packing_list'
+    });
+    
+    try {
+      const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-invoice-pdf', {
+        body: { 
+          invoiceId: invoice.id,
+          invoiceType: 'packing_list'
+        }
+      });
+
+      if (pdfError) {
+        console.error('[Packing List] PDF generation error:', {
+          error: pdfError.message,
+          invoiceId: invoice.id,
+          stack: pdfError.stack
+        });
+        throw new Error(`PDF generation failed: ${pdfError.message}`);
+      }
+
+      if (!pdfData?.fileUrl) {
+        console.error('[Packing List] No file URL returned:', { pdfData });
+        throw new Error('PDF generation returned no file URL');
+      }
+      
+      console.log('[Packing List] PDF generated successfully:', pdfData.fileUrl);
+    } catch (pdfError) {
+      console.error('[Packing List] PDF Generation Exception:', {
+        error: pdfError.message,
+        stack: pdfError.stack,
+        invoiceId: invoice.id,
+        invoiceType: 'packing_list'
+      });
+      throw new Error(`PDF generation exception: ${pdfError.message}`);
     }
 
     console.log('[Packing List] PDF generated successfully:', pdfData.fileUrl);
@@ -196,9 +246,19 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[Packing List] Error:', error);
+    console.error('[Packing List] Fatal Error:', {
+      error: error.message,
+      stack: error.stack,
+      version: FUNCTION_VERSION,
+      timestamp: new Date().toISOString()
+    });
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        version: FUNCTION_VERSION,
+        timestamp: new Date().toISOString()
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

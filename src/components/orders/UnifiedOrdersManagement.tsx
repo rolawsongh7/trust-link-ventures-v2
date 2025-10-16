@@ -196,56 +196,109 @@ const UnifiedOrdersManagement = () => {
     
     try {
       // First generate packing list
-      console.log('[UI] Starting packing list generation for order:', order.id);
+      console.log('[UI] Starting packing list generation:', {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        timestamp: new Date().toISOString()
+      });
+      
       toast.loading('Generating packing list...', { id: toastId });
       
       const { data: packingData, error: packingError } = await supabase.functions.invoke('generate-packing-list', {
         body: { orderId: order.id },
       });
 
-      console.log('[UI] Packing list response:', { packingData, packingError });
+      console.log('[UI] Packing list response:', { 
+        packingData, 
+        packingError,
+        timestamp: new Date().toISOString()
+      });
 
       if (packingError) {
         clearTimeout(timeoutId);
-        console.error('[UI] Packing list error:', packingError);
-        toast.error(`Packing list failed: ${packingError.message}`, { id: toastId });
+        console.error('[UI] Packing list error details:', {
+          error: packingError,
+          message: packingError.message,
+          context: packingError.context,
+          orderId: order.id
+        });
+        
+        const errorMsg = packingError.message || 'Unknown error occurred';
+        toast.error(`Packing list failed: ${errorMsg}. Check console for details.`, { id: toastId });
         return;
       }
 
       if (!packingData?.success) {
         clearTimeout(timeoutId);
-        console.error('[UI] Packing list generation failed - no success flag');
-        toast.error('Packing list generation failed', { id: toastId });
+        console.error('[UI] Packing list generation failed:', {
+          packingData,
+          orderId: order.id,
+          reason: 'No success flag in response'
+        });
+        
+        const errorMsg = packingData?.error || 'Generation failed - no success flag';
+        toast.error(`Packing list error: ${errorMsg}`, { id: toastId });
         return;
       }
 
-      console.log('[UI] Packing list created successfully:', packingData.invoiceNumber);
+      console.log('[UI] Packing list created successfully:', {
+        invoiceNumber: packingData.invoiceNumber,
+        fileUrl: packingData.fileUrl
+      });
+      
       toast.loading('✓ Packing list created. Generating commercial invoice...', { id: toastId });
 
       // Then generate commercial invoice
-      console.log('[UI] Starting commercial invoice generation for order:', order.id);
+      console.log('[UI] Starting commercial invoice generation:', {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        timestamp: new Date().toISOString()
+      });
+      
       const { data: commercialData, error: commercialError } = await supabase.functions.invoke('generate-commercial-invoice', {
         body: { orderId: order.id },
       });
 
-      console.log('[UI] Commercial invoice response:', { commercialData, commercialError });
+      console.log('[UI] Commercial invoice response:', { 
+        commercialData, 
+        commercialError,
+        timestamp: new Date().toISOString()
+      });
 
       if (commercialError) {
         clearTimeout(timeoutId);
-        console.error('[UI] Commercial invoice error:', commercialError);
-        toast.error(`Commercial invoice failed: ${commercialError.message}`, { id: toastId });
+        console.error('[UI] Commercial invoice error details:', {
+          error: commercialError,
+          message: commercialError.message,
+          context: commercialError.context,
+          orderId: order.id
+        });
+        
+        const errorMsg = commercialError.message || 'Unknown error occurred';
+        toast.error(`Commercial invoice failed: ${errorMsg}. Check console for details.`, { id: toastId });
         return;
       }
 
       if (!commercialData?.success) {
         clearTimeout(timeoutId);
-        console.error('[UI] Commercial invoice generation failed - no success flag');
-        toast.error('Commercial invoice generation failed', { id: toastId });
+        console.error('[UI] Commercial invoice generation failed:', {
+          commercialData,
+          orderId: order.id,
+          reason: 'No success flag in response'
+        });
+        
+        const errorMsg = commercialData?.error || 'Generation failed - no success flag';
+        toast.error(`Commercial invoice error: ${errorMsg}`, { id: toastId });
         return;
       }
 
       clearTimeout(timeoutId);
-      console.log('[UI] All invoices generated successfully');
+      console.log('[UI] All invoices generated successfully:', {
+        packingList: packingData.invoiceNumber,
+        commercialInvoice: commercialData.invoiceNumber,
+        timestamp: new Date().toISOString()
+      });
+      
       toast.success('✓ All invoices generated successfully!', { id: toastId });
       
       // Refresh orders data after a short delay
@@ -256,8 +309,17 @@ const UnifiedOrdersManagement = () => {
       
     } catch (error: any) {
       clearTimeout(timeoutId);
-      console.error('[UI] Error generating invoices:', error);
-      toast.error(error.message || 'Failed to generate invoices', { id: toastId });
+      console.error('[UI] Exception generating invoices:', {
+        error,
+        message: error?.message,
+        stack: error?.stack,
+        orderId: order.id,
+        orderNumber: order.order_number,
+        timestamp: new Date().toISOString()
+      });
+      
+      const errorMessage = error?.message || 'Unknown error occurred';
+      toast.error(`Invoice generation failed: ${errorMessage}. Check console for details.`, { id: toastId });
     }
   };
 
