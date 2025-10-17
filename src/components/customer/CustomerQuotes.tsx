@@ -222,6 +222,20 @@ export const CustomerQuotes: React.FC = () => {
   };
 
   const handleApproveQuote = (finalQuote: any) => {
+    console.log('handleApproveQuote called with:', finalQuote);
+    console.log('finalQuote.id:', finalQuote?.id);
+    
+    // Validate that we have a complete quote object
+    if (!finalQuote || !finalQuote.id) {
+      console.error('Invalid quote object:', finalQuote);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Unable to process quote. Please refresh the page and try again.",
+      });
+      return;
+    }
+
     setQuoteToAccept({
       id: finalQuote.id,
       quote_number: finalQuote.quote_number,

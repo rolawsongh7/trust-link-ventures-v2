@@ -210,6 +210,17 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
       return;
     }
 
+    // Validate quote ID exists
+    if (!quote.id) {
+      console.error('Invalid quote data - missing ID:', quote);
+      toast({
+        title: 'Error',
+        description: 'Invalid quote data. Please close this dialog and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setSubmitting(true);
     setUploadStatus('uploading');
 
