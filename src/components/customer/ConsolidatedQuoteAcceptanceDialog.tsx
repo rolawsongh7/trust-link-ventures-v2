@@ -9,22 +9,17 @@ import {
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
 import { 
   CheckCircle2, 
   MapPin, 
   Plus, 
-  CreditCard, 
   Building2, 
   Smartphone,
-  Upload,
-  FileText,
   Loader2,
   AlertCircle,
   Mail,
-  DollarSign
+  DollarSign,
+  Package
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -74,16 +69,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
   const [selectedAddressId, setSelectedAddressId] = useState<string>('');
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  
-  // Payment proof fields
-  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'mobile_money'>('mobile_money');
-  const [paymentReference, setPaymentReference] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
 
-  const MAX_FILE_SIZE = 10 * 1024 * 1024;
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
 
   useEffect(() => {
     if (open && profile) {
@@ -123,70 +109,6 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      toast({
-        title: 'Invalid File Type',
-        description: 'Please upload a JPG, PNG, or PDF file',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      toast({
-        title: 'File Too Large',
-        description: 'File size must be less than 10MB',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setSelectedFile(file);
-    setUploadStatus('idle');
-  };
-
-  const uploadWithRetry = async (file: File, customerId: string, orderNumber: string, maxRetries = 3): Promise<string> => {
-    let lastError: Error | null = null;
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${customerId}/${orderNumber}-${Date.now()}.${fileExt}`;
-        
-        setUploadProgress((attempt - 1) * 30);
-        
-        const { data, error } = await supabase.storage
-          .from('payment-proofs')
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
-
-        if (error) throw error;
-        
-        setUploadProgress(90);
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('payment-proofs')
-          .getPublicUrl(fileName);
-
-        setUploadProgress(100);
-        return publicUrl;
-      } catch (error) {
-        lastError = error as Error;
-        
-        if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        }
-      }
-    }
-    
-    throw lastError || new Error('Upload failed after all retries');
-  };
 
   const handleProceedToPayment = () => {
     if (!selectedAddressId) {
@@ -222,17 +144,9 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
     }
 
     setSubmitting(true);
-    setUploadStatus('uploading');
 
     try {
-      let paymentProofUrl = null;
-      
-      // Upload payment proof if provided
-      if (selectedFile && paymentReference.trim() && profile) {
-        paymentProofUrl = await uploadWithRetry(selectedFile, profile.id, quote.quote_number);
-      }
-
-      // Accept the quote and create order with delivery address
+      // Accept the quote
       const { error: quoteError } = await supabase
         .from('quotes')
         .update({ status: 'accepted' })
@@ -241,7 +155,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
       if (quoteError) throw quoteError;
 
       // The auto_convert_quote_to_order trigger will create the order
-      // We need to wait a moment for it to complete, then update with address and payment info
+      // Wait for it to complete
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Find the created order
@@ -253,28 +167,20 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
 
       if (orderFetchError) throw orderFetchError;
 
-      // Update the order with delivery address and payment proof
-      const updateData: any = {
-        delivery_address_id: selectedAddressId,
-      };
-
-      if (paymentProofUrl) {
-        updateData.payment_proof_url = paymentProofUrl;
-        updateData.payment_reference = paymentReference;
-        updateData.payment_method = paymentMethod;
-        updateData.payment_proof_uploaded_at = new Date().toISOString();
-      }
-
+      // Update the order with delivery address
       const { error: orderUpdateError } = await supabase
         .from('orders')
-        .update(updateData)
+        .update({
+          delivery_address_id: selectedAddressId,
+          delivery_address_confirmed_at: new Date().toISOString(),
+        })
         .eq('id', orders.id);
 
       if (orderUpdateError) throw orderUpdateError;
 
-      // Send payment instructions email
+      // Send payment instructions email (non-blocking)
       try {
-        const { error: emailError } = await supabase.functions.invoke('send-payment-instructions', {
+        await supabase.functions.invoke('send-payment-instructions', {
           body: {
             quoteId: quote.id,
             customerEmail: profile?.email,
@@ -282,58 +188,13 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
             orderNumber: orders.order_number
           }
         });
-
-        if (emailError) {
-          console.error('Failed to send payment email:', emailError);
-        }
       } catch (emailError) {
-        console.error('Payment email error:', emailError);
+        console.error('Payment email error (non-blocking):', emailError);
       }
-
-      // Send notification if payment proof was uploaded
-      if (paymentProofUrl) {
-        // Notify all admins about payment proof upload
-        const { data: adminUsers } = await supabase
-          .from('user_roles')
-          .select('user_id')
-          .eq('role', 'admin');
-
-        if (adminUsers && adminUsers.length > 0) {
-          const adminNotifications = adminUsers.map(admin => ({
-            user_id: admin.user_id,
-            type: 'payment_proof_uploaded',
-            title: 'New Payment Proof Uploaded',
-            message: `Payment proof uploaded for order ${orders.order_number}. Please verify the payment.`,
-            link: '/orders',
-          }));
-
-          const { error: notifError } = await supabase
-            .from('user_notifications')
-            .insert(adminNotifications);
-          
-          if (notifError) {
-            console.error('Failed to send admin notifications (non-blocking):', notifError);
-          }
-        }
-
-        // Also send email notification
-        await supabase.functions.invoke('notify-payment-proof-uploaded', {
-          body: {
-            orderId: orders.id,
-            orderNumber: orders.order_number,
-            paymentMethod,
-            paymentReference,
-          },
-        }).catch(err => console.error('Email notification error (non-blocking):', err));
-      }
-
-      setUploadStatus('success');
 
       toast({
         title: 'Quote Accepted Successfully!',
-        description: paymentProofUrl 
-          ? 'Your order has been created and payment proof submitted for verification.'
-          : 'Your order has been created. Please upload payment proof when ready.',
+        description: 'Your order has been created. You can upload payment proof from your Orders page.',
       });
 
       setTimeout(() => {
@@ -344,7 +205,6 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
 
     } catch (error: any) {
       console.error('Error accepting quote:', error);
-      setUploadStatus('error');
       
       toast({
         title: 'Error',
@@ -359,11 +219,6 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
   const resetForm = () => {
     setCurrentStep('address');
     setSelectedAddressId('');
-    setPaymentMethod('mobile_money');
-    setPaymentReference('');
-    setSelectedFile(null);
-    setUploadProgress(0);
-    setUploadStatus('idle');
   };
 
   const handleAddNewAddress = () => {
@@ -620,7 +475,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-amber-600 mt-0.5">•</span>
-                    <span>Upload proof of payment below after completing transaction</span>
+                    <span>Upload proof of payment from your Orders page after completing transaction</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-amber-600 mt-0.5">•</span>
@@ -630,107 +485,44 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
               </div>
             </div>
 
-            <Separator />
-
-            <div className="space-y-4">
-              <h4 className="font-semibold">Upload Payment Proof (Optional - Can do later)</h4>
-              <p className="text-sm text-muted-foreground">
-                You can upload your payment receipt now or later from your orders page
-              </p>
-
-              {/* Payment Method */}
+            {/* Next Steps Section */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-5 space-y-4">
+              <div className="flex items-center gap-2">
+                <Package className="h-6 w-6 text-blue-600" />
+                <h3 className="text-lg font-semibold text-blue-900">Next Steps</h3>
+              </div>
+              
               <div className="space-y-3">
-                <Label>Payment Method</Label>
-                <RadioGroup value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
-                  <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent">
-                    <RadioGroupItem value="mobile_money" id="mobile_money" />
-                    <Label htmlFor="mobile_money" className="flex-1 cursor-pointer">
-                      Mobile Money
-                    </Label>
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                    1
                   </div>
-                  <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent">
-                    <RadioGroupItem value="bank_transfer" id="bank_transfer" />
-                    <Label htmlFor="bank_transfer" className="flex-1 cursor-pointer">
-                      Bank Transfer
-                    </Label>
+                  <div className="flex-1">
+                    <p className="font-semibold text-blue-900">Complete Payment</p>
+                    <p className="text-sm text-blue-800">Use the payment details above to send your payment within 7 days</p>
                   </div>
-                </RadioGroup>
-              </div>
-
-              {/* Payment Reference */}
-              <div className="space-y-2">
-                <Label htmlFor="reference">Payment Reference / Transaction ID</Label>
-                <Input
-                  id="reference"
-                  placeholder="Enter your transaction reference (if uploading proof now)"
-                  value={paymentReference}
-                  onChange={(e) => setPaymentReference(e.target.value)}
-                  disabled={submitting}
-                />
-              </div>
-
-              {/* File Upload */}
-              <div className="space-y-2">
-                <Label>Payment Receipt (Image or PDF)</Label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/jpg,application/pdf"
-                    onChange={handleFileSelect}
-                    disabled={submitting}
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <label htmlFor="file-upload" className="cursor-pointer">
-                    {!selectedFile ? (
-                      <div className="space-y-2">
-                        <Upload className="h-10 w-10 mx-auto text-muted-foreground" />
-                        <div className="text-sm text-muted-foreground">
-                          <span className="font-semibold text-primary">Click to upload</span> or drag and drop
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          JPG, PNG or PDF (max 10MB)
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <FileText className="h-10 w-10 mx-auto text-primary" />
-                        <div className="text-sm font-medium">{selectedFile.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                        </div>
-                      </div>
-                    )}
-                  </label>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                    2
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-blue-900">Upload Payment Proof</p>
+                    <p className="text-sm text-blue-800">After payment, go to <strong>My Orders</strong> page and click <strong>"Upload Payment Proof"</strong></p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                    3
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-blue-900">Order Processing</p>
+                    <p className="text-sm text-blue-800">We'll verify your payment (24-48 hours) and start processing your order</p>
+                  </div>
                 </div>
               </div>
-
-              {/* Upload Progress */}
-              {uploadStatus === 'uploading' && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Processing...</span>
-                    <span className="font-medium">{uploadProgress}%</span>
-                  </div>
-                  <Progress value={uploadProgress} />
-                </div>
-              )}
-
-              {/* Success Message */}
-              {uploadStatus === 'success' && (
-                <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-3 rounded-lg">
-                  <CheckCircle2 className="h-5 w-5" />
-                  <span>Quote accepted and order created successfully!</span>
-                </div>
-              )}
-
-              {/* Error Message */}
-              {uploadStatus === 'error' && (
-                <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
-                  <AlertCircle className="h-5 w-5" />
-                  <span>Failed to process. Please try again.</span>
-                </div>
-              )}
             </div>
 
             <div className="flex justify-between items-center pt-4 border-t">
