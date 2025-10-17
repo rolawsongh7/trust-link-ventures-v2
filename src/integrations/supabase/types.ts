@@ -1334,7 +1334,7 @@ export type Database = {
           carrier_name: string | null
           created_at: string | null
           created_by: string | null
-          currency: string | null
+          currency: string
           customer_id: string | null
           delivered_at: string | null
           delivery_address_confirmed_at: string | null
@@ -1377,7 +1377,7 @@ export type Database = {
           carrier_name?: string | null
           created_at?: string | null
           created_by?: string | null
-          currency?: string | null
+          currency?: string
           customer_id?: string | null
           delivered_at?: string | null
           delivery_address_confirmed_at?: string | null
@@ -1420,7 +1420,7 @@ export type Database = {
           carrier_name?: string | null
           created_at?: string | null
           created_by?: string | null
-          currency?: string | null
+          currency?: string
           customer_id?: string | null
           delivered_at?: string | null
           delivery_address_confirmed_at?: string | null
@@ -1977,7 +1977,7 @@ export type Database = {
           approved_by: string | null
           created_at: string
           created_by: string | null
-          currency: string | null
+          currency: string
           customer_email: string | null
           customer_id: string | null
           description: string | null
@@ -2003,7 +2003,7 @@ export type Database = {
           approved_by?: string | null
           created_at?: string
           created_by?: string | null
-          currency?: string | null
+          currency?: string
           customer_email?: string | null
           customer_id?: string | null
           description?: string | null
@@ -2029,7 +2029,7 @@ export type Database = {
           approved_by?: string | null
           created_at?: string
           created_by?: string | null
-          currency?: string | null
+          currency?: string
           customer_email?: string | null
           customer_id?: string | null
           description?: string | null

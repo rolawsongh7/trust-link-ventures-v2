@@ -18,6 +18,12 @@ export class InvoiceService {
         return null;
       }
 
+      // CRITICAL: Validate currency is set
+      if (!quote.currency) {
+        console.error('Quote currency is NULL for quote:', quoteId);
+        throw new Error('Cannot generate proforma invoice: Quote has no currency set');
+      }
+
       // Check if proforma invoice already exists
       const { data: existing } = await supabase
         .from('invoices')
@@ -42,7 +48,7 @@ export class InvoiceService {
           subtotal: quote.total_amount,
           tax_amount: 0,
           total_amount: quote.total_amount,
-          currency: quote.currency || 'USD',
+          currency: quote.currency, // No fallback - validated above
           status: 'draft' as any,
           payment_terms: '30 days net',
           due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -112,6 +118,12 @@ export class InvoiceService {
         return null;
       }
 
+      // CRITICAL: Validate currency is set
+      if (!order.currency) {
+        console.error('Order currency is NULL for order:', orderId);
+        throw new Error('Cannot generate commercial invoice: Order has no currency set');
+      }
+
       // Create commercial invoice
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
@@ -124,7 +136,7 @@ export class InvoiceService {
           subtotal: order.total_amount,
           tax_amount: 0,
           total_amount: order.total_amount,
-          currency: order.currency || 'USD',
+          currency: order.currency, // No fallback - validated above
           status: 'sent' as any,
           payment_terms: '30 days net',
           due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -195,6 +207,12 @@ export class InvoiceService {
         return null;
       }
 
+      // CRITICAL: Validate currency is set
+      if (!order.currency) {
+        console.error('Order currency is NULL for order:', orderId);
+        throw new Error('Cannot generate packing list: Order has no currency set');
+      }
+
       // Create packing list
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
@@ -206,7 +224,7 @@ export class InvoiceService {
           subtotal: 0,
           tax_amount: 0,
           total_amount: 0,
-          currency: order.currency || 'USD',
+          currency: order.currency, // No fallback - validated above
           status: 'sent' as any,
           sent_at: new Date().toISOString(),
         }])
