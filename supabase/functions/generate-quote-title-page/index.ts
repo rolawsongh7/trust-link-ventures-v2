@@ -263,6 +263,16 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       color: mediumGray,
     })
 
+    yPosition -= 10
+
+    page.drawText('Email: info@trustlinkcompany.com', {
+      x: leftColumn,
+      y: yPosition,
+      size: 8,
+      font: regularFont,
+      color: mediumGray,
+    })
+
 
     // QUOTE title (centered, higher position)
     yPosition = height - 110
@@ -314,7 +324,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     })
 
     // Bill To section (positioned directly below Trust Link address)
-    yPosition -= 20
+    yPosition -= 40
     const billToX = leftColumn
 
     page.drawText('Bill To', {
