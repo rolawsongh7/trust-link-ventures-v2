@@ -231,7 +231,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     const headerStartY = height - MARGIN_Y
 
     // ===== LEFT COLUMN: "QUOTE" heading + Logo + Supplier info =====
-    let leftColY = headerStartY
+    let leftColY = headerStartY - 20  // Add 20px space from top edge
     
     // "QUOTE" heading - CENTERED at very top (highest text)
     const quoteHeadingText = 'QUOTE'
@@ -245,10 +245,11 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       font: boldFont,
       color: primaryBlue,
     })
-    leftColY -= 50  // Gap after QUOTE heading
+    leftColY -= 40  // Gap after QUOTE heading (reduced from 50px)
     
-    // Store position for logo bottom alignment
+    // Store position for logo bottom and center alignment
     let logoBottomY = leftColY
+    let logoCenterY = leftColY
     
     // Trust Link logo (below QUOTE)
     if (trustLinkLogo) {
@@ -262,7 +263,8 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
         width: logoWidth,
         height: logoHeight,
       })
-      logoBottomY = leftColY - logoHeight  // Store for right column alignment
+      logoBottomY = leftColY - logoHeight  // Store bottom position
+      logoCenterY = logoBottomY + (logoHeight / 2)  // Vertical center of logo
       leftColY -= logoHeight + 15
     }
     
@@ -312,9 +314,9 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     // Store where left column ended
     const leftColEndY = leftColY
 
-    // ===== RIGHT COLUMN: Quote metadata (aligned with logo bottom, RIGHT-ALIGNED) =====
+    // ===== RIGHT COLUMN: Quote metadata (aligned with logo center, RIGHT-ALIGNED) =====
     const quoteMetaFontSize = 12
-    let rightColY = logoBottomY  // Align with logo bottom
+    let rightColY = logoCenterY  // Align with logo vertical center
     
     // Quote # - right-aligned
     const quoteNumberLabel = 'Quote #:'
@@ -366,9 +368,9 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       color: darkGray,
     })
 
-    // ===== RIGHT COLUMN: Bill To card (aligned with Trust Link address) =====
+    // ===== RIGHT COLUMN: Bill To card (positioned below Date) =====
     const billToCardX = RIGHT_COL_X
-    const billToCardY = trustLinkStartY  // Align with Trust Link Ventures text
+    const billToCardY = rightColY - 25  // 25px gap below Date line
     const billToCardWidth = RIGHT_COL_WIDTH
     const billToCardPadding = 12
     const estimatedCardHeight = 115
