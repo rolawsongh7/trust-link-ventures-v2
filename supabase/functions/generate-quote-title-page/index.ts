@@ -273,6 +273,8 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       color: mediumGray,
     })
 
+    // Add spacing before Bill To section
+    yPosition -= 120
 
     // QUOTE title (centered, higher position)
     yPosition = height - 40
@@ -287,7 +289,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     })
 
     // Quote details (top right - Quote # and Date only)
-    let detailsY = height - 160
+    let detailsY = height - 70
     const quoteDetailsX = width - 200
     
     page.drawText('Quote #', {
@@ -401,8 +403,8 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     const tableTop = yPosition
     const col1X = leftColumn
     const col2X = leftColumn + 80
-    const col3X = width - 150
-    const col4X = width - 80
+    const col3X = width - 230
+    const col4X = width - 120
 
     // Table header background
     page.drawRectangle({
