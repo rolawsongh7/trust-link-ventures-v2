@@ -275,7 +275,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
 
 
     // QUOTE title (centered, higher position)
-    yPosition = height - 110
+    yPosition = height - 80
     const quoteTitle = 'QUOTE'
     const titleWidth = boldFont.widthOfTextAtSize(quoteTitle, 32)
     page.drawText(quoteTitle, {
@@ -283,11 +283,11 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       y: yPosition,
       size: 32,
       font: boldFont,
-      color: darkGray,
+      color: primaryBlue,
     })
 
     // Quote details (top right - Quote # and Date only)
-    let detailsY = height - 40
+    let detailsY = height - 80
     const quoteDetailsX = width - 200
     
     page.drawText('Quote #', {
@@ -324,7 +324,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     })
 
     // Bill To section (positioned directly below Trust Link address)
-    yPosition -= 40
+    yPosition -= 60
     const billToX = leftColumn
 
     page.drawText('Bill To', {
@@ -371,6 +371,18 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       })
     }
 
+    // Customer email
+    if (quote.customers?.email || quote.customer_email) {
+      yPosition -= 10
+      page.drawText(`Email: ${quote.customers?.email || quote.customer_email}`, {
+        x: billToX,
+        y: yPosition,
+        size: 8,
+        font: regularFont,
+        color: mediumGray,
+      })
+    }
+
     yPosition -= 40
 
     // Items table
@@ -386,7 +398,8 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       y: tableTop - 2,
       width: width - 2 * leftColumn + 10,
       height: 18,
-      color: lightBlue,
+      color: primaryBlue,
+      opacity: 0.1,
     })
 
     // Table headers
@@ -429,9 +442,11 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       end: { x: width - leftColumn + 5, y: yPosition + 5 },
       thickness: 1,
       color: primaryBlue,
+      opacity: 0.3,
     })
 
-    // Items
+    // Items - Get currency symbol
+    const currencySymbol = quote.currency === 'GHS' ? '₵' : quote.currency === 'EUR' ? '€' : quote.currency === 'GBP' ? '£' : '$'
     let subtotal = 0
     for (const item of items) {
       page.drawText(String(item.quantity || '1.00'), {
@@ -461,7 +476,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       })
 
       const amount = Number(item.total_price || 0).toFixed(2)
-      page.drawText(`$${amount}`, {
+      page.drawText(`${currencySymbol}${amount}`, {
         x: col4X,
         y: yPosition,
         size: 9,
@@ -479,6 +494,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       end: { x: width - leftColumn + 5, y: yPosition + 15 },
       thickness: 1,
       color: primaryBlue,
+      opacity: 0.3,
     })
 
     yPosition -= 10
@@ -491,7 +507,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       font: regularFont,
       color: black,
     })
-    page.drawText(`$${subtotal.toFixed(2)}`, {
+    page.drawText(`${currencySymbol}${subtotal.toFixed(2)}`, {
       x: col4X,
       y: yPosition,
       size: 10,
@@ -512,7 +528,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
         font: regularFont,
         color: black,
       })
-      page.drawText(`$${tax.toFixed(2)}`, {
+      page.drawText(`${currencySymbol}${tax.toFixed(2)}`, {
         x: col4X,
         y: yPosition,
         size: 10,
@@ -528,6 +544,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       end: { x: width - leftColumn + 5, y: yPosition + 10 },
       thickness: 1,
       color: primaryBlue,
+      opacity: 0.3,
     })
 
     yPosition -= 5
@@ -538,7 +555,8 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       y: yPosition - 2,
       width: (width - leftColumn + 5) - (col3X - 70),
       height: 18,
-      color: lightBlue,
+      color: primaryBlue,
+      opacity: 0.1,
     })
 
     const total = quote.total_amount || (subtotal + tax)
@@ -550,7 +568,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       font: boldFont,
       color: black,
     })
-    page.drawText(`$${Number(total).toFixed(2)}`, {
+    page.drawText(`${currencySymbol}${Number(total).toFixed(2)}`, {
       x: col4X,
       y: yPosition,
       size: 11,
@@ -565,6 +583,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       end: { x: width - leftColumn + 5, y: yPosition + 5 },
       thickness: 2,
       color: primaryBlue,
+      opacity: 0.3,
     })
 
     yPosition -= 30
