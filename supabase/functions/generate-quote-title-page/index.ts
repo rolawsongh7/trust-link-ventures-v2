@@ -369,14 +369,11 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     })
 
     // ===== RIGHT COLUMN: Bill To card (positioned below Date) =====
-    const billToCardX = RIGHT_COL_X
+    const billToCardWidth = 220  // Reduced from RIGHT_COL_WIDTH (260)
+    const billToCardX = width - MARGIN_X - billToCardWidth  // Right-aligned
     const billToCardY = rightColY - 25  // 25px gap below Date line
-    const billToCardWidth = RIGHT_COL_WIDTH
-    const billToCardPadding = 8  // Reduced padding for more text space
-    const estimatedCardHeight = 115
-    
-    // Calculate available text width for justified layout
-    const billToTextWidth = billToCardWidth - (billToCardPadding * 2)
+    const billToCardPadding = 10
+    const estimatedCardHeight = 100  // Reduced from 115
     
     // Draw card background FIRST (before text content)
     page.drawRectangle({
@@ -391,9 +388,13 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     
     let billToContentY = billToCardY - 15
     
-    // "Bill To" title (drawn on top of rectangle)
-    page.drawText('Bill To', {
-      x: billToCardX + billToCardPadding,
+    // "Bill To" title - center aligned
+    const billToTitleText = 'Bill To'
+    const billToTitleWidth = boldFont.widthOfTextAtSize(billToTitleText, 12)
+    const billToTitleX = billToCardX + (billToCardWidth - billToTitleWidth) / 2
+    
+    page.drawText(billToTitleText, {
+      x: billToTitleX,
       y: billToContentY,
       size: 12,
       font: boldFont,
@@ -402,10 +403,10 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     
     billToContentY -= 16
     
-    // Customer company name - justified by centering within available width
+    // Customer company name - center aligned
     const customerName = quote.customers?.company_name || 'Customer Name'
     const customerNameWidth = boldFont.widthOfTextAtSize(customerName, 11)
-    const customerNameX = billToCardX + billToCardPadding
+    const customerNameX = billToCardX + (billToCardWidth - customerNameWidth) / 2
     
     page.drawText(customerName, {
       x: customerNameX,
@@ -416,23 +417,29 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     })
     billToContentY -= 13
     
-    // Contact person
+    // Contact person - center aligned
     if (quote.customers?.contact_name) {
+      const contactNameWidth = regularFont.widthOfTextAtSize(quote.customers.contact_name, 10)
+      const contactNameX = billToCardX + (billToCardWidth - contactNameWidth) / 2
+      
       page.drawText(quote.customers.contact_name, {
-        x: billToCardX + billToCardPadding,
+        x: contactNameX,
         y: billToContentY,
         size: 10,
         font: regularFont,
         color: mediumGray,
       })
-      billToContentY -= 12
+      billToContentY -= 11
     }
     
-    // Address lines - use full width
+    // Address lines - center aligned
     if (deliveryAddress) {
       const addressLine1 = deliveryAddress.street_address || ''
+      const addressLine1Width = regularFont.widthOfTextAtSize(addressLine1, 10)
+      const addressLine1X = billToCardX + (billToCardWidth - addressLine1Width) / 2
+      
       page.drawText(addressLine1, {
-        x: billToCardX + billToCardPadding,
+        x: addressLine1X,
         y: billToContentY,
         size: 10,
         font: regularFont,
@@ -441,21 +448,27 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       billToContentY -= 11
       
       const addressLine2 = `${deliveryAddress.city || ''}, ${deliveryAddress.region || ''}`
+      const addressLine2Width = regularFont.widthOfTextAtSize(addressLine2, 10)
+      const addressLine2X = billToCardX + (billToCardWidth - addressLine2Width) / 2
+      
       page.drawText(addressLine2, {
-        x: billToCardX + billToCardPadding,
+        x: addressLine2X,
         y: billToContentY,
         size: 10,
         font: regularFont,
         color: mediumGray,
       })
-      billToContentY -= 12
+      billToContentY -= 11
     }
     
-    // Email - use full width
+    // Email - center aligned
     if (quote.customers?.email || quote.customer_email) {
       const emailText = `Email: ${quote.customers?.email || quote.customer_email}`
+      const emailWidth = regularFont.widthOfTextAtSize(emailText, 10)
+      const emailX = billToCardX + (billToCardWidth - emailWidth) / 2
+      
       page.drawText(emailText, {
-        x: billToCardX + billToCardPadding,
+        x: emailX,
         y: billToContentY,
         size: 10,
         font: regularFont,
