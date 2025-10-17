@@ -288,11 +288,11 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       color: primaryBlue,
     })
 
-    // Quote details (top right - Quote # and Date only)
-    let detailsY = height - 70
-    const quoteDetailsX = width - 200
+    // Quote details (top right - Quote # and Date on same line)
+    const detailsY = height - 70
+    const quoteDetailsX = width - 280
     
-    page.drawText('Quote #', {
+    page.drawText('Quote #:', {
       x: quoteDetailsX,
       y: detailsY,
       size: 10,
@@ -300,17 +300,15 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       color: darkGray,
     })
     page.drawText(quote.quote_number || '', {
-      x: quoteDetailsX + 80,
+      x: quoteDetailsX + 55,
       y: detailsY,
       size: 10,
       font: regularFont,
       color: darkGray,
     })
 
-    detailsY -= 20
-
-    page.drawText('Quote Date', {
-      x: quoteDetailsX,
+    page.drawText('Date:', {
+      x: quoteDetailsX + 160,
       y: detailsY,
       size: 10,
       font: boldFont,
@@ -318,7 +316,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     })
     const quoteDate = quote.created_at ? new Date(quote.created_at).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')
     page.drawText(quoteDate, {
-      x: quoteDetailsX + 80,
+      x: quoteDetailsX + 195,
       y: detailsY,
       size: 10,
       font: regularFont,
@@ -328,6 +326,12 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     // Bill To section (positioned directly below Trust Link address)
     yPosition -= 90
     const billToX = leftColumn
+    const billToStartY = yPosition
+
+    // Draw border box around Bill To section
+    const billToBoxPadding = 10
+    const billToBoxWidth = 240
+    let billToBoxHeight = 85 // Initial estimate, will adjust based on content
 
     page.drawText('Bill To', {
       x: billToX,
@@ -397,20 +401,34 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       })
     }
 
+    // Calculate actual box height and draw border
+    billToBoxHeight = billToStartY - yPosition + 15
+    page.drawRectangle({
+      x: billToX - billToBoxPadding,
+      y: yPosition - 5,
+      width: billToBoxWidth,
+      height: billToBoxHeight,
+      borderColor: lightGray,
+      borderWidth: 1,
+    })
+
     yPosition -= 40
 
-    // Items table
+    // Items table - define consistent dimensions
     const tableTop = yPosition
     const col1X = leftColumn
     const col2X = leftColumn + 80
     const col3X = width - 230
     const col4X = width - 120
+    const tableLeft = leftColumn - 5
+    const tableWidth = width - 2 * leftColumn + 10
+    const tableRight = tableLeft + tableWidth
 
     // Table header background
     page.drawRectangle({
-      x: leftColumn - 5,
+      x: tableLeft,
       y: tableTop - 2,
-      width: width - 2 * leftColumn + 10,
+      width: tableWidth,
       height: 18,
       color: primaryBlue,
       opacity: 0.1,
@@ -451,19 +469,22 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
 
     // Horizontal line below header
     yPosition = tableTop - 20
+    const headerLineY = yPosition + 5
     page.drawLine({
-      start: { x: leftColumn - 5, y: yPosition + 5 },
-      end: { x: width - leftColumn + 5, y: yPosition + 5 },
+      start: { x: tableLeft, y: headerLineY },
+      end: { x: tableRight, y: headerLineY },
       thickness: 1,
       color: primaryBlue,
       opacity: 0.3,
     })
 
-    yPosition -= 10
+    yPosition -= 12
 
     // Items - Get currency symbol (using text codes for WinAnsi compatibility)
     const currencySymbol = quote.currency === 'GHS' ? 'GHS ' : quote.currency === 'EUR' ? 'EUR ' : quote.currency === 'GBP' ? 'GBP ' : quote.currency === 'USD' ? 'USD ' : '$'
     let subtotal = 0
+    const itemsStartY = yPosition
+    
     for (const item of items) {
       page.drawText(String(item.quantity || '1.00'), {
         x: col1X,
@@ -491,9 +512,12 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
         color: black,
       })
 
+      // Right-align amount values
       const amount = Number(item.total_price || 0).toFixed(2)
-      page.drawText(`${currencySymbol}${amount}`, {
-        x: col4X,
+      const amountText = `${currencySymbol}${amount}`
+      const amountWidth = regularFont.widthOfTextAtSize(amountText, 9)
+      page.drawText(amountText, {
+        x: tableRight - amountWidth - 10,
         y: yPosition,
         size: 9,
         font: regularFont,
@@ -501,21 +525,74 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       })
 
       subtotal += Number(item.total_price || 0)
-      yPosition -= 20
+      yPosition -= 22
     }
+    
+    const itemsEndY = yPosition
 
-    // Horizontal line after items
+    // Draw table borders (complete grid)
+    // Top border
     page.drawLine({
-      start: { x: leftColumn - 5, y: yPosition + 15 },
-      end: { x: width - leftColumn + 5, y: yPosition + 15 },
+      start: { x: tableLeft, y: tableTop + 16 },
+      end: { x: tableRight, y: tableTop + 16 },
+      thickness: 0.5,
+      color: lightGray,
+    })
+    
+    // Bottom border after items
+    const itemsBottomY = yPosition + 17
+    page.drawLine({
+      start: { x: tableLeft, y: itemsBottomY },
+      end: { x: tableRight, y: itemsBottomY },
       thickness: 1,
       color: primaryBlue,
       opacity: 0.3,
     })
+    
+    // Left border
+    page.drawLine({
+      start: { x: tableLeft, y: tableTop + 16 },
+      end: { x: tableLeft, y: itemsBottomY },
+      thickness: 0.5,
+      color: lightGray,
+    })
+    
+    // Right border
+    page.drawLine({
+      start: { x: tableRight, y: tableTop + 16 },
+      end: { x: tableRight, y: itemsBottomY },
+      thickness: 0.5,
+      color: lightGray,
+    })
+    
+    // Vertical column separators
+    // Between QTY and Description
+    page.drawLine({
+      start: { x: col2X - 10, y: tableTop + 16 },
+      end: { x: col2X - 10, y: itemsBottomY },
+      thickness: 0.5,
+      color: lightGray,
+    })
+    
+    // Between Description and Unit Price
+    page.drawLine({
+      start: { x: col3X - 10, y: tableTop + 16 },
+      end: { x: col3X - 10, y: itemsBottomY },
+      thickness: 0.5,
+      color: lightGray,
+    })
+    
+    // Between Unit Price and Amount
+    page.drawLine({
+      start: { x: col4X - 10, y: tableTop + 16 },
+      end: { x: col4X - 10, y: itemsBottomY },
+      thickness: 0.5,
+      color: lightGray,
+    })
 
-    yPosition -= 10
+    yPosition -= 15
 
-    // Subtotal
+    // Subtotal (right-aligned)
     page.drawText('Subtotal', {
       x: col3X - 60,
       y: yPosition,
@@ -523,8 +600,10 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       font: regularFont,
       color: black,
     })
-    page.drawText(`${currencySymbol}${subtotal.toFixed(2)}`, {
-      x: col4X,
+    const subtotalText = `${currencySymbol}${subtotal.toFixed(2)}`
+    const subtotalWidth = regularFont.widthOfTextAtSize(subtotalText, 10)
+    page.drawText(subtotalText, {
+      x: tableRight - subtotalWidth - 10,
       y: yPosition,
       size: 10,
       font: regularFont,
@@ -533,7 +612,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
 
     yPosition -= 15
 
-    // Sales Tax (if applicable)
+    // Sales Tax (if applicable) - right-aligned
     const taxRate = 0 // Assuming no tax for now
     const tax = subtotal * taxRate
     if (tax > 0) {
@@ -544,8 +623,10 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
         font: regularFont,
         color: black,
       })
-      page.drawText(`${currencySymbol}${tax.toFixed(2)}`, {
-        x: col4X,
+      const taxText = `${currencySymbol}${tax.toFixed(2)}`
+      const taxWidth = regularFont.widthOfTextAtSize(taxText, 10)
+      page.drawText(taxText, {
+        x: tableRight - taxWidth - 10,
         y: yPosition,
         size: 10,
         font: regularFont,
@@ -556,8 +637,8 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
 
     // Horizontal line before total
     page.drawLine({
-      start: { x: leftColumn - 5, y: yPosition + 10 },
-      end: { x: width - leftColumn + 5, y: yPosition + 10 },
+      start: { x: tableLeft, y: yPosition + 10 },
+      end: { x: tableRight, y: yPosition + 10 },
       thickness: 1,
       color: primaryBlue,
       opacity: 0.3,
@@ -565,11 +646,11 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
 
     yPosition -= 5
 
-    // Total with background (fixed alignment)
+    // Total with background (right-aligned)
     page.drawRectangle({
-      x: leftColumn - 5,
+      x: tableLeft,
       y: yPosition - 2,
-      width: width - 2 * leftColumn + 10,
+      width: tableWidth,
       height: 18,
       color: primaryBlue,
       opacity: 0.1,
@@ -584,8 +665,10 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       font: boldFont,
       color: black,
     })
-    page.drawText(`${currencySymbol}${Number(total).toFixed(2)}`, {
-      x: col4X,
+    const totalText = `${currencySymbol}${Number(total).toFixed(2)}`
+    const totalWidth = boldFont.widthOfTextAtSize(totalText, 11)
+    page.drawText(totalText, {
+      x: tableRight - totalWidth - 10,
       y: yPosition,
       size: 11,
       font: boldFont,
@@ -595,8 +678,8 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     // Horizontal line after total
     yPosition -= 20
     page.drawLine({
-      start: { x: leftColumn - 5, y: yPosition + 5 },
-      end: { x: width - leftColumn + 5, y: yPosition + 5 },
+      start: { x: tableLeft, y: yPosition + 5 },
+      end: { x: tableRight, y: yPosition + 5 },
       thickness: 2,
       color: primaryBlue,
       opacity: 0.3,
@@ -631,8 +714,8 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     // Add official footer statement
     const footerY = 60
     page.drawLine({
-      start: { x: leftColumn - 5, y: footerY + 20 },
-      end: { x: width - leftColumn + 5, y: footerY + 20 },
+      start: { x: tableLeft, y: footerY + 20 },
+      end: { x: tableRight, y: footerY + 20 },
       thickness: 1,
       color: primaryBlue,
     })
