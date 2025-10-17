@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "npm:resend@2.0.0";
+import { encode as base64Encode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -72,9 +73,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("PDF downloaded successfully");
 
-    // Convert blob to base64
+    // Convert blob to base64 safely using Deno's standard library
     const arrayBuffer = await pdfData.arrayBuffer();
-    const base64Pdf = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const uint8Array = new Uint8Array(arrayBuffer);
+    console.log(`Converting PDF to base64 (size: ${arrayBuffer.byteLength} bytes)`);
+    const base64Pdf = base64Encode(uint8Array);
+    console.log(`Base64 conversion successful (length: ${base64Pdf.length})`);
 
     // Determine recipient details
     const finalCustomerName = customerName || quote.customers?.contact_name || "Valued Customer";
