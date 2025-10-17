@@ -105,6 +105,35 @@ serve(async (req) => {
       tracking: order.tracking_number || 'Pending' 
     });
 
+    // Fetch quote number if order has a quote_id
+    let quoteNumber = null;
+    if (order.quote_id) {
+      const { data: quote } = await supabase
+        .from('quotes')
+        .select('quote_number')
+        .eq('id', order.quote_id)
+        .single();
+      quoteNumber = quote?.quote_number || null;
+    }
+
+    // Fetch delivery address details
+    let deliveryAddress = null;
+    if (order.delivery_address_id) {
+      const { data: address } = await supabase
+        .from('customer_addresses')
+        .select('*')
+        .eq('id', order.delivery_address_id)
+        .single();
+      
+      if (address) {
+        deliveryAddress = {
+          full_address: `${address.street_address || ''}${address.area ? ', ' + address.area : ''}, ${address.city || ''}, ${address.region || ''} - ${address.ghana_digital_address || ''}`.trim(),
+          receiver_name: address.receiver_name,
+          phone_number: address.phone_number
+        };
+      }
+    }
+
     // Only create new invoice if it doesn't exist
     if (!invoice) {
       console.log('[Commercial Invoice] Creating invoice for order:', order.order_number);
@@ -132,7 +161,7 @@ serve(async (req) => {
           due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           sent_at: new Date().toISOString(),
           payment_terms: '30 days',
-          notes: `Order: ${order.order_number}\nCarrier: ${order.carrier || 'To be determined'}\nTracking: ${order.tracking_number || 'Will be provided upon shipment'}`,
+          notes: `Order: ${order.order_number}${order.payment_method ? `\nPayment Method: ${order.payment_method === 'mobile_money' ? 'Mobile Money' : 'Bank Transfer'}` : ''}${order.payment_reference ? `\nPayment Reference: ${order.payment_reference}` : ''}`,
         })
         .select()
         .single();
@@ -198,7 +227,9 @@ serve(async (req) => {
     const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-invoice-pdf', {
       body: { 
         invoiceId: invoice.id,
-        invoiceType: 'commercial'
+        invoiceType: 'commercial',
+        quoteNumber: quoteNumber,
+        deliveryAddress: deliveryAddress
       }
     });
 

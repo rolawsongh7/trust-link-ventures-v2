@@ -51,7 +51,7 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { invoiceId, invoiceType } = await req.json();
+    const { invoiceId, invoiceType, quoteNumber, deliveryAddress } = await req.json();
     console.log('[PDF Generation] Processing invoice:', { invoiceId, invoiceType, timestamp: new Date().toISOString() });
 
     if (!invoiceId) {
@@ -108,7 +108,9 @@ serve(async (req) => {
       invoice,
       items: items || [],
       customer: customer || {},
-      order
+      order,
+      quoteNumber: quoteNumber,
+      deliveryAddress: deliveryAddress
     });
 
     console.log('[PDF Generation] Step: HTML generated, length:', html.length);
@@ -239,7 +241,7 @@ serve(async (req) => {
 });
 
 function generateInvoiceHTML(data: any): string {
-  const { invoice, items, customer, order } = data;
+  const { invoice, items, customer, order, quoteNumber, deliveryAddress } = data;
   
   const invoiceTypeTitle = invoice.invoice_type === 'proforma' 
     ? 'PROFORMA INVOICE' 
@@ -387,40 +389,81 @@ function generateInvoiceHTML(data: any): string {
       <div class="header">
         <div class="company-info">
           <h1>Trust Link Ventures Limited</h1>
-          <p>P.O. Box KA 16498, Airport Residential Area</p>
+          <p style="margin: 2px 0; color: #1e40af; font-weight: 600;">Trust Link Ventures</p>
+          <p>Enyedado Coldstore Premises</p>
+          <p>Afko Junction Box 709, Adabraka</p>
           <p>Accra, Ghana</p>
-          <p>Phone: +233 XXX XXX XXX</p>
+          <p>Phone: +233 246 619 489</p>
           <p>Email: info@trustlinkcompany.com</p>
         </div>
         <div class="invoice-details">
           <h2>${invoiceTypeTitle}</h2>
           <p><strong>${invoice.invoice_number}</strong></p>
           <p>Date: ${new Date(invoice.issue_date).toLocaleDateString()}</p>
-          ${invoice.due_date && invoice.invoice_type !== 'packing_list' ? `<p>Due Date: ${new Date(invoice.due_date).toLocaleDateString()}</p>` : ''}
+          ${invoice.due_date && invoice.invoice_type !== 'packing_list' && invoice.invoice_type !== 'commercial' ? `<p>Due Date: ${new Date(invoice.due_date).toLocaleDateString()}</p>` : ''}
           ${order ? `<p>Order: ${order.order_number}</p>` : ''}
+          ${quoteNumber ? `<p>Quote: ${quoteNumber}</p>` : ''}
         </div>
       </div>
 
-      <div class="billing-info">
+      <div class="billing-info" style="${invoice.invoice_type === 'commercial' ? 'grid-template-columns: 1fr 1fr 1fr; gap: 15px;' : ''}">
+        <!-- Column 1: Bill To -->
         <div class="billing-section">
           <h3>Bill To:</h3>
           <p><strong>${customer.company_name || 'N/A'}</strong></p>
           <p>${customer.contact_name || ''}</p>
           <p>${customer.email || ''}</p>
           <p>${customer.phone || ''}</p>
-          ${customer.address ? `<p>${customer.address}</p>` : ''}
-          ${customer.country ? `<p>${customer.country}</p>` : ''}
+          ${customer.address ? `
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb;">
+              <p style="font-size: 11px; color: #6b7280; margin-bottom: 3px;"><strong>Registered Address:</strong></p>
+              <p style="font-size: 11px; color: #374151;">${customer.address}</p>
+            </div>
+          ` : ''}
+          ${customer.country ? `<p style="margin-top: 5px;">${customer.country}</p>` : ''}
         </div>
+
+        <!-- Column 2: Delivery/Shipping (Commercial Invoice Only) -->
+        ${invoice.invoice_type === 'commercial' ? `
+          <div class="billing-section">
+            <h3>Delivery/Shipping:</h3>
+            ${deliveryAddress ? `
+              <p><strong>${deliveryAddress.receiver_name || 'N/A'}</strong></p>
+              <p>${deliveryAddress.phone_number || ''}</p>
+              <p style="margin-top: 8px; font-size: 12px; line-height: 1.4;">${deliveryAddress.full_address}</p>
+            ` : '<p style="color: #6b7280; font-style: italic;">Delivery address pending</p>'}
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #e5e7eb;">
+              <p><strong>Carrier:</strong> ${order?.carrier || '<em style="color: #6b7280;">To be determined</em>'}</p>
+              <p><strong>Tracking:</strong> ${order?.tracking_number || '<em style="color: #6b7280;">Pending shipment</em>'}</p>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Column 3: Invoice Details -->
         <div class="billing-section">
           <h3>Invoice Details:</h3>
           <p><strong>Type:</strong> ${invoiceTypeTitle}</p>
-          <p><strong>Status:</strong> ${invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}</p>
+          ${invoice.invoice_type === 'commercial' ? `
+            <p><strong>Status:</strong> <span style="color: #059669; font-weight: 600;">Paid</span></p>
+          ` : `
+            <p><strong>Status:</strong> ${invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}</p>
+          `}
           <p><strong>Currency:</strong> ${invoice.currency}</p>
-          ${invoice.payment_terms ? `<p><strong>Payment Terms:</strong> ${invoice.payment_terms}</p>` : ''}
+          
           ${invoice.invoice_type === 'commercial' && order ? `
-            <p><strong>Carrier:</strong> ${order.carrier || '<em>To be determined</em>'}</p>
-            <p><strong>Tracking:</strong> ${order.tracking_number || '<em>Pending shipment</em>'}</p>
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb;">
+              <p><strong>Payment Method:</strong></p>
+              <p style="margin-left: 10px; font-size: 12px;">
+                ${order.payment_method === 'mobile_money' ? '📱 Mobile Money' : order.payment_method === 'bank_transfer' ? '🏦 Bank Transfer' : 'N/A'}
+              </p>
+              <p style="margin-top: 8px;"><strong>Payment Reference:</strong></p>
+              <p style="margin-left: 10px; font-family: monospace; font-size: 11px; background: #f3f4f6; padding: 4px 8px; border-radius: 4px; display: inline-block;">
+                ${order.payment_reference || invoice.invoice_number}
+              </p>
+            </div>
           ` : ''}
+          
+          ${invoice.payment_terms && invoice.invoice_type !== 'commercial' ? `<p><strong>Payment Terms:</strong> ${invoice.payment_terms}</p>` : ''}
         </div>
       </div>
 
@@ -467,19 +510,13 @@ function generateInvoiceHTML(data: any): string {
         </div>
       ` : ''}
 
-      ${invoice.invoice_type === 'commercial' ? `
-        <div class="notes">
-          <h4>Payment Instructions:</h4>
-          <p>Please make payment within ${invoice.payment_terms || '30 days'} to:</p>
-          <p><strong>Bank:</strong> [Bank Name]</p>
-          <p><strong>Account Number:</strong> [Account Number]</p>
-          <p><strong>Swift Code:</strong> [Swift Code]</p>
-        </div>
-      ` : ''}
-
       <div class="footer">
-        <p>This ${invoiceTypeTitle.toLowerCase()} is computer generated and valid without signature.</p>
-        <p>For questions about this invoice, please contact us at info@trustlinkcompany.com</p>
+        <p style="text-align: center; color: #374151; font-size: 11px; line-height: 1.6;">
+          ${invoice.invoice_type === 'commercial' 
+            ? '<strong>This is an official commercial invoice issued by Trust Link Ventures Limited.</strong><br/>This document certifies the transaction details and serves as proof of purchase for customs and regulatory purposes.' 
+            : 'This is an official invoice document.'}
+        </p>
+        <p style="text-align: center; margin-top: 10px;">For questions about this invoice, please contact us at info@trustlinkcompany.com</p>
         <p style="margin-top: 15px; text-align: center;">&copy; ${new Date().getFullYear()} Trust Link Ventures Limited. All rights reserved.</p>
       </div>
     </body>
