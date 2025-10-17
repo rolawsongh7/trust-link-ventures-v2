@@ -275,7 +275,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
 
 
     // QUOTE title (centered, higher position)
-    yPosition = height - 80
+    yPosition = height - 40
     const quoteTitle = 'QUOTE'
     const titleWidth = boldFont.widthOfTextAtSize(quoteTitle, 32)
     page.drawText(quoteTitle, {
@@ -287,7 +287,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     })
 
     // Quote details (top right - Quote # and Date only)
-    let detailsY = height - 80
+    let detailsY = height - 160
     const quoteDetailsX = width - 200
     
     page.drawText('Quote #', {
@@ -324,7 +324,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     })
 
     // Bill To section (positioned directly below Trust Link address)
-    yPosition -= 60
+    yPosition -= 90
     const billToX = leftColumn
 
     page.drawText('Bill To', {
@@ -337,7 +337,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
 
     yPosition -= 15
 
-    // Customer name
+    // Company name
     const customerName = quote.customers?.company_name || 'Customer Name'
     page.drawText(customerName, {
       x: billToX,
@@ -348,6 +348,18 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     })
 
     yPosition -= 12
+
+    // Contact person name
+    if (quote.customers?.contact_name) {
+      page.drawText(quote.customers.contact_name, {
+        x: billToX,
+        y: yPosition,
+        size: 9,
+        font: regularFont,
+        color: mediumGray,
+      })
+      yPosition -= 12
+    }
 
     // Customer address
     if (deliveryAddress) {
@@ -445,6 +457,8 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       opacity: 0.3,
     })
 
+    yPosition -= 10
+
     // Items - Get currency symbol
     const currencySymbol = quote.currency === 'GHS' ? '₵' : quote.currency === 'EUR' ? '€' : quote.currency === 'GBP' ? '£' : '$'
     let subtotal = 0
@@ -540,7 +554,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
 
     // Horizontal line before total
     page.drawLine({
-      start: { x: col3X - 70, y: yPosition + 10 },
+      start: { x: leftColumn - 5, y: yPosition + 10 },
       end: { x: width - leftColumn + 5, y: yPosition + 10 },
       thickness: 1,
       color: primaryBlue,
@@ -551,9 +565,9 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
 
     // Total with background (fixed alignment)
     page.drawRectangle({
-      x: col3X - 70,
+      x: leftColumn - 5,
       y: yPosition - 2,
-      width: (width - leftColumn + 5) - (col3X - 70),
+      width: width - 2 * leftColumn + 10,
       height: 18,
       color: primaryBlue,
       opacity: 0.1,
@@ -579,7 +593,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     // Horizontal line after total
     yPosition -= 20
     page.drawLine({
-      start: { x: col3X - 70, y: yPosition + 5 },
+      start: { x: leftColumn - 5, y: yPosition + 5 },
       end: { x: width - leftColumn + 5, y: yPosition + 5 },
       thickness: 2,
       color: primaryBlue,
