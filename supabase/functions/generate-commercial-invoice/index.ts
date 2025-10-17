@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const FUNCTION_VERSION = '3.2.0'; // Force complete redeployment with API key debugging
+const FUNCTION_VERSION = '4.0.0'; // Commercial invoice template update with new layout
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
