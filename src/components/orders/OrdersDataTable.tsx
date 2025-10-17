@@ -81,7 +81,6 @@ interface OrdersDataTableProps {
   onSendTracking: (order: Order) => void;
   onViewQuote: (order: Order) => void;
   onRefresh: () => void;
-  onGenerateInvoices: (order: Order) => void;
   onQuickStatusChange: (order: Order, newStatus: 'processing' | 'ready_to_ship' | 'delivered') => void;
   onVerifyPayment: (order: Order) => void;
   getStatusColor: (status: string) => string;
@@ -137,7 +136,6 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
   onSendTracking,
   onViewQuote,
   onRefresh,
-  onGenerateInvoices,
   onQuickStatusChange,
   onVerifyPayment,
   getStatusColor,
@@ -481,27 +479,6 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
               </>
             )}
             
-            {['ready_to_ship', 'shipped', 'delivered'].includes(row.status) && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => {
-                  console.log('[DROPDOWN] Generate Invoices clicked:', {
-                    orderId: row.id,
-                    orderNumber: row.order_number,
-                    status: row.status
-                  });
-                  try {
-                    onGenerateInvoices(row);
-                  } catch (error) {
-                    console.error('[DROPDOWN] Error calling onGenerateInvoices:', error);
-                    throw error;
-                  }
-                }}>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Generate Invoices
-                </DropdownMenuItem>
-              </>
-            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),

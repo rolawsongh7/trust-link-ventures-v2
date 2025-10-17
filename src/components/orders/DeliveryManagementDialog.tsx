@@ -55,10 +55,13 @@ export const DeliveryManagementDialog = ({
 
   const getStatusWarning = (status: string): string | null => {
     if (status === 'ready_to_ship') {
-      return '⚠️ This will:\n• Generate a Packing List\n• Validate delivery address\n• Mark order as ready for shipping';
+      return '✅ This will:\n• Auto-generate Packing List\n• Validate delivery address\n• Mark order as ready for shipping';
     }
     if (status === 'shipped') {
-      return '⚠️ This will:\n• Generate a Commercial Invoice\n• Send tracking email to customer\n• Create delivery tracking link\n\n✅ Required fields:\n• Carrier\n• Tracking Number\n• Estimated Delivery Date';
+      return '✅ This will:\n• Auto-generate Commercial Invoice\n• Send tracking email to customer\n• Create delivery tracking link\n\n⚠️ Required fields:\n• Carrier\n• Tracking Number\n• Estimated Delivery Date';
+    }
+    if (status === 'delivered') {
+      return '✅ This will mark the order as complete and delivered to the customer.';
     }
     return null;
   };
