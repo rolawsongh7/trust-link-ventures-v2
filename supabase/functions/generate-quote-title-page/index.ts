@@ -213,6 +213,8 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     const mediumGray = rgb(0.4, 0.4, 0.4)
     const lightGray = rgb(0.9, 0.9, 0.9)
     const black = rgb(0, 0, 0)
+    const primaryBlue = rgb(0.2, 0.4, 0.8)
+    const lightBlue = rgb(0.9, 0.95, 1.0)
     
     let yPosition = height - 40
 
@@ -261,54 +263,9 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       color: mediumGray,
     })
 
-    // Reset yPosition for right side
-    yPosition = height - 40
 
-    // New Gen Link (right)
-    if (newGenLogo) {
-      const logoScale = 0.12
-      const logoWidth = newGenLogo.width * logoScale
-      const logoHeight = newGenLogo.height * logoScale
-      
-      page.drawImage(newGenLogo, {
-        x: rightColumn,
-        y: yPosition - logoHeight,
-        width: logoWidth,
-        height: logoHeight,
-      })
-      yPosition -= logoHeight + 5
-    } else {
-      yPosition -= 40
-    }
-    
-    page.drawText('New Gen Link LLC', {
-      x: rightColumn,
-      y: yPosition,
-      size: 10,
-      font: boldFont,
-      color: darkGray,
-    })
-    yPosition -= 12
-    
-    page.drawText('3240 Lone Tree Way Street', {
-      x: rightColumn,
-      y: yPosition,
-      size: 8,
-      font: regularFont,
-      color: mediumGray,
-    })
-    yPosition -= 10
-    
-    page.drawText('204-J Antioch, CA', {
-      x: rightColumn,
-      y: yPosition,
-      size: 8,
-      font: regularFont,
-      color: mediumGray,
-    })
-
-    // QUOTE title (centered)
-    yPosition = height - 140
+    // QUOTE title (centered, higher position)
+    yPosition = height - 110
     const quoteTitle = 'QUOTE'
     const titleWidth = boldFont.widthOfTextAtSize(quoteTitle, 32)
     page.drawText(quoteTitle, {
@@ -319,23 +276,10 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       color: darkGray,
     })
 
-    yPosition -= 50
-
-    // Bill To section (left) and Quote details (right)
-    const billToX = leftColumn
+    // Quote details (top right - Quote # and Date only)
+    let detailsY = height - 40
     const quoteDetailsX = width - 200
-
-    // Bill To
-    page.drawText('Bill To', {
-      x: billToX,
-      y: yPosition,
-      size: 10,
-      font: boldFont,
-      color: darkGray,
-    })
-
-    // Quote details (right aligned)
-    let detailsY = yPosition
+    
     page.drawText('Quote #', {
       x: quoteDetailsX,
       y: detailsY,
@@ -351,21 +295,9 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       color: darkGray,
     })
 
-    yPosition -= 15
-    detailsY -= 15
+    detailsY -= 20
 
-    // Customer name
-    const customerName = quote.customers?.company_name || 'Customer Name'
-    page.drawText(customerName, {
-      x: billToX,
-      y: yPosition,
-      size: 10,
-      font: boldFont,
-      color: black,
-    })
-
-    // Quote date
-    page.drawText('Quote date', {
+    page.drawText('Quote Date', {
       x: quoteDetailsX,
       y: detailsY,
       size: 10,
@@ -381,8 +313,31 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       color: darkGray,
     })
 
+    // Bill To section (positioned directly below Trust Link address)
+    yPosition -= 20
+    const billToX = leftColumn
+
+    page.drawText('Bill To', {
+      x: billToX,
+      y: yPosition,
+      size: 10,
+      font: boldFont,
+      color: darkGray,
+    })
+
+    yPosition -= 15
+
+    // Customer name
+    const customerName = quote.customers?.company_name || 'Customer Name'
+    page.drawText(customerName, {
+      x: billToX,
+      y: yPosition,
+      size: 10,
+      font: boldFont,
+      color: black,
+    })
+
     yPosition -= 12
-    detailsY -= 15
 
     // Customer address
     if (deliveryAddress) {
@@ -406,23 +361,6 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       })
     }
 
-    // Due date (valid until)
-    page.drawText('Due date', {
-      x: quoteDetailsX,
-      y: detailsY,
-      size: 10,
-      font: boldFont,
-      color: darkGray,
-    })
-    const dueDate = quote.valid_until ? new Date(quote.valid_until).toLocaleDateString('en-GB') : ''
-    page.drawText(dueDate, {
-      x: quoteDetailsX + 80,
-      y: detailsY,
-      size: 10,
-      font: regularFont,
-      color: darkGray,
-    })
-
     yPosition -= 40
 
     // Items table
@@ -438,7 +376,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       y: tableTop - 2,
       width: width - 2 * leftColumn + 10,
       height: 18,
-      color: lightGray,
+      color: lightBlue,
     })
 
     // Table headers
@@ -480,7 +418,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       start: { x: leftColumn - 5, y: yPosition + 5 },
       end: { x: width - leftColumn + 5, y: yPosition + 5 },
       thickness: 1,
-      color: mediumGray,
+      color: primaryBlue,
     })
 
     // Items
@@ -530,7 +468,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       start: { x: leftColumn - 5, y: yPosition + 15 },
       end: { x: width - leftColumn + 5, y: yPosition + 15 },
       thickness: 1,
-      color: mediumGray,
+      color: primaryBlue,
     })
 
     yPosition -= 10
@@ -579,18 +517,18 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       start: { x: col3X - 70, y: yPosition + 10 },
       end: { x: width - leftColumn + 5, y: yPosition + 10 },
       thickness: 1,
-      color: mediumGray,
+      color: primaryBlue,
     })
 
     yPosition -= 5
 
-    // Total with background
+    // Total with background (fixed alignment)
     page.drawRectangle({
-      x: col3X - 75,
+      x: col3X - 70,
       y: yPosition - 2,
-      width: width - col3X + 75 - leftColumn + 10,
+      width: (width - leftColumn + 5) - (col3X - 70),
       height: 18,
-      color: lightGray,
+      color: lightBlue,
     })
 
     const total = quote.total_amount || (subtotal + tax)
@@ -616,7 +554,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       start: { x: col3X - 70, y: yPosition + 5 },
       end: { x: width - leftColumn + 5, y: yPosition + 5 },
       thickness: 2,
-      color: black,
+      color: primaryBlue,
     })
 
     yPosition -= 30
@@ -644,6 +582,34 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       })
       yPosition -= 12
     }
+
+    // Add official footer statement
+    const footerY = 60
+    page.drawLine({
+      start: { x: leftColumn - 5, y: footerY + 20 },
+      end: { x: width - leftColumn + 5, y: footerY + 20 },
+      thickness: 1,
+      color: primaryBlue,
+    })
+
+    const footerText = 'This is an official quotation from Trust Link Ventures Limited. All prices are subject to the terms and conditions stated above.'
+    const footerText2 = 'For any queries, please contact us at the address provided.'
+    
+    page.drawText(footerText, {
+      x: leftColumn,
+      y: footerY,
+      size: 8,
+      font: regularFont,
+      color: darkGray,
+    })
+    
+    page.drawText(footerText2, {
+      x: leftColumn,
+      y: footerY - 12,
+      size: 8,
+      font: regularFont,
+      color: darkGray,
+    })
 
     console.log('PDF generation completed')
     return await pdfDoc.save()
