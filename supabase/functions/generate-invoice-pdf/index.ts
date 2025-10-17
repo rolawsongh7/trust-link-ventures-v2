@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const FUNCTION_VERSION = '4.1.0'; // Logo, quote number, payment details fixes
+const FUNCTION_VERSION = '4.2.0'; // Logo repositioned to right of company name
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -411,8 +411,14 @@ function generateInvoiceHTML(data: any): string {
     <body>
       <div class="header">
         <div class="company-info">
-          ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Trust Link Ventures Logo" style="width: 80px; height: 80px; margin-bottom: 10px; object-fit: contain;" />` : ''}
-          <h1>Trust Link Ventures Limited</h1>
+          <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+            <div>
+              <h1 style="margin: 0;">Trust Link Ventures Limited</h1>
+            </div>
+            ${logoDataUrl ? `
+              <img src="${logoDataUrl}" alt="Trust Link Ventures Logo" style="width: 80px; height: 80px; object-fit: contain;" />
+            ` : ''}
+          </div>
           <p>Enyedado Coldstore Premises</p>
           <p>Afko Junction Box 709, Adabraka</p>
           <p>Accra, Ghana</p>
