@@ -109,6 +109,12 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
   };
 
   const handleLinkAddress = async (addressId: string) => {
+    // Prevent multiple simultaneous operations
+    if (linking) {
+      console.log('⚠️ [AddressLinkDialog] Already linking, ignoring duplicate call');
+      return;
+    }
+    
     console.log('🔗 [AddressLinkDialog] Starting handleLinkAddress...', {
       addressId,
       orderId,
@@ -200,8 +206,13 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
         description: `Address linked to order ${orderNumber}${customerData?.email ? '. Confirmation emails sent.' : '.'}`,
       });
 
-      onSuccess();
+      // Close dialog BEFORE calling onSuccess to prevent re-render loop
       onOpenChange(false);
+      
+      // Small delay to ensure dialog closes before triggering data refresh
+      setTimeout(() => {
+        onSuccess();
+      }, 100);
     } catch (error: any) {
       console.error('💥 [AddressLinkDialog] Fatal error in handleLinkAddress:', {
         message: error.message,

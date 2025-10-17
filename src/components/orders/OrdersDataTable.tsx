@@ -582,7 +582,11 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
       {addressLinkDialog && (
         <AddressLinkDialog
           open={addressLinkDialog.open}
-          onOpenChange={(open) => !open && setAddressLinkDialog(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setAddressLinkDialog(null);
+            }
+          }}
           orderId={addressLinkDialog.orderId}
           orderNumber={addressLinkDialog.orderNumber}
           customerId={addressLinkDialog.customerId}
