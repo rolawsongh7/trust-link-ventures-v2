@@ -248,9 +248,13 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       leftColY -= logoHeight + 8
     }
     
-    // "QUOTE" heading - LEFT-ALIGNED with supplier info
-    page.drawText('QUOTE', {
-      x: LEFT_COL_X,
+    // "QUOTE" heading - CENTERED at top
+    const quoteHeadingText = 'QUOTE'
+    const quoteHeadingWidth = boldFont.widthOfTextAtSize(quoteHeadingText, 28)
+    const quoteHeadingX = (width - quoteHeadingWidth) / 2
+    
+    page.drawText(quoteHeadingText, {
+      x: quoteHeadingX,
       y: leftColY,
       size: 28,
       font: boldFont,
@@ -301,16 +305,18 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     // Store where left column ended
     const leftColEndY = leftColY
 
-    // ===== RIGHT COLUMN: Quote metadata (stacked vertically) =====
+    // ===== RIGHT COLUMN: Quote metadata (stacked vertically, RIGHT-ALIGNED) =====
     let rightColY = headerStartY
     
-    // Quote #
+    // Quote # - right-aligned
     const quoteNumberLabel = 'Quote #:'
     const quoteNumberValue = quote.quote_number || ''
     const quoteNumberLabelWidth = boldFont.widthOfTextAtSize(quoteNumberLabel, 10)
+    const quoteNumberValueWidth = regularFont.widthOfTextAtSize(quoteNumberValue, 10)
+    const quoteNumberTotalWidth = quoteNumberLabelWidth + 5 + quoteNumberValueWidth
     
     page.drawText(quoteNumberLabel, {
-      x: RIGHT_COL_X,
+      x: width - MARGIN_X - quoteNumberTotalWidth,
       y: rightColY,
       size: 10,
       font: boldFont,
@@ -318,7 +324,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     })
     
     page.drawText(quoteNumberValue, {
-      x: RIGHT_COL_X + quoteNumberLabelWidth + 5,
+      x: width - MARGIN_X - quoteNumberValueWidth,
       y: rightColY,
       size: 10,
       font: regularFont,
@@ -327,15 +333,17 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     
     rightColY -= 15  // Move down for Date
     
-    // Date (directly below Quote #)
+    // Date (directly below Quote #) - right-aligned
     const dateLabel = 'Date:'
     const dateValue = quote.created_at 
       ? new Date(quote.created_at).toLocaleDateString('en-GB') 
       : new Date().toLocaleDateString('en-GB')
     const dateLabelWidth = boldFont.widthOfTextAtSize(dateLabel, 10)
+    const dateValueWidth = regularFont.widthOfTextAtSize(dateValue, 10)
+    const dateTotalWidth = dateLabelWidth + 5 + dateValueWidth
     
     page.drawText(dateLabel, {
-      x: RIGHT_COL_X,
+      x: width - MARGIN_X - dateTotalWidth,
       y: rightColY,
       size: 10,
       font: boldFont,
@@ -343,23 +351,36 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     })
     
     page.drawText(dateValue, {
-      x: RIGHT_COL_X + dateLabelWidth + 5,
+      x: width - MARGIN_X - dateValueWidth,
       y: rightColY,
       size: 10,
       font: regularFont,
       color: darkGray,
     })
     
-    rightColY -= 20  // Gap before Bill To card
+    rightColY -= 50  // Larger gap before Bill To card
 
     // ===== RIGHT COLUMN: Bill To card =====
     const billToCardX = RIGHT_COL_X
     const billToCardY = rightColY
     const billToCardWidth = RIGHT_COL_WIDTH
     const billToCardPadding = 12
+    const estimatedCardHeight = 100
+    
+    // Draw card background FIRST (before text content)
+    page.drawRectangle({
+      x: billToCardX,
+      y: billToCardY - estimatedCardHeight,
+      width: billToCardWidth,
+      height: estimatedCardHeight,
+      color: rgb(1, 1, 1),  // white background
+      borderColor: lightGray,
+      borderWidth: 1,
+    })
+    
     let billToContentY = billToCardY - 15
     
-    // "Bill To" title
+    // "Bill To" title (drawn on top of rectangle)
     page.drawText('Bill To', {
       x: billToCardX + billToCardPadding,
       y: billToContentY,
@@ -428,18 +449,6 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       })
       billToContentY -= 10
     }
-    
-    // Calculate and draw Bill To card border
-    const billToCardHeight = billToCardY - billToContentY + 10
-    page.drawRectangle({
-      x: billToCardX,
-      y: billToContentY - 5,
-      width: billToCardWidth,
-      height: billToCardHeight,
-      color: rgb(1, 1, 1),  // white background
-      borderColor: lightGray,
-      borderWidth: 1,
-    })
     
     // Store where right column ended
     const rightColEndY = billToContentY - 5
