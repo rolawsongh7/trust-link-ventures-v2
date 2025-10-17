@@ -34,13 +34,16 @@ export const OrdersSearchFilters = ({
 }: OrdersSearchFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const CURRENCIES = ['USD', 'EUR', 'GBP', 'GHS'];
+
   const activeFilterCount = [
     filters.customer,
     filters.orderNumber,
     filters.status.length > 0,
     filters.dateRange !== null,
     filters.amountRange !== null,
-    filters.origin !== 'all'
+    filters.origin !== 'all',
+    filters.currency.length > 0
   ].filter(Boolean).length;
 
   const handleStatusToggle = (status: string) => {
@@ -49,6 +52,14 @@ export const OrdersSearchFilters = ({
       : [...filters.status, status];
     
     onFiltersChange({ ...filters, status: newStatus });
+  };
+
+  const handleCurrencyToggle = (currency: string) => {
+    const newCurrency = filters.currency.includes(currency)
+      ? filters.currency.filter(c => c !== currency)
+      : [...filters.currency, currency];
+    
+    onFiltersChange({ ...filters, currency: newCurrency });
   };
 
   const formatStatus = (status: string) => {
@@ -223,6 +234,28 @@ export const OrdersSearchFilters = ({
                 </div>
               </div>
 
+              {/* Currency */}
+              <div className="space-y-2">
+                <Label>Currency</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {CURRENCIES.map((currency) => (
+                    <div key={currency} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`currency-${currency}`}
+                        checked={filters.currency.includes(currency)}
+                        onCheckedChange={() => handleCurrencyToggle(currency)}
+                      />
+                      <label
+                        htmlFor={`currency-${currency}`}
+                        className="text-sm cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {currency}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Origin */}
               <div className="space-y-2">
                 <Label>Order Origin</Label>
@@ -304,6 +337,15 @@ export const OrdersSearchFilters = ({
                 <X 
                   className="h-3 w-3 cursor-pointer" 
                   onClick={() => onFiltersChange({ ...filters, origin: 'all' })}
+                />
+              </Badge>
+            )}
+            {filters.currency.length > 0 && (
+              <Badge variant="secondary" className="gap-1">
+                Currency: {filters.currency.join(', ')}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => onFiltersChange({ ...filters, currency: [] })}
                 />
               </Badge>
             )}

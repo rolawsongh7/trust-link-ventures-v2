@@ -55,6 +55,26 @@ export const OrderCard = ({
       .join(' ');
   };
 
+  const getCurrencyColor = (currency: string) => {
+    const colors: Record<string, string> = {
+      'USD': 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-300',
+      'EUR': 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-300',
+      'GBP': 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-300',
+      'GHS': 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-300'
+    };
+    return colors[currency] || 'bg-gray-500/10 text-gray-700 dark:text-gray-300 border-gray-300';
+  };
+
+  const getCurrencySymbol = (currency: string) => {
+    const symbols: Record<string, string> = {
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£',
+      'GHS': '₵'
+    };
+    return symbols[currency] || currency;
+  };
+
   return (
     <Card className="w-full hover:shadow-md transition-shadow">
       <CardContent className="p-4">
@@ -113,9 +133,14 @@ export const OrderCard = ({
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <p className="text-xs text-muted-foreground mb-1">Amount</p>
-            <p className="font-medium text-sm">
-              {order.total_amount?.toLocaleString()} {order.currency}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium text-sm">
+                {getCurrencySymbol(order.currency)} {order.total_amount?.toLocaleString()}
+              </p>
+              <Badge variant="outline" className={`text-xs ${getCurrencyColor(order.currency)}`}>
+                {order.currency}
+              </Badge>
+            </div>
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Items</p>

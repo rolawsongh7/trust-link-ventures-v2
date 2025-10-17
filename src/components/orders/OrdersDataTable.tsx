@@ -154,7 +154,8 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
     status: [],
     dateRange: null,
     amountRange: null,
-    origin: 'all'
+    origin: 'all',
+    currency: []
   });
 
   // Apply filters to orders
@@ -203,6 +204,11 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
         }
       }
 
+      // Currency filter
+      if (filters.currency.length > 0 && !filters.currency.includes(order.currency)) {
+        return false;
+      }
+
       return true;
     });
   }, [orders, filters]);
@@ -214,7 +220,8 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
       status: [],
       dateRange: null,
       amountRange: null,
-      origin: 'all'
+      origin: 'all',
+      currency: []
     });
   };
 

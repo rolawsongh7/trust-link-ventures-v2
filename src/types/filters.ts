@@ -5,6 +5,7 @@ export interface SearchFilters {
   dateRange: { from: Date; to: Date } | null;
   amountRange: { min: number; max: number } | null;
   origin: 'all' | 'auto' | 'manual';
+  currency: string[];
 }
 
 export interface QuoteSearchFilters {
