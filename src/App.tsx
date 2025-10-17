@@ -63,7 +63,7 @@ import VirtualAssistant from "./pages/VirtualAssistant";
 const queryClient = new QueryClient();
 
 const App = () => {
-  const isLovablePreview = useMemo(() => window.location.hostname.includes('lovableproject.com'), []);
+  const isLovablePreview = useMemo(() => window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovableproject.com'), []);
   const isAdmin = useMemo(() => {
     // In preview mode, don't use isAdminDomain for route logic
     if (isLovablePreview) return false;
