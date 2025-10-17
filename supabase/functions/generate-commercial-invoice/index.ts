@@ -114,6 +114,7 @@ serve(async (req) => {
         .eq('id', order.quote_id)
         .single();
       quoteNumber = quote?.quote_number || null;
+      console.log('[Commercial Invoice] Quote number fetched:', quoteNumber);
     }
 
     // Fetch delivery address details
@@ -221,7 +222,9 @@ serve(async (req) => {
     console.log('[Commercial Invoice] Calling PDF generation:', {
       invoiceId: invoice.id,
       invoiceNumber: invoice.invoice_number,
-      invoiceType: 'commercial'
+      invoiceType: 'commercial',
+      quoteNumber: quoteNumber,
+      hasDeliveryAddress: !!deliveryAddress
     });
     
     const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-invoice-pdf', {

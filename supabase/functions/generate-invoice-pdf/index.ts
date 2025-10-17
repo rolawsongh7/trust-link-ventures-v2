@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const FUNCTION_VERSION = '4.0.0'; // Commercial invoice template update with new layout
+const FUNCTION_VERSION = '4.1.0'; // Logo, quote number, payment details fixes
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -51,6 +51,23 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Fetch Trust Link Ventures logo from storage
+    let logoDataUrl = null;
+    try {
+      const { data: logoData, error: logoError } = await supabase.storage
+        .from('logos')
+        .download('trust_link_ventures.png');
+      
+      if (logoData && !logoError) {
+        const arrayBuffer = await logoData.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        logoDataUrl = `data:image/png;base64,${base64}`;
+        console.log('[PDF Generation] Trust Link logo loaded successfully');
+      }
+    } catch (error) {
+      console.log('[PDF Generation] Failed to load Trust Link logo:', error);
+    }
+
     const { invoiceId, invoiceType, quoteNumber, deliveryAddress } = await req.json();
     console.log('[PDF Generation] Processing invoice:', { invoiceId, invoiceType, timestamp: new Date().toISOString() });
 
@@ -97,10 +114,15 @@ serve(async (req) => {
     if (invoice.order_id) {
       const { data: orderData } = await supabase
         .from('orders')
-        .select('order_number, delivery_address_id')
+        .select('order_number, delivery_address_id, carrier, tracking_number, payment_method, payment_reference')
         .eq('id', invoice.order_id)
         .single();
       order = orderData;
+      console.log('[PDF Generation] Order data:', { 
+        order_number: order?.order_number,
+        payment_method: order?.payment_method,
+        payment_reference: order?.payment_reference
+      });
     }
 
     // Generate HTML
@@ -110,7 +132,8 @@ serve(async (req) => {
       customer: customer || {},
       order,
       quoteNumber: quoteNumber,
-      deliveryAddress: deliveryAddress
+      deliveryAddress: deliveryAddress,
+      logoDataUrl: logoDataUrl
     });
 
     console.log('[PDF Generation] Step: HTML generated, length:', html.length);
@@ -241,7 +264,7 @@ serve(async (req) => {
 });
 
 function generateInvoiceHTML(data: any): string {
-  const { invoice, items, customer, order, quoteNumber, deliveryAddress } = data;
+  const { invoice, items, customer, order, quoteNumber, deliveryAddress, logoDataUrl } = data;
   
   const invoiceTypeTitle = invoice.invoice_type === 'proforma' 
     ? 'PROFORMA INVOICE' 
@@ -388,8 +411,8 @@ function generateInvoiceHTML(data: any): string {
     <body>
       <div class="header">
         <div class="company-info">
+          ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Trust Link Ventures Logo" style="width: 80px; height: 80px; margin-bottom: 10px; object-fit: contain;" />` : ''}
           <h1>Trust Link Ventures Limited</h1>
-          <p style="margin: 2px 0; color: #1e40af; font-weight: 600;">Trust Link Ventures</p>
           <p>Enyedado Coldstore Premises</p>
           <p>Afko Junction Box 709, Adabraka</p>
           <p>Accra, Ghana</p>
@@ -427,10 +450,10 @@ function generateInvoiceHTML(data: any): string {
         ${invoice.invoice_type === 'commercial' ? `
           <div class="billing-section">
             <h3>Delivery/Shipping:</h3>
-            ${deliveryAddress ? `
-              <p><strong>${deliveryAddress.receiver_name || 'N/A'}</strong></p>
+            ${deliveryAddress && deliveryAddress.receiver_name ? `
+              <p><strong>${deliveryAddress.receiver_name}</strong></p>
               <p>${deliveryAddress.phone_number || ''}</p>
-              <p style="margin-top: 8px; font-size: 12px; line-height: 1.4;">${deliveryAddress.full_address}</p>
+              <p style="margin-top: 8px; font-size: 12px; line-height: 1.4;">${deliveryAddress.full_address || ''}</p>
             ` : '<p style="color: #6b7280; font-style: italic;">Delivery address pending</p>'}
             <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #e5e7eb;">
               <p><strong>Carrier:</strong> ${order?.carrier || '<em style="color: #6b7280;">To be determined</em>'}</p>
@@ -454,11 +477,11 @@ function generateInvoiceHTML(data: any): string {
             <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb;">
               <p><strong>Payment Method:</strong></p>
               <p style="margin-left: 10px; font-size: 12px;">
-                ${order.payment_method === 'mobile_money' ? '📱 Mobile Money' : order.payment_method === 'bank_transfer' ? '🏦 Bank Transfer' : 'N/A'}
+                ${order.payment_method === 'mobile_money' ? '📱 Mobile Money' : order.payment_method === 'bank_transfer' ? '🏦 Bank Transfer' : 'Not specified'}
               </p>
               <p style="margin-top: 8px;"><strong>Payment Reference:</strong></p>
               <p style="margin-left: 10px; font-family: monospace; font-size: 11px; background: #f3f4f6; padding: 4px 8px; border-radius: 4px; display: inline-block;">
-                ${order.payment_reference || invoice.invoice_number}
+                ${order.payment_reference || 'Not provided'}
               </p>
             </div>
           ` : ''}
