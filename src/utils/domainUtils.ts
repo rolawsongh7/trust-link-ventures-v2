@@ -8,7 +8,7 @@ export const isAdminDomain = (): boolean => {
   if (typeof window === 'undefined') return false;
   
   // In Lovable preview mode, use path-based routing instead of subdomains
-  const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+  const isLovablePreview = window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovableproject.com');
   if (isLovablePreview) {
     return window.location.pathname.startsWith('/admin');
   }
@@ -34,7 +34,7 @@ export const getMainUrl = (path: string = ''): string => {
 
 export const redirectToAdminDomain = (path: string = '/') => {
   // Skip redirect in Lovable preview - use path-based routing
-  const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+  const isLovablePreview = window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovableproject.com');
   if (isLovablePreview) return;
   
   if (!isAdminDomain()) {
@@ -44,7 +44,7 @@ export const redirectToAdminDomain = (path: string = '/') => {
 
 export const redirectToMainDomain = (path: string = '/') => {
   // Skip redirect in Lovable preview - use path-based routing
-  const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+  const isLovablePreview = window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovableproject.com');
   if (isLovablePreview) return;
   
   if (isAdminDomain()) {
@@ -53,7 +53,7 @@ export const redirectToMainDomain = (path: string = '/') => {
 };
 
 export const navigateToPublicSite = () => {
-  const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+  const isLovablePreview = window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovableproject.com');
   if (isLovablePreview) {
     // In preview, navigate directly to home page (both routes available)
     window.location.href = '/';
@@ -64,7 +64,7 @@ export const navigateToPublicSite = () => {
 };
 
 export const navigateToAdminPortal = () => {
-  const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+  const isLovablePreview = window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovableproject.com');
   if (isLovablePreview) {
     // In preview, navigate to admin path
     window.location.href = '/admin/dashboard';
