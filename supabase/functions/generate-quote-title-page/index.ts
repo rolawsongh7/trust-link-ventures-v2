@@ -461,8 +461,8 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
 
     yPosition -= 10
 
-    // Items - Get currency symbol
-    const currencySymbol = quote.currency === 'GHS' ? '₵' : quote.currency === 'EUR' ? '€' : quote.currency === 'GBP' ? '£' : '$'
+    // Items - Get currency symbol (using text codes for WinAnsi compatibility)
+    const currencySymbol = quote.currency === 'GHS' ? 'GHS ' : quote.currency === 'EUR' ? 'EUR ' : quote.currency === 'GBP' ? 'GBP ' : quote.currency === 'USD' ? 'USD ' : '$'
     let subtotal = 0
     for (const item of items) {
       page.drawText(String(item.quantity || '1.00'), {
