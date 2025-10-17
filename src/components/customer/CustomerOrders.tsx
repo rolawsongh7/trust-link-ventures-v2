@@ -161,6 +161,26 @@ export const CustomerOrders: React.FC = () => {
     }
   };
 
+  const getCurrencySymbol = (currency: string) => {
+    const symbols: Record<string, string> = {
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£',
+      'GHS': '₵'
+    };
+    return symbols[currency] || '';
+  };
+
+  const getCurrencyBadgeColor = (currency: string) => {
+    const colors: Record<string, string> = {
+      'USD': 'bg-blue-100 text-blue-700 border-blue-300',
+      'EUR': 'bg-green-100 text-green-700 border-green-300',
+      'GBP': 'bg-purple-100 text-purple-700 border-purple-300',
+      'GHS': 'bg-orange-100 text-orange-700 border-orange-300'
+    };
+    return colors[currency] || 'bg-gray-100 text-gray-700 border-gray-300';
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'quote_pending':
@@ -448,9 +468,11 @@ export const CustomerOrders: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="text-right">
-                        <div className="font-semibold flex items-center">
-                          <DollarSign className="h-4 w-4" />
-                          {order.total_amount.toLocaleString()} {order.currency}
+                        <div className="font-semibold flex items-center gap-2">
+                          {getCurrencySymbol(order.currency)}{order.total_amount.toLocaleString()}
+                          <Badge variant="outline" className={getCurrencyBadgeColor(order.currency)}>
+                            {order.currency}
+                          </Badge>
                         </div>
                       </div>
                       <Badge className={getStatusColor(order.status)}>

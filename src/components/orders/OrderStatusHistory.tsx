@@ -17,6 +17,20 @@ interface StatusHistoryEntry {
   reason: string | null;
 }
 
+interface CurrencyChangeEntry {
+  id: string;
+  created_at: string;
+  event_data: {
+    order_id?: string;
+    quote_id?: string;
+    order_number?: string;
+    quote_number?: string;
+    old_currency: string;
+    new_currency: string;
+    status: string;
+  };
+}
+
 interface OrderStatusHistoryProps {
   orderId: string;
   order?: {
@@ -28,10 +42,12 @@ interface OrderStatusHistoryProps {
 
 const OrderStatusHistory = ({ orderId, order }: OrderStatusHistoryProps) => {
   const [history, setHistory] = useState<StatusHistoryEntry[]>([]);
+  const [currencyChanges, setCurrencyChanges] = useState<CurrencyChangeEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchHistory();
+    fetchCurrencyChanges();
   }, [orderId]);
 
   const fetchHistory = async () => {
@@ -49,6 +65,23 @@ const OrderStatusHistory = ({ orderId, order }: OrderStatusHistoryProps) => {
       console.error('Error fetching status history:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCurrencyChanges = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select('id, created_at, event_data, user_id')
+        .eq('event_type', 'order_currency_changed')
+        .contains('event_data', { order_id: orderId })
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      // Type assertion - we know the event_data structure from our database
+      setCurrencyChanges((data || []) as unknown as CurrencyChangeEntry[]);
+    } catch (error) {
+      console.error('Error fetching currency changes:', error);
     }
   };
 
@@ -104,9 +137,43 @@ const OrderStatusHistory = ({ orderId, order }: OrderStatusHistoryProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Status History</CardTitle>
+        <CardTitle>Order Audit Trail</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
+        {/* Currency Changes Section */}
+        {currencyChanges.length > 0 && (
+          <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+            <h4 className="font-semibold text-orange-900 dark:text-orange-300 mb-3 flex items-center gap-2">
+              <Badge variant="outline" className="bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300">
+                Currency Changes
+              </Badge>
+            </h4>
+            <div className="space-y-3">
+              {currencyChanges.map((change) => (
+                <div key={change.id} className="text-sm bg-background/50 dark:bg-background/30 rounded p-3 border">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="text-xs">
+                      {change.event_data.old_currency}
+                    </Badge>
+                    <ArrowRight className="h-3 w-3" />
+                    <Badge variant="outline" className="text-xs">
+                      {change.event_data.new_currency}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground flex items-center gap-2 mt-2">
+                    <Clock className="h-3 w-3" />
+                    {format(new Date(change.created_at), 'PPpp')}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Order Status: <span className="font-medium">{change.event_data.status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Payment Info Section */}
         {order?.payment_reference && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
             <div className="flex items-start justify-between">
