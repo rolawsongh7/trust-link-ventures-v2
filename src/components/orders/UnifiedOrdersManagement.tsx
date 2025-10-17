@@ -214,7 +214,7 @@ const UnifiedOrdersManagement = () => {
       return;
     }
 
-    const toastId = toast.loading('Generating invoices...');
+    const toastId = toast.loading('Preparing invoice generation...');
     let operationComplete = false;
     
     // Set a timeout to prevent infinite loading
@@ -226,6 +226,22 @@ const UnifiedOrdersManagement = () => {
     }, 60000); // 60 second timeout
     
     try {
+      // Delete existing invoices for this order to force regeneration with new template
+      console.log('[UI] Deleting existing invoices for order:', order.id);
+      toast.loading('Removing old invoices...', { id: toastId });
+      
+      const { error: deleteError } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('order_id', order.id);
+      
+      if (deleteError) {
+        console.error('[UI] Error deleting existing invoices:', deleteError);
+        // Continue anyway - might not have existing invoices
+      } else {
+        console.log('[UI] Successfully deleted existing invoices');
+      }
+      
       // First generate packing list
       console.log('[UI] Starting packing list generation:', {
         orderId: order.id,
