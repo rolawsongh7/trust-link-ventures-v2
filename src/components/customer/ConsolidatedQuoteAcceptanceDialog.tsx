@@ -372,7 +372,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
         <DialogHeader>
           <DialogTitle className="text-xl">Accept Quote & Complete Order</DialogTitle>
           <DialogDescription>
-            Quote {quote.quote_number} • {quote.currency} {quote.total_amount.toLocaleString()}
+            Quote {quote.quote_number} • {quote.currency} {quote.total_amount?.toLocaleString() || '0'}
           </DialogDescription>
         </DialogHeader>
 
@@ -532,7 +532,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
               <div className="bg-muted/50 rounded-lg p-4 border">
                 <p className="text-sm text-muted-foreground mb-1">Total Amount to Pay</p>
                 <p className="text-3xl font-bold">
-                  {quote.total_amount.toLocaleString()} {quote.currency}
+                  {quote.total_amount?.toLocaleString() || '0'} {quote.currency}
                 </p>
               </div>
 
