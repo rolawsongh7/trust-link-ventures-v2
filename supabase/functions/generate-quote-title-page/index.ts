@@ -230,10 +230,27 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     // Vertical starting position
     const headerStartY = height - MARGIN_Y
 
-    // ===== LEFT COLUMN: Logo + QUOTE heading + Supplier info =====
+    // ===== LEFT COLUMN: "QUOTE" heading + Logo + Supplier info =====
     let leftColY = headerStartY
     
-    // Trust Link logo
+    // "QUOTE" heading - CENTERED at very top (highest text)
+    const quoteHeadingText = 'QUOTE'
+    const quoteHeadingWidth = boldFont.widthOfTextAtSize(quoteHeadingText, 32)
+    const quoteHeadingX = (width - quoteHeadingWidth) / 2
+    
+    page.drawText(quoteHeadingText, {
+      x: quoteHeadingX,
+      y: leftColY,
+      size: 32,
+      font: boldFont,
+      color: primaryBlue,
+    })
+    leftColY -= 50  // Gap after QUOTE heading
+    
+    // Store position for logo bottom alignment
+    let logoBottomY = leftColY
+    
+    // Trust Link logo (below QUOTE)
     if (trustLinkLogo) {
       const logoScale = 0.5
       const logoWidth = trustLinkLogo.width * logoScale
@@ -245,26 +262,16 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
         width: logoWidth,
         height: logoHeight,
       })
-      leftColY -= logoHeight + 8
+      logoBottomY = leftColY - logoHeight  // Store for right column alignment
+      leftColY -= logoHeight + 15
     }
     
-    // "QUOTE" heading - CENTERED at top
-    const quoteHeadingText = 'QUOTE'
-    const quoteHeadingWidth = boldFont.widthOfTextAtSize(quoteHeadingText, 28)
-    const quoteHeadingX = (width - quoteHeadingWidth) / 2
+    // Trust Link company info (below logo)
+    const supplierInfoSize = 11
+    const supplierInfoLineHeight = 13
+    const supplierAddressSize = 10
     
-    page.drawText(quoteHeadingText, {
-      x: quoteHeadingX,
-      y: leftColY,
-      size: 28,
-      font: boldFont,
-      color: primaryBlue,
-    })
-    leftColY -= 35
-    
-    // Trust Link company info
-    const supplierInfoSize = 9
-    const supplierInfoLineHeight = 11
+    const trustLinkStartY = leftColY  // Store for Bill To alignment
     
     page.drawText('Trust Link Ventures Limited', {
       x: LEFT_COL_X,
@@ -278,25 +285,25 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     page.drawText('Enyedado Coldstore Premises', {
       x: LEFT_COL_X,
       y: leftColY,
-      size: 8,
+      size: supplierAddressSize,
       font: regularFont,
       color: mediumGray,
     })
-    leftColY -= 10
+    leftColY -= 11
     
     page.drawText('Afko Junction Box 709, Adabraka Ghana', {
       x: LEFT_COL_X,
       y: leftColY,
-      size: 8,
+      size: supplierAddressSize,
       font: regularFont,
       color: mediumGray,
     })
-    leftColY -= 10
+    leftColY -= 11
     
     page.drawText('Email: info@trustlinkcompany.com', {
       x: LEFT_COL_X,
       y: leftColY,
-      size: 8,
+      size: supplierAddressSize,
       font: regularFont,
       color: mediumGray,
     })
@@ -305,20 +312,21 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     // Store where left column ended
     const leftColEndY = leftColY
 
-    // ===== RIGHT COLUMN: Quote metadata (stacked vertically, RIGHT-ALIGNED) =====
-    let rightColY = headerStartY
+    // ===== RIGHT COLUMN: Quote metadata (aligned with logo bottom, RIGHT-ALIGNED) =====
+    const quoteMetaFontSize = 12
+    let rightColY = logoBottomY  // Align with logo bottom
     
     // Quote # - right-aligned
     const quoteNumberLabel = 'Quote #:'
     const quoteNumberValue = quote.quote_number || ''
-    const quoteNumberLabelWidth = boldFont.widthOfTextAtSize(quoteNumberLabel, 10)
-    const quoteNumberValueWidth = regularFont.widthOfTextAtSize(quoteNumberValue, 10)
+    const quoteNumberLabelWidth = boldFont.widthOfTextAtSize(quoteNumberLabel, quoteMetaFontSize)
+    const quoteNumberValueWidth = regularFont.widthOfTextAtSize(quoteNumberValue, quoteMetaFontSize)
     const quoteNumberTotalWidth = quoteNumberLabelWidth + 5 + quoteNumberValueWidth
     
     page.drawText(quoteNumberLabel, {
       x: width - MARGIN_X - quoteNumberTotalWidth,
       y: rightColY,
-      size: 10,
+      size: quoteMetaFontSize,
       font: boldFont,
       color: darkGray,
     })
@@ -326,26 +334,26 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     page.drawText(quoteNumberValue, {
       x: width - MARGIN_X - quoteNumberValueWidth,
       y: rightColY,
-      size: 10,
+      size: quoteMetaFontSize,
       font: regularFont,
       color: darkGray,
     })
     
-    rightColY -= 15  // Move down for Date
+    rightColY -= 18  // Move down for Date
     
     // Date (directly below Quote #) - right-aligned
     const dateLabel = 'Date:'
     const dateValue = quote.created_at 
       ? new Date(quote.created_at).toLocaleDateString('en-GB') 
       : new Date().toLocaleDateString('en-GB')
-    const dateLabelWidth = boldFont.widthOfTextAtSize(dateLabel, 10)
-    const dateValueWidth = regularFont.widthOfTextAtSize(dateValue, 10)
+    const dateLabelWidth = boldFont.widthOfTextAtSize(dateLabel, quoteMetaFontSize)
+    const dateValueWidth = regularFont.widthOfTextAtSize(dateValue, quoteMetaFontSize)
     const dateTotalWidth = dateLabelWidth + 5 + dateValueWidth
     
     page.drawText(dateLabel, {
       x: width - MARGIN_X - dateTotalWidth,
       y: rightColY,
-      size: 10,
+      size: quoteMetaFontSize,
       font: boldFont,
       color: darkGray,
     })
@@ -353,19 +361,17 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     page.drawText(dateValue, {
       x: width - MARGIN_X - dateValueWidth,
       y: rightColY,
-      size: 10,
+      size: quoteMetaFontSize,
       font: regularFont,
       color: darkGray,
     })
-    
-    rightColY -= 50  // Larger gap before Bill To card
 
-    // ===== RIGHT COLUMN: Bill To card =====
+    // ===== RIGHT COLUMN: Bill To card (aligned with Trust Link address) =====
     const billToCardX = RIGHT_COL_X
-    const billToCardY = rightColY
+    const billToCardY = trustLinkStartY  // Align with Trust Link Ventures text
     const billToCardWidth = RIGHT_COL_WIDTH
     const billToCardPadding = 12
-    const estimatedCardHeight = 100
+    const estimatedCardHeight = 115
     
     // Draw card background FIRST (before text content)
     page.drawRectangle({
@@ -384,34 +390,34 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     page.drawText('Bill To', {
       x: billToCardX + billToCardPadding,
       y: billToContentY,
-      size: 10,
+      size: 12,
       font: boldFont,
       color: darkGray,
     })
     
-    billToContentY -= 15
+    billToContentY -= 16
     
     // Customer company name
     const customerName = quote.customers?.company_name || 'Customer Name'
     page.drawText(customerName, {
       x: billToCardX + billToCardPadding,
       y: billToContentY,
-      size: 9,
+      size: 11,
       font: boldFont,
       color: black,
     })
-    billToContentY -= 12
+    billToContentY -= 13
     
     // Contact person
     if (quote.customers?.contact_name) {
       page.drawText(quote.customers.contact_name, {
         x: billToCardX + billToCardPadding,
         y: billToContentY,
-        size: 8,
+        size: 10,
         font: regularFont,
         color: mediumGray,
       })
-      billToContentY -= 11
+      billToContentY -= 12
     }
     
     // Address lines
@@ -420,21 +426,21 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       page.drawText(addressLine1, {
         x: billToCardX + billToCardPadding,
         y: billToContentY,
-        size: 8,
+        size: 10,
         font: regularFont,
         color: mediumGray,
       })
-      billToContentY -= 10
+      billToContentY -= 11
       
       const addressLine2 = `${deliveryAddress.city || ''}, ${deliveryAddress.region || ''}`
       page.drawText(addressLine2, {
         x: billToCardX + billToCardPadding,
         y: billToContentY,
-        size: 8,
+        size: 10,
         font: regularFont,
         color: mediumGray,
       })
-      billToContentY -= 11
+      billToContentY -= 12
     }
     
     // Email
@@ -443,7 +449,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       page.drawText(emailText, {
         x: billToCardX + billToCardPadding,
         y: billToContentY,
-        size: 8,
+        size: 10,
         font: regularFont,
         color: mediumGray,
       })
