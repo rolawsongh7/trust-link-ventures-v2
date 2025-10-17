@@ -54,7 +54,7 @@ interface Quote {
 
 interface CustomerQuotesTableProps {
   quotes: Quote[];
-  onApprove: (quoteId: string) => void;
+  onApprove: (finalQuote: FinalQuote) => void;
   onReject: (quoteId: string) => void;
   onDownload: (url: string) => void;
 }

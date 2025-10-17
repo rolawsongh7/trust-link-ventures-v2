@@ -52,7 +52,7 @@ interface Quote {
 
 interface ExpandedQuoteRowProps {
   quote: Quote;
-  onApprove: (quoteId: string) => void;
+  onApprove: (finalQuote: FinalQuote) => void;
   onReject: (quoteId: string) => void;
   onDownload: (url: string) => void;
 }
@@ -203,7 +203,7 @@ export function ExpandedQuoteRow({ quote, onApprove, onReject, onDownload }: Exp
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={() => onApprove(quote.final_quote!.id)}
+                  onClick={() => onApprove(quote.final_quote!)}
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Approve Quote
