@@ -27,15 +27,23 @@ import {
 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
+import { usePendingAddressRequests } from '@/hooks/usePendingAddressRequests';
 import { Badge } from '@/components/ui/badge';
 
 export const CustomerNavigation: React.FC = () => {
   const { profile, signOut } = useCustomerAuth();
   const { totalItems } = useShoppingCart();
+  const { pendingCount } = usePendingAddressRequests();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navigationItems = [
+  const navigationItems: Array<{
+    title: string;
+    href: string;
+    icon: any;
+    badge?: number;
+    badgeVariant?: 'default' | 'destructive' | 'outline' | 'secondary';
+  }> = [
     {
       title: 'Dashboard',
       href: '/customer',
@@ -60,7 +68,9 @@ export const CustomerNavigation: React.FC = () => {
     {
       title: 'Orders',
       href: '/customer/orders',
-      icon: Package
+      icon: Package,
+      badge: pendingCount > 0 ? pendingCount : undefined,
+      badgeVariant: 'destructive' as const
     },
     {
       title: 'Invoices',
@@ -139,8 +149,10 @@ export const CustomerNavigation: React.FC = () => {
                     {item.title}
                     {item.badge && (
                       <Badge 
-                        variant="destructive" 
-                        className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center"
+                        variant={item.badgeVariant || "destructive"}
+                        className={`absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center ${
+                          item.badgeVariant === 'destructive' ? 'bg-orange-500 hover:bg-orange-600' : ''
+                        }`}
                       >
                         {item.badge}
                       </Badge>
@@ -188,8 +200,10 @@ export const CustomerNavigation: React.FC = () => {
                           {item.title}
                           {item.badge && (
                             <Badge 
-                              variant="destructive" 
-                              className="ml-auto h-6 w-6 p-0 text-xs flex items-center justify-center"
+                              variant={item.badgeVariant || "destructive"}
+                              className={`ml-auto h-6 w-6 p-0 text-xs flex items-center justify-center ${
+                                item.badgeVariant === 'destructive' ? 'bg-orange-500 hover:bg-orange-600' : ''
+                              }`}
                             >
                               {item.badge}
                             </Badge>

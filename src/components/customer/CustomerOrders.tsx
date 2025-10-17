@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign, Download, MapPin, AlertCircle, Upload, CreditCard } from 'lucide-react';
+import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign, Download, MapPin, AlertCircle, Upload, CreditCard, Clock } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +27,7 @@ interface Order {
   estimated_delivery_date?: string;
   tracking_number?: string;
   delivery_address_id?: string;
+  delivery_address_requested_at?: string;
   order_items?: any[];
   quotes?: {
     quote_number: string;
@@ -106,7 +108,7 @@ export const CustomerOrders: React.FC = () => {
         return;
       }
 
-      // Fetch orders with related data
+      // Fetch orders with related data (including delivery_address_requested_at)
       const { data: ordersData, error } = await supabase
         .from('orders')
         .select(`
@@ -560,10 +562,22 @@ export const CustomerOrders: React.FC = () => {
                             setSelectedOrderForAddress(order);
                             setAddressDialogOpen(true);
                           }}
-                          className="bg-orange-500 hover:bg-orange-600"
+                          className={`${
+                            order.delivery_address_requested_at 
+                              ? 'bg-orange-600 hover:bg-orange-700 animate-pulse border-2 border-orange-400' 
+                              : 'bg-orange-500 hover:bg-orange-600'
+                          }`}
                         >
-                          <MapPin className="h-4 w-4 mr-2" />
-                          Add Delivery Address
+                          {order.delivery_address_requested_at && (
+                            <Clock className="h-4 w-4 mr-2" />
+                          )}
+                          {!order.delivery_address_requested_at && (
+                            <MapPin className="h-4 w-4 mr-2" />
+                          )}
+                          {order.delivery_address_requested_at 
+                            ? `⚠️ Address Required - Requested ${formatDistanceToNow(new Date(order.delivery_address_requested_at), { addSuffix: true })}`
+                            : 'Add Delivery Address'
+                          }
                         </Button>
                       )}
                       
