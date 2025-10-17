@@ -216,213 +216,249 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     const primaryBlue = rgb(0.2, 0.4, 0.8)
     const lightBlue = rgb(0.9, 0.95, 1.0)
     
-    let yPosition = height - 40
+    // Page layout constants - measured, not magic numbers
+    const MARGIN_X = 50
+    const MARGIN_Y = 40
+    const CONTENT_WIDTH = width - (2 * MARGIN_X)  // 512 for letter size
+    
+    // Two-column layout
+    const RIGHT_COL_WIDTH = 260  // Enough for Quote # + Date + Bill To
+    const LEFT_COL_WIDTH = CONTENT_WIDTH - RIGHT_COL_WIDTH - 30  // 30px gap
+    const LEFT_COL_X = MARGIN_X
+    const RIGHT_COL_X = width - MARGIN_X - RIGHT_COL_WIDTH
+    
+    // Vertical starting position
+    const headerStartY = height - MARGIN_Y
 
-    // Top section - Company logos and info
-    const leftColumn = 50
-    const rightColumn = width - 250
-
-    // Trust Link Ventures (left)
+    // ===== LEFT COLUMN: Logo + QUOTE heading + Supplier info =====
+    let leftColY = headerStartY
+    
+    // Trust Link logo
     if (trustLinkLogo) {
       const logoScale = 0.5
       const logoWidth = trustLinkLogo.width * logoScale
       const logoHeight = trustLinkLogo.height * logoScale
       
       page.drawImage(trustLinkLogo, {
-        x: leftColumn,
-        y: yPosition - logoHeight,
+        x: LEFT_COL_X,
+        y: leftColY - logoHeight,
         width: logoWidth,
         height: logoHeight,
       })
-      yPosition -= logoHeight + 5
+      leftColY -= logoHeight + 8
     }
     
-    page.drawText('Trust Link Ventures Limited', {
-      x: leftColumn,
-      y: yPosition,
-      size: 10,
-      font: boldFont,
-      color: darkGray,
-    })
-    yPosition -= 12
-    
-    page.drawText('Enyedado Coldstore Premises', {
-      x: leftColumn,
-      y: yPosition,
-      size: 8,
-      font: regularFont,
-      color: mediumGray,
-    })
-    yPosition -= 10
-    
-    page.drawText('Afko Junction Box 709, Adabraka Ghana', {
-      x: leftColumn,
-      y: yPosition,
-      size: 8,
-      font: regularFont,
-      color: mediumGray,
-    })
-
-    yPosition -= 10
-
-    page.drawText('Email: info@trustlinkcompany.com', {
-      x: leftColumn,
-      y: yPosition,
-      size: 8,
-      font: regularFont,
-      color: mediumGray,
-    })
-
-    // Add spacing before Bill To section
-    yPosition -= 120
-
-    // QUOTE title (centered, higher position)
-    yPosition = height - 40
-    const quoteTitle = 'QUOTE'
-    const titleWidth = boldFont.widthOfTextAtSize(quoteTitle, 32)
-    page.drawText(quoteTitle, {
-      x: (width - titleWidth) / 2,
-      y: yPosition,
-      size: 32,
+    // "QUOTE" heading - LEFT-ALIGNED with supplier info
+    page.drawText('QUOTE', {
+      x: LEFT_COL_X,
+      y: leftColY,
+      size: 28,
       font: boldFont,
       color: primaryBlue,
     })
-
-    // Quote details (top right - Quote # and Date on same line)
-    const detailsY = height - 70
-    const quoteDetailsX = width - 280
+    leftColY -= 35
     
-    page.drawText('Quote #:', {
-      x: quoteDetailsX,
-      y: detailsY,
+    // Trust Link company info
+    const supplierInfoSize = 9
+    const supplierInfoLineHeight = 11
+    
+    page.drawText('Trust Link Ventures Limited', {
+      x: LEFT_COL_X,
+      y: leftColY,
+      size: supplierInfoSize,
+      font: boldFont,
+      color: darkGray,
+    })
+    leftColY -= supplierInfoLineHeight
+    
+    page.drawText('Enyedado Coldstore Premises', {
+      x: LEFT_COL_X,
+      y: leftColY,
+      size: 8,
+      font: regularFont,
+      color: mediumGray,
+    })
+    leftColY -= 10
+    
+    page.drawText('Afko Junction Box 709, Adabraka Ghana', {
+      x: LEFT_COL_X,
+      y: leftColY,
+      size: 8,
+      font: regularFont,
+      color: mediumGray,
+    })
+    leftColY -= 10
+    
+    page.drawText('Email: info@trustlinkcompany.com', {
+      x: LEFT_COL_X,
+      y: leftColY,
+      size: 8,
+      font: regularFont,
+      color: mediumGray,
+    })
+    leftColY -= 10
+    
+    // Store where left column ended
+    const leftColEndY = leftColY
+
+    // ===== RIGHT COLUMN: Quote metadata (stacked vertically) =====
+    let rightColY = headerStartY
+    
+    // Quote #
+    const quoteNumberLabel = 'Quote #:'
+    const quoteNumberValue = quote.quote_number || ''
+    const quoteNumberLabelWidth = boldFont.widthOfTextAtSize(quoteNumberLabel, 10)
+    
+    page.drawText(quoteNumberLabel, {
+      x: RIGHT_COL_X,
+      y: rightColY,
       size: 10,
       font: boldFont,
       color: darkGray,
     })
-    page.drawText(quote.quote_number || '', {
-      x: quoteDetailsX + 55,
-      y: detailsY,
+    
+    page.drawText(quoteNumberValue, {
+      x: RIGHT_COL_X + quoteNumberLabelWidth + 5,
+      y: rightColY,
       size: 10,
       font: regularFont,
       color: darkGray,
     })
-
-    page.drawText('Date:', {
-      x: quoteDetailsX + 160,
-      y: detailsY,
+    
+    rightColY -= 15  // Move down for Date
+    
+    // Date (directly below Quote #)
+    const dateLabel = 'Date:'
+    const dateValue = quote.created_at 
+      ? new Date(quote.created_at).toLocaleDateString('en-GB') 
+      : new Date().toLocaleDateString('en-GB')
+    const dateLabelWidth = boldFont.widthOfTextAtSize(dateLabel, 10)
+    
+    page.drawText(dateLabel, {
+      x: RIGHT_COL_X,
+      y: rightColY,
       size: 10,
       font: boldFont,
       color: darkGray,
     })
-    const quoteDate = quote.created_at ? new Date(quote.created_at).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')
-    page.drawText(quoteDate, {
-      x: quoteDetailsX + 195,
-      y: detailsY,
+    
+    page.drawText(dateValue, {
+      x: RIGHT_COL_X + dateLabelWidth + 5,
+      y: rightColY,
       size: 10,
       font: regularFont,
       color: darkGray,
     })
+    
+    rightColY -= 20  // Gap before Bill To card
 
-    // Bill To section (positioned directly below Trust Link address)
-    yPosition -= 90
-    const billToX = leftColumn
-    const billToStartY = yPosition
-
-    // Draw border box around Bill To section
-    const billToBoxPadding = 10
-    const billToBoxWidth = 240
-    let billToBoxHeight = 85 // Initial estimate, will adjust based on content
-
+    // ===== RIGHT COLUMN: Bill To card =====
+    const billToCardX = RIGHT_COL_X
+    const billToCardY = rightColY
+    const billToCardWidth = RIGHT_COL_WIDTH
+    const billToCardPadding = 12
+    let billToContentY = billToCardY - 15
+    
+    // "Bill To" title
     page.drawText('Bill To', {
-      x: billToX,
-      y: yPosition,
+      x: billToCardX + billToCardPadding,
+      y: billToContentY,
       size: 10,
       font: boldFont,
       color: darkGray,
     })
-
-    yPosition -= 15
-
-    // Company name
+    
+    billToContentY -= 15
+    
+    // Customer company name
     const customerName = quote.customers?.company_name || 'Customer Name'
     page.drawText(customerName, {
-      x: billToX,
-      y: yPosition,
-      size: 10,
+      x: billToCardX + billToCardPadding,
+      y: billToContentY,
+      size: 9,
       font: boldFont,
       color: black,
     })
-
-    yPosition -= 12
-
-    // Contact person name
+    billToContentY -= 12
+    
+    // Contact person
     if (quote.customers?.contact_name) {
       page.drawText(quote.customers.contact_name, {
-        x: billToX,
-        y: yPosition,
-        size: 9,
+        x: billToCardX + billToCardPadding,
+        y: billToContentY,
+        size: 8,
         font: regularFont,
         color: mediumGray,
       })
-      yPosition -= 12
+      billToContentY -= 11
     }
-
-    // Customer address
+    
+    // Address lines
     if (deliveryAddress) {
       const addressLine1 = deliveryAddress.street_address || ''
       page.drawText(addressLine1, {
-        x: billToX,
-        y: yPosition,
+        x: billToCardX + billToCardPadding,
+        y: billToContentY,
         size: 8,
         font: regularFont,
         color: mediumGray,
       })
-      yPosition -= 10
-
+      billToContentY -= 10
+      
       const addressLine2 = `${deliveryAddress.city || ''}, ${deliveryAddress.region || ''}`
       page.drawText(addressLine2, {
-        x: billToX,
-        y: yPosition,
+        x: billToCardX + billToCardPadding,
+        y: billToContentY,
         size: 8,
         font: regularFont,
         color: mediumGray,
       })
+      billToContentY -= 11
     }
-
-    // Customer email
+    
+    // Email
     if (quote.customers?.email || quote.customer_email) {
-      yPosition -= 10
-      page.drawText(`Email: ${quote.customers?.email || quote.customer_email}`, {
-        x: billToX,
-        y: yPosition,
+      const emailText = `Email: ${quote.customers?.email || quote.customer_email}`
+      page.drawText(emailText, {
+        x: billToCardX + billToCardPadding,
+        y: billToContentY,
         size: 8,
         font: regularFont,
         color: mediumGray,
       })
+      billToContentY -= 10
     }
-
-    // Calculate actual box height and draw border
-    billToBoxHeight = billToStartY - yPosition + 15
+    
+    // Calculate and draw Bill To card border
+    const billToCardHeight = billToCardY - billToContentY + 10
     page.drawRectangle({
-      x: billToX - billToBoxPadding,
-      y: yPosition - 5,
-      width: billToBoxWidth,
-      height: billToBoxHeight,
+      x: billToCardX,
+      y: billToContentY - 5,
+      width: billToCardWidth,
+      height: billToCardHeight,
+      color: rgb(1, 1, 1),  // white background
       borderColor: lightGray,
       borderWidth: 1,
     })
+    
+    // Store where right column ended
+    const rightColEndY = billToContentY - 5
+    
+    // ===== MAIN CONTENT: Calculate start position (below both columns) =====
+    const mainContentStartY = Math.min(leftColEndY, rightColEndY) - 40  // 40px gap
+    let yPosition = mainContentStartY
 
-    yPosition -= 40
-
-    // Items table - define consistent dimensions
+    // ===== ITEMS TABLE: Full width =====
     const tableTop = yPosition
-    const col1X = leftColumn
-    const col2X = leftColumn + 80
-    const col3X = width - 230
-    const col4X = width - 120
-    const tableLeft = leftColumn - 5
-    const tableWidth = width - 2 * leftColumn + 10
+    const tableLeft = MARGIN_X
+    const tableWidth = CONTENT_WIDTH  // Full width, no column restrictions
     const tableRight = tableLeft + tableWidth
+    
+    // Column positions within table
+    const col1X = tableLeft + 10      // QTY
+    const col2X = tableLeft + 80      // Description
+    const col3X = tableRight - 230    // Unit Price
+    const col4X = tableRight - 120    // Amount (right-aligned)
 
     // Table header background
     page.drawRectangle({
@@ -689,7 +725,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
 
     // Terms and Conditions
     page.drawText('Terms and Conditions', {
-      x: leftColumn,
+      x: MARGIN_X,
       y: yPosition,
       size: 11,
       font: boldFont,
@@ -702,7 +738,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     const termsLines = terms.split('\n')
     for (const line of termsLines) {
       page.drawText(line, {
-        x: leftColumn,
+        x: MARGIN_X,
         y: yPosition,
         size: 9,
         font: regularFont,
@@ -724,7 +760,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     const footerText2 = 'For any queries, please contact us at the address provided.'
     
     page.drawText(footerText, {
-      x: leftColumn,
+      x: MARGIN_X,
       y: footerY,
       size: 8,
       font: regularFont,
@@ -732,7 +768,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     })
     
     page.drawText(footerText2, {
-      x: leftColumn,
+      x: MARGIN_X,
       y: footerY - 12,
       size: 8,
       font: regularFont,
