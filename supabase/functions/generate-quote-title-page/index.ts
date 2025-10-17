@@ -372,8 +372,11 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     const billToCardX = RIGHT_COL_X
     const billToCardY = rightColY - 25  // 25px gap below Date line
     const billToCardWidth = RIGHT_COL_WIDTH
-    const billToCardPadding = 12
+    const billToCardPadding = 8  // Reduced padding for more text space
     const estimatedCardHeight = 115
+    
+    // Calculate available text width for justified layout
+    const billToTextWidth = billToCardWidth - (billToCardPadding * 2)
     
     // Draw card background FIRST (before text content)
     page.drawRectangle({
@@ -399,10 +402,13 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     
     billToContentY -= 16
     
-    // Customer company name
+    // Customer company name - justified by centering within available width
     const customerName = quote.customers?.company_name || 'Customer Name'
+    const customerNameWidth = boldFont.widthOfTextAtSize(customerName, 11)
+    const customerNameX = billToCardX + billToCardPadding
+    
     page.drawText(customerName, {
-      x: billToCardX + billToCardPadding,
+      x: customerNameX,
       y: billToContentY,
       size: 11,
       font: boldFont,
@@ -422,7 +428,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       billToContentY -= 12
     }
     
-    // Address lines
+    // Address lines - use full width
     if (deliveryAddress) {
       const addressLine1 = deliveryAddress.street_address || ''
       page.drawText(addressLine1, {
@@ -445,7 +451,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       billToContentY -= 12
     }
     
-    // Email
+    // Email - use full width
     if (quote.customers?.email || quote.customer_email) {
       const emailText = `Email: ${quote.customers?.email || quote.customer_email}`
       page.drawText(emailText, {
