@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Download, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { InvoiceService } from '@/services/invoiceService';
+import { downloadInvoiceFromUrl } from '@/lib/storageHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Invoice {
@@ -18,6 +18,7 @@ interface Invoice {
   currency: string;
   status: string;
   order_id: string;
+  file_url: string | null;
   orders?: {
     order_number: string;
   };
@@ -89,10 +90,14 @@ export const CustomerInvoices = () => {
   const handleDownload = async (invoice: Invoice) => {
     setDownloading(invoice.id);
     try {
-      const blob = await InvoiceService.downloadInvoice(invoice.id);
+      const blob = await downloadInvoiceFromUrl(
+        invoice.id,
+        invoice.file_url,
+        invoice.invoice_number
+      );
       
       if (!blob) {
-        throw new Error('Failed to generate invoice');
+        throw new Error('Failed to download invoice');
       }
 
       // Create download link
@@ -113,7 +118,7 @@ export const CustomerInvoices = () => {
       console.error('Error downloading invoice:', error);
       toast({
         title: 'Error',
-        description: 'Failed to download invoice',
+        description: error instanceof Error ? error.message : 'Failed to download invoice',
         variant: 'destructive',
       });
     } finally {
