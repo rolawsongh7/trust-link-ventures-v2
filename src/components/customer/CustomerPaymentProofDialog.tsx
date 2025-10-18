@@ -95,13 +95,22 @@ export const CustomerPaymentProofDialog: React.FC<CustomerPaymentProofDialogProp
         
         setUploadProgress(90);
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
+        // Get signed URL (valid for 1 year)
+        const { data: signedUrlData, error: urlError } = await supabase.storage
           .from('payment-proofs')
-          .getPublicUrl(fileName);
+          .createSignedUrl(fileName, 31536000); // 365 days
+
+        if (urlError) {
+          console.error('Failed to generate signed URL:', urlError);
+          throw new Error('Failed to generate secure access URL for receipt');
+        }
+
+        if (!signedUrlData?.signedUrl) {
+          throw new Error('Signed URL not generated');
+        }
 
         setUploadProgress(100);
-        return publicUrl;
+        return signedUrlData.signedUrl;
       } catch (error) {
         lastError = error as Error;
         console.error(`Upload attempt ${attempt} failed:`, error);
@@ -184,11 +193,23 @@ export const CustomerPaymentProofDialog: React.FC<CustomerPaymentProofDialogProp
     } catch (error: any) {
       console.error('Error uploading payment proof:', error);
       setUploadStatus('error');
-      setErrorMessage(error.message || 'Failed to upload payment proof');
+      
+      // Provide specific error messages
+      let errorMessage = 'Failed to upload payment proof. Please try again.';
+      
+      if (error.message?.includes('Signed URL') || error.message?.includes('secure access URL')) {
+        errorMessage = 'Security configuration issue. Please contact support.';
+      } else if (error.message?.includes('storage')) {
+        errorMessage = 'Storage service unavailable. Please try again in a few moments.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setErrorMessage(errorMessage);
       
       toast({
         title: 'Upload Failed',
-        description: error.message || 'Failed to upload payment proof. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {

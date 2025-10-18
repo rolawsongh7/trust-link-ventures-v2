@@ -49,17 +49,39 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
       
       if (!user) throw new Error('Not authenticated');
 
-      // Update order status to processing and mark payment as verified
-      const { error: updateError } = await supabase
+      // Step 1: Mark payment as received (required transition)
+      const { error: paymentReceivedError } = await supabase
         .from('orders')
         .update({
-          status: 'processing',
+          status: 'payment_received',
           payment_verified_by: user.id,
           payment_verified_at: new Date().toISOString(),
         })
         .eq('id', order.id);
 
-      if (updateError) throw updateError;
+      if (paymentReceivedError) {
+        console.error('Failed to mark payment as received:', paymentReceivedError);
+        throw new Error(`Failed to confirm payment: ${paymentReceivedError.message}`);
+      }
+
+      // Step 2: Move to processing (valid transition from payment_received)
+      const { error: processingError } = await supabase
+        .from('orders')
+        .update({
+          status: 'processing',
+        })
+        .eq('id', order.id);
+
+      if (processingError) {
+        console.error('Failed to move order to processing:', processingError);
+        // Don't throw - payment is already confirmed
+        toast({
+          title: 'Partial Success',
+          description: 'Payment confirmed but order not moved to processing. Please manually update status.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       // Send payment confirmation email to customer
       await supabase.functions.invoke('send-payment-confirmation', {
@@ -89,7 +111,7 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
 
       toast({
         title: 'Payment Verified & Processing Started',
-        description: `Order ${order.order_number} is now being processed automatically.`,
+        description: `Order ${order.order_number} payment confirmed and moved to processing automatically.`,
       });
 
       onSuccess();
