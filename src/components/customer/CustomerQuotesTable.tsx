@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { ExpandedQuoteRow } from './ExpandedQuoteRow';
 
@@ -72,6 +73,38 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
     setExpandedRows(newExpanded);
   };
 
+  const getPriceDisplay = (finalQuote: FinalQuote | undefined): string => {
+    if (!finalQuote) {
+      return '-';
+    }
+
+    if (!finalQuote.final_quote_items || finalQuote.final_quote_items.length === 0) {
+      return '-';
+    }
+
+    const validPrices = finalQuote.final_quote_items
+      .filter(item => {
+        if (item.unit_price == null || isNaN(item.unit_price)) return false;
+        if (item.unit_price < 0) return false;
+        return true;
+      })
+      .map(item => item.unit_price);
+
+    if (validPrices.length === 0) {
+      return '-';
+    }
+
+    const currency = finalQuote.currency || 'USD';
+    const minPrice = Math.min(...validPrices);
+    const maxPrice = Math.max(...validPrices);
+
+    if (minPrice === maxPrice) {
+      return `${currency} ${minPrice.toLocaleString()}/unit`;
+    }
+
+    return `${currency} ${minPrice.toLocaleString()} - ${maxPrice.toLocaleString()}/unit`;
+  };
+
   const getStatusColor = (status: string) => {
     const colors = {
       pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
@@ -110,6 +143,7 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
             <TableHead>Date</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Urgency</TableHead>
+            <TableHead className="text-right" aria-label="Unit price range for quoted items">Unit Price</TableHead>
             <TableHead className="text-right">Amount</TableHead>
           </TableRow>
         </TableHeader>
@@ -159,6 +193,28 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
+                    {quote.final_quote && quote.final_quote.final_quote_items && quote.final_quote.final_quote_items.length > 0 ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="font-medium text-sm cursor-help">
+                              {getPriceDisplay(quote.final_quote)}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs">
+                              {quote.final_quote.final_quote_items.length === 1 
+                                ? 'Unit price for this item' 
+                                : `Price range across ${quote.final_quote.final_quote_items.length} items. Click to view details.`}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
                     {quote.final_quote ? (
                       <div className="font-semibold">
                         {quote.final_quote.currency} {quote.final_quote.total_amount.toLocaleString()}
@@ -170,7 +226,7 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
                 </TableRow>
                 {isExpanded && (
                   <TableRow>
-                    <TableCell colSpan={7} className="p-0">
+                    <TableCell colSpan={8} className="p-0">
                       <ExpandedQuoteRow
                         quote={quote}
                         onApprove={onApprove}
