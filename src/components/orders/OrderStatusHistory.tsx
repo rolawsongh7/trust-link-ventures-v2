@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { Clock, User, ArrowRight, Download } from "lucide-react";
+import { openSecureStorageUrl } from "@/lib/storageHelpers";
 
 interface StatusHistoryEntry {
   id: string;
@@ -202,7 +203,9 @@ const OrderStatusHistory = ({ orderId, order }: OrderStatusHistoryProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(order.payment_proof_url, '_blank')}
+                  onClick={async () => {
+                    await openSecureStorageUrl(order.payment_proof_url!);
+                  }}
                 >
                   <Download className="mr-2 h-4 w-4" />
                   View Receipt

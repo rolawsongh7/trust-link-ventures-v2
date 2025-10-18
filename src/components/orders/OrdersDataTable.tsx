@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { openSecureStorageUrl } from '@/lib/storageHelpers';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -343,9 +344,9 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
                 variant="link"
                 size="sm"
                 className="h-auto p-0 text-xs"
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
-                  window.open(row.payment_proof_url, '_blank');
+                  await openSecureStorageUrl(row.payment_proof_url!);
                 }}
               >
                 <FileText className="mr-1 h-3 w-3" />
