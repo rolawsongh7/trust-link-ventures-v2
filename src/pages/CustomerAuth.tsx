@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Building2, Mail, Lock, User, KeyRound } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const CustomerAuth = () => {
   const [signInData, setSignInData] = useState({ email: '', password: '' });
@@ -41,21 +42,43 @@ const CustomerAuth = () => {
   const from = (location.state as any)?.from?.pathname || '/customer';
 
   useEffect(() => {
-    if (user) {
-      // Check if we have stored order context
-      const storedOrderId = sessionStorage.getItem('pendingOrderId');
-      const storedOrderNumber = sessionStorage.getItem('pendingOrderNumber');
-      
-      if (storedOrderId && storedOrderNumber) {
-        // Clear from storage
-        sessionStorage.removeItem('pendingOrderId');
-        sessionStorage.removeItem('pendingOrderNumber');
-        // Navigate with order context
-        navigate(`/customer/addresses?orderId=${storedOrderId}&orderNumber=${encodeURIComponent(storedOrderNumber)}`, { replace: true });
-      } else {
-        navigate(from, { replace: true });
+    const checkAdminStatus = async () => {
+      if (user) {
+        try {
+          // Check if user is in admin whitelist
+          const { data: isAllowed, error } = await supabase.rpc('is_allowed_admin_email', {
+            user_email: user.email,
+          });
+          
+          if (error) {
+            console.error('[CustomerAuth] Error checking admin status:', error);
+          } else if (isAllowed) {
+            // Admin user - redirect to dashboard
+            console.log('[CustomerAuth] Admin detected, redirecting to dashboard');
+            navigate('/dashboard', { replace: true });
+            return;
+          }
+        } catch (error) {
+          console.error('[CustomerAuth] Exception checking admin status:', error);
+        }
+        
+        // Check if we have stored order context
+        const storedOrderId = sessionStorage.getItem('pendingOrderId');
+        const storedOrderNumber = sessionStorage.getItem('pendingOrderNumber');
+        
+        if (storedOrderId && storedOrderNumber) {
+          // Clear from storage
+          sessionStorage.removeItem('pendingOrderId');
+          sessionStorage.removeItem('pendingOrderNumber');
+          // Navigate with order context
+          navigate(`/customer/addresses?orderId=${storedOrderId}&orderNumber=${encodeURIComponent(storedOrderNumber)}`, { replace: true });
+        } else {
+          navigate(from, { replace: true });
+        }
       }
-    }
+    };
+    
+    checkAdminStatus();
   }, [user, navigate, from]);
 
   useEffect(() => {
@@ -119,7 +142,32 @@ const CustomerAuth = () => {
         });
       }
     } else {
-      navigate(from, { replace: true });
+      // Check if newly signed-in user is admin
+      try {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        
+        if (currentUser?.email) {
+          const { data: isAllowed, error: rpcError } = await supabase.rpc('is_allowed_admin_email', {
+            user_email: currentUser.email,
+          });
+          
+          if (rpcError) {
+            console.error('[CustomerAuth] Error checking admin status:', rpcError);
+          } else if (isAllowed) {
+            toast({
+              title: "Welcome, Administrator",
+              description: "Redirecting to admin dashboard...",
+            });
+            navigate('/dashboard', { replace: true });
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (checkError) {
+        console.error('[CustomerAuth] Exception checking admin status:', checkError);
+      }
+      
+      // Will be handled by useEffect for non-admins
     }
 
     setIsLoading(false);
@@ -143,11 +191,42 @@ const CustomerAuth = () => {
         description: error.message,
       });
     } else {
-      toast({
-        title: "Check your email to verify your account",
-        description: "We've sent a confirmation link to your email address. Please click the link to activate your account.",
-        duration: 7000,
-      });
+      // Check if admin email
+      try {
+        const { data: isAllowed, error: rpcError } = await supabase.rpc('is_allowed_admin_email', {
+          user_email: signUpData.email,
+        });
+        
+        if (rpcError) {
+          console.error('[CustomerAuth] Error checking admin status:', rpcError);
+          // Show default message on error
+          toast({
+            title: "Check your email to verify your account",
+            description: "We've sent a confirmation link to your email address.",
+            duration: 7000,
+          });
+        } else if (isAllowed) {
+          toast({
+            title: "Admin Account Created! 🎉",
+            description: "You've been granted administrator access. Please check your email to confirm your account, then sign in to access the admin dashboard.",
+            duration: 10000,
+          });
+        } else {
+          toast({
+            title: "Check your email to verify your account",
+            description: "We've sent a confirmation link to your email address. Please click the link to activate your account.",
+            duration: 7000,
+          });
+        }
+      } catch (checkError) {
+        console.error('[CustomerAuth] Exception checking admin status:', checkError);
+        toast({
+          title: "Check your email to verify your account",
+          description: "We've sent a confirmation link to your email address.",
+          duration: 7000,
+        });
+      }
+      
       // Switch to sign-in tab so users know where to go after confirming
       setActiveTab('signin');
       // Clear the form
