@@ -114,69 +114,8 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
     }
     
     try {
-      // Step 1: Find or create customer
-      let customerId: string | null = null;
-      
-      const { data: existingCustomer } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('email', formData.email)
-        .maybeSingle();
-      
-      if (existingCustomer) {
-        customerId = existingCustomer.id;
-      } else {
-        // Create new customer
-        const { data: newCustomer, error: customerError } = await supabase
-          .from('customers')
-          .insert({
-            company_name: formData.company || formData.name,
-            contact_name: formData.name,
-            email: formData.email,
-            country: formData.country,
-            customer_status: 'prospect',
-            priority: formData.inquiryType === 'Request a Quote' ? 'high' : 'medium'
-          })
-          .select('id')
-          .single();
-        
-        if (customerError) throw customerError;
-        customerId = newCustomer.id;
-      }
-      
-      // Step 2: Create lead
-      const { data: lead, error: leadError } = await supabase
-        .from('leads')
-        .insert({
-          customer_id: customerId,
-          title: `${formData.inquiryType || 'Contact Form'} - ${formData.name}`,
-          description: formData.message,
-          source: 'contact_form',
-          status: 'new',
-          lead_score: formData.inquiryType === 'Request a Quote' ? 80 : 60
-        })
-        .select('id')
-        .single();
-      
-      if (leadError) throw leadError;
-      
-      // Step 3: Log communication
-      const { error: commError } = await supabase
-        .from('communications')
-        .insert({
-          customer_id: customerId,
-          lead_id: lead.id,
-          communication_type: 'email',
-          direction: 'inbound',
-          subject: `Contact Form: ${formData.inquiryType || 'General Inquiry'}`,
-          content: `From: ${formData.name} (${formData.email})\nCompany: ${formData.company || 'N/A'}\nCountry: ${formData.country}\nInquiry Type: ${formData.inquiryType || 'N/A'}\n\nMessage:\n${formData.message}`,
-          contact_person: formData.name
-        });
-      
-      if (commError) throw commError;
-      
-      // Step 4: Send email notifications (await to check if successful)
-      const { data: emailData, error: emailError } = await supabase.functions.invoke('submit-contact-form', {
+      // Call edge function to handle all database operations and email notifications
+      const { data, error } = await supabase.functions.invoke('submit-contact-form', {
         body: {
           name: formData.name,
           company: formData.company,
@@ -184,23 +123,14 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
           country: formData.country,
           inquiryType: formData.inquiryType,
           message: formData.message,
-          leadId: lead.id,
           recaptchaToken: recaptchaToken
         }
       });
 
-      if (emailError) {
-        console.error('Email notification error:', emailError);
-        toast.warning(
-          'Your inquiry was saved, but confirmation emails could not be sent. ' +
-          'We have your information and will contact you soon.',
-          { duration: 7000 }
-        );
-      } else {
-        console.log('Email notifications sent:', emailData);
-        toast.success('Thank you! We\'ve received your inquiry and will be in touch shortly.');
-      }
-      
+      if (error) throw error;
+
+      console.log('Contact form submitted successfully:', data);
+      toast.success('Thank you! We\'ve received your inquiry and will be in touch shortly.');
       setIsSubmitted(true);
     } catch (error: any) {
       console.error('Error submitting contact form:', error);

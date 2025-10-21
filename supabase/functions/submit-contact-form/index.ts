@@ -1,8 +1,21 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.54.0';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const recaptchaSecretKey = Deno.env.get("RECAPTCHA_SECRET_KEY");
+
+// Create Supabase client with service role key for admin operations
+const supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,7 +29,6 @@ interface ContactFormData {
   country: string;
   inquiryType: string;
   message: string;
-  leadId: string;
   recaptchaToken: string;
 }
 
@@ -71,6 +83,80 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Step 1: Find or create customer
+    let customerId: string | null = null;
+    
+    const { data: existingCustomer } = await supabaseAdmin
+      .from('customers')
+      .select('id')
+      .eq('email', formData.email)
+      .maybeSingle();
+    
+    if (existingCustomer) {
+      customerId = existingCustomer.id;
+      console.log('[Contact Form] Found existing customer:', customerId);
+    } else {
+      // Create new customer
+      const { data: newCustomer, error: customerError } = await supabaseAdmin
+        .from('customers')
+        .insert({
+          company_name: formData.company || formData.name,
+          contact_name: formData.name,
+          email: formData.email,
+          country: formData.country,
+          customer_status: 'prospect',
+          priority: formData.inquiryType === 'Request a Quote' ? 'high' : 'medium'
+        })
+        .select('id')
+        .single();
+      
+      if (customerError) {
+        console.error('[Contact Form] Customer creation error:', customerError);
+        throw customerError;
+      }
+      customerId = newCustomer.id;
+      console.log('[Contact Form] Created new customer:', customerId);
+    }
+    
+    // Step 2: Create lead
+    const { data: lead, error: leadError } = await supabaseAdmin
+      .from('leads')
+      .insert({
+        customer_id: customerId,
+        title: `${formData.inquiryType || 'Contact Form'} - ${formData.name}`,
+        description: formData.message,
+        source: 'contact_form',
+        status: 'new',
+        lead_score: formData.inquiryType === 'Request a Quote' ? 80 : 60
+      })
+      .select('id')
+      .single();
+    
+    if (leadError) {
+      console.error('[Contact Form] Lead creation error:', leadError);
+      throw leadError;
+    }
+    console.log('[Contact Form] Created lead:', lead.id);
+    
+    // Step 3: Log communication
+    const { error: commError } = await supabaseAdmin
+      .from('communications')
+      .insert({
+        customer_id: customerId,
+        lead_id: lead.id,
+        communication_type: 'email',
+        direction: 'inbound',
+        subject: `Contact Form: ${formData.inquiryType || 'General Inquiry'}`,
+        content: `From: ${formData.name} (${formData.email})\nCompany: ${formData.company || 'N/A'}\nCountry: ${formData.country}\nInquiry Type: ${formData.inquiryType || 'N/A'}\n\nMessage:\n${formData.message}`,
+        contact_person: formData.name
+      });
+    
+    if (commError) {
+      console.error('[Contact Form] Communication logging error:', commError);
+      throw commError;
+    }
+    console.log('[Contact Form] Logged communication');
+
     // Send admin notification email
     const adminEmailPromise = resend.emails.send({
       from: "Trust Link Ventures <onboarding@resend.dev>",
@@ -86,7 +172,7 @@ const handler = async (req: Request): Promise<Response> => {
         <p><strong>Message:</strong></p>
         <p>${formData.message || 'No message provided'}</p>
         <hr>
-        <p><small>Lead ID: ${formData.leadId}</small></p>
+        <p><small>Lead ID: ${lead.id}</small></p>
         <p><small>View in admin portal: <a href="https://ppyfrftmexvgnsxlhdbz.supabase.co">Admin Dashboard</a></small></p>
       `,
     });
@@ -135,7 +221,9 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: 'Emails sent successfully',
+        message: 'Contact form submitted successfully',
+        leadId: lead.id,
+        customerId: customerId,
         adminEmailId: adminResult.data?.id,
         customerEmailId: customerResult.data?.id
       }),
