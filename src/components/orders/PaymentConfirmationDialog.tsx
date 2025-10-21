@@ -67,21 +67,28 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
     try {
       let paymentProofUrl = null;
       
-      // Upload payment proof if provided
+      // STEP 1: Upload payment proof (if provided)
       if (paymentProofFile) {
         setUploadingProof(true);
         try {
           // Verify authentication
-          const { data: { session } } = await supabase.auth.getSession();
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) {
+            console.error('[PaymentConfirmation] Session error:', sessionError);
+            throw new Error(`Authentication check failed: ${sessionError.message}`);
+          }
+          
           if (!session) {
             throw new Error('Not authenticated. Please log in and try again.');
           }
+          
+          console.log('[PaymentConfirmation] Authenticated user:', session.user.id);
           
           const fileExt = paymentProofFile.name.split('.').pop();
           const fileName = `${orderId}-payment-proof-${Date.now()}.${fileExt}`;
           const filePath = `payment-proofs/${fileName}`;
           
-          console.log('Attempting upload as:', session.user.id, 'to path:', filePath);
+          console.log('[PaymentConfirmation] Uploading to:', filePath);
           
           const { error: uploadError } = await supabase.storage
             .from('payment-proofs')
@@ -91,83 +98,40 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
             });
           
           if (uploadError) {
-            console.error('Storage upload error:', uploadError);
-            throw new Error(`Upload failed: ${uploadError.message}`);
+            console.error('[PaymentConfirmation] Storage upload error:', uploadError);
+            throw new Error(`File upload failed: ${uploadError.message}`);
           }
           
-          // Get public URL (signed URL for private bucket)
+          // Get signed URL
           const { data: signedUrlData, error: urlError } = await supabase.storage
             .from('payment-proofs')
             .createSignedUrl(filePath, 31536000); // 1 year expiry
           
-          if (urlError) throw urlError;
+          if (urlError) {
+            console.error('[PaymentConfirmation] Signed URL error:', urlError);
+            throw new Error(`Failed to generate file URL: ${urlError.message}`);
+          }
           
           paymentProofUrl = signedUrlData.signedUrl;
           
-          console.log('Payment proof uploaded:', paymentProofUrl);
+          console.log('[PaymentConfirmation] Payment proof uploaded successfully');
+          toast.success('Payment proof uploaded successfully');
         } catch (uploadError) {
-          console.error('Error uploading payment proof:', uploadError);
-          toast.warning('Payment proof upload failed, but reference will be saved');
+          console.error('[PaymentConfirmation] Upload failed:', uploadError);
+          toast.error(
+            uploadError instanceof Error 
+              ? uploadError.message 
+              : 'Payment proof upload failed. Continuing without proof file.'
+          );
           // Don't block payment confirmation if upload fails
+          paymentProofUrl = null;
         } finally {
           setUploadingProof(false);
         }
       }
-      // Check if delivery address exists
-      if (!deliveryAddressId) {
-        // Request delivery address from customer
-        const { error: emailError } = await supabase.functions.invoke('send-email', {
-          body: {
-            to: customerEmail,
-            subject: `Delivery Address Required - Order ${orderNumber}`,
-            templateType: 'delivery_address_request',
-            templateData: {
-              orderNumber,
-              message: 'We have received your payment. Please provide your delivery address to complete your order.',
-            },
-          },
-        });
 
-        if (emailError) {
-          console.error('Error sending delivery address request:', emailError);
-        }
-
-        toast.success('Payment confirmed! Delivery address request sent to customer.');
-        
-        // Update order with payment reference and status
-        await supabase
-          .from('orders')
-          .update({
-            status: 'payment_received',
-            payment_reference: paymentReference,
-            payment_method: paymentMethod,
-            payment_proof_url: paymentProofUrl,
-            delivery_notes: deliveryNotes,
-          })
-          .eq('id', orderId);
-
-        // Send payment confirmation emails
-        const { error: confirmEmailError } = await supabase.functions.invoke('send-payment-confirmation', {
-          body: {
-            orderId,
-            orderNumber,
-            customerEmail,
-            paymentReference,
-            paymentProofUrl,
-            hasDeliveryAddress: false,
-          },
-        });
-
-        if (confirmEmailError) {
-          console.error('Error sending payment confirmation email:', confirmEmailError);
-        }
-
-        onSuccess();
-        onOpenChange(false);
-        return;
-      }
-
-      // Update order with payment details
+      // STEP 2: Update order status
+      console.log('[PaymentConfirmation] Updating order status...');
       const { error: updateError } = await supabase
         .from('orders')
         .update({
@@ -179,58 +143,157 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
         })
         .eq('id', orderId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('[PaymentConfirmation] Order update error:', updateError);
+        throw new Error(`Failed to update order: ${updateError.message}`);
+      }
 
-      // Generate invoice
-      toast.loading('Generating invoice...');
+      console.log('[PaymentConfirmation] Order updated successfully');
+      toast.success('Payment details saved');
+
+      // STEP 3: Handle delivery address scenario
+      if (!deliveryAddressId) {
+        console.log('[PaymentConfirmation] No delivery address - requesting from customer');
+        
+        // Request delivery address from customer
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-email', {
+            body: {
+              to: customerEmail,
+              subject: `Delivery Address Required - Order ${orderNumber}`,
+              templateType: 'delivery_address_request',
+              templateData: {
+                orderNumber,
+                message: 'We have received your payment. Please provide your delivery address to complete your order.',
+              },
+            },
+          });
+
+          if (emailError) {
+            console.error('[PaymentConfirmation] Delivery address request email error:', emailError);
+            throw new Error(`Failed to send address request email: ${emailError.message}`);
+          }
+
+          console.log('[PaymentConfirmation] Delivery address request sent');
+        } catch (emailError) {
+          console.error('[PaymentConfirmation] Email sending failed:', emailError);
+          toast.warning('Payment confirmed, but failed to send delivery address request email');
+        }
+
+        // Send payment confirmation emails
+        try {
+          const { error: confirmEmailError } = await supabase.functions.invoke('send-payment-confirmation', {
+            body: {
+              orderId,
+              orderNumber,
+              customerEmail,
+              paymentReference,
+              paymentProofUrl,
+              hasDeliveryAddress: false,
+            },
+          });
+
+          if (confirmEmailError) {
+            console.error('[PaymentConfirmation] Confirmation email error:', confirmEmailError);
+            toast.warning('Payment confirmed, but confirmation email failed to send');
+          } else {
+            console.log('[PaymentConfirmation] Confirmation email sent');
+          }
+        } catch (emailError) {
+          console.error('[PaymentConfirmation] Confirmation email exception:', emailError);
+        }
+
+        toast.success('Payment confirmed! Delivery address request sent to customer.');
+        onSuccess();
+        onOpenChange(false);
+        return;
+      }
+
+      // STEP 4: Generate invoice (delivery address exists)
+      console.log('[PaymentConfirmation] Generating invoice...');
+      const invoiceToastId = toast.loading('Generating invoice...');
       
-      const { data: invoiceData, error: invoiceError } = await supabase.functions.invoke('generate-invoice-pdf', {
-        body: {
-          orderId,
-          invoiceType: 'commercial',
-          paymentReference,
-          deliveryNotes,
-        },
-      });
+      try {
+        const { data: invoiceData, error: invoiceError } = await supabase.functions.invoke('generate-invoice-pdf', {
+          body: {
+            orderId,
+            invoiceType: 'commercial',
+            paymentReference,
+            deliveryNotes,
+          },
+        });
 
-      if (invoiceError) throw invoiceError;
+        if (invoiceError) {
+          console.error('[PaymentConfirmation] Invoice generation error:', invoiceError);
+          throw new Error(`Invoice generation failed: ${invoiceError.message}`);
+        }
 
-      // Send invoice to customer
-      const { error: sendError } = await supabase.functions.invoke('send-invoice-email', {
-        body: {
-          orderId,
-          customerEmail,
-          invoiceData: invoiceData,
-        },
-      });
+        console.log('[PaymentConfirmation] Invoice generated successfully');
+        toast.success('Invoice generated', { id: invoiceToastId });
 
-      if (sendError) {
-        console.error('Error sending invoice email:', sendError);
-        toast.warning('Invoice generated but email failed to send');
+        // STEP 5: Send invoice to customer
+        console.log('[PaymentConfirmation] Sending invoice email...');
+        const { error: sendError } = await supabase.functions.invoke('send-invoice-email', {
+          body: {
+            orderId,
+            customerEmail,
+            invoiceData: invoiceData,
+          },
+        });
+
+        if (sendError) {
+          console.error('[PaymentConfirmation] Invoice email error:', sendError);
+          toast.warning('Invoice generated but email failed to send');
+        } else {
+          console.log('[PaymentConfirmation] Invoice email sent');
+        }
+
+        // STEP 6: Send payment confirmation emails
+        console.log('[PaymentConfirmation] Sending payment confirmation...');
+        const { error: confirmEmailError } = await supabase.functions.invoke('send-payment-confirmation', {
+          body: {
+            orderId,
+            orderNumber,
+            customerEmail,
+            paymentReference,
+            paymentProofUrl,
+            hasDeliveryAddress: true,
+          },
+        });
+
+        if (confirmEmailError) {
+          console.error('[PaymentConfirmation] Payment confirmation error:', confirmEmailError);
+          toast.warning('Invoice sent, but confirmation email failed');
+        } else {
+          console.log('[PaymentConfirmation] Payment confirmation sent');
+        }
+
+        toast.success('Payment confirmed and invoice generated successfully');
+      } catch (invoiceError) {
+        console.error('[PaymentConfirmation] Invoice/email error:', invoiceError);
+        toast.error(
+          invoiceError instanceof Error
+            ? `Invoice error: ${invoiceError.message}`
+            : 'Failed to generate or send invoice',
+          { id: invoiceToastId }
+        );
+        // Don't return - payment is already confirmed
+        toast.info('Payment is confirmed, but invoice generation failed. Please regenerate manually.');
       }
 
-      // Send payment confirmation emails
-      const { error: confirmEmailError } = await supabase.functions.invoke('send-payment-confirmation', {
-        body: {
-          orderId,
-          orderNumber,
-          customerEmail,
-          paymentReference,
-          paymentProofUrl,
-          hasDeliveryAddress: true,
-        },
-      });
-
-      if (confirmEmailError) {
-        console.error('Error sending payment confirmation email:', confirmEmailError);
-      }
-
-      toast.success('Payment confirmed and invoice generated successfully');
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error confirming payment:', error);
-      toast.error('Failed to confirm payment. Please try again.');
+      console.error('[PaymentConfirmation] Fatal error:', error);
+      
+      // Provide specific error message
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'An unknown error occurred';
+      
+      toast.error(`Failed to confirm payment: ${errorMessage}`, {
+        duration: 7000,
+      });
     } finally {
       setLoading(false);
     }

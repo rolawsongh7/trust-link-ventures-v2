@@ -112,9 +112,9 @@ export const CustomerNavigation: React.FC = () => {
   };
 
   return (
-    <nav className="bg-white border-b border-border/10 shadow-sm sticky top-0 z-50">
+    <nav className="bg-white/95 backdrop-blur-sm border-b-2 border-primary/10 shadow-md sticky top-0 z-[100] min-h-[64px]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 sm:h-20">
+        <div className="flex justify-between items-center h-16 sm:h-20 gap-4">
           {/* Logo and Company Info */}
           <div className="flex items-center min-w-0">
             <Link to="/customer" className="flex items-center gap-2 sm:gap-3 touch-manipulation">
@@ -133,7 +133,7 @@ export const CustomerNavigation: React.FC = () => {
           </div>
 
           {/* Desktop Navigation - Hidden on Mobile */}
-          <div className="hidden lg:flex items-center space-x-1">
+          <div className="hidden lg:flex items-center space-x-2 gap-1">
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.href;
               const Icon = item.icon;
@@ -143,7 +143,7 @@ export const CustomerNavigation: React.FC = () => {
                   <Button
                     variant={isActive ? "secondary" : "ghost"}
                     size="sm"
-                    className="relative h-10 touch-manipulation"
+                    className="relative h-10 touch-manipulation whitespace-nowrap px-3"
                   >
                     <Icon className="h-4 w-4 mr-2" />
                     {item.title}

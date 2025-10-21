@@ -10,7 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check, X, Download } from 'lucide-react';
 import { ExpandedQuoteRow } from './ExpandedQuoteRow';
 
 interface QuoteItem {
@@ -39,6 +39,8 @@ interface FinalQuote {
   currency: string;
   final_quote_items?: FinalQuoteItem[];
   file_url?: string;
+  valid_until?: string;
+  final_file_url?: string;
 }
 
 interface Quote {
@@ -144,7 +146,8 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
             <TableHead>Status</TableHead>
             <TableHead>Urgency</TableHead>
             <TableHead className="text-right" aria-label="Unit price range for quoted items">Unit Price</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
+            <TableHead className="text-right">Total Amount</TableHead>
+            <TableHead className="text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -216,17 +219,80 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
                   </TableCell>
                   <TableCell className="text-right">
                     {quote.final_quote ? (
-                      <div className="font-semibold">
-                        {quote.final_quote.currency} {quote.final_quote.total_amount.toLocaleString()}
+                      <div className="flex flex-col items-end">
+                        <span className="font-semibold text-lg">
+                          {quote.final_quote.currency} {quote.final_quote.total_amount.toLocaleString()}
+                        </span>
+                        {quote.final_quote.valid_until && (
+                          <span className="text-xs text-muted-foreground">
+                            Valid until {new Date(quote.final_quote.valid_until).toLocaleDateString()}
+                          </span>
+                        )}
                       </div>
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
+                  <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                    {quote.final_quote && quote.status === 'quoted' && (
+                      <div className="flex items-center justify-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onApprove(quote.final_quote);
+                          }}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onReject(quote.final_quote.id);
+                          }}
+                          className="border-red-200 text-red-600 hover:bg-red-50"
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Reject
+                        </Button>
+                        {quote.final_quote?.final_file_url && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDownload(quote.final_quote.final_file_url);
+                            }}
+                            title="Download quote PDF"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                    {quote.final_quote && quote.status === 'approved' && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        ✓ Accepted
+                      </Badge>
+                    )}
+                    {quote.final_quote && quote.status === 'rejected' && (
+                      <Badge variant="secondary" className="bg-red-100 text-red-800">
+                        ✗ Rejected
+                      </Badge>
+                    )}
+                    {!quote.final_quote && (
+                      <span className="text-xs text-muted-foreground">Awaiting quote</span>
+                    )}
+                  </TableCell>
                 </TableRow>
                 {isExpanded && (
                   <TableRow>
-                    <TableCell colSpan={8} className="p-0">
+                    <TableCell colSpan={9} className="p-0">
                       <ExpandedQuoteRow
                         quote={quote}
                         onApprove={onApprove}
