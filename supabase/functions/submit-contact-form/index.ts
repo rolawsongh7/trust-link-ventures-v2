@@ -213,9 +213,10 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('[Contact Form] Admin email result:', adminResult);
     console.log('[Contact Form] Customer email result:', customerResult);
 
+    // Don't fail the whole request if emails fail - data is already saved
     if (adminResult.error || customerResult.error) {
-      console.error('[Contact Form] Email error:', adminResult.error || customerResult.error);
-      throw new Error('Failed to send one or more emails');
+      console.error('[Contact Form] Email warning:', adminResult.error || customerResult.error);
+      // Continue anyway - the lead was saved successfully
     }
 
     return new Response(
