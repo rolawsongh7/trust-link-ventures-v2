@@ -116,9 +116,29 @@ export const signUpSchema = z.object({
   companyName: companyNameSchema,
 });
 
+// Change password schema
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: passwordSchema,
+  confirmPassword: z.string().min(1, 'Please confirm your new password'),
+}).refine(
+  (data) => data.newPassword === data.confirmPassword,
+  {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  }
+).refine(
+  (data) => data.newPassword !== data.currentPassword,
+  {
+    message: 'New password must be different from current password',
+    path: ['newPassword'],
+  }
+);
+
 // Type exports for TypeScript
 export type SignInFormData = z.infer<typeof signInSchema>;
 export type SignUpFormData = z.infer<typeof signUpSchema>;
+export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 
 // Helper function to sanitize input (defense in depth)
 export function sanitizeInput(input: string): string {

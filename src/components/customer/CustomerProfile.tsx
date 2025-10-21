@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { User, Building2, Mail, Phone, MapPin, Save, Shield, Lock } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
+import { ChangePasswordDialog } from './ChangePasswordDialog';
 
 
 export const CustomerProfile: React.FC = () => {
@@ -15,6 +16,7 @@ export const CustomerProfile: React.FC = () => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     company_name: profile?.company_name || '',
@@ -244,7 +246,11 @@ export const CustomerProfile: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => setShowChangePassword(true)}
+              >
                 <Lock className="h-4 w-4 mr-2" />
                 Change Password
               </Button>
@@ -287,6 +293,11 @@ export const CustomerProfile: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      <ChangePasswordDialog 
+        open={showChangePassword} 
+        onOpenChange={setShowChangePassword}
+      />
     </div>
   );
 };

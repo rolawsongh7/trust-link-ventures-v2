@@ -23,6 +23,7 @@ interface CustomerAuthContextType {
   signUp: (email: string, password: string, companyName: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
   updateProfile: (updates: Partial<CustomerProfile>) => Promise<{ error: any }>;
+  updatePassword: (newPassword: string) => Promise<{ error: any }>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   resendConfirmationEmail: (email: string) => Promise<{ error: any }>;
 }
@@ -355,6 +356,39 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
+  const updatePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        console.error('Password update error:', error);
+        toast({
+          variant: "destructive",
+          title: "Password update failed",
+          description: error.message || "Failed to update password. Please try again.",
+        });
+        return { error };
+      }
+
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully changed.",
+      });
+
+      return { error: null };
+    } catch (error: any) {
+      console.error('Unexpected error updating password:', error);
+      toast({
+        variant: "destructive",
+        title: "Password update failed",
+        description: "An unexpected error occurred. Please try again.",
+      });
+      return { error };
+    }
+  };
+
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/customer-auth?reset=true`,
@@ -390,6 +424,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     signUp,
     signOut,
     updateProfile,
+    updatePassword,
     resetPassword,
     resendConfirmationEmail,
   };
