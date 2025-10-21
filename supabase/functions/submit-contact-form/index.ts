@@ -43,6 +43,10 @@ async function verifyRecaptcha(token: string): Promise<boolean> {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log('[Contact Form] Function invoked');
+  console.log('[Contact Form] RESEND_API_KEY present:', !!Deno.env.get("RESEND_API_KEY"));
+  console.log('[Contact Form] RECAPTCHA_SECRET_KEY present:', !!Deno.env.get("RECAPTCHA_SECRET_KEY"));
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -69,7 +73,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send admin notification email
     const adminEmailPromise = resend.emails.send({
-      from: "Trust Link Ventures <info@trustlinkcompany.com>",
+      from: "Trust Link Ventures <onboarding@resend.dev>",
       to: ["trustlventuresghana_a01@yahoo.com"],
       subject: `New Contact Form: ${formData.inquiryType} - ${formData.name}`,
       html: `
@@ -89,7 +93,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send customer confirmation email
     const customerEmailPromise = resend.emails.send({
-      from: "Trust Link Ventures <info@trustlinkcompany.com>",
+      from: "Trust Link Ventures <onboarding@resend.dev>",
       to: [formData.email],
       subject: "Thank you for contacting Trust Link Ventures",
       html: `

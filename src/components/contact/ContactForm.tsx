@@ -175,8 +175,8 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
       
       if (commError) throw commError;
       
-      // Step 4: Send email notifications (background task)
-      supabase.functions.invoke('submit-contact-form', {
+      // Step 4: Send email notifications (await to check if successful)
+      const { data: emailData, error: emailError } = await supabase.functions.invoke('submit-contact-form', {
         body: {
           name: formData.name,
           company: formData.company,
@@ -187,15 +187,20 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType = '' }) =>
           leadId: lead.id,
           recaptchaToken: recaptchaToken
         }
-      }).then(({ data, error }) => {
-        if (error) {
-          console.error('Email notification error:', error);
-        } else {
-          console.log('Email notifications sent:', data);
-        }
       });
+
+      if (emailError) {
+        console.error('Email notification error:', emailError);
+        toast.warning(
+          'Your inquiry was saved, but confirmation emails could not be sent. ' +
+          'We have your information and will contact you soon.',
+          { duration: 7000 }
+        );
+      } else {
+        console.log('Email notifications sent:', emailData);
+        toast.success('Thank you! We\'ve received your inquiry and will be in touch shortly.');
+      }
       
-      toast.success('Thank you! We\'ve received your inquiry and will be in touch shortly.');
       setIsSubmitted(true);
     } catch (error: any) {
       console.error('Error submitting contact form:', error);
