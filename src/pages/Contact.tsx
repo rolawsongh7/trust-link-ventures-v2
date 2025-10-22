@@ -10,6 +10,8 @@ import contactHeroBg from '@/assets/contact-hero-bg.jpg';
 import ContactForm from '@/components/contact/ContactForm';
 import ContactFAQ from '@/components/contact/ContactFAQ';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
+import appleStoreBadge from '@/assets/app-store-badge.svg';
+import googlePlayBadge from '@/assets/google-play-badge.png';
 
 const Contact = () => {
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
@@ -282,7 +284,7 @@ const Contact = () => {
               <div className="relative">
                 <div className="bg-gradient-to-br from-blue-600 to-purple-700 rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-white text-center">
                   <Smartphone className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-6 opacity-90" />
-                  <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Trust Link Mobile</h3>
+                  <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Trust Link B2B Connect</h3>
                   <p className="text-blue-100 text-sm sm:text-base mb-4 sm:mb-6">
                     Order management, real-time tracking, and instant communication - all in your pocket.
                   </p>
@@ -297,31 +299,31 @@ const Contact = () => {
               {/* Download Buttons */}
               <div className="space-y-4 sm:space-y-6">
                 <div className="space-y-3 sm:space-y-4">
-                  {/* App Store Button */}
-                  <Button 
-                    size={isMobile ? "default" : "lg"}
-                    className="w-full min-h-[56px] sm:h-16 bg-black hover:bg-gray-800 text-white rounded-xl sm:rounded-2xl flex items-center justify-start px-4 sm:px-6 gap-3 sm:gap-4 touch-manipulation"
+                  {/* App Store Badge */}
+                  <a 
+                    href="#" 
+                    className="block hover:opacity-80 transition-opacity"
+                    aria-label="Download on the App Store"
                   >
-                    <Apple className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" />
-                    <div className="text-left">
-                      <div className="text-xs text-gray-300">Download on the</div>
-                      <div className="text-base sm:text-lg font-semibold">App Store</div>
-                    </div>
-                  </Button>
+                    <img 
+                      src={appleStoreBadge} 
+                      alt="Download on the App Store"
+                      className="w-full h-auto max-w-[200px]"
+                    />
+                  </a>
 
-                  {/* Google Play Button */}
-                  <Button 
-                    size={isMobile ? "default" : "lg"}
-                    className="w-full min-h-[56px] sm:h-16 bg-green-600 hover:bg-green-700 text-white rounded-xl sm:rounded-2xl flex items-center justify-start px-4 sm:px-6 gap-3 sm:gap-4 touch-manipulation"
+                  {/* Google Play Badge */}
+                  <a 
+                    href="#" 
+                    className="block hover:opacity-80 transition-opacity"
+                    aria-label="Get it on Google Play"
                   >
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Download className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
-                    </div>
-                    <div className="text-left">
-                      <div className="text-xs text-green-100">Get it on</div>
-                      <div className="text-base sm:text-lg font-semibold">Google Play</div>
-                    </div>
-                  </Button>
+                    <img 
+                      src={googlePlayBadge} 
+                      alt="Get it on Google Play"
+                      className="w-full h-auto max-w-[200px]"
+                    />
+                  </a>
                 </div>
 
                 <div className="text-center pt-2 sm:pt-4">
