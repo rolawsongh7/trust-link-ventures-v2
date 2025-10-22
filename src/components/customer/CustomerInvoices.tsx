@@ -7,6 +7,7 @@ import { Download, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { downloadInvoiceFromUrl } from '@/lib/storageHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ensureCustomerRecord } from '@/lib/customerUtils';
 
 interface Invoice {
   id: string;
@@ -66,17 +67,8 @@ export const CustomerInvoices = () => {
       // Debug: Log the email being searched
       console.log('Fetching invoices for email:', user.email);
 
-      // Get customer ID from email with error handling
-      const { data: customer, error: customerError } = await supabase
-        .from('customers')
-        .select('id, email, company_name')
-        .eq('email', user.email)
-        .maybeSingle(); // Use maybeSingle() instead of single()
-
-      if (customerError) {
-        console.error('Error fetching customer:', customerError);
-        throw customerError;
-      }
+      // Use the case-insensitive customer lookup utility
+      const customer = await ensureCustomerRecord(user.email);
 
       if (!customer) {
         console.warn('No customer record found for email:', user.email);

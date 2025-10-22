@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import AddressSelectionDialog from './AddressSelectionDialog';
 import { CustomerPaymentProofDialog } from './CustomerPaymentProofDialog';
 import { OrderPaymentInstructions } from './OrderPaymentInstructions';
+import { ensureCustomerRecord } from '@/lib/customerUtils';
 
 
 // Order interface matching database schema
@@ -107,17 +108,8 @@ export const CustomerOrders: React.FC = () => {
       // Debug: Log the email being searched
       console.log('Fetching orders for email:', profile.email);
 
-      // First, get the customer record with error handling
-      const { data: customer, error: customerError } = await supabase
-        .from('customers')
-        .select('id, email, company_name')
-        .eq('email', profile.email)
-        .maybeSingle(); // Use maybeSingle() instead of single()
-
-      if (customerError) {
-        console.error('Error fetching customer:', customerError);
-        throw customerError;
-      }
+      // Use the case-insensitive customer lookup utility
+      const customer = await ensureCustomerRecord(profile.email);
 
       if (!customer) {
         console.warn('No customer record found for email:', profile.email);
