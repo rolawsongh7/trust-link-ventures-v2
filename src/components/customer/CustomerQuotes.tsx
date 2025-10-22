@@ -100,7 +100,12 @@ export const CustomerQuotes: React.FC = () => {
         .ilike('lead_email', profile.email)  // Case-insensitive
         .order('created_at', { ascending: false });
 
-      if (requestsError) throw requestsError;
+      if (requestsError) {
+        console.error('❌ Error fetching quote requests:', requestsError);
+        throw requestsError;
+      }
+
+      console.log('✅ Quote requests found:', quoteRequests?.length || 0);
 
       // Fetch linked final quotes with items
       let finalQuotes = [];
