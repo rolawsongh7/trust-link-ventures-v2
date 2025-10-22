@@ -148,7 +148,7 @@ export type Database = {
           event_data: Json | null
           event_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           request_id: string | null
           resource_id: string | null
           resource_type: string | null
@@ -164,7 +164,7 @@ export type Database = {
           event_data?: Json | null
           event_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           request_id?: string | null
           resource_id?: string | null
           resource_type?: string | null
@@ -180,7 +180,7 @@ export type Database = {
           event_data?: Json | null
           event_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           request_id?: string | null
           resource_id?: string | null
           resource_type?: string | null
@@ -321,7 +321,7 @@ export type Database = {
           consent_type: string
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_agent: string | null
           user_id: string
         }
@@ -330,7 +330,7 @@ export type Database = {
           consent_type: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id: string
         }
@@ -339,7 +339,7 @@ export type Database = {
           consent_type?: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string
         }
@@ -352,7 +352,7 @@ export type Database = {
           created_at: string
           document_uri: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           line_number: number | null
           source_file: string | null
           user_agent: string | null
@@ -365,7 +365,7 @@ export type Database = {
           created_at?: string
           document_uri?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           line_number?: number | null
           source_file?: string | null
           user_agent?: string | null
@@ -378,7 +378,7 @@ export type Database = {
           created_at?: string
           document_uri?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           line_number?: number | null
           source_file?: string | null
           user_agent?: string | null
@@ -732,7 +732,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           reason: string | null
           user_agent: string | null
         }
@@ -741,7 +741,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           reason?: string | null
           user_agent?: string | null
         }
@@ -750,7 +750,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           reason?: string | null
           user_agent?: string | null
         }
@@ -767,7 +767,7 @@ export type Database = {
           metadata: Json | null
           storage_path: string | null
           updated_at: string
-          upload_ip: unknown | null
+          upload_ip: unknown
           user_id: string
           validation_errors: string[] | null
           validation_status: string
@@ -783,7 +783,7 @@ export type Database = {
           metadata?: Json | null
           storage_path?: string | null
           updated_at?: string
-          upload_ip?: unknown | null
+          upload_ip?: unknown
           user_id: string
           validation_errors?: string[] | null
           validation_status?: string
@@ -799,7 +799,7 @@ export type Database = {
           metadata?: Json | null
           storage_path?: string | null
           updated_at?: string
-          upload_ip?: unknown | null
+          upload_ip?: unknown
           user_id?: string
           validation_errors?: string[] | null
           validation_status?: string
@@ -1084,7 +1084,7 @@ export type Database = {
           attempt_time: string
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           success: boolean
           user_agent: string | null
           user_id: string
@@ -1093,7 +1093,7 @@ export type Database = {
           attempt_time?: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           success?: boolean
           user_agent?: string | null
           user_id: string
@@ -1102,7 +1102,7 @@ export type Database = {
           attempt_time?: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           success?: boolean
           user_agent?: string | null
           user_id?: string
@@ -1286,7 +1286,7 @@ export type Database = {
           changed_at: string | null
           changed_by: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           new_status: string
           old_status: string | null
           order_id: string
@@ -1297,7 +1297,7 @@ export type Database = {
           changed_at?: string | null
           changed_by?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_status: string
           old_status?: string | null
           order_id: string
@@ -1308,7 +1308,7 @@ export type Database = {
           changed_at?: string | null
           changed_by?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_status?: string
           old_status?: string | null
           order_id?: string
@@ -1664,7 +1664,7 @@ export type Database = {
           customer_notes: string | null
           decision: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           quote_id: string
           token: string
           user_agent: string | null
@@ -1676,7 +1676,7 @@ export type Database = {
           customer_notes?: string | null
           decision: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           quote_id: string
           token: string
           user_agent?: string | null
@@ -1688,7 +1688,7 @@ export type Database = {
           customer_notes?: string | null
           decision?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           quote_id?: string
           token?: string
           user_agent?: string | null
@@ -1869,7 +1869,7 @@ export type Database = {
           changed_at: string | null
           changed_by: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           new_status: string
           old_status: string | null
           quote_id: string
@@ -1880,7 +1880,7 @@ export type Database = {
           changed_at?: string | null
           changed_by?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_status: string
           old_status?: string | null
           quote_id: string
@@ -1891,7 +1891,7 @@ export type Database = {
           changed_at?: string | null
           changed_by?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_status?: string
           old_status?: string | null
           quote_id?: string
@@ -2232,7 +2232,7 @@ export type Database = {
           details: Json | null
           event_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_agent: string | null
           user_id: string
         }
@@ -2241,7 +2241,7 @@ export type Database = {
           details?: Json | null
           event_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id: string
         }
@@ -2250,7 +2250,7 @@ export type Database = {
           details?: Json | null
           event_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string
         }
@@ -2358,6 +2358,30 @@ export type Database = {
           entity_type?: string
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      tracking_access_logs: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: unknown
+          success: boolean
+          token_accessed: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address: unknown
+          success?: boolean
+          token_accessed?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          success?: boolean
+          token_accessed?: string | null
         }
         Relationships: []
       }
@@ -2482,7 +2506,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           location_data: Json | null
           login_time: string
           risk_score: number | null
@@ -2493,7 +2517,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           location_data?: Json | null
           login_time?: string
           risk_score?: number | null
@@ -2504,7 +2528,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           location_data?: Json | null
           login_time?: string
           risk_score?: number | null
@@ -2612,7 +2636,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           is_active: boolean
           session_id: string
           updated_at: string
@@ -2623,7 +2647,7 @@ export type Database = {
           created_at?: string
           expires_at: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean
           session_id: string
           updated_at?: string
@@ -2634,7 +2658,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean
           session_id?: string
           updated_at?: string
@@ -2783,14 +2807,9 @@ export type Database = {
         Args: { check_user_id: string; required_role: string }
         Returns: boolean
       }
-      cleanup_expired_devices: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      cleanup_expired_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      cleanup_expired_devices: { Args: never; Returns: number }
+      cleanup_expired_sessions: { Args: never; Returns: number }
+      cleanup_old_tracking_logs: { Args: never; Returns: number }
       count_recent_failed_logins: {
         Args: { p_identifier: string; p_minutes?: number }
         Returns: number
@@ -2865,18 +2884,9 @@ export type Database = {
         Args: { invoice_type: string }
         Returns: string
       }
-      generate_order_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_quote_request_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_secure_token: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_order_number: { Args: never; Returns: string }
+      generate_quote_request_number: { Args: never; Returns: string }
+      generate_secure_token: { Args: never; Returns: string }
       get_anomaly_statistics: {
         Args: { p_days?: number; p_user_id: string }
         Returns: {
@@ -2913,18 +2923,9 @@ export type Database = {
           tracking_number: string
         }[]
       }
-      get_password_policy: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      get_user_role: {
-        Args: { user_id: string }
-        Returns: string
-      }
-      is_allowed_admin_email: {
-        Args: { user_email: string }
-        Returns: boolean
-      }
+      get_password_policy: { Args: never; Returns: Json }
+      get_user_role: { Args: { user_id: string }; Returns: string }
+      is_allowed_admin_email: { Args: { user_email: string }; Returns: boolean }
       link_quote_to_request: {
         Args: { p_quote_id: string; p_quote_number: string }
         Returns: Json
@@ -2964,10 +2965,7 @@ export type Database = {
           token_type: string
         }[]
       }
-      validate_session: {
-        Args: { p_session_token: string }
-        Returns: boolean
-      }
+      validate_session: { Args: { p_session_token: string }; Returns: boolean }
     }
     Enums: {
       assistant_mode: "qa" | "workflow"
