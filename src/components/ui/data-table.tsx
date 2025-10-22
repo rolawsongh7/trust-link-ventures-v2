@@ -169,7 +169,7 @@ export function DataTable<T extends Record<string, any>>({
                   </div>
                 </TableHead>
               ))}
-              {actions && <TableHead className="w-12"></TableHead>}
+              {actions && <TableHead className="w-12">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>

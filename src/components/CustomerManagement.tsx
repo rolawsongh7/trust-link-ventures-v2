@@ -345,16 +345,6 @@ const CustomerManagement = () => {
       ),
     },
     {
-      key: 'phone',
-      label: 'Phone',
-      render: (value) => value ? (
-        <div className="flex items-center gap-2">
-          <Phone className="h-3 w-3 text-muted-foreground" />
-          <span className="text-sm">{value}</span>
-        </div>
-      ) : '-',
-    },
-    {
       key: 'industry',
       label: 'Industry',
       sortable: true,
@@ -379,12 +369,6 @@ const CustomerManagement = () => {
           {value}
         </Badge>
       ),
-    },
-    {
-      key: 'annual_revenue',
-      label: 'Revenue',
-      sortable: true,
-      render: (value) => value ? `$${Number(value).toLocaleString()}` : '-',
     },
   ];
 
