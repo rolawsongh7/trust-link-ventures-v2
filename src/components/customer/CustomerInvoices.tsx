@@ -53,16 +53,43 @@ export const CustomerInvoices = () => {
   const fetchInvoices = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user?.email) {
+        console.error('No user email found');
+        toast({
+          title: 'Authentication Error',
+          description: 'Unable to retrieve your profile. Please log in again.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-      // Get customer ID from email
-      const { data: customer } = await supabase
+      // Debug: Log the email being searched
+      console.log('Fetching invoices for email:', user.email);
+
+      // Get customer ID from email with error handling
+      const { data: customer, error: customerError } = await supabase
         .from('customers')
-        .select('id')
+        .select('id, email, company_name')
         .eq('email', user.email)
-        .single();
+        .maybeSingle(); // Use maybeSingle() instead of single()
 
-      if (!customer) return;
+      if (customerError) {
+        console.error('Error fetching customer:', customerError);
+        throw customerError;
+      }
+
+      if (!customer) {
+        console.warn('No customer record found for email:', user.email);
+        toast({
+          title: 'No Customer Profile',
+          description: 'Your account is not linked to a customer profile. Please contact support at support@trustlinkventures.com',
+          variant: 'destructive',
+        });
+        setInvoices([]);
+        return;
+      }
+
+      console.log('Found customer:', customer);
 
       const { data, error } = await supabase
         .from('invoices')
@@ -74,14 +101,17 @@ export const CustomerInvoices = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log('Invoices found:', data?.length || 0);
       setInvoices(data || []);
     } catch (error) {
       console.error('Error fetching invoices:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to load invoices',
+        title: 'Error Loading Invoices',
+        description: error instanceof Error ? error.message : 'Failed to load invoices. Please try again.',
         variant: 'destructive',
       });
+      setInvoices([]); // Ensure invoices is always an array
     } finally {
       setLoading(false);
     }

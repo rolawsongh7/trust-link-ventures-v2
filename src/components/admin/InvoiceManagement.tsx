@@ -17,10 +17,12 @@ import {
   ExternalLink,
   ArrowUpDown,
   Calendar,
-  Filter
+  Filter,
+  Eye
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { InvoicePDFPreviewDialog } from './InvoicePDFPreviewDialog';
 import {
   Select,
   SelectContent,
@@ -76,6 +78,8 @@ export default function InvoiceManagement() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [selectedInvoiceForPreview, setSelectedInvoiceForPreview] = useState<Invoice | null>(null);
 
   const { data: invoices, isLoading, refetch } = useQuery({
     queryKey: ['admin-invoices'],
@@ -422,13 +426,27 @@ export default function InvoiceManagement() {
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       {invoice.file_url && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDownload(invoice)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setSelectedInvoiceForPreview(invoice);
+                              setPreviewDialogOpen(true);
+                            }}
+                            title="Preview PDF"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDownload(invoice)}
+                            title="Download PDF"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </>
                       )}
                       
                       <Button
@@ -436,6 +454,7 @@ export default function InvoiceManagement() {
                         variant="ghost"
                         onClick={() => handleRegenerate(invoice)}
                         disabled={regeneratingId === invoice.id}
+                        title="Regenerate PDF"
                       >
                         <RefreshCw className={`h-4 w-4 ${regeneratingId === invoice.id ? 'animate-spin' : ''}`} />
                       </Button>
@@ -445,6 +464,7 @@ export default function InvoiceManagement() {
                           size="sm"
                           variant="ghost"
                           onClick={() => window.location.href = `/admin/orders`}
+                          title="View Order"
                         >
                           <ExternalLink className="h-4 w-4" />
                         </Button>
@@ -509,6 +529,12 @@ export default function InvoiceManagement() {
           )}
         </CardContent>
       </Card>
+      
+      <InvoicePDFPreviewDialog
+        open={previewDialogOpen}
+        onOpenChange={setPreviewDialogOpen}
+        invoice={selectedInvoiceForPreview}
+      />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -367,9 +367,9 @@ const LeadsManagement = () => {
                           <SelectContent>
                             <SelectItem value="new">New</SelectItem>
                             <SelectItem value="contacted">Contacted</SelectItem>
-                            <SelectItem value="qualified">Qualified</SelectItem>
-                            <SelectItem value="proposal">Proposal</SelectItem>
-                            <SelectItem value="negotiation">Negotiation</SelectItem>
+                            <SelectItem value="qualified">Qualified Lead</SelectItem>
+                            <SelectItem value="proposal">Proposal (Opportunity)</SelectItem>
+                            <SelectItem value="negotiation">Negotiation (Opportunity)</SelectItem>
                             <SelectItem value="closed_won">Closed Won</SelectItem>
                             <SelectItem value="closed_lost">Closed Lost</SelectItem>
                           </SelectContent>
@@ -383,17 +383,20 @@ const LeadsManagement = () => {
                     name="lead_score"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Lead Score</FormLabel>
+                        <FormLabel>Lead Score (0-100)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
                             min="0" 
                             max="100" 
-                            placeholder="50" 
+                            placeholder="0-100 (higher = better quality)" 
                             {...field}
                             onChange={(e) => field.onChange(Number(e.target.value))}
                           />
                         </FormControl>
+                        <FormDescription>
+                          Quality rating from 0-100
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -402,13 +405,16 @@ const LeadsManagement = () => {
                     control={form.control}
                     name="value"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Value</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Lead value" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                       <FormItem>
+                         <FormLabel>Estimated Deal Value</FormLabel>
+                         <FormControl>
+                           <Input placeholder="e.g., 5000" {...field} />
+                         </FormControl>
+                         <FormDescription>
+                           Expected revenue from this potential customer
+                         </FormDescription>
+                         <FormMessage />
+                       </FormItem>
                     )}
                   />
                   <FormField
@@ -417,9 +423,28 @@ const LeadsManagement = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Source</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Lead source" {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select source" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="contact_form">Contact Form</SelectItem>
+                            <SelectItem value="website_chat">Website Chat</SelectItem>
+                            <SelectItem value="email_inquiry">Email Inquiry</SelectItem>
+                            <SelectItem value="phone_call">Phone Call</SelectItem>
+                            <SelectItem value="referral">Referral</SelectItem>
+                            <SelectItem value="trade_show">Trade Show / Event</SelectItem>
+                            <SelectItem value="social_media">Social Media</SelectItem>
+                            <SelectItem value="paid_advertising">Paid Advertising</SelectItem>
+                            <SelectItem value="direct_outreach">Direct Outreach</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Where did this lead come from?
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

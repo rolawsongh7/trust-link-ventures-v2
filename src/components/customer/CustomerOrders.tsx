@@ -91,25 +91,49 @@ export const CustomerOrders: React.FC = () => {
   }, [orders]);
 
   const fetchOrders = async () => {
-    if (!profile?.email) return;
+    if (!profile?.email) {
+      console.error('No profile email found');
+      toast({
+        title: "Authentication Error",
+        description: "Unable to retrieve your profile. Please log in again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       setLoading(true);
+      
+      // Debug: Log the email being searched
+      console.log('Fetching orders for email:', profile.email);
 
-      // First, get the customer record
-      const { data: customer } = await supabase
+      // First, get the customer record with error handling
+      const { data: customer, error: customerError } = await supabase
         .from('customers')
-        .select('id')
+        .select('id, email, company_name')
         .eq('email', profile.email)
-        .single();
+        .maybeSingle(); // Use maybeSingle() instead of single()
+
+      if (customerError) {
+        console.error('Error fetching customer:', customerError);
+        throw customerError;
+      }
 
       if (!customer) {
+        console.warn('No customer record found for email:', profile.email);
+        toast({
+          title: "No Customer Profile",
+          description: "Your account is not linked to a customer profile. Please contact support at support@trustlinkventures.com",
+          variant: "destructive",
+        });
         setOrders([]);
         return;
       }
 
-      // Fetch orders with related data (including delivery_address_requested_at)
-      const { data: ordersData, error } = await supabase
+      console.log('Found customer:', customer);
+
+      // Fetch orders with better error handling
+      const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select(`
           *,
@@ -122,16 +146,22 @@ export const CustomerOrders: React.FC = () => {
         .eq('customer_id', customer.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (ordersError) {
+        console.error('Error fetching orders:', ordersError);
+        throw ordersError;
+      }
 
+      console.log('Orders found:', ordersData?.length || 0);
       setOrders(ordersData || []);
+      
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('Error in fetchOrders:', error);
       toast({
-        title: "Error",
-        description: "Failed to load orders",
+        title: "Error Loading Orders",
+        description: error instanceof Error ? error.message : "Failed to load orders. Please try again.",
         variant: "destructive",
       });
+      setOrders([]); // Ensure orders is always an array
     } finally {
       setLoading(false);
     }

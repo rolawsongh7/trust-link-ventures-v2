@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { openSecureStorageUrl } from '@/lib/storageHelpers';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +35,7 @@ import { OrderCard } from './OrderCard';
 import { OrdersSearchFilters } from './OrdersSearchFilters';
 import { SearchFilters } from '@/types/filters';
 import { AddressLinkDialog } from './AddressLinkDialog';
+import { PaymentReceiptPreviewDialog } from './PaymentReceiptPreviewDialog';
 
 interface Order {
   id: string;
@@ -149,6 +149,13 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
     orderNumber: string;
     customerId: string;
   } | null>(null);
+  const [receiptPreviewDialog, setReceiptPreviewDialog] = useState<{
+    open: boolean;
+    order: Order | null;
+  }>({
+    open: false,
+    order: null,
+  });
   const [filters, setFilters] = useState<SearchFilters>({
     customer: '',
     orderNumber: '',
@@ -344,12 +351,15 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
                 variant="link"
                 size="sm"
                 className="h-auto p-0 text-xs"
-                onClick={async (e) => {
+                onClick={(e) => {
                   e.stopPropagation();
-                  await openSecureStorageUrl(row.payment_proof_url!);
+                  setReceiptPreviewDialog({
+                    open: true,
+                    order: row,
+                  });
                 }}
               >
-                <FileText className="mr-1 h-3 w-3" />
+                <Eye className="mr-1 h-3 w-3" />
                 View Receipt
               </Button>
             )}
@@ -601,6 +611,16 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
           onSuccess={onRefresh}
         />
       )}
+      
+      <PaymentReceiptPreviewDialog
+        open={receiptPreviewDialog.open}
+        onOpenChange={(open) => {
+          if (!open) {
+            setReceiptPreviewDialog({ open: false, order: null });
+          }
+        }}
+        order={receiptPreviewDialog.order}
+      />
     </div>
   );
 };
