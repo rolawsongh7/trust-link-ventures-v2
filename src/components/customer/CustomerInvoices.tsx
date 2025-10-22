@@ -65,23 +65,30 @@ export const CustomerInvoices = () => {
       }
 
       // Debug: Log the email being searched
-      console.log('Fetching invoices for email:', user.email);
+      console.log('🔍 DEBUG - Auth email:', user.email);
+      console.log('🔍 DEBUG - Auth user ID:', user.id);
 
       // Use the case-insensitive customer lookup utility
       const customer = await ensureCustomerRecord(user.email);
 
       if (!customer) {
-        console.warn('No customer record found for email:', user.email);
+        console.error('❌ No customer record found');
+        console.log('🔍 DEBUG - Tried email:', user.email);
         toast({
           title: 'No Customer Profile',
-          description: 'Your account is not linked to a customer profile. Please contact support at support@trustlinkventures.com',
+          description: `Your account (${user.email}) is not linked to a customer profile. Please contact support at support@trustlinkventures.com`,
           variant: 'destructive',
         });
         setInvoices([]);
+        setLoading(false);
         return;
       }
 
-      console.log('Found customer:', customer);
+      console.log('✅ Customer found:', {
+        id: customer.id,
+        email: customer.email,
+        company: customer.company_name
+      });
 
       const { data, error } = await supabase
         .from('invoices')
@@ -92,12 +99,16 @@ export const CustomerInvoices = () => {
         .eq('customer_id', customer.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching invoices:', error);
+        throw error;
+      }
       
-      console.log('Invoices found:', data?.length || 0);
+      console.log('✅ Invoices data:', data);
+      console.log('🔍 DEBUG - Number of invoices found:', data?.length || 0);
       setInvoices(data || []);
     } catch (error) {
-      console.error('Error fetching invoices:', error);
+      console.error('💥 Error fetching invoices:', error);
       toast({
         title: 'Error Loading Invoices',
         description: error instanceof Error ? error.message : 'Failed to load invoices. Please try again.',

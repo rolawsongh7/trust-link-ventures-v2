@@ -106,23 +106,30 @@ export const CustomerOrders: React.FC = () => {
       setLoading(true);
       
       // Debug: Log the email being searched
-      console.log('Fetching orders for email:', profile.email);
+      console.log('🔍 DEBUG - Auth email:', profile.email);
+      console.log('🔍 DEBUG - Profile ID:', profile?.id);
 
       // Use the case-insensitive customer lookup utility
       const customer = await ensureCustomerRecord(profile.email);
 
       if (!customer) {
-        console.warn('No customer record found for email:', profile.email);
+        console.error('❌ No customer record found');
+        console.log('🔍 DEBUG - Tried email:', profile.email);
         toast({
           title: "No Customer Profile",
-          description: "Your account is not linked to a customer profile. Please contact support at support@trustlinkventures.com",
+          description: `Your account (${profile.email}) is not linked to a customer profile. Please contact support at support@trustlinkventures.com`,
           variant: "destructive",
         });
         setOrders([]);
+        setLoading(false);
         return;
       }
 
-      console.log('Found customer:', customer);
+      console.log('✅ Customer found:', {
+        id: customer.id,
+        email: customer.email,
+        company: customer.company_name
+      });
 
       // Fetch orders with better error handling
       const { data: ordersData, error: ordersError } = await supabase
@@ -139,15 +146,16 @@ export const CustomerOrders: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (ordersError) {
-        console.error('Error fetching orders:', ordersError);
+        console.error('❌ Error fetching orders:', ordersError);
         throw ordersError;
       }
 
-      console.log('Orders found:', ordersData?.length || 0);
+      console.log('✅ Orders data:', ordersData);
+      console.log('🔍 DEBUG - Number of orders found:', ordersData?.length || 0);
       setOrders(ordersData || []);
       
     } catch (error) {
-      console.error('Error in fetchOrders:', error);
+      console.error('💥 Error in fetchOrders:', error);
       toast({
         title: "Error Loading Orders",
         description: error instanceof Error ? error.message : "Failed to load orders. Please try again.",
