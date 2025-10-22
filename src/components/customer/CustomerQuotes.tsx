@@ -81,17 +81,23 @@ export const CustomerQuotes: React.FC = () => {
   }, [profile]);
 
   const fetchQuotes = async () => {
-    if (!profile?.email) return;
+    if (!profile?.email) {
+      console.warn('⚠️ No profile email found');
+      setLoading(false);
+      return;
+    }
+
+    console.log('🔍 fetchQuotes - Starting for:', profile.email);
 
     try {
-      // Fetch quote requests
+      // Fetch quote requests with case-insensitive email matching
       const { data: quoteRequests, error: requestsError } = await supabase
         .from('quote_requests')
         .select(`
           *,
           quote_request_items (*)
         `)
-        .eq('lead_email', profile.email)
+        .ilike('lead_email', profile.email)  // Case-insensitive
         .order('created_at', { ascending: false });
 
       if (requestsError) throw requestsError;

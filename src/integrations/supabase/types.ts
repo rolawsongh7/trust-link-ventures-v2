@@ -2945,6 +2945,10 @@ export type Database = {
         Args: { p_token: string }
         Returns: boolean
       }
+      merge_duplicate_customers: {
+        Args: { keep_id: string; remove_id: string }
+        Returns: undefined
+      }
       validate_file_upload: {
         Args: {
           p_file_size: number

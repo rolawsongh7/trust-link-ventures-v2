@@ -118,19 +118,42 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const fetchProfile = async (userId: string, userEmail: string) => {
+    console.log('🔍 fetchProfile - Starting for:', userEmail);
+    
     try {
-      const { data: existingCustomer, error } = await supabase
+      // Use case-insensitive lookup with ordering to be deterministic
+      const { data: existingCustomers, error } = await supabase
         .from('customers')
         .select('*')
-        .eq('email', userEmail)
-        .maybeSingle();
+        .ilike('email', userEmail)  // Case-insensitive
+        .order('created_at', { ascending: true })  // Deterministic: oldest first
+        .limit(1);
 
       if (error) {
-        console.error('Error fetching customer profile:', error);
+        console.error('❌ Error fetching customer profile:', error);
+        
+        // Set a fallback profile to prevent infinite loading
+        setProfile({
+          id: userId,
+          email: userEmail,
+          full_name: 'Customer',
+          company_name: 'Company',
+          phone: null,
+          country: null,
+          industry: null,
+        });
         return;
       }
 
+      const existingCustomer = existingCustomers?.[0];
+
       if (existingCustomer) {
+        console.log('✅ Customer profile found:', {
+          id: existingCustomer.id,
+          email: existingCustomer.email,
+          company: existingCustomer.company_name
+        });
+        
         setProfile({
           id: existingCustomer.id,
           email: existingCustomer.email,
@@ -141,6 +164,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           industry: existingCustomer.industry,
         });
       } else {
+        console.warn('⚠️ No customer record found, using fallback profile');
+        
         // No customer record found, create a basic profile from auth metadata
         const { data: { user } } = await supabase.auth.getUser();
         const userData = user?.user_metadata;
@@ -156,7 +181,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         });
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('💥 Exception fetching profile:', error);
+      
       // Set a basic profile to prevent infinite loading
       setProfile({
         id: userId,
@@ -240,23 +266,59 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     });
 
-    // Create customer record if signup was successful
+    // Create or update customer record if signup was successful
     if (!error && data.user) {
       try {
-        const { error: customerError } = await supabase
+        // Check if customer already exists (case-insensitive)
+        const { data: existingCustomer, error: checkError } = await supabase
           .from('customers')
-          .insert([
-            {
-              company_name: sanitizedCompanyName,
-              contact_name: sanitizedFullName,
-              email: sanitizedEmail,
-              customer_status: 'active',
-              priority: 'medium'
-            }
-          ]);
+          .select('id, email, company_name, contact_name')
+          .ilike('email', sanitizedEmail)
+          .maybeSingle();
 
-        if (customerError) {
-          console.error('Error creating customer record:', customerError);
+        if (checkError) {
+          console.error('Error checking for existing customer:', checkError);
+        }
+
+        if (existingCustomer) {
+          console.log('✅ Customer record already exists:', existingCustomer);
+          
+          // Update existing customer with new info if needed
+          const { error: updateError } = await supabase
+            .from('customers')
+            .update({
+              contact_name: sanitizedFullName,
+              company_name: sanitizedCompanyName,
+              customer_status: 'active'
+            })
+            .eq('id', existingCustomer.id);
+
+          if (updateError) {
+            console.error('Error updating customer record:', updateError);
+          } else {
+            console.log('✅ Updated existing customer record');
+          }
+        } else {
+          console.log('Creating new customer record');
+          
+          // Create new customer record
+          const { error: customerError } = await supabase
+            .from('customers')
+            .insert([
+              {
+                company_name: sanitizedCompanyName,
+                contact_name: sanitizedFullName,
+                email: sanitizedEmail,
+                customer_status: 'active',
+                priority: 'medium'
+              }
+            ]);
+
+          if (customerError) {
+            console.error('Error creating customer record:', customerError);
+          } else {
+            console.log('✅ Created new customer record');
+          }
         }
 
         toast({
@@ -265,7 +327,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           duration: 6000,
         });
       } catch (customerError) {
-        console.error('Failed to create customer record:', customerError);
+        console.error('Failed to manage customer record:', customerError);
       }
     }
 
