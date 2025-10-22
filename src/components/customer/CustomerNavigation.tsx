@@ -12,6 +12,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { 
   Building2, 
   User, 
   LogOut, 
@@ -29,6 +35,7 @@ import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { usePendingAddressRequests } from '@/hooks/usePendingAddressRequests';
 import { Badge } from '@/components/ui/badge';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const CustomerNavigation: React.FC = () => {
   const { profile, signOut } = useCustomerAuth();
@@ -36,6 +43,7 @@ export const CustomerNavigation: React.FC = () => {
   const { pendingCount } = usePendingAddressRequests();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const navigationItems: Array<{
     title: string;
@@ -112,28 +120,66 @@ export const CustomerNavigation: React.FC = () => {
   };
 
   return (
-    <nav className="bg-white/95 backdrop-blur-sm border-b-2 border-primary/10 shadow-md sticky top-0 z-[100] min-h-[64px]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 sm:h-20 gap-4">
-          {/* Logo and Company Info */}
-          <div className="flex items-center min-w-0">
-            <Link to="/customer" className="flex items-center gap-2 sm:gap-3 touch-manipulation">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
-              </div>
-              <div className="hidden sm:block">
-                <div className="text-sm font-semibold text-primary truncate">
-                  {profile?.company_name}
+    <TooltipProvider>
+      <nav className="bg-white/95 backdrop-blur-sm border-b-2 border-primary/10 shadow-md sticky top-0 z-[100] min-h-[64px] overflow-x-hidden">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-3 md:gap-4">
+            {/* Logo and Company Info */}
+            <div className="flex items-center flex-shrink-0">
+              <Link to="/customer" className="flex items-center gap-3 sm:gap-4 touch-manipulation">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Customer Portal
+                <div className="hidden sm:block flex-shrink-0 max-w-[180px] md:max-w-[220px]">
+                  <div className="text-sm font-semibold text-primary truncate">
+                    {profile?.company_name}
+                  </div>
+                  <div className="text-xs text-muted-foreground whitespace-nowrap">
+                    Customer Portal
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </div>
+
+          {/* Tablet Navigation - Icon Only with Tooltips (768px-1024px) */}
+          <div className="hidden md:flex lg:hidden items-center gap-1 overflow-x-auto no-scrollbar">
+            {navigationItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              const Icon = item.icon;
+              
+              return (
+                <Tooltip key={item.href}>
+                  <TooltipTrigger asChild>
+                    <Link to={item.href}>
+                      <Button
+                        variant={isActive ? "secondary" : "ghost"}
+                        size="icon"
+                        className="relative h-10 w-10 touch-safe flex-shrink-0"
+                      >
+                        <Icon className="h-5 w-5" />
+                        {item.badge && (
+                          <Badge 
+                            variant={item.badgeVariant || "destructive"}
+                            className={`absolute top-0 right-0 h-5 w-5 p-0 text-xs flex items-center justify-center transform translate-x-1/2 -translate-y-1/2 ${
+                              item.badgeVariant === 'destructive' ? 'bg-orange-500 hover:bg-orange-600' : ''
+                            }`}
+                          >
+                            {item.badge}
+                          </Badge>
+                        )}
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{item.title}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
           </div>
 
-          {/* Desktop Navigation - Hidden on Mobile */}
-          <div className="hidden lg:flex items-center space-x-2 gap-1">
+          {/* Desktop Navigation - Full Text (1024px+) */}
+          <div className="hidden lg:flex items-center gap-1 xl:gap-2 overflow-x-auto no-scrollbar">
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.href;
               const Icon = item.icon;
@@ -143,14 +189,14 @@ export const CustomerNavigation: React.FC = () => {
                   <Button
                     variant={isActive ? "secondary" : "ghost"}
                     size="sm"
-                    className="relative h-10 touch-manipulation whitespace-nowrap px-3"
+                    className="relative h-10 touch-manipulation whitespace-nowrap px-2 xl:px-3 flex-shrink-0"
                   >
-                    <Icon className="h-4 w-4 mr-2" />
-                    {item.title}
+                    <Icon className="h-4 w-4 mr-1 xl:mr-2" />
+                    <span className="text-xs xl:text-sm">{item.title}</span>
                     {item.badge && (
                       <Badge 
                         variant={item.badgeVariant || "destructive"}
-                        className={`absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center ${
+                        className={`absolute top-0 right-0 h-5 w-5 p-0 text-xs flex items-center justify-center transform translate-x-1/2 -translate-y-1/2 ${
                           item.badgeVariant === 'destructive' ? 'bg-orange-500 hover:bg-orange-600' : ''
                         }`}
                       >
@@ -164,20 +210,20 @@ export const CustomerNavigation: React.FC = () => {
           </div>
 
           {/* Right Side Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {/* Mobile Menu Button */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild className="lg:hidden">
+              <SheetTrigger asChild className="md:hidden">
                 <Button 
                   variant="ghost" 
                   size="icon"
-                  className="h-10 w-10 touch-manipulation"
+                  className="h-10 w-10 touch-safe flex-shrink-0"
                   aria-label="Open menu"
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[280px] sm:w-[320px]">
+              <SheetContent side="left" className="w-[280px] sm:w-[340px] md:w-[380px]">
                 <SheetHeader>
                   <SheetTitle className="text-left">Menu</SheetTitle>
                 </SheetHeader>
@@ -194,14 +240,14 @@ export const CustomerNavigation: React.FC = () => {
                       >
                         <Button
                           variant={isActive ? "secondary" : "ghost"}
-                          className="w-full justify-start h-12 text-base touch-manipulation"
+                          className="w-full justify-start h-12 text-base touch-safe"
                         >
-                          <Icon className="h-5 w-5 mr-3" />
-                          {item.title}
+                          <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                          <span className="flex-1 text-left">{item.title}</span>
                           {item.badge && (
                             <Badge 
                               variant={item.badgeVariant || "destructive"}
-                              className={`ml-auto h-6 w-6 p-0 text-xs flex items-center justify-center ${
+                              className={`ml-2 h-6 w-6 p-0 text-xs flex items-center justify-center flex-shrink-0 ${
                                 item.badgeVariant === 'destructive' ? 'bg-orange-500 hover:bg-orange-600' : ''
                               }`}
                             >
@@ -221,20 +267,20 @@ export const CustomerNavigation: React.FC = () => {
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className="flex items-center gap-2 h-10 px-2 sm:px-3 touch-manipulation"
+                  className="flex items-center gap-1 sm:gap-2 h-10 px-1 sm:px-2 md:px-3 touch-safe flex-shrink-0"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-8 w-8 flex-shrink-0">
                     <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                       {getInitials(profile?.full_name)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="hidden md:block text-left min-w-0">
+                  <div className="hidden lg:block text-left min-w-0 max-w-[120px] xl:max-w-[160px]">
                     <div className="text-sm font-medium truncate">{profile?.full_name}</div>
                     <div className="text-xs text-muted-foreground truncate">
                       {profile?.email}
                     </div>
                   </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block flex-shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end">
@@ -249,14 +295,14 @@ export const CustomerNavigation: React.FC = () => {
                 <DropdownMenuSeparator />
                 
                 <DropdownMenuItem asChild>
-                  <Link to="/customer/profile" className="flex items-center w-full touch-manipulation">
+                  <Link to="/customer/profile" className="flex items-center w-full touch-safe">
                     <User className="h-4 w-4 mr-2" />
                     Profile Settings
                   </Link>
                 </DropdownMenuItem>
                 
                 <DropdownMenuItem asChild>
-                  <Link to="/customer" className="flex items-center w-full touch-manipulation">
+                  <Link to="/customer" className="flex items-center w-full touch-safe">
                     <Settings className="h-4 w-4 mr-2" />
                     Dashboard
                   </Link>
@@ -266,7 +312,7 @@ export const CustomerNavigation: React.FC = () => {
                 
                 <DropdownMenuItem 
                   onClick={handleSignOut}
-                  className="text-destructive focus:text-destructive cursor-pointer touch-manipulation"
+                  className="text-destructive focus:text-destructive cursor-pointer touch-safe"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
@@ -274,8 +320,9 @@ export const CustomerNavigation: React.FC = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </TooltipProvider>
   );
 };

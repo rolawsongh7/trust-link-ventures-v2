@@ -3,6 +3,39 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Responsive Utility Classes */
+@layer utilities {
+  /* Prevent horizontal scroll */
+  .no-scrollbar-x {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Hide scrollbar but allow scrolling */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Touch-safe minimum tap target size (44x44px) */
+  .touch-safe {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent text overflow with ellipsis */
+  .text-ellipsis-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
 
 @layer base {
   :root {
