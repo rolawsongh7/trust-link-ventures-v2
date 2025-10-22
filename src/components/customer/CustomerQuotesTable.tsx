@@ -75,37 +75,6 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
     setExpandedRows(newExpanded);
   };
 
-  const getPriceDisplay = (finalQuote: FinalQuote | undefined): string => {
-    if (!finalQuote) {
-      return '-';
-    }
-
-    if (!finalQuote.final_quote_items || finalQuote.final_quote_items.length === 0) {
-      return '-';
-    }
-
-    const validPrices = finalQuote.final_quote_items
-      .filter(item => {
-        if (item.unit_price == null || isNaN(item.unit_price)) return false;
-        if (item.unit_price < 0) return false;
-        return true;
-      })
-      .map(item => item.unit_price);
-
-    if (validPrices.length === 0) {
-      return '-';
-    }
-
-    const currency = finalQuote.currency || 'USD';
-    const minPrice = Math.min(...validPrices);
-    const maxPrice = Math.max(...validPrices);
-
-    if (minPrice === maxPrice) {
-      return `${currency} ${minPrice.toLocaleString()}/unit`;
-    }
-
-    return `${currency} ${minPrice.toLocaleString()} - ${maxPrice.toLocaleString()}/unit`;
-  };
 
   const getStatusColor = (status: string) => {
     const colors = {
@@ -128,14 +97,15 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
 
   if (quotes.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">No quote requests found.</p>
+      <div className="text-center py-16 space-y-4">
+        <p className="text-lg text-muted-foreground">No quote requests yet</p>
+        <p className="text-sm text-muted-foreground">Your quote requests will appear here once you submit them</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -145,7 +115,6 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
             <TableHead>Date</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Urgency</TableHead>
-            <TableHead className="text-right" aria-label="Unit price range for quoted items">Unit Price</TableHead>
             <TableHead className="text-right">Total Amount</TableHead>
             <TableHead className="text-center">Actions</TableHead>
           </TableRow>
@@ -196,31 +165,9 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    {quote.final_quote && quote.final_quote.final_quote_items && quote.final_quote.final_quote_items.length > 0 ? (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="font-medium text-sm cursor-help">
-                              {getPriceDisplay(quote.final_quote)}
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="text-xs">
-                              {quote.final_quote.final_quote_items.length === 1 
-                                ? 'Unit price for this item' 
-                                : `Price range across ${quote.final_quote.final_quote_items.length} items. Click to view details.`}
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
                     {quote.final_quote ? (
-                      <div className="flex flex-col items-end">
-                        <span className="font-semibold text-lg">
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="font-bold text-xl text-primary">
                           {quote.final_quote.currency} {quote.final_quote.total_amount.toLocaleString()}
                         </span>
                         {quote.final_quote.valid_until && (
@@ -230,12 +177,12 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
                         )}
                       </div>
                     ) : (
-                      <span className="text-muted-foreground">-</span>
+                      <span className="text-muted-foreground text-sm">Pending</span>
                     )}
                   </TableCell>
                   <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                     {quote.final_quote && quote.status === 'quoted' && (
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex flex-wrap items-center justify-center gap-2">
                         <Button
                           size="sm"
                           variant="default"
@@ -243,7 +190,7 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
                             e.stopPropagation();
                             onApprove(quote.final_quote);
                           }}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
                         >
                           <Check className="h-4 w-4 mr-1" />
                           Accept
@@ -255,7 +202,7 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
                             e.stopPropagation();
                             onReject(quote.final_quote.id);
                           }}
-                          className="border-red-200 text-red-600 hover:bg-red-50"
+                          className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
                         >
                           <X className="h-4 w-4 mr-1" />
                           Reject
@@ -292,7 +239,7 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
                 </TableRow>
                 {isExpanded && (
                   <TableRow>
-                    <TableCell colSpan={9} className="p-0">
+                    <TableCell colSpan={8} className="p-0">
                       <ExpandedQuoteRow
                         quote={quote}
                         onApprove={onApprove}
