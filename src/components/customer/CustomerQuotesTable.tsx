@@ -10,8 +10,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronDown, ChevronRight, Check, X, Download } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check, X, Download, Eye } from 'lucide-react';
 import { ExpandedQuoteRow } from './ExpandedQuoteRow';
+import { CustomerQuotePDFDialog } from './CustomerQuotePDFDialog';
 
 interface QuoteItem {
   id: string;
@@ -64,6 +65,8 @@ interface CustomerQuotesTableProps {
 
 export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }: CustomerQuotesTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [selectedQuoteForPDF, setSelectedQuoteForPDF] = useState<Quote | null>(null);
 
   const toggleRow = (quoteId: string) => {
     const newExpanded = new Set(expandedRows);
@@ -208,17 +211,32 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
                           Reject
                         </Button>
                         {quote.final_quote?.final_file_url && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDownload(quote.final_quote.final_file_url);
-                            }}
-                            title="Download quote PDF"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedQuoteForPDF(quote);
+                                setPdfDialogOpen(true);
+                              }}
+                              title="View quote PDF"
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDownload(quote.final_quote.final_file_url);
+                              }}
+                              title="Download quote PDF"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </>
                         )}
                       </div>
                     )}
@@ -254,6 +272,18 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
           })}
         </TableBody>
       </Table>
+
+      {selectedQuoteForPDF && (
+        <CustomerQuotePDFDialog
+          open={pdfDialogOpen}
+          onOpenChange={setPdfDialogOpen}
+          quote={{
+            quote_number: selectedQuoteForPDF.final_quote?.quote_number || '',
+            final_file_url: selectedQuoteForPDF.final_quote?.final_file_url,
+            status: selectedQuoteForPDF.status
+          }}
+        />
+      )}
     </div>
   );
 }

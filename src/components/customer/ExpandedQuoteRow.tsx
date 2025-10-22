@@ -1,6 +1,8 @@
-import { Package, Calendar, Clock, AlertCircle, CheckCircle, XCircle, Download } from 'lucide-react';
+import { useState } from 'react';
+import { Package, Calendar, Clock, AlertCircle, CheckCircle, XCircle, Download, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { CustomerQuotePDFDialog } from './CustomerQuotePDFDialog';
 import {
   Table,
   TableBody,
@@ -58,6 +60,8 @@ interface ExpandedQuoteRowProps {
 }
 
 export function ExpandedQuoteRow({ quote, onApprove, onReject, onDownload }: ExpandedQuoteRowProps) {
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+
   const getUrgencyColor = (urgency: string) => {
     const colors = {
       low: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
@@ -189,14 +193,24 @@ export function ExpandedQuoteRow({ quote, onApprove, onReject, onDownload }: Exp
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
             {quote.final_quote.file_url && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onDownload(quote.final_quote!.file_url!)}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download PDF
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPdfDialogOpen(true)}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  View PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onDownload(quote.final_quote!.file_url!)}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </Button>
+              </>
             )}
             {quote.final_quote.status === 'sent' && (
               <>
@@ -219,6 +233,16 @@ export function ExpandedQuoteRow({ quote, onApprove, onReject, onDownload }: Exp
               </>
             )}
           </div>
+
+          <CustomerQuotePDFDialog
+            open={pdfDialogOpen}
+            onOpenChange={setPdfDialogOpen}
+            quote={{
+              quote_number: quote.final_quote.quote_number,
+              final_file_url: quote.final_quote.file_url,
+              status: quote.status
+            }}
+          />
         </div>
       )}
 

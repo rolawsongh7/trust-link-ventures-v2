@@ -5,7 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { FileText, Search, Download, Eye, Calendar, DollarSign, Clock, Package, LayoutGrid, Table as TableIcon } from 'lucide-react';
+import { FileText, Search, Download, Eye, Calendar, DollarSign, Clock, Package, LayoutGrid, Table as TableIcon, FileCheck } from 'lucide-react';
+import { ensureSignedUrl } from '@/lib/storageHelpers';
+import { CustomerQuotePDFDialog } from './CustomerQuotePDFDialog';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -61,6 +63,8 @@ export const CustomerQuotes: React.FC = () => {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [showAcceptanceDialog, setShowAcceptanceDialog] = useState(false);
   const [quoteToAccept, setQuoteToAccept] = useState<any>(null);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [selectedQuoteForPDF, setSelectedQuoteForPDF] = useState<Quote | null>(null);
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -275,8 +279,11 @@ export const CustomerQuotes: React.FC = () => {
     try {
       console.log('Attempting to download quote PDF:', fileUrl);
       
+      // Ensure we have a signed URL
+      const secureUrl = await ensureSignedUrl(fileUrl);
+      
       // Fetch the file as a blob
-      const response = await fetch(fileUrl);
+      const response = await fetch(secureUrl);
       
       if (!response.ok) {
         throw new Error(`File not found: ${response.status} ${response.statusText}`);
@@ -634,15 +641,29 @@ export const CustomerQuotes: React.FC = () => {
                   </Button>
                   
                   {quote.final_quote?.final_file_url && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="shadow-sm hover:shadow-md transition-all"
-                      onClick={() => downloadQuote(quote.final_quote!.final_file_url!, quote.final_quote!.quote_number)}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Quote
-                    </Button>
+                    <>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="shadow-sm hover:shadow-md transition-all"
+                        onClick={() => {
+                          setSelectedQuoteForPDF(quote);
+                          setPdfDialogOpen(true);
+                        }}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View PDF
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="shadow-sm hover:shadow-md transition-all"
+                        onClick={() => downloadQuote(quote.final_quote!.final_file_url!, quote.final_quote!.quote_number)}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Quote
+                      </Button>
+                    </>
                   )}
                   
           {(quote.status === 'approved' || quote.final_quote?.status === 'accepted') && quote.final_quote && (
@@ -1032,6 +1053,19 @@ export const CustomerQuotes: React.FC = () => {
           onOpenChange={setShowAcceptanceDialog}
           quote={quoteToAccept}
           onSuccess={fetchQuotes}
+        />
+      )}
+
+      {/* PDF Preview Dialog */}
+      {selectedQuoteForPDF && selectedQuoteForPDF.final_quote && (
+        <CustomerQuotePDFDialog
+          open={pdfDialogOpen}
+          onOpenChange={setPdfDialogOpen}
+          quote={{
+            quote_number: selectedQuoteForPDF.final_quote.quote_number,
+            final_file_url: selectedQuoteForPDF.final_quote.final_file_url,
+            status: selectedQuoteForPDF.status
+          }}
         />
       )}
     </div>
