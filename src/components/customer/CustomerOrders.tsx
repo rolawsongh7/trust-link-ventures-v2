@@ -14,6 +14,8 @@ import AddressSelectionDialog from './AddressSelectionDialog';
 import { CustomerPaymentProofDialog } from './CustomerPaymentProofDialog';
 import { OrderPaymentInstructions } from './OrderPaymentInstructions';
 import { ensureCustomerRecord } from '@/lib/customerUtils';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
+import { MobileOrderCard } from './mobile/MobileOrderCard';
 
 
 // Order interface matching database schema
@@ -52,6 +54,7 @@ export const CustomerOrders: React.FC = () => {
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isMobile } = useMobileDetection();
 
   useEffect(() => {
     if (profile?.email) {
@@ -467,7 +470,29 @@ export const CustomerOrders: React.FC = () => {
             )}
           </CardContent>
         </Card>
+      ) : isMobile ? (
+        // Mobile View
+        <div className="space-y-4">
+          {filteredOrders.map((order) => (
+            <MobileOrderCard
+              key={order.id}
+              order={order}
+              onTrack={() => navigate(`/customer/orders/${order.id}`)}
+              onReorder={() => handleReorder(order)}
+              onViewInvoices={() => navigate('/customer/invoices')}
+              onAddAddress={() => {
+                setSelectedOrderForAddress(order);
+                setAddressDialogOpen(true);
+              }}
+              onUploadPayment={() => {
+                setSelectedOrderForPayment(order);
+                setPaymentProofDialogOpen(true);
+              }}
+            />
+          ))}
+        </div>
       ) : (
+        // Desktop View
         <div className="space-y-4">
           {filteredOrders.map((order) => {
             const StatusIcon = getStatusIcon(order.status);

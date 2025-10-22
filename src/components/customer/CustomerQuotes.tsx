@@ -14,6 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { CustomerQuotesTable } from './CustomerQuotesTable';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { ConsolidatedQuoteAcceptanceDialog } from './ConsolidatedQuoteAcceptanceDialog';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
+import { MobileQuoteCard } from './mobile/MobileQuoteCard';
 
 
 interface QuoteItem {
@@ -68,6 +70,7 @@ export const CustomerQuotes: React.FC = () => {
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const { isMobile: isMobileDetection } = useMobileDetection();
 
   // Force card view on mobile
   useEffect(() => {
@@ -460,7 +463,25 @@ export const CustomerQuotes: React.FC = () => {
           onReject={handleRejectQuote}
           onDownload={(url) => downloadQuote(url, 'quote')}
         />
+      ) : isMobileDetection ? (
+        // Mobile View
+        <div className="space-y-4">
+          {filteredQuotes.map((quote) => (
+            <MobileQuoteCard
+              key={quote.id}
+              quote={quote}
+              onApprove={handleApproveQuote}
+              onReject={handleRejectQuote}
+              onDownload={downloadQuote}
+              onViewPDF={(q) => {
+                setSelectedQuoteForPDF(q);
+                setPdfDialogOpen(true);
+              }}
+            />
+          ))}
+        </div>
       ) : (
+        // Desktop View - Cards
         <div className="space-y-4">
           {filteredQuotes.map((quote) => (
             <Card key={quote.id} className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary overflow-hidden">

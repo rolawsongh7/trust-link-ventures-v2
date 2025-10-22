@@ -8,6 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { downloadInvoiceFromUrl } from '@/lib/storageHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ensureCustomerRecord } from '@/lib/customerUtils';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
+import { MobileInvoiceCard } from './mobile/MobileInvoiceCard';
 
 interface Invoice {
   id: string;
@@ -30,6 +32,7 @@ export const CustomerInvoices = () => {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
   const { toast } = useToast();
+  const { isMobile } = useMobileDetection();
 
   useEffect(() => {
     fetchInvoices();
@@ -228,61 +231,74 @@ export const CustomerInvoices = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Your Invoices</h2>
-        <Badge variant="secondary">
+        <h2 className={isMobile ? "text-xl font-bold" : "text-2xl font-bold"}>Your Invoices</h2>
+        <Badge variant="secondary" className={isMobile ? "text-xs" : ""}>
           {invoices.length} Invoice{invoices.length !== 1 ? 's' : ''}
         </Badge>
       </div>
 
-      {invoices.map((invoice) => (
-        <Card key={invoice.id}>
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  {invoice.invoice_number}
-                  <Badge className={getInvoiceTypeBadge(invoice.invoice_type)}>
-                    {getInvoiceTypeLabel(invoice.invoice_type)}
-                  </Badge>
-                  {getStatusBadge(invoice.status)}
-                </CardTitle>
-                <CardDescription>
-                  {invoice.orders && `Order: ${invoice.orders.order_number}`}
-                </CardDescription>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold">
-                  {invoice.currency} {Number(invoice.total_amount).toLocaleString()}
+      {isMobile ? (
+        // Mobile View
+        invoices.map((invoice) => (
+          <MobileInvoiceCard
+            key={invoice.id}
+            invoice={invoice}
+            onDownload={handleDownload}
+            downloading={downloading === invoice.id}
+          />
+        ))
+      ) : (
+        // Desktop View
+        invoices.map((invoice) => (
+          <Card key={invoice.id}>
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    {invoice.invoice_number}
+                    <Badge className={getInvoiceTypeBadge(invoice.invoice_type)}>
+                      {getInvoiceTypeLabel(invoice.invoice_type)}
+                    </Badge>
+                    {getStatusBadge(invoice.status)}
+                  </CardTitle>
+                  <CardDescription>
+                    {invoice.orders && `Order: ${invoice.orders.order_number}`}
+                  </CardDescription>
                 </div>
-                {invoice.invoice_type !== 'packing_list' && (
-                  <div className="text-sm text-muted-foreground">
-                    Issued: {new Date(invoice.issue_date).toLocaleDateString()}
+                <div className="text-right">
+                  <div className="text-2xl font-bold">
+                    {invoice.currency} {Number(invoice.total_amount).toLocaleString()}
                   </div>
-                )}
+                  {invoice.invoice_type !== 'packing_list' && (
+                    <div className="text-sm text-muted-foreground">
+                      Issued: {new Date(invoice.issue_date).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                {invoice.due_date && invoice.invoice_type !== 'packing_list' && (
-                  <div>Due: {new Date(invoice.due_date).toLocaleDateString()}</div>
-                )}
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  {invoice.due_date && invoice.invoice_type !== 'packing_list' && (
+                    <div>Due: {new Date(invoice.due_date).toLocaleDateString()}</div>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownload(invoice)}
+                  disabled={downloading === invoice.id}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {downloading === invoice.id ? 'Downloading...' : 'Download PDF'}
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDownload(invoice)}
-                disabled={downloading === invoice.id}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {downloading === invoice.id ? 'Downloading...' : 'Download PDF'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        ))
+      )}
     </div>
   );
 };
