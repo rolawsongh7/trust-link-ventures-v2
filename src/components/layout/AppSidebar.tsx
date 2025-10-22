@@ -20,6 +20,7 @@ import { navigateToPublicSite } from '@/utils/domainUtils';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { RealtimeIndicator } from '@/components/realtime/RealtimeIndicator';
 import { useBackgroundSync } from '@/hooks/useBackgroundSync';
+import { getStorageUrl } from '@/config/supabase';
 
 import {
   Sidebar,
@@ -66,7 +67,7 @@ export function AppSidebar() {
         <div className="flex items-center gap-2 px-4 py-2">
           <div className="w-8 h-8 rounded-lg overflow-hidden bg-primary/10 p-1 flex-shrink-0">
             <img 
-              src="/lovable-uploads/22e4a71a-b0c3-4abd-8f53-268d55d324df.png" 
+              src={getStorageUrl('logos', 'trust_link_ventures.png')} 
               alt="Trust Link Logo" 
               className="w-full h-full object-contain bg-white rounded-md"
             />
