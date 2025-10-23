@@ -443,6 +443,38 @@ export type Database = {
           },
         ]
       }
+      customer_users: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_users_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
@@ -2964,6 +2996,10 @@ export type Database = {
       merge_duplicate_customers: {
         Args: { keep_id: string; remove_id: string }
         Returns: undefined
+      }
+      user_can_access_customer: {
+        Args: { p_customer_id: string; p_user_id: string }
+        Returns: boolean
       }
       validate_file_upload: {
         Args: {
