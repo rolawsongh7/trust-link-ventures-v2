@@ -171,9 +171,9 @@ export const MobileQuoteCard = ({
 
       {/* Action Buttons */}
       {hasFinalQuote && quote.final_quote?.final_file_url && (
-        <div className="flex gap-2 pt-2">
+        <div className="space-y-2 pt-2">
           {quote.final_quote.status === 'sent' && (
-            <>
+            <div className="flex gap-2">
               <Button 
                 onClick={() => onApprove(quote.final_quote)}
                 size="sm" 
@@ -191,17 +191,28 @@ export const MobileQuoteCard = ({
                 <X className="h-3 w-3 mr-1" />
                 <span className="text-xs">Reject</span>
               </Button>
-            </>
+            </div>
           )}
-          <Button 
-            onClick={() => onViewPDF(quote)}
-            variant="outline" 
-            size="sm" 
-            className={quote.final_quote.status === 'sent' ? 'flex-shrink-0 h-9 w-9 p-0' : 'flex-1 h-9'}
-          >
-            <Eye className="h-3 w-3" />
-            {quote.final_quote.status !== 'sent' && <span className="ml-1 text-xs">View PDF</span>}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => onViewPDF(quote)}
+              variant="outline" 
+              size="sm" 
+              className="flex-1 h-9"
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              <span className="text-xs">View PDF</span>
+            </Button>
+            <Button 
+              onClick={() => onDownload(quote.final_quote!.final_file_url!, quote.final_quote!.quote_number)}
+              variant="outline" 
+              size="sm" 
+              className="flex-1 h-9"
+            >
+              <Download className="h-3 w-3 mr-1" />
+              <span className="text-xs">Download</span>
+            </Button>
+          </div>
         </div>
       )}
     </InteractiveCard>

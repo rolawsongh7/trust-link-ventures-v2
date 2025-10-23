@@ -16,6 +16,7 @@ import { OrderPaymentInstructions } from './OrderPaymentInstructions';
 import { ensureCustomerRecord } from '@/lib/customerUtils';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { MobileOrderCard } from './mobile/MobileOrderCard';
+import { InvoicePreviewDialog } from './InvoicePreviewDialog';
 
 
 // Order interface matching database schema
@@ -51,6 +52,8 @@ export const CustomerOrders: React.FC = () => {
   const [paymentProofDialogOpen, setPaymentProofDialogOpen] = useState(false);
   const [selectedOrderForPayment, setSelectedOrderForPayment] = useState<Order | null>(null);
   const [showPaymentInstructions, setShowPaymentInstructions] = useState<string | null>(null);
+  const [invoicePreviewOpen, setInvoicePreviewOpen] = useState(false);
+  const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState<Order | null>(null);
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -316,41 +319,31 @@ export const CustomerOrders: React.FC = () => {
     }
   };
 
-  const handleDownloadInvoice = async (orderId: string, orderNumber: string) => {
+  const handleTrackOrder = async (order: Order) => {
     try {
-      toast({
-        title: "Generating Invoice",
-        description: "Please wait while we generate your invoice...",
-      });
+      // Fetch tracking token for this order
+      const { data, error } = await supabase
+        .from('delivery_tracking_tokens')
+        .select('token')
+        .eq('order_id', order.id)
+        .single();
 
-      const { data, error } = await supabase.functions.invoke('generate-invoice', {
-        body: { orderId, type: 'commercial' }
-      });
+      if (error || !data) {
+        toast({
+          title: "Tracking Unavailable",
+          description: "Tracking information is not yet available for this order.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      if (error) throw error;
-
-      // Create blob and download
-      const blob = new Blob([Uint8Array.from(atob(data.pdf), c => c.charCodeAt(0))], { 
-        type: 'application/pdf' 
-      });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `invoice-${orderNumber}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast({
-        title: "Invoice Downloaded",
-        description: `Invoice for ${orderNumber} has been downloaded.`,
-      });
+      // Navigate to public tracking page with token
+      window.open(`/track?token=${data.token}`, '_blank');
     } catch (error) {
-      console.error('Error downloading invoice:', error);
+      console.error('Error fetching tracking token:', error);
       toast({
-        title: "Download Failed",
-        description: "Failed to download invoice. Please try again.",
+        title: "Error",
+        description: "Failed to load tracking information.",
         variant: "destructive",
       });
     }
@@ -477,7 +470,7 @@ export const CustomerOrders: React.FC = () => {
             <MobileOrderCard
               key={order.id}
               order={order}
-              onTrack={() => navigate(`/customer/orders/${order.id}`)}
+              onTrack={() => handleTrackOrder(order)}
               onReorder={() => handleReorder(order)}
               onViewInvoices={() => navigate('/customer/invoices')}
               onAddAddress={() => {
@@ -639,7 +632,7 @@ export const CustomerOrders: React.FC = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => navigate(`/customer/orders/${order.id}`)}
+                        onClick={() => handleTrackOrder(order)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Track Order
@@ -657,10 +650,13 @@ export const CustomerOrders: React.FC = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => navigate('/customer/invoices')}
+                        onClick={() => {
+                          setSelectedOrderForInvoice(order);
+                          setInvoicePreviewOpen(true);
+                        }}
                       >
-                        <Download className="h-4 w-4 mr-2" />
-                        View Invoices
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Invoice
                       </Button>
                     </div>
                   </div>
@@ -685,6 +681,16 @@ export const CustomerOrders: React.FC = () => {
           onOpenChange={setPaymentProofDialogOpen}
           order={selectedOrderForPayment}
           onSuccess={fetchOrders}
+        />
+      )}
+
+      {/* Invoice Preview Dialog */}
+      {selectedOrderForInvoice && (
+        <InvoicePreviewDialog
+          open={invoicePreviewOpen}
+          onOpenChange={setInvoicePreviewOpen}
+          orderId={selectedOrderForInvoice.id}
+          orderNumber={selectedOrderForInvoice.order_number}
         />
       )}
     </div>

@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download, FileText } from 'lucide-react';
+import { FileText, Download, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { downloadInvoiceFromUrl } from '@/lib/storageHelpers';
+import { supabase } from '@/integrations/supabase/client';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { downloadInvoiceFromUrl } from '@/lib/storageHelpers';
 import { ensureCustomerRecord } from '@/lib/customerUtils';
-import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { MobileInvoiceCard } from './mobile/MobileInvoiceCard';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
 
 interface Invoice {
   id: string;
@@ -24,6 +25,7 @@ interface Invoice {
   file_url: string | null;
   orders?: {
     order_number: string;
+    currency: string;
   };
 }
 
@@ -31,93 +33,76 @@ export const CustomerInvoices = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const { isMobile } = useMobileDetection();
 
   useEffect(() => {
-    fetchInvoices();
+    if (profile?.email) {
+      fetchInvoices();
 
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel('customer-invoices-changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'invoices' },
-        (payload) => {
-          console.log('Invoice change detected:', payload);
-          fetchInvoices();
-        }
-      )
-      .subscribe();
+      const subscription = supabase
+        .channel('customer-invoices-changes')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'invoices' },
+          () => {
+            fetchInvoices();
+          }
+        )
+        .subscribe();
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [profile]);
 
   const fetchInvoices = async () => {
+    if (!profile?.email) {
+      console.error('No profile email found');
+      toast({
+        title: 'Authentication Error',
+        description: 'Unable to retrieve your profile. Please log in again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) {
-        console.error('No user email found');
-        toast({
-          title: 'Authentication Error',
-          description: 'Unable to retrieve your profile. Please log in again.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Debug: Log the email being searched
-      console.log('🔍 DEBUG - Auth email:', user.email);
-      console.log('🔍 DEBUG - Auth user ID:', user.id);
-
-      // Use the case-insensitive customer lookup utility
-      const customer = await ensureCustomerRecord(user.email);
+      setLoading(true);
+      const customer = await ensureCustomerRecord(profile.email);
 
       if (!customer) {
         console.error('❌ No customer record found');
-        console.log('🔍 DEBUG - Tried email:', user.email);
         toast({
           title: 'No Customer Profile',
-          description: `Your account (${user.email}) is not linked to a customer profile. Please contact support at support@trustlinkventures.com`,
+          description: `Your account (${profile.email}) is not linked to a customer profile. Please contact support.`,
           variant: 'destructive',
         });
         setInvoices([]);
-        setLoading(false);
         return;
       }
-
-      console.log('✅ Customer found:', {
-        id: customer.id,
-        email: customer.email,
-        company: customer.company_name
-      });
 
       const { data, error } = await supabase
         .from('invoices')
         .select(`
           *,
-          orders(order_number)
+          orders(order_number, currency)
         `)
         .eq('customer_id', customer.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('❌ Error fetching invoices:', error);
-        throw error;
-      }
+      if (error) throw error;
       
-      console.log('✅ Invoices data:', data);
-      console.log('🔍 DEBUG - Number of invoices found:', data?.length || 0);
       setInvoices(data || []);
     } catch (error) {
-      console.error('💥 Error fetching invoices:', error);
+      console.error('Error fetching invoices:', error);
       toast({
         title: 'Error Loading Invoices',
-        description: error instanceof Error ? error.message : 'Failed to load invoices. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to load invoices.',
         variant: 'destructive',
       });
-      setInvoices([]); // Ensure invoices is always an array
+      setInvoices([]);
     } finally {
       setLoading(false);
     }
@@ -136,7 +121,6 @@ export const CustomerInvoices = () => {
         throw new Error('Failed to download invoice');
       }
 
-      // Create download link
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -190,35 +174,6 @@ export const CustomerInvoices = () => {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-6 w-1/3" />
-              <Skeleton className="h-4 w-1/4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-10 w-32" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  if (invoices.length === 0) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">No invoices yet</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   const getInvoiceTypeBadge = (type: string) => {
     const colors: Record<string, string> = {
       proforma: 'bg-blue-100 text-blue-800',
@@ -229,75 +184,125 @@ export const CustomerInvoices = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className={isMobile ? "text-xl font-bold" : "text-2xl font-bold"}>Your Invoices</h2>
-        <Badge variant="secondary" className={isMobile ? "text-xs" : ""}>
-          {invoices.length} Invoice{invoices.length !== 1 ? 's' : ''}
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            My Invoices
+          </h1>
+          <p className="text-muted-foreground">
+            View and download your invoices
+          </p>
+        </div>
+        <Badge variant="secondary" className="text-lg px-4 py-2">
+          <FileText className="h-4 w-4 mr-2" />
+          {invoices.length} Invoices
         </Badge>
       </div>
 
-      {isMobile ? (
-        // Mobile View
-        invoices.map((invoice) => (
-          <MobileInvoiceCard
-            key={invoice.id}
-            invoice={invoice}
-            onDownload={handleDownload}
-            downloading={downloading === invoice.id}
-          />
-        ))
+      {loading ? (
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : invoices.length === 0 ? (
+        <Card className="text-center py-12">
+          <CardContent>
+            <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No invoices yet</h3>
+            <p className="text-muted-foreground">
+              Your invoices will appear here once orders are processed
+            </p>
+          </CardContent>
+        </Card>
+      ) : isMobile ? (
+        <div className="space-y-4">
+          {invoices.map((invoice) => (
+            <MobileInvoiceCard
+              key={invoice.id}
+              invoice={invoice}
+              onDownload={() => handleDownload(invoice)}
+              downloading={downloading === invoice.id}
+            />
+          ))}
+        </div>
       ) : (
-        // Desktop View
-        invoices.map((invoice) => (
-          <Card key={invoice.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    {invoice.invoice_number}
-                    <Badge className={getInvoiceTypeBadge(invoice.invoice_type)}>
-                      {getInvoiceTypeLabel(invoice.invoice_type)}
-                    </Badge>
-                    {getStatusBadge(invoice.status)}
-                  </CardTitle>
-                  <CardDescription>
-                    {invoice.orders && `Order: ${invoice.orders.order_number}`}
-                  </CardDescription>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold">
-                    {invoice.currency} {Number(invoice.total_amount).toLocaleString()}
-                  </div>
-                  {invoice.invoice_type !== 'packing_list' && (
-                    <div className="text-sm text-muted-foreground">
-                      Issued: {new Date(invoice.issue_date).toLocaleDateString()}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                  {invoice.due_date && invoice.invoice_type !== 'packing_list' && (
-                    <div>Due: {new Date(invoice.due_date).toLocaleDateString()}</div>
-                  )}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDownload(invoice)}
-                  disabled={downloading === invoice.id}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  {downloading === invoice.id ? 'Downloading...' : 'Download PDF'}
-                </Button>
-              </div>
-            </CardContent>
+        <div className="space-y-4">
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Invoice Number</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Type</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Order</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Issue Date</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Due Date</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {invoices.map((invoice) => (
+                    <tr key={invoice.id} className="hover:bg-muted/20">
+                      <td className="px-4 py-3 font-medium">{invoice.invoice_number}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className="font-medium">
+                          {getInvoiceTypeLabel(invoice.invoice_type)}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm">{invoice.orders?.order_number || 'N/A'}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {new Date(invoice.issue_date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {invoice.due_date
+                          ? new Date(invoice.due_date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })
+                          : 'N/A'}
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold">
+                        {invoice.orders?.currency || invoice.currency || 'USD'} {Number(invoice.total_amount).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3">{getStatusBadge(invoice.status)}</td>
+                      <td className="px-4 py-3 text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownload(invoice)}
+                          disabled={downloading === invoice.id}
+                        >
+                          {downloading === invoice.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Card>
-        ))
+        </div>
       )}
     </div>
   );

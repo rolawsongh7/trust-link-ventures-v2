@@ -165,15 +165,14 @@ export const MobileOrderCard = ({
           </Button>
         ) : (
           <>
-            <Button 
-              onClick={onTrack}
-              variant="outline" 
-              size="sm" 
-              className="flex-1 h-9"
-            >
-              <Eye className="h-3 w-3 mr-1" />
-              <span className="text-xs">Track</span>
-            </Button>
+              <Button 
+                onClick={onTrack}
+                size="sm" 
+                className="flex-1 h-9"
+              >
+                <Eye className="h-3 w-3 mr-1" />
+                <span className="text-xs">Track</span>
+              </Button>
             <Button 
               onClick={onReorder}
               variant="outline" 
