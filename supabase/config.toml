@@ -64,3 +64,6 @@ verify_jwt = false
 
 [functions.verify-newsletter-confirm]
 verify_jwt = false
+
+[functions.submit-lead]
+verify_jwt = false

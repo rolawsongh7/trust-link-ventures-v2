@@ -1016,14 +1016,17 @@ export type Database = {
           description: string | null
           expected_close_date: string | null
           id: string
+          ip_address: unknown
           lead_score: number | null
           notes: string | null
           probability: number | null
           source: string | null
           status: Database["public"]["Enums"]["lead_status"] | null
+          submission_metadata: Json | null
           title: string | null
           updated_at: string
           value: number | null
+          verification_status: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -1033,14 +1036,17 @@ export type Database = {
           description?: string | null
           expected_close_date?: string | null
           id?: string
+          ip_address?: unknown
           lead_score?: number | null
           notes?: string | null
           probability?: number | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"] | null
+          submission_metadata?: Json | null
           title?: string | null
           updated_at?: string
           value?: number | null
+          verification_status?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -1050,14 +1056,17 @@ export type Database = {
           description?: string | null
           expected_close_date?: string | null
           id?: string
+          ip_address?: unknown
           lead_score?: number | null
           notes?: string | null
           probability?: number | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"] | null
+          submission_metadata?: Json | null
           title?: string | null
           updated_at?: string
           value?: number | null
+          verification_status?: string | null
         }
         Relationships: [
           {
@@ -2847,6 +2856,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_lead_rate_limit: {
+        Args: { p_ip_address: unknown }
+        Returns: boolean
+      }
       check_newsletter_rate_limit: {
         Args: { p_ip_address: unknown }
         Returns: boolean
