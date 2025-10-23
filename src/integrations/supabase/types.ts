@@ -247,11 +247,14 @@ export type Database = {
           customer_id: string | null
           direction: string | null
           id: string
+          ip_address: unknown
           lead_id: string | null
           order_id: string | null
           scheduled_date: string | null
           subject: string | null
+          submission_metadata: Json | null
           updated_at: string
+          verification_status: string | null
         }
         Insert: {
           communication_date?: string
@@ -266,11 +269,14 @@ export type Database = {
           customer_id?: string | null
           direction?: string | null
           id?: string
+          ip_address?: unknown
           lead_id?: string | null
           order_id?: string | null
           scheduled_date?: string | null
           subject?: string | null
+          submission_metadata?: Json | null
           updated_at?: string
+          verification_status?: string | null
         }
         Update: {
           communication_date?: string
@@ -285,11 +291,14 @@ export type Database = {
           customer_id?: string | null
           direction?: string | null
           id?: string
+          ip_address?: unknown
           lead_id?: string | null
           order_id?: string | null
           scheduled_date?: string | null
           subject?: string | null
+          submission_metadata?: Json | null
           updated_at?: string
+          verification_status?: string | null
         }
         Relationships: [
           {
@@ -2856,6 +2865,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_communication_rate_limit: {
+        Args: { p_ip_address: unknown }
+        Returns: boolean
+      }
       check_lead_rate_limit: {
         Args: { p_ip_address: unknown }
         Returns: boolean

@@ -67,3 +67,6 @@ verify_jwt = false
 
 [functions.submit-lead]
 verify_jwt = false
+
+[functions.submit-contact-form]
+verify_jwt = false

@@ -1,251 +1,225 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.54.0';
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-const recaptchaSecretKey = Deno.env.get("RECAPTCHA_SECRET_KEY");
-
-// Create Supabase client with service role key for admin operations
-const supabaseAdmin = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
-
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface ContactFormData {
+interface ContactFormRequest {
   name: string;
   company?: string;
   email: string;
   country: string;
-  inquiryType: string;
-  message: string;
-  recaptchaToken: string;
+  inquiryType?: string;
+  message?: string;
+  recaptchaToken?: string;
+}
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// List of disposable/temporary email domains to block
+const DISPOSABLE_EMAIL_DOMAINS = [
+  '10minutemail.com', 'guerrillamail.com', 'mailinator.com', 'tempmail.com',
+  'temp-mail.org', 'throwaway.email', 'yopmail.com', 'maildrop.cc',
+  'mintemail.com', 'sharklasers.com', 'guerrillamail.info', 'spam4.me',
+  'grr.la', 'getnada.com', 'mohmal.com', 'trashmail.com', 'fakeinbox.com'
+];
+
+function isDisposableEmail(email: string): boolean {
+  const domain = email.split('@')[1]?.toLowerCase();
+  return domain ? DISPOSABLE_EMAIL_DOMAINS.includes(domain) : false;
+}
+
+function validateEmail(email: string): { valid: boolean; reason?: string } {
+  const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+  
+  if (!emailRegex.test(email)) {
+    return { valid: false, reason: 'Invalid email format' };
+  }
+  
+  if (email.length < 5 || email.length > 255) {
+    return { valid: false, reason: 'Email must be between 5 and 255 characters' };
+  }
+  
+  if (isDisposableEmail(email)) {
+    return { valid: false, reason: 'Temporary/disposable email addresses are not allowed' };
+  }
+  
+  return { valid: true };
 }
 
 async function verifyRecaptcha(token: string): Promise<boolean> {
-  if (!recaptchaSecretKey) {
-    console.error('[Contact Form] RECAPTCHA_SECRET_KEY not configured');
-    return false;
-  }
-
   try {
-    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `secret=${recaptchaSecretKey}&response=${token}`,
-    });
+    const recaptchaSecret = Deno.env.get('RECAPTCHA_SECRET_KEY');
+    if (!recaptchaSecret) {
+      console.warn('RECAPTCHA_SECRET_KEY not configured, skipping verification');
+      return true;
+    }
+
+    const response = await fetch(
+      `https://www.google.com/recaptcha/api/siteverify`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `secret=${recaptchaSecret}&response=${token}`,
+      }
+    );
 
     const data = await response.json();
-    console.log('[Contact Form] reCAPTCHA verification result:', data.success);
-    return data.success === true;
+    return data.success && data.score >= 0.5;
   } catch (error) {
-    console.error('[Contact Form] reCAPTCHA verification error:', error);
+    console.error('reCAPTCHA verification error:', error);
     return false;
   }
 }
 
-const handler = async (req: Request): Promise<Response> => {
-  console.log('[Contact Form] Function invoked');
-  console.log('[Contact Form] RESEND_API_KEY present:', !!Deno.env.get("RESEND_API_KEY"));
-  console.log('[Contact Form] RECAPTCHA_SECRET_KEY present:', !!Deno.env.get("RECAPTCHA_SECRET_KEY"));
+async function getClientIP(req: Request): Promise<string> {
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
   
-  if (req.method === "OPTIONS") {
+  const realIP = req.headers.get('x-real-ip');
+  if (realIP) {
+    return realIP;
+  }
+  
+  return '0.0.0.0';
+}
+
+async function handler(req: Request): Promise<Response> {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const formData: ContactFormData = await req.json();
-    console.log('[Contact Form] Processing submission for:', formData.email);
+    const {
+      name,
+      company,
+      email,
+      country,
+      inquiryType,
+      message,
+      recaptchaToken
+    }: ContactFormRequest = await req.json();
 
-    // Verify reCAPTCHA token
-    const isValidRecaptcha = await verifyRecaptcha(formData.recaptchaToken);
-    if (!isValidRecaptcha) {
-      console.error('[Contact Form] reCAPTCHA verification failed');
+    console.log('Contact form submission request:', { name, email, inquiryType });
+
+    // Basic validation
+    if (!name || name.trim().length < 2) {
       return new Response(
-        JSON.stringify({ 
-          success: false,
-          error: 'reCAPTCHA verification failed. Please try again.' 
-        }),
-        {
-          status: 403,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        JSON.stringify({ error: 'Name must be at least 2 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Step 1: Find or create customer
-    let customerId: string | null = null;
-    
-    const { data: existingCustomer } = await supabaseAdmin
-      .from('customers')
-      .select('id')
-      .eq('email', formData.email)
-      .maybeSingle();
-    
-    if (existingCustomer) {
-      customerId = existingCustomer.id;
-      console.log('[Contact Form] Found existing customer:', customerId);
-    } else {
-      // Create new customer
-      const { data: newCustomer, error: customerError } = await supabaseAdmin
-        .from('customers')
-        .insert({
-          company_name: formData.company || formData.name,
-          contact_name: formData.name,
-          email: formData.email,
-          country: formData.country,
-          customer_status: 'prospect',
-          priority: formData.inquiryType === 'Request a Quote' ? 'high' : 'medium'
-        })
-        .select('id')
-        .single();
-      
-      if (customerError) {
-        console.error('[Contact Form] Customer creation error:', customerError);
-        throw customerError;
+    if (name.length > 100) {
+      return new Response(
+        JSON.stringify({ error: 'Name must be less than 100 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Email validation
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      return new Response(
+        JSON.stringify({ error: emailValidation.reason }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verify reCAPTCHA
+    if (recaptchaToken) {
+      const isValidRecaptcha = await verifyRecaptcha(recaptchaToken);
+      if (!isValidRecaptcha) {
+        console.warn('reCAPTCHA verification failed');
+        return new Response(
+          JSON.stringify({ error: 'Security verification failed. Please try again.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-      customerId = newCustomer.id;
-      console.log('[Contact Form] Created new customer:', customerId);
     }
-    
-    // Step 2: Create lead
-    const { data: lead, error: leadError } = await supabaseAdmin
-      .from('leads')
-      .insert({
-        customer_id: customerId,
-        title: `${formData.inquiryType || 'Contact Form'} - ${formData.name}`,
-        description: formData.message,
-        source: 'contact_form',
-        status: 'new',
-        lead_score: formData.inquiryType === 'Request a Quote' ? 80 : 60
-      })
-      .select('id')
-      .single();
-    
-    if (leadError) {
-      console.error('[Contact Form] Lead creation error:', leadError);
-      throw leadError;
+
+    // Get client IP for rate limiting
+    const ipAddress = await getClientIP(req);
+    console.log('Client IP:', ipAddress);
+
+    // Check rate limit using the database function
+    const { data: rateLimitCheck, error: rateLimitError } = await supabase
+      .rpc('check_communication_rate_limit', { p_ip_address: ipAddress });
+
+    if (rateLimitError) {
+      console.error('Rate limit check error:', rateLimitError);
+    } else if (rateLimitCheck === false) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Too many contact form submissions from your location. Please try again in an hour.' 
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-    console.log('[Contact Form] Created lead:', lead.id);
+
+    // Collect submission metadata for security analysis
+    const userAgent = req.headers.get('user-agent') || 'unknown';
+    const referrer = req.headers.get('referer') || req.headers.get('referrer') || 'direct';
     
-    // Step 3: Log communication
-    const { error: commError } = await supabaseAdmin
+    const submissionMetadata = {
+      user_agent: userAgent,
+      referrer: referrer,
+      ip_address: ipAddress,
+      submitted_at: new Date().toISOString(),
+      recaptcha_verified: !!recaptchaToken,
+      name: name.trim(),
+      company: company?.trim() || null,
+      country: country.trim(),
+      inquiry_type: inquiryType || 'General Contact'
+    };
+
+    // Insert communication with service role (bypasses RLS)
+    const { data: communication, error: insertError } = await supabase
       .from('communications')
       .insert({
-        customer_id: customerId,
-        lead_id: lead.id,
         communication_type: 'email',
         direction: 'inbound',
-        subject: `Contact Form: ${formData.inquiryType || 'General Inquiry'}`,
-        content: `From: ${formData.name} (${formData.email})\nCompany: ${formData.company || 'N/A'}\nCountry: ${formData.country}\nInquiry Type: ${formData.inquiryType || 'N/A'}\n\nMessage:\n${formData.message}`,
-        contact_person: formData.name
-      });
-    
-    if (commError) {
-      console.error('[Contact Form] Communication logging error:', commError);
-      throw commError;
+        subject: `Contact Form: ${inquiryType || 'General Contact'}`,
+        content: `Name: ${name}\nEmail: ${email}\nCountry: ${country}\n${company ? `Company: ${company}\n` : ''}${inquiryType ? `Inquiry Type: ${inquiryType}\n` : ''}\n\nMessage:\n${message || 'No message provided'}`,
+        communication_date: new Date().toISOString(),
+        ip_address: ipAddress,
+        verification_status: 'pending',
+        submission_metadata: submissionMetadata
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Error inserting communication:', insertError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to submit contact form. Please try again.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-    console.log('[Contact Form] Logged communication');
 
-    // Send admin notification email
-    const adminEmailPromise = resend.emails.send({
-      from: "Trust Link Ventures <info@trustlinkcompany.com>",
-      to: ["trustlventuresghana_a01@yahoo.com"],
-      subject: `New Contact Form: ${formData.inquiryType} - ${formData.name}`,
-      html: `
-        <h2>New Contact Form Submission</h2>
-        <p><strong>Inquiry Type:</strong> ${formData.inquiryType}</p>
-        <p><strong>Name:</strong> ${formData.name}</p>
-        <p><strong>Company:</strong> ${formData.company || 'N/A'}</p>
-        <p><strong>Email:</strong> ${formData.email}</p>
-        <p><strong>Country:</strong> ${formData.country}</p>
-        <p><strong>Message:</strong></p>
-        <p>${formData.message || 'No message provided'}</p>
-        <hr>
-        <p><small>Lead ID: ${lead.id}</small></p>
-        <p><small>View in admin portal: <a href="https://ppyfrftmexvgnsxlhdbz.supabase.co">Admin Dashboard</a></small></p>
-      `,
-    });
-
-    // Send customer confirmation email
-    const customerEmailPromise = resend.emails.send({
-      from: "Trust Link Ventures <info@trustlinkcompany.com>",
-      to: [formData.email],
-      subject: "Thank you for contacting Trust Link Ventures",
-      html: `
-        <h2>Thank you for reaching out, ${formData.name}!</h2>
-        <p>We've received your inquiry regarding <strong>${formData.inquiryType}</strong> and will get back to you shortly.</p>
-        <p>Our team typically responds within:</p>
-        <ul>
-          <li><strong>Request a Quote:</strong> 4-6 hours</li>
-          <li><strong>Pitch a Partnership:</strong> 1 business day</li>
-          <li><strong>Investor Opportunities:</strong> 2 business days</li>
-          <li><strong>General Contact:</strong> 1 business day</li>
-        </ul>
-        <p>In the meantime, feel free to explore:</p>
-        <ul>
-          <li><a href="https://trustlinkventures.com/about">Our Sustainability Commitments</a></li>
-          <li><a href="https://trustlinkventures.com/partners">Our Partner Network</a></li>
-          <li><a href="https://trustlinkventures.com/products">Our Products</a></li>
-        </ul>
-        <p>Best regards,<br>The Trust Link Ventures Team</p>
-        <hr>
-        <p><small>This is an automated confirmation. Please do not reply to this email.</small></p>
-      `,
-    });
-
-    // Wait for both emails to send
-    const [adminResult, customerResult] = await Promise.all([
-      adminEmailPromise,
-      customerEmailPromise,
-    ]);
-
-    console.log('[Contact Form] Admin email result:', adminResult);
-    console.log('[Contact Form] Customer email result:', customerResult);
-
-    // Don't fail the whole request if emails fail - data is already saved
-    if (adminResult.error || customerResult.error) {
-      console.error('[Contact Form] Email warning:', adminResult.error || customerResult.error);
-      // Continue anyway - the lead was saved successfully
-    }
+    console.log('Contact form submitted successfully:', communication.id);
 
     return new Response(
       JSON.stringify({ 
-        success: true,
-        message: 'Contact form submitted successfully',
-        leadId: lead.id,
-        customerId: customerId,
-        adminEmailId: adminResult.data?.id,
-        customerEmailId: customerResult.data?.id
+        success: true, 
+        message: 'Thank you! We\'ve received your inquiry and will be in touch shortly.',
+        communication_id: communication.id
       }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
-    console.error("[Contact Form] Error:", error);
+
+  } catch (error) {
+    console.error('Unexpected error:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: error.message 
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      JSON.stringify({ error: 'An unexpected error occurred. Please try again.' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
-};
+}
 
-serve(handler);
+Deno.serve(handler);
