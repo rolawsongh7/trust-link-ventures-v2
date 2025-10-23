@@ -58,3 +58,9 @@ verify_jwt = false
 
 [functions.send-quote-email]
 verify_jwt = false
+
+[functions.verify-newsletter]
+verify_jwt = false
+
+[functions.verify-newsletter-confirm]
+verify_jwt = false

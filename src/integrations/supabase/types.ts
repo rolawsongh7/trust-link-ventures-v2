@@ -1147,28 +1147,40 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          ip_address: unknown
           source: string | null
           status: string | null
           subscription_date: string
           updated_at: string
+          verification_sent_at: string | null
+          verification_token: string | null
+          verified: boolean | null
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
+          ip_address?: unknown
           source?: string | null
           status?: string | null
           subscription_date?: string
           updated_at?: string
+          verification_sent_at?: string | null
+          verification_token?: string | null
+          verified?: boolean | null
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          ip_address?: unknown
           source?: string | null
           status?: string | null
           subscription_date?: string
           updated_at?: string
+          verification_sent_at?: string | null
+          verification_token?: string | null
+          verified?: boolean | null
         }
         Relationships: []
       }
@@ -2803,6 +2815,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_newsletter_rate_limit: {
+        Args: { p_ip_address: unknown }
+        Returns: boolean
+      }
       check_user_role: {
         Args: { check_user_id: string; required_role: string }
         Returns: boolean
@@ -2970,6 +2986,10 @@ export type Database = {
         }[]
       }
       validate_session: { Args: { p_session_token: string }; Returns: boolean }
+      verify_newsletter_subscription: {
+        Args: { p_token: string }
+        Returns: Json
+      }
     }
     Enums: {
       assistant_mode: "qa" | "workflow"

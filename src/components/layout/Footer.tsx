@@ -1,28 +1,105 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Linkedin, Twitter } from 'lucide-react';
+import ReCAPTCHA from 'react-google-recaptcha';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { TermsDialog, PrivacyDialog, CookiesDialog } from '@/components/legal/LegalDialogs';
+import { validateEmail } from '@/lib/disposableEmailDomains';
+import { checkNewsletterRateLimit } from '@/lib/newsletterRateLimit';
+import { RECAPTCHA_SITE_KEY } from '@/config/recaptcha';
+import { performBotCheck } from '@/lib/botDetection';
+import { toast } from 'sonner';
 import trustLinkLogo from '@/assets/trust-link-logo.png';
 
 const Footer = () => {
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const formStartTime = useRef(Date.now());
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setIsSubmitting(true);
+
     try {
-      // For now, just log the subscription since the table might not exist yet
-      console.log('Newsletter subscription:', email);
+      // Client-side validation
+      const emailValidation = validateEmail(email);
+      if (!emailValidation.valid) {
+        setError(emailValidation.reason || 'Invalid email');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Rate limit check
+      const rateLimitCheck = checkNewsletterRateLimit();
+      if (!rateLimitCheck.allowed) {
+        setError(rateLimitCheck.reason || 'Too many attempts');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Get reCAPTCHA token
+      const recaptchaToken = await recaptchaRef.current?.executeAsync();
+      recaptchaRef.current?.reset();
+
+      // Bot detection check
+      const botCheck = await performBotCheck(
+        recaptchaToken || null,
+        honeypot,
+        formStartTime.current
+      );
+
+      if (!botCheck.allowed) {
+        setError('Security check failed. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Call edge function to handle subscription and send verification email
+      const { data, error: submitError } = await supabase.functions.invoke(
+        'verify-newsletter',
+        {
+          body: {
+            email,
+            source: 'footer',
+            recaptchaToken,
+          },
+        }
+      );
+
+      if (submitError) {
+        throw submitError;
+      }
+
+      if (data?.error) {
+        setError(data.error);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Success
+      toast.success('Please check your email to confirm your subscription!', {
+        description: 'We sent a verification link to ' + email,
+      });
       setIsSubscribed(true);
       setEmail('');
       
-      // Reset after 3 seconds
-      setTimeout(() => setIsSubscribed(false), 3000);
+      // Reset after 5 seconds
+      setTimeout(() => {
+        setIsSubscribed(false);
+        formStartTime.current = Date.now();
+      }, 5000);
     } catch (error) {
       console.error('Newsletter subscription error:', error);
+      setError('An error occurred. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -82,25 +159,57 @@ const Footer = () => {
             
             {isSubscribed ? (
               <div className="py-1">
-                <p className="text-blue-100 font-medium text-xs">✅ Thank you for subscribing!</p>
+                <p className="text-blue-100 font-medium text-xs">
+                  ✅ Please check your email to confirm!
+                </p>
               </div>
             ) : (
               <form onSubmit={handleSubscribe} className="space-y-2">
+                {/* Honeypot field (hidden from users, visible to bots) */}
+                <input
+                  type="text"
+                  name="website"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  style={{ position: 'absolute', left: '-9999px' }}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                />
+                
                 <Input
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={isSubmitting}
                   className="bg-blue-800/30 border-blue-700 text-blue-100 placeholder:text-blue-300 text-xs h-8"
                 />
+                
+                {error && (
+                  <p className="text-red-400 text-xs">{error}</p>
+                )}
+                
+                {/* Invisible reCAPTCHA v3 */}
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  size="invisible"
+                  sitekey={RECAPTCHA_SITE_KEY}
+                />
+                
                 <Button 
                   type="submit"
                   size="sm"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground w-full h-8 text-xs font-medium"
+                  disabled={isSubmitting}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground w-full h-8 text-xs font-medium disabled:opacity-50"
                 >
-                  Subscribe
+                  {isSubmitting ? 'Subscribing...' : 'Subscribe'}
                 </Button>
+                
+                <p className="text-blue-300 text-[10px] leading-tight">
+                  Protected by reCAPTCHA. By subscribing, you agree to receive marketing emails.
+                </p>
               </form>
             )}
           </div>
