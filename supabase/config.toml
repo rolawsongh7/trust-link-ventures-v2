@@ -74,11 +74,11 @@ verify_jwt = false
 [functions.get-payment-options]
 verify_jwt = true
 
-[functions.initialize-ghipss-payment]
+[functions.initialize-paystack-payment]
 verify_jwt = true
 
-[functions.verify-ghipss-payment]
+[functions.verify-paystack-payment]
 verify_jwt = true
 
-[functions.ghipss-webhook]
+[functions.paystack-webhook]
 verify_jwt = false

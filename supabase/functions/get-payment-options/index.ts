@@ -56,8 +56,8 @@ Deno.serve(async (req) => {
       tier2_max: 50000,
       tier3_max: null,
       currency: 'GHS',
-      tier1_method: 'ghipss',
-      tier2_method: 'ghipss',
+      tier1_method: 'paystack',
+      tier2_method: 'paystack',
       tier3_method: 'manual'
     };
 
@@ -81,15 +81,15 @@ Deno.serve(async (req) => {
     // Build available options
     const options = [];
 
-    // GhIPSS option
+    // Paystack option for tier 1 and 2
     if (tier === 1 || tier === 2) {
       options.push({
-        method: 'ghipss',
-        label: 'Pay Now Online',
-        channels: ['bank_transfer', 'mobile_money'],
-        fees: '1.5% (capped at GHS 100)',
+        method: 'paystack',
+        label: 'Pay Now Online (Paystack)',
+        channels: ['card', 'mobile_money', 'bank_transfer', 'ussd'],
+        fees: '1.95% + GHS 0.50',
         processingTime: 'Instant',
-        benefits: ['Auto-verified', 'Instant confirmation', 'No receipt upload needed']
+        benefits: ['Auto-verified', 'Instant confirmation', 'Multiple payment options', 'No receipt upload needed']
       });
     }
 

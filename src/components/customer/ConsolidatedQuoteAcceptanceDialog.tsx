@@ -69,7 +69,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
   const [selectedAddressId, setSelectedAddressId] = useState<string>('');
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'ghipss' | 'manual' | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'paystack' | 'manual' | null>(null);
   const [paymentOptions, setPaymentOptions] = useState<any>(null);
   const [loadingPaymentOptions, setLoadingPaymentOptions] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string>('');
@@ -185,13 +185,14 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
 
     setSubmitting(true);
     try {
-      if (selectedPaymentMethod === 'ghipss') {
+      if (selectedPaymentMethod === 'paystack') {
         const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
-          'initialize-ghipss-payment',
+          'initialize-paystack-payment',
           {
             body: {
               orderId: createdOrderId,
               customerEmail: profile?.email,
+              customerPhone: profile?.phone,
               amount: quote.total_amount,
               currency: quote.currency,
               callbackUrl: `${window.location.origin}/customer/payment-callback`

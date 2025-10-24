@@ -20,7 +20,9 @@ export const PaymentCallback = () => {
 
   const verifyPayment = async () => {
     try {
-      const reference = searchParams.get('reference') || sessionStorage.getItem('pending_payment_reference');
+      const reference = searchParams.get('reference') || 
+                       searchParams.get('trxref') || // Paystack uses trxref
+                       sessionStorage.getItem('pending_payment_reference');
       const orderId = searchParams.get('orderId') || sessionStorage.getItem('pending_order_id');
 
       if (!reference) {
@@ -29,7 +31,7 @@ export const PaymentCallback = () => {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('verify-ghipss-payment', {
+      const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
         body: { reference }
       });
 
