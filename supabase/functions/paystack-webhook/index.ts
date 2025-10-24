@@ -12,10 +12,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const webhookSecret = Deno.env.get('PAYSTACK_WEBHOOK_SECRET');
+    const webhookSecret = Deno.env.get('PAYSTACK_SECRET_KEY');
     
     if (!webhookSecret) {
-      throw new Error('PAYSTACK_WEBHOOK_SECRET not configured');
+      throw new Error('PAYSTACK_SECRET_KEY not configured');
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
