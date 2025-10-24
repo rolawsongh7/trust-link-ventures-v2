@@ -37,6 +37,7 @@ import { CustomerCommunications } from "@/components/customer/CustomerCommunicat
 import { CustomerInvoices } from "@/components/customer/CustomerInvoices";
 import { CustomerAddresses } from "@/components/customer/CustomerAddresses";
 import OrderTracking from "@/pages/OrderTracking";
+import PaymentCallback from "@/pages/PaymentCallback";
 import AdminLogin from "./pages/AdminLogin";
 import Cookies from "./pages/Cookies";
 import Products from "./pages/Products";
@@ -170,6 +171,7 @@ const App = () => {
                         <Route path="communications" element={<CustomerCommunications />} />
                         <Route path="addresses" element={<CustomerAddresses />} />
                         <Route path="profile" element={<CustomerProfile />} />
+                        <Route path="payment-callback" element={<PaymentCallback />} />
                       </Route>
                       
                       {/* Public order tracking */}
@@ -249,6 +251,7 @@ const App = () => {
                         <Route path="communications" element={<CustomerCommunications />} />
                         <Route path="addresses" element={<CustomerAddresses />} />
                         <Route path="profile" element={<CustomerProfile />} />
+                        <Route path="payment-callback" element={<PaymentCallback />} />
                       </Route>
                       
                       {/* Public order tracking */}

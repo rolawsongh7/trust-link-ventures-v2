@@ -70,3 +70,15 @@ verify_jwt = false
 
 [functions.submit-contact-form]
 verify_jwt = false
+
+[functions.get-payment-options]
+verify_jwt = true
+
+[functions.initialize-ghipss-payment]
+verify_jwt = true
+
+[functions.verify-ghipss-payment]
+verify_jwt = true
+
+[functions.ghipss-webhook]
+verify_jwt = false

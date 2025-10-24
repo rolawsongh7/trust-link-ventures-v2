@@ -54,7 +54,7 @@ interface ConsolidatedQuoteAcceptanceDialogProps {
   onSuccess: () => void;
 }
 
-type Step = 'address' | 'payment';
+type Step = 'address' | 'payment-method' | 'payment-instructions';
 
 export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAcceptanceDialogProps> = ({
   open,
@@ -69,6 +69,10 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
   const [selectedAddressId, setSelectedAddressId] = useState<string>('');
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'ghipss' | 'manual' | null>(null);
+  const [paymentOptions, setPaymentOptions] = useState<any>(null);
+  const [loadingPaymentOptions, setLoadingPaymentOptions] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<string>('');
 
 
   useEffect(() => {
@@ -110,7 +114,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
   };
 
 
-  const handleProceedToPayment = () => {
+  const handleProceedToPayment = async () => {
     if (!selectedAddressId) {
       toast({
         title: 'No Address Selected',
@@ -119,7 +123,101 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
       });
       return;
     }
-    setCurrentStep('payment');
+
+    setSubmitting(true);
+    try {
+      // Accept quote and create order
+      const { error: quoteError } = await supabase
+        .from('quotes')
+        .update({ status: 'accepted' })
+        .eq('id', quote.id);
+
+      if (quoteError) throw quoteError;
+
+      // Wait for order creation
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .select('id, order_number, total_amount, currency')
+        .eq('quote_id', quote.id)
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Update delivery address
+      await supabase
+        .from('orders')
+        .update({
+          delivery_address_id: selectedAddressId,
+          delivery_address_confirmed_at: new Date().toISOString(),
+        })
+        .eq('id', order.id);
+
+      // Fetch payment options
+      setLoadingPaymentOptions(true);
+      const { data: options, error: optionsError } = await supabase.functions.invoke(
+        'get-payment-options',
+        { body: { orderId: order.id } }
+      );
+
+      if (optionsError) throw optionsError;
+
+      setPaymentOptions(options);
+      setCreatedOrderId(order.id);
+      setCurrentStep('payment-method');
+
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to proceed',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+      setLoadingPaymentOptions(false);
+    }
+  };
+
+  const handlePaymentMethodSelection = async () => {
+    if (!selectedPaymentMethod) return;
+
+    setSubmitting(true);
+    try {
+      if (selectedPaymentMethod === 'ghipss') {
+        const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+          'initialize-ghipss-payment',
+          {
+            body: {
+              orderId: createdOrderId,
+              customerEmail: profile?.email,
+              amount: quote.total_amount,
+              currency: quote.currency,
+              callbackUrl: `${window.location.origin}/customer/payment-callback`
+            }
+          }
+        );
+
+        if (paymentError) throw paymentError;
+
+        sessionStorage.setItem('pending_payment_reference', paymentData.reference);
+        sessionStorage.setItem('pending_order_id', createdOrderId);
+
+        window.location.href = paymentData.authorizationUrl;
+      } else {
+        setCurrentStep('payment-instructions');
+      }
+    } catch (error: any) {
+      console.error('Payment initialization error:', error);
+      toast({
+        title: 'Payment Error',
+        description: error.message || 'Failed to initialize payment. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -253,9 +351,9 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
             <span className="text-sm font-medium">Delivery Address</span>
           </div>
           <div className="flex-1 h-px bg-border" />
-          <div className={`flex items-center gap-2 ${currentStep === 'payment' ? 'text-primary' : 'text-muted-foreground'}`}>
+          <div className={`flex items-center gap-2 ${currentStep !== 'address' ? 'text-primary' : 'text-muted-foreground'}`}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              currentStep === 'payment' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+              currentStep !== 'address' ? 'bg-primary text-primary-foreground' : 'bg-muted'
             }`}>
               2
             </div>

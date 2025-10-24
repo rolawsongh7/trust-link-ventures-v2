@@ -1410,11 +1410,19 @@ export type Database = {
           failed_delivery_at: string | null
           failed_delivery_count: number | null
           failed_delivery_reason: string | null
+          ghipss_metadata: Json | null
+          ghipss_reference: string | null
+          ghipss_status: string | null
+          ghipss_transaction_id: string | null
           id: string
           internal_notes: string | null
           notes: string | null
           order_number: string
+          payment_amount_paid: number | null
+          payment_channel: string | null
           payment_confirmed_at: string | null
+          payment_gateway: string | null
+          payment_initiated_at: string | null
           payment_method: string | null
           payment_proof_uploaded_at: string | null
           payment_proof_url: string | null
@@ -1453,11 +1461,19 @@ export type Database = {
           failed_delivery_at?: string | null
           failed_delivery_count?: number | null
           failed_delivery_reason?: string | null
+          ghipss_metadata?: Json | null
+          ghipss_reference?: string | null
+          ghipss_status?: string | null
+          ghipss_transaction_id?: string | null
           id?: string
           internal_notes?: string | null
           notes?: string | null
           order_number: string
+          payment_amount_paid?: number | null
+          payment_channel?: string | null
           payment_confirmed_at?: string | null
+          payment_gateway?: string | null
+          payment_initiated_at?: string | null
           payment_method?: string | null
           payment_proof_uploaded_at?: string | null
           payment_proof_url?: string | null
@@ -1496,11 +1512,19 @@ export type Database = {
           failed_delivery_at?: string | null
           failed_delivery_count?: number | null
           failed_delivery_reason?: string | null
+          ghipss_metadata?: Json | null
+          ghipss_reference?: string | null
+          ghipss_status?: string | null
+          ghipss_transaction_id?: string | null
           id?: string
           internal_notes?: string | null
           notes?: string | null
           order_number?: string
+          payment_amount_paid?: number | null
+          payment_channel?: string | null
           payment_confirmed_at?: string | null
+          payment_gateway?: string | null
+          payment_initiated_at?: string | null
           payment_method?: string | null
           payment_proof_uploaded_at?: string | null
           payment_proof_url?: string | null
@@ -1603,6 +1627,110 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      payment_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string | null
+          currency: string
+          customer_email: string | null
+          customer_phone: string | null
+          failed_at: string | null
+          ghipss_reference: string
+          ghipss_response: Json | null
+          ghipss_transaction_id: string | null
+          id: string
+          initiated_at: string | null
+          last_verification_at: string | null
+          notes: string | null
+          order_id: string | null
+          payment_channel: string | null
+          status: string
+          updated_at: string | null
+          verification_attempts: number | null
+          webhook_received_at: string | null
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          failed_at?: string | null
+          ghipss_reference: string
+          ghipss_response?: Json | null
+          ghipss_transaction_id?: string | null
+          id?: string
+          initiated_at?: string | null
+          last_verification_at?: string | null
+          notes?: string | null
+          order_id?: string | null
+          payment_channel?: string | null
+          status: string
+          updated_at?: string | null
+          verification_attempts?: number | null
+          webhook_received_at?: string | null
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          failed_at?: string | null
+          ghipss_reference?: string
+          ghipss_response?: Json | null
+          ghipss_transaction_id?: string | null
+          id?: string
+          initiated_at?: string | null
+          last_verification_at?: string | null
+          notes?: string | null
+          order_id?: string | null
+          payment_channel?: string | null
+          status?: string
+          updated_at?: string | null
+          verification_attempts?: number | null
+          webhook_received_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pipeline_stages: {
         Row: {
