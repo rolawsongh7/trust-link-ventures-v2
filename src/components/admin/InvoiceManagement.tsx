@@ -183,7 +183,16 @@ export default function InvoiceManagement() {
   );
 
   const handleDownload = async (invoice: Invoice) => {
+    console.group('📥 Invoice Download - Start');
+    console.log('Invoice:', {
+      id: invoice.id,
+      number: invoice.invoice_number,
+      file_url: invoice.file_url
+    });
+
     if (!invoice.file_url) {
+      console.error('❌ No file_url in invoice');
+      console.groupEnd();
       toast({
         title: "No PDF available",
         description: "Please regenerate the PDF first.",
@@ -193,17 +202,43 @@ export default function InvoiceManagement() {
     }
 
     try {
-      // Convert file path to signed URL
+      console.log('🔄 Step 1: Converting to signed URL...');
       const signedUrl = await ensureSignedUrl(invoice.file_url);
+      console.log('✅ Signed URL obtained:', signedUrl.substring(0, 100) + '...');
       
-      // Download using the signed URL
+      console.log('🔄 Step 2: Fetching PDF...');
       const response = await fetch(signedUrl);
+      console.log('📥 Fetch response:', {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        headers: {
+          'content-type': response.headers.get('content-type'),
+          'content-length': response.headers.get('content-length')
+        }
+      });
       
       if (!response.ok) {
-        throw new Error(`Download failed: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('❌ Fetch failed:', errorText);
+        console.groupEnd();
+        throw new Error(`Download failed: ${response.status} ${response.statusText}`);
       }
       
+      console.log('🔄 Step 3: Creating blob...');
       const blob = await response.blob();
+      console.log('✅ Blob created:', {
+        size: blob.size,
+        type: blob.type
+      });
+      
+      if (blob.size === 0) {
+        console.error('❌ Blob is empty (size = 0)');
+        console.groupEnd();
+        throw new Error('Downloaded file is empty');
+      }
+      
+      console.log('🔄 Step 4: Triggering download...');
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -213,12 +248,21 @@ export default function InvoiceManagement() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
+      console.log('✅ Download complete');
+      console.groupEnd();
+      
       toast({
         title: "Success",
         description: "Invoice downloaded successfully.",
       });
     } catch (error) {
-      console.error('Download error:', error);
+      console.error('❌ Download error:', error);
+      if (error instanceof Error) {
+        console.error('   Error message:', error.message);
+        console.error('   Error stack:', error.stack);
+      }
+      console.groupEnd();
+      
       toast({
         title: "Download failed",
         description: error instanceof Error ? error.message : "Failed to download the PDF.",
@@ -250,6 +294,47 @@ export default function InvoiceManagement() {
       });
     } finally {
       setRegeneratingId(null);
+    }
+  };
+
+  const handleTestStorage = async (invoice: Invoice) => {
+    console.group('🧪 Storage Test - Start');
+    
+    try {
+      // Test 1: Check if file exists
+      console.log('Test 1: Checking if file exists...');
+      const folderPath = invoice.file_url?.split('/')[0] || '';
+      const { data: fileList, error: listError } = await supabase.storage
+        .from('invoices')
+        .list(folderPath, {
+          search: invoice.invoice_number
+        });
+      
+      console.log('File list result:', { fileList, listError });
+      
+      // Test 2: Try to get signed URL directly
+      console.log('Test 2: Getting signed URL...');
+      const { data: signedData, error: signedError } = await supabase.storage
+        .from('invoices')
+        .createSignedUrl(invoice.file_url || '', 3600);
+      
+      console.log('Signed URL result:', { signedData, signedError });
+      
+      // Test 3: Check authentication
+      console.log('Test 3: Checking auth...');
+      const { data: session } = await supabase.auth.getSession();
+      console.log('Session exists:', !!session?.session);
+      console.log('User ID:', session?.session?.user?.id);
+      
+      console.groupEnd();
+      
+      toast({
+        title: "Storage Test Complete",
+        description: "Check browser console for detailed results",
+      });
+    } catch (error) {
+      console.error('❌ Test error:', error);
+      console.groupEnd();
     }
   };
 
@@ -464,6 +549,15 @@ export default function InvoiceManagement() {
                           </Button>
                         </>
                       )}
+                      
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleTestStorage(invoice)}
+                        title="Test Storage (Check Console)"
+                      >
+                        🧪
+                      </Button>
                       
                       <Button
                         size="sm"

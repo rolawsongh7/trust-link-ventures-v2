@@ -11,19 +11,26 @@ export async function ensureSignedUrl(
   urlOrPath: string, 
   expiresIn: number = 3600  // 1 hour default
 ): Promise<string> {
+  console.group('🔍 ensureSignedUrl - Start');
+  console.log('Input:', urlOrPath);
+  console.log('Expiry seconds:', expiresIn);
+  
   let bucketName = 'invoices';  // Default bucket
   let filePath = urlOrPath;
 
   // Case 1: Already a signed URL - check if expired
   if (urlOrPath.includes('?token=')) {
+    console.log('📌 Case 1: Detected signed URL');
     const expMatch = urlOrPath.match(/[&?]exp=(\d+)/);
     if (expMatch) {
       const expiry = parseInt(expMatch[1], 10);
       const now = Math.floor(Date.now() / 1000);
+      console.log(`⏰ Expiry check: ${expiry} vs now: ${now} (${expiry - now}s remaining)`);
       
       // If not expired and has >5 min remaining, reuse it
       if (expiry > now + 300) {
         console.log('✅ Signed URL still valid, reusing');
+        console.groupEnd();
         return urlOrPath;
       }
       console.log('⚠️ Signed URL expired, regenerating...');
@@ -35,25 +42,32 @@ export async function ensureSignedUrl(
     if (signMatch) {
       bucketName = signMatch[1];
       filePath = decodeURIComponent(signMatch[2]);
-      console.log(`📝 Extracted path from expired URL: ${filePath}`);
+      console.log(`📝 Extracted: bucket="${bucketName}", path="${filePath}"`);
     }
   }
   
   // Case 2: Public URL format
   else if (urlOrPath.includes('/storage/v1/object/public/')) {
+    console.log('📌 Case 2: Detected public URL');
     const publicMatch = urlOrPath.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
     if (publicMatch) {
       bucketName = publicMatch[1];
       filePath = decodeURIComponent(publicMatch[2]);
-      console.log(`📝 Extracted path from public URL: ${filePath}`);
+      console.log(`📝 Extracted: bucket="${bucketName}", path="${filePath}"`);
     }
   }
   
   // Case 3: Plain file path (e.g., "commercial_invoice/INV-123.pdf")
   // Already set as filePath, use default bucket
   else {
-    console.log(`📝 Using plain file path: ${filePath}`);
+    console.log('📌 Case 3: Plain file path');
+    console.log(`📝 Using: bucket="${bucketName}", path="${filePath}"`);
   }
+
+  console.log('🔐 Requesting signed URL from Supabase...');
+  console.log(`   Bucket: ${bucketName}`);
+  console.log(`   Path: ${filePath}`);
+  console.log(`   Expiry: ${expiresIn}s`);
 
   // Generate fresh signed URL
   try {
@@ -61,25 +75,43 @@ export async function ensureSignedUrl(
       .from(bucketName)
       .createSignedUrl(filePath, expiresIn);
 
+    console.log('📥 Supabase response received');
+    console.log('   Data:', data);
+    console.log('   Error:', error);
+
     if (error) {
-      console.error('❌ Failed to create signed URL:', error);
+      console.error('❌ Supabase returned error:', error);
+      console.error('   Error message:', error.message);
+      console.error('   Error name:', error.name);
       
       // Check if file doesn't exist
       if (error.message?.includes('not found')) {
-        throw new Error(`Invoice PDF not found in storage: ${filePath}`);
+        const msg = `Invoice PDF not found in storage: ${filePath}`;
+        console.error('❌', msg);
+        console.groupEnd();
+        throw new Error(msg);
       }
       
-      throw new Error(`Storage error: ${error.message}`);
+      const msg = `Storage error: ${error.message}`;
+      console.error('❌', msg);
+      console.groupEnd();
+      throw new Error(msg);
     }
 
     if (!data?.signedUrl) {
+      console.error('❌ No signed URL in response');
+      console.groupEnd();
       throw new Error('No signed URL returned from storage');
     }
 
-    console.log(`✅ Generated fresh signed URL (expires in ${expiresIn}s)`);
+    console.log('✅ Signed URL generated successfully');
+    console.log('   URL length:', data.signedUrl.length);
+    console.log('   URL preview:', data.signedUrl.substring(0, 100) + '...');
+    console.groupEnd();
     return data.signedUrl;
   } catch (error) {
-    console.error('❌ Error generating signed URL:', error);
+    console.error('❌ Exception caught:', error);
+    console.groupEnd();
     throw error;  // Don't silently fail
   }
 }
