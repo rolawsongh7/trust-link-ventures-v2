@@ -1,46 +1,86 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Detects if a URL is an old public format and converts it to a signed URL
- * @param url - The storage URL (could be public or signed format)
- * @returns Promise<string> - A valid signed URL
+ * Converts any storage reference into a fresh signed URL
+ * Handles: file paths, public URLs, expired signed URLs
+ * @param urlOrPath - Storage URL or file path
+ * @param expiresIn - Expiry time in seconds (default: 1 hour)
+ * @returns Promise<string> - A fresh signed URL
  */
-export async function ensureSignedUrl(url: string): Promise<string> {
-  // Already a signed URL (contains ?token= or /sign/)
-  if (url.includes('?token=') || url.includes('/sign/')) {
-    return url;
-  }
+export async function ensureSignedUrl(
+  urlOrPath: string, 
+  expiresIn: number = 3600  // 1 hour default
+): Promise<string> {
+  let bucketName = 'invoices';  // Default bucket
+  let filePath = urlOrPath;
 
-  // Extract bucket name and file path from public URL
-  const publicMatch = url.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
+  // Case 1: Already a signed URL - check if expired
+  if (urlOrPath.includes('?token=')) {
+    const expMatch = urlOrPath.match(/[&?]exp=(\d+)/);
+    if (expMatch) {
+      const expiry = parseInt(expMatch[1], 10);
+      const now = Math.floor(Date.now() / 1000);
+      
+      // If not expired and has >5 min remaining, reuse it
+      if (expiry > now + 300) {
+        console.log('✅ Signed URL still valid, reusing');
+        return urlOrPath;
+      }
+      console.log('⚠️ Signed URL expired, regenerating...');
+    }
+    
+    // Extract file path from expired signed URL
+    // Format: .../storage/v1/object/sign/bucket/path?token=...
+    const signMatch = urlOrPath.match(/\/storage\/v1\/object\/sign\/([^/]+)\/(.+?)\?/);
+    if (signMatch) {
+      bucketName = signMatch[1];
+      filePath = decodeURIComponent(signMatch[2]);
+      console.log(`📝 Extracted path from expired URL: ${filePath}`);
+    }
+  }
   
-  if (!publicMatch) {
-    console.warn('Could not parse storage URL:', url);
-    return url; // Return original if can't parse
+  // Case 2: Public URL format
+  else if (urlOrPath.includes('/storage/v1/object/public/')) {
+    const publicMatch = urlOrPath.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
+    if (publicMatch) {
+      bucketName = publicMatch[1];
+      filePath = decodeURIComponent(publicMatch[2]);
+      console.log(`📝 Extracted path from public URL: ${filePath}`);
+    }
+  }
+  
+  // Case 3: Plain file path (e.g., "commercial_invoice/INV-123.pdf")
+  // Already set as filePath, use default bucket
+  else {
+    console.log(`📝 Using plain file path: ${filePath}`);
   }
 
-  const [, bucketName, filePath] = publicMatch;
-
+  // Generate fresh signed URL
   try {
-    // Generate signed URL (1 year expiry)
     const { data, error } = await supabase.storage
       .from(bucketName)
-      .createSignedUrl(filePath, 31536000);
+      .createSignedUrl(filePath, expiresIn);
 
     if (error) {
-      console.error('Failed to create signed URL:', error);
-      return url; // Fallback to original URL
+      console.error('❌ Failed to create signed URL:', error);
+      
+      // Check if file doesn't exist
+      if (error.message?.includes('not found')) {
+        throw new Error(`Invoice PDF not found in storage: ${filePath}`);
+      }
+      
+      throw new Error(`Storage error: ${error.message}`);
     }
 
     if (!data?.signedUrl) {
-      console.error('No signed URL returned');
-      return url;
+      throw new Error('No signed URL returned from storage');
     }
 
+    console.log(`✅ Generated fresh signed URL (expires in ${expiresIn}s)`);
     return data.signedUrl;
   } catch (error) {
-    console.error('Error generating signed URL:', error);
-    return url;
+    console.error('❌ Error generating signed URL:', error);
+    throw error;  // Don't silently fail
   }
 }
 
