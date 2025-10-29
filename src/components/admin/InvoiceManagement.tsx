@@ -23,6 +23,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { InvoicePDFPreviewDialog } from './InvoicePDFPreviewDialog';
+import { ensureSignedUrl } from '@/lib/storageHelpers';
 import {
   Select,
   SelectContent,
@@ -192,7 +193,16 @@ export default function InvoiceManagement() {
     }
 
     try {
-      const response = await fetch(invoice.file_url);
+      // Convert file path to signed URL
+      const signedUrl = await ensureSignedUrl(invoice.file_url);
+      
+      // Download using the signed URL
+      const response = await fetch(signedUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.statusText}`);
+      }
+      
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -202,10 +212,16 @@ export default function InvoiceManagement() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      toast({
+        title: "Success",
+        description: "Invoice downloaded successfully.",
+      });
     } catch (error) {
+      console.error('Download error:', error);
       toast({
         title: "Download failed",
-        description: "Failed to download the PDF.",
+        description: error instanceof Error ? error.message : "Failed to download the PDF.",
         variant: "destructive",
       });
     }
