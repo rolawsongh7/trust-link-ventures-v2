@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InteractiveCard } from "@/components/ui/interactive-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,8 @@ import {
   ArrowUpDown,
   Calendar,
   Filter,
-  Eye
+  Eye,
+  Beaker
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -360,15 +362,20 @@ export default function InvoiceManagement() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Invoice Management</h1>
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-primary bg-clip-text text-transparent">
+            Invoice Management
+          </h1>
+          <p className="text-muted-foreground mt-2">Manage and track all your invoices</p>
+        </div>
       </div>
 
-      <Card>
+      <InteractiveCard variant="glass" className="border-primary/10">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Filter className="h-5 w-5 text-primary" />
             Filters & Quick Views
           </CardTitle>
         </CardHeader>
@@ -422,57 +429,61 @@ export default function InvoiceManagement() {
             </Select>
           </div>
         </CardContent>
-      </Card>
+      </InteractiveCard>
 
-      <Card>
+      <InteractiveCard variant="elevated" className="overflow-hidden">
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
+          <div className="overflow-x-auto">
+            <Table>
+            <TableHeader className="bg-muted/50 backdrop-blur-sm sticky top-0 z-10">
+              <TableRow className="hover:bg-transparent">
                 <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer hover:bg-muted/70 transition-colors font-semibold"
                   onClick={() => handleSort('created_at')}
                 >
                   <div className="flex items-center gap-2">
                     Date
-                    <ArrowUpDown className="h-4 w-4" />
+                    <ArrowUpDown className="h-4 w-4 text-primary" />
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer hover:bg-muted/70 transition-colors font-semibold"
                   onClick={() => handleSort('invoice_number')}
                 >
                   <div className="flex items-center gap-2">
                     Invoice #
-                    <ArrowUpDown className="h-4 w-4" />
+                    <ArrowUpDown className="h-4 w-4 text-primary" />
                   </div>
                 </TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Customer</TableHead>
+                <TableHead className="font-semibold">Type</TableHead>
+                <TableHead className="font-semibold">Customer</TableHead>
                 <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 text-right"
+                  className="cursor-pointer hover:bg-muted/70 transition-colors text-right font-semibold"
                   onClick={() => handleSort('total_amount')}
                 >
                   <div className="flex items-center justify-end gap-2">
                     Amount
-                    <ArrowUpDown className="h-4 w-4" />
+                    <ArrowUpDown className="h-4 w-4 text-primary" />
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer hover:bg-muted/70 transition-colors font-semibold"
                   onClick={() => handleSort('status')}
                 >
                   <div className="flex items-center gap-2">
                     Status
-                    <ArrowUpDown className="h-4 w-4" />
+                    <ArrowUpDown className="h-4 w-4 text-primary" />
                   </div>
                 </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right font-semibold">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedInvoices.map((invoice) => (
-                <TableRow key={invoice.id}>
+                <TableRow 
+                  key={invoice.id} 
+                  className="hover:bg-muted/30 transition-all hover:scale-[1.01] hover:shadow-sm border-l-2 border-l-transparent hover:border-l-primary"
+                >
                   <TableCell>
                     <div className="flex flex-col gap-1">
                       <span className="font-medium">
@@ -520,7 +531,10 @@ export default function InvoiceManagement() {
                     {invoice.currency} {invoice.total_amount.toFixed(2)}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getStatusColor(invoice.status)}>
+                    <Badge 
+                      variant={getStatusColor(invoice.status)}
+                      className="font-medium shadow-sm"
+                    >
                       {invoice.status}
                     </Badge>
                   </TableCell>
@@ -536,6 +550,7 @@ export default function InvoiceManagement() {
                               setPreviewDialogOpen(true);
                             }}
                             title="Preview PDF"
+                            className="hover:bg-primary/10 hover:text-primary transition-colors"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -544,6 +559,7 @@ export default function InvoiceManagement() {
                             variant="ghost"
                             onClick={() => handleDownload(invoice)}
                             title="Download PDF"
+                            className="hover:bg-success/10 hover:text-success transition-colors"
                           >
                             <Download className="h-4 w-4" />
                           </Button>
@@ -555,8 +571,9 @@ export default function InvoiceManagement() {
                         variant="ghost"
                         onClick={() => handleTestStorage(invoice)}
                         title="Test Storage (Check Console)"
+                        className="hover:bg-accent/50 hover:text-accent-foreground transition-colors"
                       >
-                        🧪
+                        <Beaker className="h-4 w-4" />
                       </Button>
                       
                       <Button
@@ -565,6 +582,7 @@ export default function InvoiceManagement() {
                         onClick={() => handleRegenerate(invoice)}
                         disabled={regeneratingId === invoice.id}
                         title="Regenerate PDF"
+                        className="hover:bg-warning/10 hover:text-warning transition-colors"
                       >
                         <RefreshCw className={`h-4 w-4 ${regeneratingId === invoice.id ? 'animate-spin' : ''}`} />
                       </Button>
@@ -596,6 +614,7 @@ export default function InvoiceManagement() {
               )}
             </TableBody>
           </Table>
+          </div>
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-4 border-t">
@@ -638,7 +657,7 @@ export default function InvoiceManagement() {
             </div>
           )}
         </CardContent>
-      </Card>
+      </InteractiveCard>
       
       <InvoicePDFPreviewDialog
         open={previewDialogOpen}
