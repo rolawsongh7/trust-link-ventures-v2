@@ -36,7 +36,7 @@ interface FinalQuote {
   status: string;
   total_amount: number;
   currency: string;
-  final_quote_items?: FinalQuoteItem[];
+  quote_items?: FinalQuoteItem[];
   file_url?: string;
 }
 
@@ -157,7 +157,7 @@ export function ExpandedQuoteRow({ quote, onApprove, onReject, onDownload }: Exp
           </div>
 
           {/* Final Quote Items */}
-          {quote.final_quote.final_quote_items && quote.final_quote.final_quote_items.length > 0 && (
+          {quote.final_quote.quote_items && quote.final_quote.quote_items.length > 0 && (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -168,7 +168,7 @@ export function ExpandedQuoteRow({ quote, onApprove, onReject, onDownload }: Exp
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {quote.final_quote.final_quote_items.map((item) => (
+                {quote.final_quote.quote_items.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.product_name}</TableCell>
                     <TableCell>{item.quantity} {item.unit}</TableCell>
