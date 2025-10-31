@@ -1217,8 +1217,16 @@
 }
 
 /* Prevent table row hover during dropdown interaction */
-.data-table-row:has([data-state="open"]) {
+.data-table-row:has([data-state="open"]) > td:not(:has([data-state="open"])) {
   pointer-events: none;
+}
+
+/* Ensure the dropdown cell stays interactive */
+.data-table-row:has([data-state="open"]) td:has([data-dropdown-cell]),
+td[data-dropdown-cell] {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto !important;
 }
 
 /* Dropdown menu safe utility class */

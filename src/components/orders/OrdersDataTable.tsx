@@ -387,7 +387,7 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
       sortable: false,
       width: '80px',
       render: (value: any, row: Order) => (
-        <div onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()} data-dropdown-cell>
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button 
