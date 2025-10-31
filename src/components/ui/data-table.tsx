@@ -200,14 +200,23 @@ export function DataTable<T extends Record<string, any>>({
                     </TableCell>
                   ))}
                   {actions && (
-                    <TableCell>
-                      <DropdownMenu>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
+                          <Button 
+                            variant="ghost" 
+                            className="h-8 w-8 p-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <span className="sr-only">Open menu</span>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-background border-2 shadow-xl z-[9999] pointer-events-auto backdrop-blur-sm">
+                        <DropdownMenuContent 
+                          align="end" 
+                          className="bg-background border-2 shadow-xl z-[9999] pointer-events-auto backdrop-blur-sm"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {actions(row)}
                         </DropdownMenuContent>
                       </DropdownMenu>

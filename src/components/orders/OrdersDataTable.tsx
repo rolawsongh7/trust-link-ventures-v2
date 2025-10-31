@@ -387,22 +387,23 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
       sortable: false,
       width: '80px',
       render: (value: any, row: Order) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              className="h-8 w-8 p-0 hover:bg-accent"
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="h-8 w-8 p-0 hover:bg-accent"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              align="end" 
+              className="z-[9999] bg-background border-2 shadow-xl min-w-[220px]"
               onClick={(e) => e.stopPropagation()}
             >
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            align="end" 
-            className="z-[9999] bg-background border-2 shadow-xl min-w-[220px]"
-            onClick={(e) => e.stopPropagation()}
-          >
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             
@@ -507,6 +508,7 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
             
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       ),
     },
   ];

@@ -4,7 +4,9 @@ import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-const DropdownMenu = DropdownMenuPrimitive.Root
+const DropdownMenu = ({ modal = false, ...props }: DropdownMenuPrimitive.DropdownMenuProps) => (
+  <DropdownMenuPrimitive.Root modal={modal} {...props} />
+)
 
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
 
@@ -66,6 +68,7 @@ const DropdownMenuContent = React.forwardRef<
         "z-[9999] min-w-[8rem] overflow-hidden rounded-md border-2 bg-background backdrop-blur-sm p-1 text-foreground shadow-xl pointer-events-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
         className
       )}
+      onInteractOutside={(e) => e.preventDefault()}
       {...props}
     />
   </DropdownMenuPrimitive.Portal>
