@@ -7,6 +7,8 @@ import type { Lead } from './useLeadsQuery';
 export const useRealtimeLeads = (customerId?: string) => {
   const queryClient = useQueryClient();
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('disconnected');
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const maxReconnectAttempts = 3;
 
   useEffect(() => {
     setConnectionStatus('reconnecting');
@@ -72,9 +74,28 @@ export const useRealtimeLeads = (customerId?: string) => {
           toast.info(`Lead removed: ${deletedLead.title}`);
         }
       )
-      .subscribe((status) => {
+      .subscribe((status, err) => {
         if (status === 'SUBSCRIBED') {
+          console.log('✅ Leads realtime active');
           setConnectionStatus('connected');
+          setReconnectAttempts(0);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Leads realtime error:', err);
+          setConnectionStatus('disconnected');
+          
+          if (reconnectAttempts < maxReconnectAttempts) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+            setTimeout(() => setReconnectAttempts(prev => prev + 1), delay);
+            toast.info(`Lead updates reconnecting... (${reconnectAttempts + 1}/${maxReconnectAttempts})`);
+          } else {
+            toast.error('Unable to connect to live lead updates. Showing cached data.');
+          }
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏱️ Leads realtime timed out');
+          setConnectionStatus('reconnecting');
+          if (reconnectAttempts < maxReconnectAttempts) {
+            setReconnectAttempts(prev => prev + 1);
+          }
         } else if (status === 'CLOSED') {
           setConnectionStatus('disconnected');
         }
@@ -84,7 +105,7 @@ export const useRealtimeLeads = (customerId?: string) => {
       supabase.removeChannel(channel);
       setConnectionStatus('disconnected');
     };
-  }, [queryClient, customerId]);
+  }, [queryClient, customerId, reconnectAttempts]);
 
   return { connectionStatus };
 };

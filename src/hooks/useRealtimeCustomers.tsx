@@ -7,6 +7,8 @@ import type { Customer } from './useCustomersQuery';
 export const useRealtimeCustomers = (filters?: { status?: string; industry?: string; country?: string }) => {
   const queryClient = useQueryClient();
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('disconnected');
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const maxReconnectAttempts = 3;
 
   useEffect(() => {
     setConnectionStatus('reconnecting');
@@ -67,9 +69,28 @@ export const useRealtimeCustomers = (filters?: { status?: string; industry?: str
           toast.info(`Customer removed: ${deletedCustomer.company_name}`);
         }
       )
-      .subscribe((status) => {
+      .subscribe((status, err) => {
         if (status === 'SUBSCRIBED') {
+          console.log('✅ Customers realtime active');
           setConnectionStatus('connected');
+          setReconnectAttempts(0);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Customers realtime error:', err);
+          setConnectionStatus('disconnected');
+          
+          if (reconnectAttempts < maxReconnectAttempts) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+            setTimeout(() => setReconnectAttempts(prev => prev + 1), delay);
+            toast.info(`Customer updates reconnecting... (${reconnectAttempts + 1}/${maxReconnectAttempts})`);
+          } else {
+            toast.error('Unable to connect to live customer updates. Showing cached data.');
+          }
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏱️ Customers realtime timed out');
+          setConnectionStatus('reconnecting');
+          if (reconnectAttempts < maxReconnectAttempts) {
+            setReconnectAttempts(prev => prev + 1);
+          }
         } else if (status === 'CLOSED') {
           setConnectionStatus('disconnected');
         }
@@ -79,7 +100,7 @@ export const useRealtimeCustomers = (filters?: { status?: string; industry?: str
       supabase.removeChannel(channel);
       setConnectionStatus('disconnected');
     };
-  }, [queryClient, filters]);
+  }, [queryClient, filters, reconnectAttempts]);
 
   return { connectionStatus };
 };

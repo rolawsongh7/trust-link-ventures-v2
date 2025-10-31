@@ -14,6 +14,8 @@ export const useRealtimeQuotes = (customerId?: string) => {
   const { toast } = useToast();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const maxReconnectAttempts = 3;
 
   useEffect(() => {
     // Initial fetch
@@ -87,12 +89,39 @@ export const useRealtimeQuotes = (customerId?: string) => {
           }
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Quotes realtime active');
+          setReconnectAttempts(0);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Quotes realtime error:', err);
+          
+          if (reconnectAttempts < maxReconnectAttempts) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+            setTimeout(() => setReconnectAttempts(prev => prev + 1), delay);
+            toast({
+              title: 'Reconnecting',
+              description: `Quote updates reconnecting... (${reconnectAttempts + 1}/${maxReconnectAttempts})`,
+            });
+          } else {
+            toast({
+              title: 'Connection Error',
+              description: 'Unable to connect to live quote updates.',
+              variant: 'destructive',
+            });
+          }
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏱️ Quotes realtime timed out');
+          if (reconnectAttempts < maxReconnectAttempts) {
+            setReconnectAttempts(prev => prev + 1);
+          }
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [customerId, toast]);
+  }, [customerId, toast, reconnectAttempts]);
 
   return { quotes, loading, setQuotes };
 };

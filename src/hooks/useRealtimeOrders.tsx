@@ -16,6 +16,8 @@ export const useRealtimeOrders = (customerId?: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('disconnected');
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const maxReconnectAttempts = 3;
 
   useEffect(() => {
     let retryCount = 0;
@@ -279,17 +281,31 @@ export const useRealtimeOrders = (customerId?: string) => {
         if (status === 'SUBSCRIBED') {
           console.log('✅ Realtime subscription active');
           setConnectionStatus('connected');
+          setReconnectAttempts(0);
         } else if (status === 'CHANNEL_ERROR') {
           console.error('❌ Realtime subscription error:', err);
           setConnectionStatus('disconnected');
-          toast({
-            title: 'Real-time Updates Disabled',
-            description: 'Unable to connect to live updates. Please refresh to see latest data.',
-            variant: 'destructive',
-          });
+          
+          if (reconnectAttempts < maxReconnectAttempts) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+            setTimeout(() => setReconnectAttempts(prev => prev + 1), delay);
+            toast({
+              title: 'Reconnecting',
+              description: `Order updates reconnecting... (${reconnectAttempts + 1}/${maxReconnectAttempts})`,
+            });
+          } else {
+            toast({
+              title: 'Real-time Updates Disabled',
+              description: 'Unable to connect to live updates. Please refresh to see latest data.',
+              variant: 'destructive',
+            });
+          }
         } else if (status === 'TIMED_OUT') {
           console.error('⏱️ Realtime subscription timed out');
           setConnectionStatus('reconnecting');
+          if (reconnectAttempts < maxReconnectAttempts) {
+            setReconnectAttempts(prev => prev + 1);
+          }
         }
       });
 
@@ -298,7 +314,7 @@ export const useRealtimeOrders = (customerId?: string) => {
       supabase.removeChannel(channel);
       setConnectionStatus('disconnected');
     };
-  }, [customerId, toast]);
+  }, [customerId, toast, reconnectAttempts]);
 
   return { 
     orders, 
