@@ -34,3 +34,26 @@ export const QUOTE_STATUSES = [
   'accepted',
   'rejected'
 ] as const;
+
+export interface InvoiceSearchFilters {
+  searchTerm: string;
+  status: string[];
+  invoiceType: string[];
+  dateRange: { from: Date; to: Date } | null;
+  timePeriod: 'all' | 'week' | 'month' | 'quarter' | 'year';
+  amountRange: { min: number; max: number } | null;
+  currency: string[];
+}
+
+export const INVOICE_STATUSES = [
+  'draft',
+  'sent',
+  'paid',
+  'cancelled'
+] as const;
+
+export const INVOICE_TYPES = [
+  'proforma',
+  'commercial',
+  'packing_list'
+] as const;

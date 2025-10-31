@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Loader2 } from 'lucide-react';
+import { FileText, Download, Loader2, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
@@ -11,6 +11,10 @@ import { downloadInvoiceFromUrl } from '@/lib/storageHelpers';
 import { ensureCustomerRecord } from '@/lib/customerUtils';
 import { MobileInvoiceCard } from './mobile/MobileInvoiceCard';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
+import { InvoiceFilterPanel } from './filters/InvoiceFilterPanel';
+import { InvoiceStatistics, type InvoiceStats } from './InvoiceStatistics';
+import { InvoiceSearchFilters } from '@/types/filters';
+import { getDateRangeForPeriod, isDateInRange } from '@/lib/dateHelpers';
 
 interface Invoice {
   id: string;
@@ -33,6 +37,16 @@ export const CustomerInvoices = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(true);
+  const [filters, setFilters] = useState<InvoiceSearchFilters>({
+    searchTerm: '',
+    status: [],
+    invoiceType: [],
+    dateRange: null,
+    timePeriod: 'all',
+    amountRange: null,
+    currency: []
+  });
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const { isMobile } = useMobileDetection();
@@ -183,6 +197,95 @@ export const CustomerInvoices = () => {
     return colors[type] || 'bg-gray-100 text-gray-800';
   };
 
+  // Filter invoices based on current filters
+  const filteredInvoices = useMemo(() => {
+    let filtered = invoices || [];
+
+    // Apply search term
+    if (filters.searchTerm) {
+      const search = filters.searchTerm.toLowerCase();
+      filtered = filtered.filter(inv => 
+        inv.invoice_number.toLowerCase().includes(search) ||
+        inv.orders?.order_number?.toLowerCase().includes(search)
+      );
+    }
+
+    // Apply status filter
+    if (filters.status.length > 0) {
+      filtered = filtered.filter(inv => filters.status.includes(inv.status));
+    }
+
+    // Apply invoice type filter
+    if (filters.invoiceType.length > 0) {
+      filtered = filtered.filter(inv => filters.invoiceType.includes(inv.invoice_type));
+    }
+
+    // Apply time period filter
+    if (filters.timePeriod !== 'all') {
+      const dateRange = getDateRangeForPeriod(filters.timePeriod);
+      if (dateRange) {
+        filtered = filtered.filter(inv => 
+          isDateInRange(new Date(inv.issue_date), dateRange)
+        );
+      }
+    }
+
+    // Apply custom date range (overrides time period)
+    if (filters.dateRange) {
+      filtered = filtered.filter(inv => 
+        isDateInRange(new Date(inv.issue_date), filters.dateRange)
+      );
+    }
+
+    // Apply amount range filter
+    if (filters.amountRange) {
+      filtered = filtered.filter(inv => 
+        inv.total_amount >= (filters.amountRange?.min || 0) &&
+        inv.total_amount <= (filters.amountRange?.max || Infinity)
+      );
+    }
+
+    // Apply currency filter
+    if (filters.currency.length > 0) {
+      filtered = filtered.filter(inv => 
+        filters.currency.includes(inv.currency || inv.orders?.currency || 'USD')
+      );
+    }
+
+    return filtered;
+  }, [invoices, filters]);
+
+  // Calculate statistics
+  const stats = useMemo((): InvoiceStats => {
+    const totalAmountByCurrency: Record<string, number> = {};
+    const unpaidByCurrency: Record<string, number> = {};
+
+    filteredInvoices.forEach(inv => {
+      const currency = inv.currency || inv.orders?.currency || 'USD';
+      const amount = Number(inv.total_amount);
+
+      // Total amount
+      totalAmountByCurrency[currency] = (totalAmountByCurrency[currency] || 0) + amount;
+
+      // Unpaid balance (sent or draft status)
+      if (inv.status === 'sent' || inv.status === 'draft') {
+        unpaidByCurrency[currency] = (unpaidByCurrency[currency] || 0) + amount;
+      }
+    });
+
+    const allAmounts = filteredInvoices.map(inv => Number(inv.total_amount));
+    const averageValue = allAmounts.length > 0 
+      ? allAmounts.reduce((sum, val) => sum + val, 0) / allAmounts.length 
+      : 0;
+
+    return {
+      totalCount: filteredInvoices.length,
+      totalAmountByCurrency,
+      unpaidByCurrency,
+      averageValue
+    };
+  }, [filteredInvoices]);
+
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -194,11 +297,34 @@ export const CustomerInvoices = () => {
             View and download your invoices
           </p>
         </div>
-        <Badge variant="secondary" className="text-lg px-4 py-2">
-          <FileText className="h-4 w-4 mr-2" />
-          {invoices.length} Invoices
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            {showFilters ? 'Hide' : 'Show'} Filters
+          </Button>
+          <Badge variant="secondary" className="text-lg px-4 py-2">
+            <FileText className="h-4 w-4 mr-2" />
+            {invoices.length} Total
+          </Badge>
+        </div>
       </div>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <InvoiceFilterPanel
+          filters={filters}
+          onFilterChange={setFilters}
+          totalInvoices={invoices.length}
+          filteredCount={filteredInvoices.length}
+        />
+      )}
+
+      {/* Statistics */}
+      <InvoiceStatistics stats={stats} loading={loading} />
 
       {loading ? (
         <div className="space-y-4">
@@ -226,7 +352,7 @@ export const CustomerInvoices = () => {
         </Card>
       ) : isMobile ? (
         <div className="space-y-4">
-          {invoices.map((invoice) => (
+          {filteredInvoices.map((invoice) => (
             <MobileInvoiceCard
               key={invoice.id}
               invoice={invoice}
@@ -253,7 +379,7 @@ export const CustomerInvoices = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {invoices.map((invoice) => (
+                  {filteredInvoices.map((invoice) => (
                     <tr key={invoice.id} className="hover:bg-muted/20">
                       <td className="px-4 py-3 font-medium">{invoice.invoice_number}</td>
                       <td className="px-4 py-3">
