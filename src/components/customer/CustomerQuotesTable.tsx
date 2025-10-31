@@ -184,7 +184,10 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
                     )}
                   </TableCell>
                   <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                    {quote.final_quote && quote.status === 'quoted' && (
+                    {quote.final_quote && 
+                     quote.final_quote.status === 'sent' && 
+                     quote.final_quote.total_amount > 0 &&
+                     quote.final_quote.final_file_url && (
                       <div className="flex flex-wrap items-center justify-center gap-2">
                         <Button
                           size="sm"

@@ -79,7 +79,10 @@ export const MobileQuoteCard = ({
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
-  const hasFinalQuote = quote.final_quote && quote.final_quote.status === 'sent';
+  const hasFinalQuote = quote.final_quote && 
+    quote.final_quote.status === 'sent' && 
+    quote.final_quote.total_amount > 0 &&
+    quote.final_quote.final_file_url;
   const items = quote.final_quote?.quote_items || quote.quote_request_items || [];
   const itemCount = items.length;
 
