@@ -176,16 +176,40 @@ export const CustomerQuotes: React.FC = () => {
       }
 
       // Merge quote requests with their final quotes
-      // IMPORTANT: Prioritize linked_quote_request_id to avoid duplicate matches
+      // IMPORTANT: Prioritize sent/actionable quotes when multiple quotes exist
       const mergedData = quoteRequests?.map(request => {
-        // First, try to find by linked_quote_request_id (most accurate)
-        let finalQuote = finalQuotes?.find(q => q.linked_quote_request_id === request.id);
+        // Find ALL quotes linked to this request
+        const linkedQuotes = finalQuotes?.filter(q => q.linked_quote_request_id === request.id) || [];
         
-        // Only fall back to email matching if no linked quote exists
-        // AND if this quote hasn't already been linked to another request
+        let finalQuote;
+        
+        if (linkedQuotes.length > 0) {
+          // Priority 1: Find quotes in actionable states (sent, accepted, rejected)
+          const actionableQuotes = linkedQuotes.filter(q => 
+            ['sent', 'accepted', 'rejected'].includes(q.status)
+          );
+          
+          if (actionableQuotes.length > 0) {
+            // If multiple actionable quotes, use the most recent
+            finalQuote = actionableQuotes.sort((a, b) => 
+              new Date(b.sent_at || b.created_at).getTime() - 
+              new Date(a.sent_at || a.created_at).getTime()
+            )[0];
+          } else {
+            // Priority 2: No actionable quotes, use the most recent one
+            finalQuote = linkedQuotes.sort((a, b) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )[0];
+          }
+        }
+        
+        // Fallback to email matching (keep existing logic for backwards compatibility)
         if (!finalQuote) {
           const usedQuoteIds = quoteRequests
-            .map(r => finalQuotes?.find(q => q.linked_quote_request_id === r.id)?.id)
+            .map(r => {
+              const linked = finalQuotes?.filter(q => q.linked_quote_request_id === r.id) || [];
+              return linked.length > 0 ? linked[0].id : null;
+            })
             .filter(Boolean);
           
           finalQuote = finalQuotes?.find(q => 
