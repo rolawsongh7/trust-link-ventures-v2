@@ -155,7 +155,7 @@ export function DataTable<T extends Record<string, any>>({
                             <Filter className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-56 bg-background border shadow-md z-50">
+                        <DropdownMenuContent align="start" className="w-56 bg-background border-2 shadow-xl z-[9999] pointer-events-auto backdrop-blur-sm">
                           <div className="p-2">
                             <Input
                               placeholder={`Filter ${column.label}...`}
@@ -207,7 +207,7 @@ export function DataTable<T extends Record<string, any>>({
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-background border shadow-md z-50">
+                        <DropdownMenuContent align="end" className="bg-background border-2 shadow-xl z-[9999] pointer-events-auto backdrop-blur-sm">
                           {actions(row)}
                         </DropdownMenuContent>
                       </DropdownMenu>

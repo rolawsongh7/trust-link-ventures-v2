@@ -1204,3 +1204,17 @@
     padding-bottom: 1rem;
   }
 }
+
+/* Dropdown menu z-index fix for Radix UI */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* Dropdown menu safe utility class */
+.dropdown-menu-safe {
+  position: relative;
+  z-index: 9999;
+  pointer-events: auto;
+  background: hsl(var(--background));
+  border: 2px solid hsl(var(--border));
+}
