@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { Skeleton } from '@/components/ui/skeleton';
-import { downloadInvoiceFromUrl } from '@/lib/storageHelpers';
+import { ensureSignedUrl } from '@/lib/storageHelpers';
 import { ensureCustomerRecord } from '@/lib/customerUtils';
 import { MobileInvoiceCard } from './mobile/MobileInvoiceCard';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
@@ -125,16 +125,23 @@ export const CustomerInvoices = () => {
   const handleDownload = async (invoice: Invoice) => {
     setDownloading(invoice.id);
     try {
-      const blob = await downloadInvoiceFromUrl(
-        invoice.id,
-        invoice.file_url,
-        invoice.invoice_number
-      );
-      
-      if (!blob) {
-        throw new Error('Failed to download invoice');
+      // Check if file_url exists
+      if (!invoice.file_url) {
+        throw new Error('Invoice PDF not available yet. Please try again later or contact support.');
       }
 
+      // Get signed URL for the stored PDF
+      const signedUrl = await ensureSignedUrl(invoice.file_url, 3600); // 1 hour expiry
+
+      // Fetch the PDF
+      const response = await fetch(signedUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch invoice PDF');
+      }
+
+      const blob = await response.blob();
+      
+      // Download
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -152,7 +159,7 @@ export const CustomerInvoices = () => {
       console.error('Error downloading invoice:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to download invoice',
+        description: error instanceof Error ? error.message : 'Failed to download invoice. Please try again or contact support.',
         variant: 'destructive',
       });
     } finally {

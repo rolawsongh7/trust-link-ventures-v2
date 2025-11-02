@@ -4,6 +4,7 @@ import { Download, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ensureSignedUrl } from '@/lib/storageHelpers';
 
 interface InvoicePreviewDialogProps {
   open: boolean;
@@ -34,21 +35,41 @@ export const InvoicePreviewDialog = ({
     setError(null);
     
     try {
-      const { data, error } = await supabase.functions.invoke('generate-invoice', {
-        body: { orderId, type: 'commercial' }
-      });
+      // Fetch invoice records for this order (prefer commercial invoice)
+      const { data: invoices, error: fetchError } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('order_id', orderId)
+        .eq('invoice_type', 'commercial')
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
-      if (data?.pdf) {
-        const blob = new Blob([Uint8Array.from(atob(data.pdf), c => c.charCodeAt(0))], { 
-          type: 'application/pdf' 
-        });
-        const url = window.URL.createObjectURL(blob);
-        setPdfUrl(url);
-      } else {
-        throw new Error('No PDF data received');
+      if (!invoices || invoices.length === 0) {
+        // No commercial invoice found, try packing list
+        const { data: packingLists, error: plError } = await supabase
+          .from('invoices')
+          .select('*')
+          .eq('order_id', orderId)
+          .eq('invoice_type', 'packing_list')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (plError) throw plError;
+
+        if (!packingLists || packingLists.length === 0) {
+          throw new Error('No invoices found for this order. Invoice will be generated when order is processed.');
+        }
+
+        // Use packing list
+        await loadInvoicePDF(packingLists[0]);
+        return;
       }
+
+      // Use commercial invoice
+      await loadInvoicePDF(invoices[0]);
+      
     } catch (err) {
       console.error('Error fetching invoice:', err);
       setError(err instanceof Error ? err.message : 'Failed to load invoice');
@@ -60,6 +81,16 @@ export const InvoicePreviewDialog = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadInvoicePDF = async (invoice: any) => {
+    if (!invoice.file_url) {
+      throw new Error('Invoice PDF not yet generated. Please contact support.');
+    }
+
+    // Get signed URL for the stored PDF
+    const signedUrl = await ensureSignedUrl(invoice.file_url);
+    setPdfUrl(signedUrl);
   };
 
   const handleDownload = () => {
