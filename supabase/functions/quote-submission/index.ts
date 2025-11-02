@@ -6,9 +6,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('[quote-submission] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+}
+
 const supabase = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+  supabaseUrl ?? '',
+  supabaseServiceKey ?? ''
 );
 
 serve(async (req) => {
