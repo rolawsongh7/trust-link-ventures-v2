@@ -232,7 +232,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        filePath: filePath,
+        fileUrl: filePath,
         invoiceNumber: invoice.invoice_number,
         message: 'PDF generated and stored successfully'
       }),
