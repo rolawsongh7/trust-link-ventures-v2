@@ -236,6 +236,26 @@ serve(async (req) => {
 
     console.log('[Packing List] Invoice updated with PDF URL');
 
+    // Verify PDF exists in storage
+    console.log('[Packing List] Verifying PDF in storage...');
+    const fileParts = pdfData.fileUrl.split('/');
+    if (fileParts.length >= 2) {
+      const folder = fileParts[0];
+      const filename = fileParts[1];
+      
+      const { data: files, error: verifyError } = await supabase.storage
+        .from('invoices')
+        .list(folder, { search: filename });
+
+      if (verifyError || !files || files.length === 0) {
+        console.error('[Packing List] PDF verification failed - file not found in storage');
+        // Rollback: Delete invoice record if PDF doesn't exist
+        await supabase.from('invoices').delete().eq('id', invoice.id);
+        throw new Error('PDF file verification failed after generation - invoice rolled back');
+      }
+      console.log('[Packing List] PDF verified in storage successfully');
+    }
+
     // Send packing list email notification
     try {
       await supabase.functions.invoke('send-packing-list-email', {

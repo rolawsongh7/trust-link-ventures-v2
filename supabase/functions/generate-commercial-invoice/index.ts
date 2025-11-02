@@ -291,6 +291,26 @@ serve(async (req) => {
 
     console.log('[Commercial Invoice] Invoice updated with PDF URL');
 
+    // Verify PDF exists in storage
+    console.log('[Commercial Invoice] Verifying PDF in storage...');
+    const fileParts = pdfData.fileUrl.split('/');
+    if (fileParts.length >= 2) {
+      const folder = fileParts[0];
+      const filename = fileParts[1];
+      
+      const { data: files, error: verifyError } = await supabase.storage
+        .from('invoices')
+        .list(folder, { search: filename });
+
+      if (verifyError || !files || files.length === 0) {
+        console.error('[Commercial Invoice] PDF verification failed - file not found in storage');
+        // Rollback: Delete invoice record if PDF doesn't exist
+        await supabase.from('invoices').delete().eq('id', invoice.id);
+        throw new Error('PDF file verification failed after generation - invoice rolled back');
+      }
+      console.log('[Commercial Invoice] PDF verified in storage successfully');
+    }
+
     // Send commercial invoice email notification
     if (order.customers?.email) {
       try {

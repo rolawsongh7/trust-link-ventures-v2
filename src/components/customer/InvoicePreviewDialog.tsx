@@ -85,12 +85,24 @@ export const InvoicePreviewDialog = ({
 
   const loadInvoicePDF = async (invoice: any) => {
     if (!invoice.file_url) {
-      throw new Error('Invoice PDF not yet generated. Please contact support.');
+      throw new Error('Invoice PDF not yet generated. Please contact support to request invoice generation.');
     }
 
-    // Get signed URL for the stored PDF
-    const signedUrl = await ensureSignedUrl(invoice.file_url);
-    setPdfUrl(signedUrl);
+    try {
+      // Get signed URL for the stored PDF
+      const signedUrl = await ensureSignedUrl(invoice.file_url);
+      setPdfUrl(signedUrl);
+    } catch (error: any) {
+      // Better error message when PDF doesn't exist in storage
+      if (error.message?.includes('not found')) {
+        throw new Error(
+          `Invoice PDF file is missing from storage. ` +
+          `This invoice (${invoice.invoice_number}) needs to be regenerated. ` +
+          `Please contact support with invoice number: ${invoice.invoice_number}`
+        );
+      }
+      throw error;
+    }
   };
 
   const handleDownload = () => {

@@ -83,6 +83,7 @@ export default function InvoiceManagement() {
   const itemsPerPage = 20;
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [selectedInvoiceForPreview, setSelectedInvoiceForPreview] = useState<Invoice | null>(null);
+  const [regeneratingAll, setRegeneratingAll] = useState(false);
 
   const { data: invoices, isLoading, refetch } = useQuery({
     queryKey: ['admin-invoices'],
@@ -353,6 +354,59 @@ export default function InvoiceManagement() {
     }
   };
 
+  const handleRegenerateMissingPDFs = async () => {
+    setRegeneratingAll(true);
+    try {
+      toast({
+        title: "Scanning invoices...",
+        description: "Checking for missing PDF files in storage.",
+      });
+
+      const { data, error } = await supabase.functions.invoke('regenerate-missing-invoices');
+      
+      if (error) throw error;
+      
+      const result = data as {
+        total: number;
+        missing: string[];
+        regenerated: string[];
+        failed: { invoice: string; reason: string }[];
+        already_exists: string[];
+      };
+
+      toast({
+        title: "PDF Regeneration Complete",
+        description: (
+          <div className="space-y-2 text-sm">
+            <p>Total invoices: {result.total}</p>
+            <p>Already have PDFs: {result.already_exists.length}</p>
+            <p>Missing PDFs found: {result.missing.length}</p>
+            <p>Successfully regenerated: {result.regenerated.length}</p>
+            <p>Failed: {result.failed.length}</p>
+            {result.failed.length > 0 && (
+              <div className="mt-2 p-2 bg-destructive/10 rounded text-destructive">
+                Failed invoices: {result.failed.map(f => f.invoice).join(', ')}
+              </div>
+            )}
+          </div>
+        ),
+      });
+
+      if (result.regenerated.length > 0) {
+        refetch();
+      }
+    } catch (error: any) {
+      console.error('Error regenerating PDFs:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to regenerate missing PDFs',
+        variant: 'destructive',
+      });
+    } finally {
+      setRegeneratingAll(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -370,6 +424,16 @@ export default function InvoiceManagement() {
           </h1>
           <p className="text-muted-foreground mt-2">Manage and track all your invoices</p>
         </div>
+        <Button
+          onClick={handleRegenerateMissingPDFs}
+          disabled={regeneratingAll}
+          variant="outline"
+          className="gap-2"
+        >
+          {regeneratingAll && <RefreshCw className="h-4 w-4 animate-spin" />}
+          <Beaker className="h-4 w-4" />
+          Regenerate Missing PDFs
+        </Button>
       </div>
 
       <InteractiveCard variant="glass" className="border-primary/10">
