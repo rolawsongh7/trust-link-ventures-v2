@@ -209,47 +209,9 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
         return;
       }
 
-      // STEP 4: Generate invoice (delivery address exists)
-      console.log('[PaymentConfirmation] Generating invoice...');
-      const invoiceToastId = toast.loading('Generating invoice...');
-      
+      // STEP 3: Send payment confirmation emails (regardless of delivery address)
+      console.log('[PaymentConfirmation] Sending payment confirmation...');
       try {
-        const { data: invoiceData, error: invoiceError } = await supabase.functions.invoke('generate-invoice-pdf', {
-          body: {
-            orderId,
-            invoiceType: 'commercial',
-            paymentReference,
-            deliveryNotes,
-          },
-        });
-
-        if (invoiceError) {
-          console.error('[PaymentConfirmation] Invoice generation error:', invoiceError);
-          throw new Error(`Invoice generation failed: ${invoiceError.message}`);
-        }
-
-        console.log('[PaymentConfirmation] Invoice generated successfully');
-        toast.success('Invoice generated', { id: invoiceToastId });
-
-        // STEP 5: Send invoice to customer
-        console.log('[PaymentConfirmation] Sending invoice email...');
-        const { error: sendError } = await supabase.functions.invoke('send-invoice-email', {
-          body: {
-            orderId,
-            customerEmail,
-            invoiceData: invoiceData,
-          },
-        });
-
-        if (sendError) {
-          console.error('[PaymentConfirmation] Invoice email error:', sendError);
-          toast.warning('Invoice generated but email failed to send');
-        } else {
-          console.log('[PaymentConfirmation] Invoice email sent');
-        }
-
-        // STEP 6: Send payment confirmation emails
-        console.log('[PaymentConfirmation] Sending payment confirmation...');
         const { error: confirmEmailError } = await supabase.functions.invoke('send-payment-confirmation', {
           body: {
             orderId,
@@ -257,29 +219,26 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
             customerEmail,
             paymentReference,
             paymentProofUrl,
-            hasDeliveryAddress: true,
+            hasDeliveryAddress: !!deliveryAddressId,
           },
         });
 
         if (confirmEmailError) {
-          console.error('[PaymentConfirmation] Payment confirmation error:', confirmEmailError);
-          toast.warning('Invoice sent, but confirmation email failed');
+          console.error('[PaymentConfirmation] Confirmation email error:', confirmEmailError);
+          toast.warning('Payment confirmed, but confirmation email failed to send');
         } else {
-          console.log('[PaymentConfirmation] Payment confirmation sent');
+          console.log('[PaymentConfirmation] Payment confirmation sent successfully');
         }
-
-        toast.success('Payment confirmed and invoice generated successfully');
-      } catch (invoiceError) {
-        console.error('[PaymentConfirmation] Invoice/email error:', invoiceError);
-        toast.error(
-          invoiceError instanceof Error
-            ? `Invoice error: ${invoiceError.message}`
-            : 'Failed to generate or send invoice',
-          { id: invoiceToastId }
-        );
-        // Don't return - payment is already confirmed
-        toast.info('Payment is confirmed, but invoice generation failed. Please regenerate manually.');
+      } catch (emailError) {
+        console.error('[PaymentConfirmation] Confirmation email exception:', emailError);
       }
+
+      // Success message based on delivery address status
+      const successMessage = deliveryAddressId 
+        ? 'Payment confirmed successfully! Order ready for processing.'
+        : 'Payment confirmed! Customer will be notified to provide delivery address.';
+
+      toast.success(successMessage);
 
       onSuccess();
       onOpenChange(false);
