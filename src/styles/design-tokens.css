@@ -55,8 +55,8 @@
   --tl-danger-bg: 4 70% 95%;
   --tl-danger-text: 4 70% 35%;
   
-  --tl-info: 199 100% 36%;  /* #0077B6 */
-  --tl-info-bg: 199 100% 96%;
+  --tl-info: 199 100% 36%;  /* Maritime Blue for info */
+  --tl-info-bg: 199 97% 92%;
   --tl-info-text: 199 100% 27%;
   
   /* Surface & Background */
@@ -117,6 +117,6 @@
   --tl-warning-text: 45 95% 75%;
   --tl-danger-bg: 4 70% 15%;
   --tl-danger-text: 4 70% 75%;
-  --tl-info-bg: 199 100% 15%;
-  --tl-info-text: 199 100% 75%;
+  --tl-info-bg: 199 97% 15%;
+  --tl-info-text: 199 97% 75%;
 }
