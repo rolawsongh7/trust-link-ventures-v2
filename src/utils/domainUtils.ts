@@ -2,19 +2,13 @@
  * Domain utility functions for subdomain-based routing
  * Enables admin portal on admin.trustlinkventures.com
  * and main site on trustlinkventures.com
+ * 
+ * Note: Uses centralized environment detection from env.ts
  */
 
-export const isAdminDomain = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  
-  // In Lovable preview mode, use path-based routing instead of subdomains
-  const isLovablePreview = window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovableproject.com');
-  if (isLovablePreview) {
-    return window.location.pathname.startsWith('/admin');
-  }
-  
-  return window.location.hostname.startsWith('admin.');
-};
+import { isAdminDomain as checkIsAdminDomain, isNativeApp } from './env';
+
+export const isAdminDomain = checkIsAdminDomain;
 
 export const isMainDomain = (): boolean => {
   return !isAdminDomain();
@@ -64,6 +58,12 @@ export const navigateToPublicSite = () => {
 };
 
 export const navigateToAdminPortal = () => {
+  // Block in native apps
+  if (isNativeApp()) {
+    console.warn('[navigateToAdminPortal] Admin access blocked in native app');
+    return;
+  }
+  
   const isLovablePreview = window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovableproject.com');
   if (isLovablePreview) {
     // In preview, navigate to admin path

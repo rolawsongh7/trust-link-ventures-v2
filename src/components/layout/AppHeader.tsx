@@ -7,6 +7,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Search, User, LogOut, MessageSquare, Shield, Package, ExternalLink } from 'lucide-react';
 import trustLinkLogo from '@/assets/trust-link-logo.png';
 import { getMainUrl, navigateToPublicSite } from '@/utils/domainUtils';
+import { isNativeApp } from '@/utils/env';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -128,14 +129,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
                       <span>Login & Security</span>
                     </Link>
                   </DropdownMenuItem>
-                  {/* Show admin login option for customers */}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin-login" className="flex items-center space-x-2 cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Admin Login</span>
-                    </Link>
-                  </DropdownMenuItem>
+                  {/* Show admin login option for customers - web only */}
+                  {!isNativeApp() && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin-login" className="flex items-center space-x-2 cursor-pointer">
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Admin Login</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </>
               )}
               

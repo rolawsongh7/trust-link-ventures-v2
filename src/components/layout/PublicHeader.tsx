@@ -8,6 +8,7 @@ import { useState } from 'react';
 import trustLinkLogo from '@/assets/trust-link-logo.png';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { navigateToAdminPortal } from '@/utils/domainUtils';
+import { isNativeApp } from '@/utils/env';
 
 export const PublicHeader = () => {
   const { user } = useAuth();
@@ -60,8 +61,8 @@ export const PublicHeader = () => {
           <div className="ml-4 md:ml-6 flex items-center space-x-2 md:space-x-4">
             {user && <NotificationCenter />}
             
-            {/* Show Admin Portal button only for admin users */}
-            {hasAdminAccess && (
+            {/* Show Admin Portal button only for admin users AND web only */}
+            {hasAdminAccess && !isNativeApp() && (
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -115,8 +116,8 @@ export const PublicHeader = () => {
                 </Link>
               ))}
               
-              {/* Admin Portal button in mobile menu */}
-              {hasAdminAccess && (
+              {/* Admin Portal button in mobile menu - web only */}
+              {hasAdminAccess && !isNativeApp() && (
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);

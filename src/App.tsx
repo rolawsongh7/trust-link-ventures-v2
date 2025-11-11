@@ -13,7 +13,9 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
-import { isAdminDomain, getAdminUrl, getMainUrl } from "@/utils/domainUtils";
+import { getAdminUrl, getMainUrl } from "@/utils/domainUtils";
+import { isAdminDomain, isNativeApp, isPreviewDomain } from "@/utils/env";
+import { BlockAdmin } from "@/routes/BlockAdmin";
 import { useEffect, useMemo } from "react";
 import Home from "./pages/Home";
 import About from "./pages/About";
@@ -64,21 +66,32 @@ import VirtualAssistant from "./pages/VirtualAssistant";
 const queryClient = new QueryClient();
 
 const App = () => {
-  const isLovablePreview = useMemo(() => window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovableproject.com'), []);
+  // Check if running as native app
+  const nativeApp = isNativeApp();
+  
+  const isLovablePreview = useMemo(() => 
+    !nativeApp && (window.location.hostname.includes('lovable.app') || 
+    window.location.hostname.includes('lovableproject.com')), 
+  [nativeApp]);
+  
   const isAdmin = useMemo(() => {
-    // In preview mode, don't use isAdminDomain for route logic
-    if (isLovablePreview) return false;
+    // Native apps never have admin access
+    if (nativeApp || isLovablePreview) return false;
     return isAdminDomain();
-  }, [isLovablePreview]);
+  }, [nativeApp, isLovablePreview]);
 
-  // In preview mode, we show ALL routes (both admin and public)
-  // In production, we show either admin OR public based on subdomain
-  const showBothRoutes = isLovablePreview;
-  const showOnlyAdminRoutes = !isLovablePreview && isAdmin;
-  const showOnlyPublicRoutes = !isLovablePreview && !isAdmin;
+  // Native apps: only public + customer routes
+  // Web preview: both admin and public routes (testing)
+  // Web production: admin OR public based on subdomain
+  const showBothRoutes = !nativeApp && isLovablePreview;
+  const showOnlyAdminRoutes = !nativeApp && !isLovablePreview && isAdmin;
+  const showOnlyPublicRoutes = nativeApp || (!isLovablePreview && !isAdmin);
 
   // Security: Prevent admin routes from being accessible on main domain (except on preview for testing)
+  // Skip this entire check in native apps
   useEffect(() => {
+    if (nativeApp) return; // Skip in native apps
+    
     const currentPath = window.location.pathname;
     
     // Skip redirects on Lovable preview for testing purposes
@@ -96,7 +109,7 @@ const App = () => {
     if (isAdmin && !currentPath.startsWith('/admin') && currentPath !== '/' && currentPath !== '/unauthorized') {
       window.location.href = getMainUrl(currentPath);
     }
-  }, [isAdmin, isLovablePreview]);
+  }, [nativeApp, isAdmin, isLovablePreview]);
 
   return (
     <HelmetProvider>
@@ -108,6 +121,8 @@ const App = () => {
               <Sonner />
               <BrowserRouter>
                 <ScrollToTop />
+                {/* Hard block admin routes in native apps */}
+                {nativeApp && <BlockAdmin />}
                 <Routes>
                   {/* LOVABLE PREVIEW MODE - Show both admin and public routes */}
                   {showBothRoutes && (
