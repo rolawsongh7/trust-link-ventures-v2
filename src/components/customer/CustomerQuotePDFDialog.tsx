@@ -12,7 +12,7 @@ interface CustomerQuotePDFDialogProps {
     quote_number: string;
     final_file_url?: string;
     status: string;
-  };
+  } | null;
 }
 
 export const CustomerQuotePDFDialog: React.FC<CustomerQuotePDFDialogProps> = ({
@@ -26,7 +26,7 @@ export const CustomerQuotePDFDialog: React.FC<CustomerQuotePDFDialogProps> = ({
 
   useEffect(() => {
     const loadSecureUrl = async () => {
-      if (!quote.final_file_url || !open) {
+      if (!quote?.final_file_url || !open) {
         setSecureUrl(null);
         setLoading(false);
         return;
@@ -49,7 +49,7 @@ export const CustomerQuotePDFDialog: React.FC<CustomerQuotePDFDialogProps> = ({
     };
 
     loadSecureUrl();
-  }, [quote.final_file_url, open, toast]);
+  }, [quote?.final_file_url, open, toast]);
 
   const handleDownload = async () => {
     if (!secureUrl) return;
@@ -60,7 +60,7 @@ export const CustomerQuotePDFDialog: React.FC<CustomerQuotePDFDialogProps> = ({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${quote.quote_number}.pdf`;
+      a.download = `${quote?.quote_number || 'quote'}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -68,7 +68,7 @@ export const CustomerQuotePDFDialog: React.FC<CustomerQuotePDFDialogProps> = ({
 
       toast({
         title: "Download started",
-        description: `Downloading ${quote.quote_number}`,
+        description: `Downloading ${quote?.quote_number || 'quote'}`,
       });
     } catch (error) {
       console.error('Error downloading PDF:', error);
@@ -90,7 +90,7 @@ export const CustomerQuotePDFDialog: React.FC<CustomerQuotePDFDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Quote Preview - {quote.quote_number}</DialogTitle>
+          <DialogTitle>Quote Preview - {quote?.quote_number || 'Quote'}</DialogTitle>
           <DialogDescription>
             View your quote details. Download or open in a new tab for better viewing.
           </DialogDescription>

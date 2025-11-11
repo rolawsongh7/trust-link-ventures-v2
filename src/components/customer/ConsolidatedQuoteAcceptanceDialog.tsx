@@ -50,7 +50,7 @@ interface Quote {
 interface ConsolidatedQuoteAcceptanceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  quote: Quote;
+  quote: Quote | null;
   onSuccess: () => void;
 }
 
@@ -130,7 +130,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
       const { error: quoteError } = await supabase
         .from('quotes')
         .update({ status: 'accepted' })
-        .eq('id', quote.id);
+        .eq('id', quote?.id || '');
 
       if (quoteError) throw quoteError;
 
@@ -140,7 +140,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .select('id, order_number, total_amount, currency')
-        .eq('quote_id', quote.id)
+        .eq('quote_id', quote?.id || '')
         .single();
 
       if (orderError) throw orderError;
@@ -193,8 +193,8 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
               orderId: createdOrderId,
               customerEmail: profile?.email,
               customerPhone: profile?.phone,
-              amount: quote.total_amount,
-              currency: quote.currency,
+              amount: quote?.total_amount || 0,
+              currency: quote?.currency || 'GHS',
               callbackUrl: `${window.location.origin}/customer/payment-callback`
             }
           }
@@ -232,7 +232,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
     }
 
     // Validate quote ID exists
-    if (!quote.id) {
+    if (!quote?.id) {
       console.error('Invalid quote data - missing ID:', quote);
       toast({
         title: 'Error',
@@ -249,7 +249,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
       const { error: quoteError } = await supabase
         .from('quotes')
         .update({ status: 'accepted' })
-        .eq('id', quote.id);
+        .eq('id', quote?.id || '');
 
       if (quoteError) throw quoteError;
 
@@ -261,7 +261,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
       const { data: orders, error: orderFetchError } = await supabase
         .from('orders')
         .select('id, order_number')
-        .eq('quote_id', quote.id)
+        .eq('quote_id', quote?.id || '')
         .single();
 
       if (orderFetchError) throw orderFetchError;
@@ -281,7 +281,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
       try {
         await supabase.functions.invoke('send-payment-instructions', {
           body: {
-            quoteId: quote.id,
+            quoteId: quote?.id || '',
             customerEmail: profile?.email,
             customerName: addresses.find(a => a.id === selectedAddressId)?.receiver_name,
             orderNumber: orders.order_number
@@ -337,7 +337,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
         <DialogHeader>
           <DialogTitle className="text-xl">Accept Quote & Complete Order</DialogTitle>
           <DialogDescription>
-            Quote {quote.quote_number} • {quote.currency} {quote.total_amount?.toLocaleString() || 'N/A'}
+            Quote {quote?.quote_number || 'N/A'} • {quote?.currency || 'GHS'} {quote?.total_amount?.toLocaleString() || 'N/A'}
           </DialogDescription>
         </DialogHeader>
 
@@ -488,7 +488,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
                 <div className="bg-white p-3 rounded border-2 border-primary/20">
                   <p className="text-xs text-muted-foreground mb-1">Use this reference for your payment:</p>
                   <p className="font-mono text-2xl font-bold text-primary tracking-wide">
-                    {quote.quote_number}
+                    {quote?.quote_number || 'N/A'}
                   </p>
                 </div>
               </div>
@@ -497,7 +497,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
               <div className="bg-muted/50 rounded-lg p-4 border">
                 <p className="text-sm text-muted-foreground mb-1">Total Amount to Pay</p>
                 <p className="text-3xl font-bold">
-                  {quote.total_amount?.toLocaleString() || 'N/A'} {quote.currency}
+                  {quote?.total_amount?.toLocaleString() || 'N/A'} {quote?.currency || 'GHS'}
                 </p>
               </div>
 
