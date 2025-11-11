@@ -4,7 +4,12 @@
   "webDir": "dist",
   "server": {
     "url": "https://747d7655-6061-4215-adc7-0c8134db2cfc.lovableproject.com?forceHideBadge=true",
-    "cleartext": true
+    "cleartext": true,
+    "allowNavigation": [
+      "trustlinkcompany.com",
+      "www.trustlinkcompany.com",
+      "customer.trustlinkcompany.com"
+    ]
   },
   "plugins": {
     "Camera": {
