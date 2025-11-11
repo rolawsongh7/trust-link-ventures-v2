@@ -19,6 +19,7 @@ const Footer = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [honeypot, setHoneypot] = useState('');
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const formStartTime = useRef(Date.now());
 
@@ -44,13 +45,9 @@ const Footer = () => {
         return;
       }
 
-      // Get reCAPTCHA token
-      const recaptchaToken = await recaptchaRef.current?.executeAsync();
-      recaptchaRef.current?.reset();
-
       // Bot detection check
       const botCheck = await performBotCheck(
-        recaptchaToken || null,
+        recaptchaToken,
         honeypot,
         formStartTime.current
       );
@@ -89,6 +86,8 @@ const Footer = () => {
       });
       setIsSubscribed(true);
       setEmail('');
+      setRecaptchaToken(null);
+      recaptchaRef.current?.reset();
       
       // Reset after 5 seconds
       setTimeout(() => {
@@ -191,17 +190,18 @@ const Footer = () => {
                   <p className="text-red-400 text-xs">{error}</p>
                 )}
                 
-                {/* Invisible reCAPTCHA v3 */}
+                {/* reCAPTCHA v2 */}
                 <ReCAPTCHA
                   ref={recaptchaRef}
-                  size="invisible"
                   sitekey={RECAPTCHA_SITE_KEY}
+                  onChange={(token) => setRecaptchaToken(token)}
+                  onExpired={() => setRecaptchaToken(null)}
                 />
                 
                 <Button 
                   type="submit"
                   size="sm"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !recaptchaToken}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground w-full h-8 text-xs font-medium disabled:opacity-50"
                 >
                   {isSubmitting ? 'Subscribing...' : 'Subscribe'}
