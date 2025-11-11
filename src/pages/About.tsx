@@ -377,15 +377,15 @@ const About = () => {
 
           <div className="space-y-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             {/* Company Establishment */}
-            <div className="flex items-start gap-6 p-6 rounded-2xl border border-border/50 bg-gradient-to-r from-accent/5 to-secondary/5 hover:shadow-lg transition-all duration-300">
-              <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-primary" />
+            <div className="flex items-start gap-6 p-6 rounded-xl border border-border/50 bg-white shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="flex-shrink-0 w-12 h-12 bg-[#0077B6]/10 rounded-full flex items-center justify-center">
+                <Building2 className="w-6 h-6 text-[#0077B6]" />
               </div>
               <div>
-                <p className="text-lg leading-relaxed text-foreground">
-                  <span className="font-semibold text-primary">Trust Link Ventures Limited (TLVL)</span> is a privately held company established under the 
-                  <span className="font-medium text-accent-foreground"> Ghana Companies Code of 1963 (Act 179)</span>, with official certification granted on 
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary font-semibold rounded-md ml-1">
+                <p className="text-lg leading-relaxed text-gray-700">
+                  <span className="font-semibold text-[#003366]">Trust Link Ventures Limited (TLVL)</span> is a privately held company established under the 
+                  <span className="font-medium text-gray-600"> Ghana Companies Code of 1963 (Act 179)</span>, with official certification granted on 
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#0077B6]/10 text-[#0077B6] font-semibold rounded-md ml-1 border border-[#0077B6]/20">
                     <Calendar className="w-4 h-4" />
                     December 20, 2006
                   </span>.
@@ -394,51 +394,51 @@ const About = () => {
             </div>
 
             {/* Growth Story */}
-            <div className="flex items-start gap-6 p-6 rounded-2xl border border-border/50 bg-gradient-to-r from-secondary/5 to-accent/5 hover:shadow-lg transition-all duration-300">
-              <div className="flex-shrink-0 w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-secondary" />
+            <div className="flex items-start gap-6 p-6 rounded-xl border border-border/50 bg-[#F9FAFB] shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="flex-shrink-0 w-12 h-12 bg-[#0077B6]/10 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-[#0077B6]" />
               </div>
               <div>
-                <p className="text-lg leading-relaxed text-foreground">
-                  Originally founded as a <span className="font-medium text-muted-foreground">small-scale frozen food trading company</span>, TLVL has grown into 
-                  <span className="font-semibold text-secondary"> one of Ghana's leading importers and distributors</span> of frozen foods, including 
-                  <span className="font-medium text-primary">fish, poultry, and beef</span>.
+                <p className="text-lg leading-relaxed text-gray-700">
+                  Originally founded as a <span className="font-medium text-gray-600">small-scale frozen food trading company</span>, TLVL has grown into 
+                  <span className="font-semibold text-[#0077B6]"> one of Ghana's leading importers and distributors</span> of frozen foods, including 
+                  <span className="font-medium text-gray-700">fish, poultry, and beef</span>.
                 </p>
               </div>
             </div>
 
             {/* Current Operations */}
-            <div className="flex items-start gap-6 p-6 rounded-2xl border border-border/50 bg-gradient-to-r from-primary/5 to-secondary/5 hover:shadow-lg transition-all duration-300">
-              <div className="flex-shrink-0 w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center">
-                <Package className="w-6 h-6 text-accent" />
+            <div className="flex items-start gap-6 p-6 rounded-xl border border-border/50 bg-white shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="flex-shrink-0 w-12 h-12 bg-[#0077B6]/10 rounded-full flex items-center justify-center">
+                <Package className="w-6 h-6 text-[#0077B6]" />
               </div>
               <div>
-                <p className="text-lg leading-relaxed text-foreground">
-                  Operating from <span className="font-semibold text-primary">Tema</span>, we now handle over 
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-accent/10 text-accent font-bold rounded-md mx-1 text-xl">
+                <p className="text-lg leading-relaxed text-gray-700">
+                  Operating from <span className="font-semibold text-[#003366]">Tema</span>, we now handle over 
+                  <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#F4B400]/10 text-[#F4B400] font-bold rounded-full mx-1 text-lg border border-[#F4B400]/20">
                     1,200 tonnes
                   </span> 
-                  of imports per month, with a <span className="font-medium text-secondary">nationwide cold-chain distribution network</span> that ensures goods reach consumers 
-                  <span className="font-medium text-accent">swiftly and safely</span>.
+                  of imports per month, with a <span className="font-medium text-[#0077B6]">nationwide cold-chain distribution network</span> that ensures goods reach consumers 
+                  <span className="font-medium text-gray-700">swiftly and safely</span>.
                 </p>
               </div>
             </div>
 
             {/* Mission Statement - Pull Quote Style */}
             <div className="relative my-12">
-              <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-primary to-secondary rounded-full" />
+              <div className="absolute left-0 top-0 w-1 h-full bg-[#003366] rounded-full" />
               <blockquote className="pl-8 py-4">
-                <p className="text-xl lg:text-2xl font-medium leading-relaxed text-foreground italic">
-                  "Our story is one of <span className="text-primary font-semibold not-italic">resilience</span>, 
-                  <span className="text-secondary font-semibold not-italic"> local innovation</span>, and 
-                  <span className="text-accent font-semibold not-italic"> international standards</span>."
+                <p className="text-xl lg:text-2xl font-medium leading-relaxed text-gray-800 italic">
+                  "Our story is one of <span className="text-[#0077B6] font-semibold not-italic">resilience</span>, 
+                  <span className="text-[#0077B6] font-semibold not-italic"> local innovation</span>, and 
+                  <span className="text-[#F4B400] font-semibold not-italic"> international standards</span>."
                 </p>
-                <div className="mt-4 h-px bg-gradient-to-r from-primary via-secondary to-accent w-32" />
-                <p className="mt-4 text-lg text-muted-foreground font-medium">
+                <div className="mt-4 h-0.5 bg-[#0077B6] w-24" />
+                <p className="mt-4 text-lg text-gray-600 font-medium">
                   We believe that trusted logistics and quality food distribution can 
-                  <span className="text-primary font-semibold"> transform economies</span>, 
-                  <span className="text-secondary font-semibold"> improve lives</span>, and 
-                  <span className="text-accent font-semibold"> build long-term prosperity</span>.
+                  <span className="text-[#0077B6] font-semibold"> transform economies</span>, 
+                  <span className="text-[#0077B6] font-semibold"> improve lives</span>, and 
+                  <span className="text-[#F4B400] font-semibold"> build long-term prosperity</span>.
                 </p>
               </blockquote>
             </div>
