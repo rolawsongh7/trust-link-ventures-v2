@@ -303,7 +303,7 @@ const CustomerAuth = () => {
                             id="signin-email"
                             type="email"
                             placeholder="Enter your email"
-                            className="pl-10"
+                            className="pl-12"
                             value={signInData.email}
                             onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
                             required
@@ -327,7 +327,7 @@ const CustomerAuth = () => {
                             id="signin-password"
                             type="password"
                             placeholder="Enter your password"
-                            className="pl-10"
+                            className="pl-12"
                             value={signInData.password}
                             onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
                             required
@@ -352,7 +352,7 @@ const CustomerAuth = () => {
                             id="reset-email"
                             type="email"
                             placeholder="Enter your email"
-                            className="pl-10"
+                            className="pl-12"
                             value={resetEmail}
                             onChange={(e) => setResetEmail(e.target.value)}
                             required
@@ -396,7 +396,7 @@ const CustomerAuth = () => {
                           id="signup-name"
                           type="text"
                           placeholder="Enter your full name"
-                          className="pl-10"
+                          className="pl-12"
                           value={signUpData.fullName}
                           onChange={(e) => setSignUpData({ ...signUpData, fullName: e.target.value })}
                           required
@@ -411,7 +411,7 @@ const CustomerAuth = () => {
                           id="signup-company"
                           type="text"
                           placeholder="Enter your company name"
-                          className="pl-10"
+                          className="pl-12"
                           value={signUpData.companyName}
                           onChange={(e) => setSignUpData({ ...signUpData, companyName: e.target.value })}
                           required
@@ -426,7 +426,7 @@ const CustomerAuth = () => {
                           id="signup-email"
                           type="email"
                           placeholder="Enter your email"
-                          className="pl-10"
+                          className="pl-12"
                           value={signUpData.email}
                           onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
                           required
@@ -441,7 +441,7 @@ const CustomerAuth = () => {
                           id="signup-password"
                           type="password"
                           placeholder="Create a password"
-                          className="pl-10"
+                          className="pl-12"
                           value={signUpData.password}
                           onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
                           required
