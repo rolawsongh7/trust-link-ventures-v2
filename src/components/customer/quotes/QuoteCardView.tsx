@@ -42,7 +42,7 @@ export const QuoteCardView: React.FC<QuoteCardViewProps> = ({
         <div
           key={quote.id}
           className="group rounded-xl bg-white dark:bg-slate-900/80 shadow-md hover:shadow-xl border border-[hsl(var(--tl-border))]/40 transition-all duration-300 overflow-hidden cursor-pointer animate-fade-in-stagger"
-          style={{ animationDelay: `${index * 50}ms` }}
+          style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
           onClick={() => onView(quote)}
         >
           {/* Card Header */}
