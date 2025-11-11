@@ -3,6 +3,62 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Stagger animation for dashboard cards */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-animation {
+  animation: fadeInUp 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+/* Disable animations for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .stagger-animation {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Maritime focus rings */
+.focus-maritime {
+  @apply focus:ring-2 focus:ring-[#2AA6FF] focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-slate-900;
+}
+
+/* Hover lift effect */
+.hover-lift {
+  @apply hover:shadow-md hover:translate-y-[-2px] active:translate-y-0 transition-all duration-200;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hover-lift {
+    @apply hover:translate-y-0 transition-none;
+  }
+}
+
+/* Hide scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Responsive Utility Classes */
 @layer utilities {
   /* Prevent horizontal scroll */
