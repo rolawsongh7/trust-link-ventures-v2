@@ -1,0 +1,122 @@
+/* ============================================
+   TRUST LINK VENTURES - DESIGN TOKEN SYSTEM
+   Premium Logistics Dashboard
+   ============================================ */
+
+:root {
+  /* === TRUST LINK VENTURES BRAND COLORS === */
+  
+  /* Primary - Trust Link Navy */
+  --tl-navy-50: 210 100% 97%;
+  --tl-navy-100: 210 95% 92%;
+  --tl-navy-200: 210 90% 82%;
+  --tl-navy-300: 210 85% 70%;
+  --tl-navy-400: 210 65% 45%;
+  --tl-navy-500: 210 100% 20%;  /* #003366 - Base brand */
+  --tl-navy-600: 210 100% 16%;
+  --tl-navy-700: 210 100% 13%;
+  --tl-navy-800: 210 100% 10%;
+  --tl-navy-900: 210 100% 7%;
+  
+  /* Accent - Maritime Blue */
+  --tl-maritime-50: 199 100% 96%;
+  --tl-maritime-100: 199 100% 90%;
+  --tl-maritime-200: 199 97% 80%;
+  --tl-maritime-300: 199 92% 68%;
+  --tl-maritime-400: 199 88% 56%;
+  --tl-maritime-500: 199 100% 36%;  /* #0077B6 - Accent */
+  --tl-maritime-600: 199 100% 32%;
+  --tl-maritime-700: 199 100% 27%;
+  --tl-maritime-800: 199 100% 22%;
+  --tl-maritime-900: 199 100% 17%;
+  
+  /* Gold - Warm highlights */
+  --tl-gold-50: 45 100% 97%;
+  --tl-gold-100: 45 100% 93%;
+  --tl-gold-200: 45 98% 83%;
+  --tl-gold-300: 45 95% 71%;
+  --tl-gold-400: 45 92% 59%;
+  --tl-gold-500: 45 95% 48%;  /* #F4B400 */
+  --tl-gold-600: 43 95% 43%;
+  --tl-gold-700: 41 95% 37%;
+  --tl-gold-800: 39 95% 31%;
+  --tl-gold-900: 37 95% 25%;
+  
+  /* Status Colors - Logistics-specific */
+  --tl-success: 122 39% 33%;  /* #2E7D32 */
+  --tl-success-bg: 122 39% 90%;
+  --tl-success-text: 122 39% 25%;
+  
+  --tl-warning: 45 95% 48%;  /* #F4B400 */
+  --tl-warning-bg: 45 95% 92%;
+  --tl-warning-text: 45 95% 35%;
+  
+  --tl-danger: 4 70% 47%;  /* #C62828 */
+  --tl-danger-bg: 4 70% 95%;
+  --tl-danger-text: 4 70% 35%;
+  
+  --tl-info: 199 100% 36%;  /* #0077B6 */
+  --tl-info-bg: 199 100% 96%;
+  --tl-info-text: 199 100% 27%;
+  
+  /* Surface & Background */
+  --tl-surface: 0 0% 100%;  /* #FFFFFF */
+  --tl-bg: 210 40% 98%;  /* #F9FAFB */
+  --tl-border: 220 13% 91%;  /* #E5E7EB */
+  
+  /* Text Colors */
+  --tl-text-primary: 215 25% 13%;  /* #1E293B */
+  --tl-text-secondary: 215 16% 42%;  /* #64748B */
+  --tl-link: 199 100% 36%;  /* #0077B6 */
+  --tl-link-hover: 199 100% 27%;  /* #005A8C */
+  
+  /* Typography Scale */
+  --tl-font-heading: 1.75rem;  /* 28px */
+  --tl-font-subheading: 1.125rem;  /* 18px */
+  --tl-font-body: 1rem;  /* 16px */
+  --tl-font-small: 0.875rem;  /* 14px */
+  --tl-font-caption: 0.75rem;  /* 12px */
+  
+  --tl-line-height: 1.5;
+  
+  /* Spacing System */
+  --tl-space-xs: 0.5rem;  /* 8px */
+  --tl-space-sm: 0.75rem;  /* 12px */
+  --tl-space-md: 1rem;  /* 16px */
+  --tl-space-lg: 1.5rem;  /* 24px */
+  --tl-space-xl: 2rem;  /* 32px */
+  --tl-space-2xl: 3rem;  /* 48px */
+  
+  /* Border Radius */
+  --tl-radius-sm: 0.5rem;  /* 8px */
+  --tl-radius-md: 0.75rem;  /* 12px */
+  --tl-radius-lg: 1rem;  /* 16px */
+  --tl-radius-xl: 1.5rem;  /* 24px */
+  --tl-radius-full: 9999px;
+  
+  /* Shadows */
+  --tl-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --tl-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --tl-shadow-md: 0 4px 10px rgba(0, 0, 0, 0.08);
+  --tl-shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
+  --tl-shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark Mode Overrides */
+.dark {
+  --tl-surface: 222 47% 11%;  /* #0F172A */
+  --tl-bg: 222 47% 7%;  /* #0A1320 */
+  --tl-border: 217 33% 17%;  /* #1E293B */
+  --tl-text-primary: 210 40% 98%;  /* #F9FAFB */
+  --tl-text-secondary: 215 20% 65%;  /* #94A3B8 */
+  
+  /* Adjust status colors for dark mode */
+  --tl-success-bg: 122 39% 15%;
+  --tl-success-text: 122 39% 75%;
+  --tl-warning-bg: 45 95% 15%;
+  --tl-warning-text: 45 95% 75%;
+  --tl-danger-bg: 4 70% 15%;
+  --tl-danger-text: 4 70% 75%;
+  --tl-info-bg: 199 100% 15%;
+  --tl-info-text: 199 100% 75%;
+}

@@ -1,6 +1,13 @@
 import React from 'react';
+import { Clock, FileCheck, CheckCircle, XCircle, Package, Truck, CheckCircle2, Ban, FileText, HelpCircle } from 'lucide-react';
 
-type StatusType = 'pending' | 'processing' | 'shipped' | 'delivered' | 'canceled' | 'draft' | 'approved' | 'quote';
+type StatusType = 
+  // Quote-specific statuses
+  | 'pending' | 'quoted' | 'approved' | 'rejected' | 'completed' | 'quote'
+  // Order statuses
+  | 'processing' | 'shipped' | 'delivered' | 'canceled'
+  // General
+  | 'draft';
 
 interface StatusBadgeProps {
   status: StatusType;
@@ -8,38 +15,65 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<StatusType, { label: string; className: string }> = {
+const statusConfig: Record<StatusType, { 
+  label: string; 
+  className: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}> = {
   pending: {
-    label: 'Pending',
-    className: 'bg-amber-100 text-amber-700 dark:bg-amber-800/40 dark:text-amber-400'
+    label: 'Pending Review',
+    className: 'bg-[hsl(var(--tl-warning-bg))] text-[hsl(var(--tl-warning-text))] border border-[hsl(var(--tl-warning))]',
+    icon: Clock
   },
-  processing: {
-    label: 'Processing',
-    className: 'bg-blue-100 text-blue-700 dark:bg-blue-800/40 dark:text-blue-400'
-  },
-  shipped: {
-    label: 'Shipped',
-    className: 'bg-sky-100 text-sky-700 dark:bg-sky-800/40 dark:text-sky-400'
-  },
-  delivered: {
-    label: 'Delivered',
-    className: 'bg-green-100 text-green-700 dark:bg-green-800/40 dark:text-green-400'
-  },
-  canceled: {
-    label: 'Canceled',
-    className: 'bg-rose-100 text-rose-700 dark:bg-rose-800/40 dark:text-rose-400'
-  },
-  draft: {
-    label: 'Draft',
-    className: 'bg-slate-100 text-slate-700 dark:bg-slate-800/40 dark:text-slate-400'
+  quoted: {
+    label: 'Quote Available',
+    className: 'bg-[hsl(var(--tl-info-bg))] text-[hsl(var(--tl-info-text))] border border-[hsl(var(--tl-maritime-400))]',
+    icon: FileCheck
   },
   approved: {
-    label: 'Approved',
-    className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-800/40 dark:text-emerald-400'
+    label: 'Accepted',
+    className: 'bg-[hsl(var(--tl-success-bg))] text-[hsl(var(--tl-success-text))] border border-[hsl(var(--tl-success))]',
+    icon: CheckCircle
+  },
+  rejected: {
+    label: 'Declined',
+    className: 'bg-[hsl(var(--tl-danger-bg))] text-[hsl(var(--tl-danger-text))] border border-[hsl(var(--tl-danger))]',
+    icon: XCircle
+  },
+  completed: {
+    label: 'Completed',
+    className: 'bg-[hsl(var(--tl-success-bg))] text-[hsl(var(--tl-success-text))] border border-[hsl(var(--tl-success))]',
+    icon: CheckCircle2
   },
   quote: {
     label: 'Quote',
-    className: 'bg-violet-100 text-violet-700 dark:bg-violet-800/40 dark:text-violet-400'
+    className: 'bg-[hsl(var(--tl-info-bg))] text-[hsl(var(--tl-info-text))] border border-[hsl(var(--tl-maritime-400))]',
+    icon: FileText
+  },
+  processing: {
+    label: 'Processing',
+    className: 'bg-[hsl(var(--tl-info-bg))] text-[hsl(var(--tl-info-text))] border border-[hsl(var(--tl-maritime-400))]',
+    icon: Package
+  },
+  shipped: {
+    label: 'Shipped',
+    className: 'bg-[hsl(var(--tl-info-bg))] text-[hsl(var(--tl-info-text))] border border-[hsl(var(--tl-maritime-500))]',
+    icon: Truck
+  },
+  delivered: {
+    label: 'Delivered',
+    className: 'bg-[hsl(var(--tl-success-bg))] text-[hsl(var(--tl-success-text))] border border-[hsl(var(--tl-success))]',
+    icon: CheckCircle2
+  },
+  canceled: {
+    label: 'Canceled',
+    className: 'bg-[hsl(var(--tl-danger-bg))] text-[hsl(var(--tl-danger-text))] border border-[hsl(var(--tl-danger))]',
+    icon: Ban
+  },
+  draft: {
+    label: 'Draft',
+    className: 'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-600',
+    icon: HelpCircle
   }
 };
 
@@ -49,15 +83,16 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   className = ''
 }) => {
   const config = statusConfig[status] || statusConfig.pending;
+  const Icon = config.icon;
   
   return (
     <span 
-      className={`inline-flex items-center justify-center
-                  rounded-full font-medium
+      className={`inline-flex items-center gap-1 justify-center rounded-full font-medium transition-all
                   ${variant === 'compact' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-xs sm:text-sm'}
                   ${config.className}
                   ${className}`}
     >
+      {Icon && <Icon className={variant === 'compact' ? 'h-3 w-3' : 'h-3.5 w-3.5'} />}
       {config.label}
     </span>
   );
