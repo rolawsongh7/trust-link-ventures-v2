@@ -38,7 +38,7 @@ async function verifyRecaptcha(token: string): Promise<boolean> {
     );
 
     const data = await response.json();
-    return data.success && data.score >= 0.5; // Require score >= 0.5 for v3
+    return data.success === true; // reCAPTCHA v2 only returns success true/false
   } catch (error) {
     console.error('reCAPTCHA verification error:', error);
     return false;
