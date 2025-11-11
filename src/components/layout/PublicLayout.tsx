@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { PublicHeader } from './PublicHeader';
 import Footer from './Footer';
 import { FloatingLoginButton } from '@/components/ui/FloatingLoginButton';
+import { mobileFeatures } from '@/config/mobile.config';
 
 export const PublicLayout = () => {
   return (
@@ -14,7 +15,7 @@ export const PublicLayout = () => {
       </main>
       
       <Footer />
-      <FloatingLoginButton />
+      {mobileFeatures.showFloatingLogin && <FloatingLoginButton />}
     </div>
   );
 };

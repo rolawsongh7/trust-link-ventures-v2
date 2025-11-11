@@ -16,14 +16,19 @@ export const FloatingLoginButton: React.FC = () => {
   }
 
   const handleLoginClick = () => {
-    navigate('/customer-auth');
+    navigate('/portal-auth');
   };
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="fixed bottom-20 sm:bottom-6 right-6 z-50">
+          <div className="fixed z-50 pointer-events-auto
+                          bottom-6 right-6
+                          sm:bottom-6 sm:right-6
+                          md:bottom-6 md:right-6
+                          [.has-bottom-nav_&]:bottom-[calc(4rem+env(safe-area-inset-bottom)+1.5rem)]
+                          pb-safe">
             <button
               onClick={handleLoginClick}
               aria-label="Access Customer Portal"
@@ -33,6 +38,7 @@ export const FloatingLoginButton: React.FC = () => {
                          hover:shadow-[0_0_30px_rgba(59,130,246,0.5)]
                          backdrop-blur-md bg-opacity-80
                          px-6 py-3 md:px-8 md:py-4
+                         min-h-[44px] min-w-[44px]
                          transition-all duration-300 hover:scale-105 active:scale-95
                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
             >

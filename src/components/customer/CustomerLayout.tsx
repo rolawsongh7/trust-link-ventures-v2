@@ -6,6 +6,7 @@ import { FloatingNotificationButton } from '@/components/ui/FloatingNotification
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { RealtimeIndicator } from '@/components/realtime/RealtimeIndicator';
 import { useBackgroundSync } from '@/hooks/useBackgroundSync';
+import { mobileFeatures } from '@/config/mobile.config';
 
 export const CustomerLayout: React.FC = () => {
   const { isSyncing } = useBackgroundSync();
@@ -19,9 +20,9 @@ export const CustomerLayout: React.FC = () => {
       <main className="container mx-auto px-2 sm:px-3 md:px-4 lg:px-6 py-4 sm:py-6 max-w-full">
         <Outlet />
       </main>
-      <FloatingLoginButton />
-      <FloatingNotificationButton />
-      <PWAInstallPrompt />
+      {mobileFeatures.showFloatingLogin && <FloatingLoginButton />}
+      {mobileFeatures.showFloatingNotifications && <FloatingNotificationButton />}
+      {mobileFeatures.showPWAInstallPrompt && <PWAInstallPrompt />}
     </div>
   );
 };

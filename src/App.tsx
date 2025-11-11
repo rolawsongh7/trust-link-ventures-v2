@@ -13,6 +13,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { getAdminUrl, getMainUrl } from "@/utils/domainUtils";
 import { isAdminDomain, isNativeApp, isPreviewDomain } from "@/utils/env";
 import { BlockAdmin } from "@/routes/BlockAdmin";
@@ -111,6 +112,16 @@ const App = () => {
     }
   }, [nativeApp, isAdmin, isLovablePreview]);
 
+  // Add has-bottom-nav class for native apps (for floating UI positioning)
+  useEffect(() => {
+    if (nativeApp) {
+      document.body.classList.add('has-bottom-nav');
+    }
+    return () => {
+      document.body.classList.remove('has-bottom-nav');
+    };
+  }, [nativeApp]);
+
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
@@ -166,12 +177,11 @@ const App = () => {
                         <Route path="/notifications" element={<NotificationDemo />} />
                       </Route>
                       
-                      {/* Customer Auth Routes */}
-                      <Route path="/customer-auth" element={<CustomerAuth />} />
-                      <Route path="/customer-portal" element={<CustomerPortal />} />
+                      {/* Portal routes (new primary path) */}
+                      <Route path="/portal-auth" element={<CustomerAuth />} />
+                      <Route path="/portal/login" element={<CustomerAuth />} />
                       
-                      {/* Customer Portal Protected Routes */}
-                      <Route path="/customer/*" element={
+                      <Route path="/portal/*" element={
                         <CustomerProtectedRoute>
                           <CustomerLayout />
                         </CustomerProtectedRoute>
@@ -188,6 +198,13 @@ const App = () => {
                         <Route path="profile" element={<CustomerProfile />} />
                         <Route path="payment-callback" element={<PaymentCallback />} />
                       </Route>
+                      
+                      {/* Customer Auth Routes - Redirect to Portal */}
+                      <Route path="/customer-auth" element={<Navigate to="/portal-auth" replace />} />
+                      <Route path="/customer-portal" element={<Navigate to="/portal/login" replace />} />
+                      
+                      {/* Old Customer Portal Routes - Redirect to Portal */}
+                      <Route path="/customer/*" element={<Navigate to="/portal" replace />} />
                       
                       {/* Public order tracking */}
                       <Route path="/track" element={<OrderTracking />} />
@@ -246,12 +263,11 @@ const App = () => {
                         <Route path="/notifications" element={<NotificationDemo />} />
                       </Route>
                       
-                      {/* Customer Auth Routes */}
-                      <Route path="/customer-auth" element={<CustomerAuth />} />
-                      <Route path="/customer-portal" element={<CustomerPortal />} />
+                      {/* Portal routes (new primary path) */}
+                      <Route path="/portal-auth" element={<CustomerAuth />} />
+                      <Route path="/portal/login" element={<CustomerAuth />} />
                       
-                      {/* Customer Portal Protected Routes */}
-                      <Route path="/customer/*" element={
+                      <Route path="/portal/*" element={
                         <CustomerProtectedRoute>
                           <CustomerLayout />
                         </CustomerProtectedRoute>
@@ -269,6 +285,13 @@ const App = () => {
                         <Route path="payment-callback" element={<PaymentCallback />} />
                       </Route>
                       
+                      {/* Customer Auth Routes - Redirect to Portal */}
+                      <Route path="/customer-auth" element={<Navigate to="/portal-auth" replace />} />
+                      <Route path="/customer-portal" element={<Navigate to="/portal/login" replace />} />
+                      
+                      {/* Old Customer Portal Routes - Redirect to Portal */}
+                      <Route path="/customer/*" element={<Navigate to="/portal" replace />} />
+                      
                       {/* Public order tracking */}
                       <Route path="/track" element={<OrderTracking />} />
                       
@@ -277,6 +300,7 @@ const App = () => {
                     </>
                   )}
                 </Routes>
+                {nativeApp && <MobileBottomNav />}
               </BrowserRouter>
             </TooltipProvider>
           </CustomerAuthProvider>

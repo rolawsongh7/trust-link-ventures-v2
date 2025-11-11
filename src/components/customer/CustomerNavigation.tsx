@@ -54,45 +54,45 @@ export const CustomerNavigation: React.FC = () => {
   }> = [
     {
       title: 'Dashboard',
-      href: '/customer',
+      href: '/portal',
       icon: Grid3X3
     },
     {
       title: 'Catalog',
-      href: '/customer/catalog',
+      href: '/portal/catalog',
       icon: Package
     },
     {
       title: 'Cart',
-      href: '/customer/cart',
+      href: '/portal/cart',
       icon: ShoppingCart,
       badge: totalItems > 0 ? totalItems : undefined
     },
     {
       title: 'Quotes',
-      href: '/customer/quotes',
+      href: '/portal/quotes',
       icon: FileText
     },
     {
       title: 'Orders',
-      href: '/customer/orders',
+      href: '/portal/orders',
       icon: Package,
       badge: pendingCount > 0 ? pendingCount : undefined,
       badgeVariant: 'destructive' as const
     },
     {
       title: 'Invoices',
-      href: '/customer/invoices',
+      href: '/portal/invoices',
       icon: FileText
     },
     {
       title: 'Addresses',
-      href: '/customer/addresses',
+      href: '/portal/addresses',
       icon: MapPin
     },
     {
       title: 'Messages',
-      href: '/customer/communications',
+      href: '/portal/communications',
       icon: MessageSquare
     }
   ];
@@ -126,7 +126,7 @@ export const CustomerNavigation: React.FC = () => {
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-3 md:gap-4">
             {/* Logo and Company Info */}
             <div className="flex items-center flex-shrink-0">
-              <Link to="/customer" className="flex items-center gap-3 sm:gap-4 touch-manipulation">
+              <Link to="/portal" className="flex items-center gap-3 sm:gap-4 touch-manipulation">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
                 </div>
@@ -295,14 +295,14 @@ export const CustomerNavigation: React.FC = () => {
                 <DropdownMenuSeparator />
                 
                 <DropdownMenuItem asChild>
-                  <Link to="/customer/profile" className="flex items-center w-full touch-safe">
+                  <Link to="/portal/profile" className="flex items-center w-full touch-safe">
                     <User className="h-4 w-4 mr-2" />
                     Profile Settings
                   </Link>
                 </DropdownMenuItem>
                 
                 <DropdownMenuItem asChild>
-                  <Link to="/customer" className="flex items-center w-full touch-safe">
+                  <Link to="/portal" className="flex items-center w-full touch-safe">
                     <Settings className="h-4 w-4 mr-2" />
                     Dashboard
                   </Link>

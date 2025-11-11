@@ -75,7 +75,7 @@ export const PublicHeader = () => {
             )}
             
             <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hidden sm:flex touch-manipulation">
-              <Link to="/customer-auth">
+              <Link to="/portal-auth">
                 <LogIn className="h-4 w-4 mr-2" />
                 <span className="hidden md:inline">Sign In</span>
                 <span className="md:hidden">Login</span>
@@ -131,7 +131,7 @@ export const PublicHeader = () => {
               )}
               
               <Link
-                to="/customer-auth"
+                to="/portal-auth"
                 className="block px-3 py-3 text-base font-medium text-primary hover:text-primary/80 transition-colors rounded-md hover:bg-muted/50 touch-manipulation sm:hidden"
                 onClick={() => setMobileMenuOpen(false)}
               >

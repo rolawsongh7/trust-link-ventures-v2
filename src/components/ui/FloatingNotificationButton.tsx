@@ -17,12 +17,16 @@ export const FloatingNotificationButton: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-32 left-6 z-50">
+    <div className="fixed z-50 pointer-events-auto
+                    bottom-20 right-6
+                    sm:bottom-24 sm:right-6
+                    [.has-bottom-nav_&]:bottom-[calc(4rem+env(safe-area-inset-bottom)+5rem)]
+                    pb-safe">
       <button
         onClick={handleNotificationClick}
         className="group relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-md
                    border border-white/20 shadow-xl hover:shadow-2xl
-                   p-4 transition-all duration-300 hover:scale-105
+                   p-4 min-h-[44px] min-w-[44px] transition-all duration-300 hover:scale-105
                    hover:bg-white/20 active:scale-95
                    before:absolute before:inset-0 before:rounded-2xl
                    before:bg-gradient-to-r before:from-primary/20 before:via-secondary/20 before:to-accent/20
