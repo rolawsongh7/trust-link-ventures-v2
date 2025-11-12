@@ -253,107 +253,107 @@ export const CustomerCart: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-            Shopping Cart
-          </h1>
-          <p className="text-muted-foreground">
-            {totalItems} item{totalItems !== 1 ? 's' : ''} ready for quote
-          </p>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 space-y-6 pb-safe">
+      {/* Gradient Header Section */}
+      <div className="bg-tl-gradient rounded-lg shadow-md p-6 md:p-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-semibold text-white">
+              Shopping Cart
+            </h1>
+            <p className="text-white/80 text-sm md:text-base mt-1">
+              {totalItems} item{totalItems !== 1 ? 's' : ''} ready for quote
+            </p>
+          </div>
+          <div className="hidden sm:inline-flex bg-white/10 backdrop-blur-sm border border-white/30 px-4 py-2 rounded-full text-white font-medium">
+            <Package className="h-4 w-4 mr-2" />
+            {totalItems}
+          </div>
         </div>
-        <Badge variant="secondary" className="text-lg px-4 py-2">
-          <Package className="h-4 w-4 mr-2" />
-          {totalItems}
-        </Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
-            <Card key={item.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-2">{item.productName}</h3>
-                    {item.productDescription && (
-                      <p className="text-muted-foreground text-sm mb-3">
-                        {item.productDescription}
-                      </p>
-                    )}
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium">Unit:</span> {item.unit}
-                      </div>
-                      {item.preferredGrade && (
-                        <div>
-                          <span className="font-medium">Grade:</span> {item.preferredGrade}
-                        </div>
-                      )}
+            <div 
+              key={item.id} 
+              className="bg-tl-surface border border-tl-border rounded-lg p-4 shadow-sm hover:shadow-md transition-all"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg text-tl-text mb-2">{item.productName}</h3>
+                  {item.productDescription && (
+                    <p className="text-tl-muted text-sm mb-3">
+                      {item.productDescription}
+                    </p>
+                  )}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="font-medium text-tl-text">Unit:</span> 
+                      <span className="text-tl-muted ml-1">{item.unit}</span>
                     </div>
-                    {item.specifications && (
-                      <div className="mt-2">
-                        <span className="font-medium text-sm">Specifications:</span>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {item.specifications}
-                        </p>
+                    {item.preferredGrade && (
+                      <div>
+                        <span className="font-medium text-tl-text">Grade:</span> 
+                        <span className="text-tl-muted ml-1">{item.preferredGrade}</span>
                       </div>
                     )}
                   </div>
-                  
-                  <div className="flex flex-col items-end gap-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeItem(item.id)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <Input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 1)}
-                        className="w-20 text-center"
-                        min="1"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
+                  {item.specifications && (
+                    <div className="mt-2 p-2 bg-tl-border/20 rounded">
+                      <span className="font-medium text-sm text-tl-text">Specifications:</span>
+                      <p className="text-sm text-tl-muted mt-1">
+                        {item.specifications}
+                      </p>
                     </div>
+                  )}
+                </div>
+                
+                <div className="flex flex-col items-end gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeItem(item.id)}
+                    className="text-tl-danger hover:text-tl-danger hover:bg-tl-danger-bg min-h-[44px] min-w-[44px]"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                      disabled={item.quantity <= 1}
+                      className="h-9 w-9 rounded-full bg-tl-accent text-white flex items-center justify-center hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[44px] min-w-[44px]"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <span className="px-3 py-1 rounded-full border border-tl-border font-medium text-tl-text min-w-[60px] text-center">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                      className="h-9 w-9 rounded-full bg-tl-primary text-white flex items-center justify-center hover:opacity-90 transition-all min-h-[44px] min-w-[44px]"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
 
         <div className="space-y-6">
-          <Card>
+          <Card className="bg-tl-surface border-tl-border shadow-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-tl-text">
                 <MessageSquare className="h-5 w-5" />
                 Quote Request
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">
+                <label className="text-sm font-medium mb-2 block text-tl-text">
                   Additional Notes (Optional)
                 </label>
                 <Textarea
@@ -361,14 +361,15 @@ export const CustomerCart: React.FC = () => {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={4}
+                  className="border-tl-border focus:ring-2 focus:ring-tl-accent/40 focus:border-tl-accent"
                 />
               </div>
               
-              <div className="pt-4 border-t">
+              <div className="pt-4 border-t border-tl-border">
                 <Button
                   onClick={handleSubmitQuote}
                   disabled={isSubmitting}
-                  className="w-full bg-gradient-to-r from-primary to-primary/90"
+                  className="w-full py-3 rounded-lg shadow-md bg-tl-gradient hover:opacity-95 font-semibold text-white min-h-[44px]"
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Quote Request'}
                 </Button>
@@ -376,7 +377,7 @@ export const CustomerCart: React.FC = () => {
                 <Button
                   variant="outline"
                   onClick={clearCart}
-                  className="w-full mt-2"
+                  className="w-full mt-2 border-tl-border hover:bg-tl-border/20 min-h-[44px]"
                 >
                   Clear Cart
                 </Button>
@@ -385,23 +386,27 @@ export const CustomerCart: React.FC = () => {
           </Card>
 
           {profile && (
-            <Card>
+            <Card className="bg-tl-surface border-tl-border shadow-sm">
               <CardHeader>
-                <CardTitle className="text-base">Quote Details</CardTitle>
+                <CardTitle className="text-base text-tl-text">Quote Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div>
-                  <span className="font-medium">Company:</span> {profile.company_name}
+                  <span className="font-medium text-tl-text">Company:</span> 
+                  <span className="text-tl-muted ml-1">{profile.company_name}</span>
                 </div>
                 <div>
-                  <span className="font-medium">Contact:</span> {profile.full_name}
+                  <span className="font-medium text-tl-text">Contact:</span> 
+                  <span className="text-tl-muted ml-1">{profile.full_name}</span>
                 </div>
                 <div>
-                  <span className="font-medium">Email:</span> {profile.email}
+                  <span className="font-medium text-tl-text">Email:</span> 
+                  <span className="text-tl-muted ml-1">{profile.email}</span>
                 </div>
                 {profile.phone && (
                   <div>
-                    <span className="font-medium">Phone:</span> {profile.phone}
+                    <span className="font-medium text-tl-text">Phone:</span> 
+                    <span className="text-tl-muted ml-1">{profile.phone}</span>
                   </div>
                 )}
               </CardContent>
