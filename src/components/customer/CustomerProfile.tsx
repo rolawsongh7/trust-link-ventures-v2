@@ -81,105 +81,114 @@ export const CustomerProfile: React.FC = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-          Profile Settings
-        </h1>
-        <p className="text-muted-foreground">
-          Manage your account information and preferences
-        </p>
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+      {/* Gradient Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-tl-gradient p-8 sm:p-10 shadow-xl">
+        <div className="absolute inset-0 bg-[url('/placeholder.svg')] opacity-5" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm">
+              <User className="h-6 w-6 text-white" />
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white">
+              Profile Settings
+            </h1>
+          </div>
+          <p className="text-white/90 text-base max-w-2xl">
+            Manage your account information and preferences
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Information */}
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
+          <Card className="bg-tl-surface/80 backdrop-blur-md border-tl-border shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="border-b border-tl-border/50">
+              <CardTitle className="flex items-center gap-2 text-tl-text">
+                <User className="h-5 w-5 text-tl-primary" />
                 Profile Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="full_name">Full Name</Label>
+                  <Label htmlFor="full_name" className="text-tl-text">Full Name</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <User className="absolute left-3 top-3 h-4 w-4 text-tl-muted" />
                     <Input
                       id="full_name"
                       value={formData.full_name}
                       onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                       disabled={!isEditing}
-                      className="pl-10"
+                      className="pl-10 bg-tl-bg border-tl-border text-tl-text"
                     />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="company_name">Company Name</Label>
+                  <Label htmlFor="company_name" className="text-tl-text">Company Name</Label>
                   <div className="relative">
-                    <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Building2 className="absolute left-3 top-3 h-4 w-4 text-tl-muted" />
                     <Input
                       id="company_name"
                       value={formData.company_name}
                       onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                       disabled={!isEditing}
-                      className="pl-10"
+                      className="pl-10 bg-tl-bg border-tl-border text-tl-text"
                     />
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email" className="text-tl-text">Email Address</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-tl-muted" />
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     disabled
-                    className="pl-10 bg-muted"
+                    className="pl-10 bg-tl-muted/20 border-tl-border text-tl-muted"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-tl-muted">
                   Email address cannot be changed. Contact support if you need to update this.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone" className="text-tl-text">Phone Number</Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-tl-muted" />
                     <Input
                       id="phone"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       disabled={!isEditing}
-                      className="pl-10"
+                      className="pl-10 bg-tl-bg border-tl-border text-tl-text"
                       placeholder="+1 (555) 123-4567"
                     />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="country">Country</Label>
+                  <Label htmlFor="country" className="text-tl-text">Country</Label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-tl-muted z-10" />
                     <Select 
                       value={formData.country} 
                       onValueChange={(value) => setFormData({ ...formData, country: value })}
                       disabled={!isEditing}
                     >
-                      <SelectTrigger className="pl-10">
+                      <SelectTrigger className="pl-10 bg-tl-bg border-tl-border text-tl-text">
                         <SelectValue placeholder="Select country" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-tl-surface border-tl-border">
                         {countries.map(country => (
-                          <SelectItem key={country} value={country}>
+                          <SelectItem key={country} value={country} className="text-tl-text">
                             {country}
                           </SelectItem>
                         ))}
@@ -190,18 +199,18 @@ export const CustomerProfile: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="industry">Industry</Label>
+                <Label htmlFor="industry" className="text-tl-text">Industry</Label>
                 <Select 
                   value={formData.industry} 
                   onValueChange={(value) => setFormData({ ...formData, industry: value })}
                   disabled={!isEditing}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-tl-bg border-tl-border text-tl-text">
                     <SelectValue placeholder="Select industry" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-tl-surface border-tl-border">
                     {industries.map(industry => (
-                      <SelectItem key={industry} value={industry}>
+                      <SelectItem key={industry} value={industry} className="text-tl-text">
                         {industry}
                       </SelectItem>
                     ))}
@@ -209,25 +218,32 @@ export const CustomerProfile: React.FC = () => {
                 </Select>
               </div>
 
-              <Separator />
+              <div className="h-px bg-gradient-to-r from-transparent via-tl-border to-transparent" />
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 {isEditing ? (
                   <>
                     <Button 
                       onClick={handleSave}
                       disabled={saving}
-                      className="bg-gradient-to-r from-primary to-primary/90"
+                      className="bg-tl-gradient hover:opacity-90 text-white shadow-md hover:shadow-lg transition-all"
                     >
                       <Save className="h-4 w-4 mr-2" />
                       {saving ? 'Saving...' : 'Save Changes'}
                     </Button>
-                    <Button variant="outline" onClick={handleCancel}>
+                    <Button 
+                      variant="outline" 
+                      onClick={handleCancel}
+                      className="border-tl-border text-tl-text hover:bg-tl-muted/20"
+                    >
                       Cancel
                     </Button>
                   </>
                 ) : (
-                  <Button onClick={() => setIsEditing(true)}>
+                  <Button 
+                    onClick={() => setIsEditing(true)}
+                    className="bg-tl-gradient hover:opacity-90 text-white shadow-md hover:shadow-lg transition-all"
+                  >
                     Edit Profile
                   </Button>
                 )}
@@ -238,33 +254,36 @@ export const CustomerProfile: React.FC = () => {
 
         {/* Account Actions */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
+          <Card className="bg-tl-surface/80 backdrop-blur-md border-tl-border shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="border-b border-tl-border/50">
+              <CardTitle className="flex items-center gap-2 text-tl-text">
+                <Shield className="h-5 w-5 text-tl-primary" />
                 Account Security
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-6">
               <Button 
                 variant="outline" 
-                className="w-full justify-start"
+                className="w-full justify-start border-tl-border text-tl-text hover:bg-tl-muted/20"
                 onClick={() => setShowChangePassword(true)}
               >
                 <Lock className="h-4 w-4 mr-2" />
                 Change Password
               </Button>
               
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start border-tl-border text-tl-text hover:bg-tl-muted/20"
+              >
                 <Shield className="h-4 w-4 mr-2" />
                 Two-Factor Authentication
               </Button>
               
-              <Separator />
+              <div className="h-px bg-gradient-to-r from-transparent via-tl-border to-transparent" />
               
               <Button 
                 variant="destructive" 
-                className="w-full"
+                className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-md hover:shadow-lg transition-all"
                 onClick={() => signOut()}
               >
                 Sign Out
@@ -272,22 +291,26 @@ export const CustomerProfile: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Account Information</CardTitle>
+          <Card className="bg-tl-surface/80 backdrop-blur-md border-tl-border shadow-lg">
+            <CardHeader className="border-b border-tl-border/50">
+              <CardTitle className="text-base text-tl-text">Account Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div>
-                <span className="font-medium">Account Type:</span> Customer
+            <CardContent className="space-y-3 text-sm pt-6">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-tl-muted">Account Type:</span>
+                <span className="text-tl-text">Customer</span>
               </div>
-              <div>
-                <span className="font-medium">Member Since:</span> January 2024
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-tl-muted">Member Since:</span>
+                <span className="text-tl-text">January 2024</span>
               </div>
-              <div>
-                <span className="font-medium">Total Orders:</span> 0
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-tl-muted">Total Orders:</span>
+                <span className="text-tl-text">0</span>
               </div>
-              <div>
-                <span className="font-medium">Total Quotes:</span> 0
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-tl-muted">Total Quotes:</span>
+                <span className="text-tl-text">0</span>
               </div>
             </CardContent>
           </Card>
