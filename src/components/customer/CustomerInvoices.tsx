@@ -181,18 +181,19 @@ export const CustomerInvoices = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      draft: 'outline',
-      sent: 'secondary',
-      paid: 'default',
-      cancelled: 'destructive',
+    const classes: Record<string, string> = {
+      paid: 'bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/20',
+      sent: 'bg-[#E3F2FD] text-tl-accent border-tl-accent/20',
+      draft: 'bg-gray-100 text-gray-700 border-gray-300',
+      overdue: 'bg-[#FFEBEE] text-[#C62828] border-[#C62828]/20',
+      cancelled: 'bg-[#FFEBEE] text-[#C62828] border-[#C62828]/20',
     };
 
-    return (
-      <Badge variant={variants[status] || 'outline'}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
+    const className = `${
+      classes[status] || 'bg-gray-100 text-gray-800 border-gray-300'
+    } rounded-full px-3 py-1 text-sm font-medium border`;
+
+    return <Badge className={className}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
   };
 
   const getInvoiceTypeBadge = (type: string) => {
@@ -294,29 +295,28 @@ export const CustomerInvoices = () => {
   }, [filteredInvoices]);
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-            My Invoices
-          </h1>
-          <p className="text-muted-foreground">
-            View and download your invoices
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="h-4 w-4 mr-2" />
-            {showFilters ? 'Hide' : 'Show'} Filters
-          </Button>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            <FileText className="h-4 w-4 mr-2" />
-            {invoices.length} Total
-          </Badge>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
+      {/* Gradient Header */}
+      <div className="bg-tl-gradient text-white rounded-lg shadow-md p-6 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold">My Invoices</h1>
+            <p className="text-white/80 text-sm mt-1">View and download your invoices</p>
+          </div>
+          <div className="hidden sm:flex items-center gap-3">
+            <Badge className="bg-white/20 border border-white/30 text-white text-lg px-4 py-2">
+              <FileText className="h-4 w-4 mr-2" />
+              {filteredInvoices.length} Invoices
+            </Badge>
+            <Button
+              variant="outline"
+              className="border-white/30 text-white hover:bg-white/10"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Filters
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -336,25 +336,25 @@ export const CustomerInvoices = () => {
       {loading ? (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
-            <Card key={i}>
+            <Card key={i} className="bg-tl-surface border border-tl-border rounded-lg shadow-sm">
               <CardContent className="p-6">
                 <div className="space-y-3">
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-6 w-48 bg-tl-border rounded" />
+                  <Skeleton className="h-4 w-full bg-tl-border rounded" />
+                  <Skeleton className="h-4 w-3/4 bg-tl-border rounded" />
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       ) : invoices.length === 0 ? (
-        <Card className="text-center py-12">
+        <Card className="text-center py-12 bg-tl-surface border border-tl-border rounded-lg shadow-sm">
           <CardContent>
-            <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No invoices yet</h3>
-            <p className="text-muted-foreground">
-              Your invoices will appear here once orders are processed
-            </p>
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-tl-accent/10 flex items-center justify-center">
+              <FileText className="h-10 w-10 text-tl-accent" />
+            </div>
+            <h3 className="text-xl font-semibold text-tl-primary mb-2">No invoices yet</h3>
+            <p className="text-tl-muted">Your invoices will appear here once orders are processed</p>
           </CardContent>
         </Card>
       ) : isMobile ? (
@@ -370,39 +370,57 @@ export const CustomerInvoices = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          <Card>
+          <Card className="bg-tl-surface border border-tl-border rounded-lg shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-muted/50">
+                <thead className="bg-tl-primary/5 sticky top-0">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Invoice Number</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Type</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Order</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Issue Date</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Due Date</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-tl-primary">
+                      Invoice #
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-tl-primary">Type</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-tl-primary">Order</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-tl-primary">
+                      Issue Date
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-tl-primary">
+                      Due Date
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-tl-primary">Amount</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-tl-primary">Status</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-tl-primary">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-tl-border">
                   {filteredInvoices.map((invoice) => (
-                    <tr key={invoice.id} className="hover:bg-muted/20">
-                      <td className="px-4 py-3 font-medium">{invoice.invoice_number}</td>
+                    <tr
+                      key={invoice.id}
+                      className="hover:bg-tl-bg transition-all duration-200 hover:shadow-sm"
+                    >
                       <td className="px-4 py-3">
-                        <Badge variant="outline" className="font-medium">
+                        <span className="text-tl-accent font-medium">{invoice.invoice_number}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant="outline"
+                          className="font-medium border-tl-border text-tl-text"
+                        >
                           {getInvoiceTypeLabel(invoice.invoice_type)}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-sm">{invoice.orders?.order_number || 'N/A'}</td>
-                      <td className="px-4 py-3 text-sm">
+                      <td className="px-4 py-3 text-sm text-tl-text">
+                        {invoice.orders?.order_number || 'N/A'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-tl-text">
                         {new Date(invoice.issue_date).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric',
                         })}
                       </td>
-                      <td className="px-4 py-3 text-sm">
+                      <td className="px-4 py-3 text-sm text-tl-text">
                         {invoice.due_date
                           ? new Date(invoice.due_date).toLocaleDateString('en-US', {
                               year: 'numeric',
@@ -411,14 +429,15 @@ export const CustomerInvoices = () => {
                             })
                           : 'N/A'}
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold">
-                        {invoice.orders?.currency || invoice.currency || 'USD'} {Number(invoice.total_amount).toLocaleString()}
+                      <td className="px-4 py-3 text-right font-semibold text-tl-primary">
+                        {invoice.orders?.currency || invoice.currency || 'USD'}{' '}
+                        {Number(invoice.total_amount).toLocaleString()}
                       </td>
                       <td className="px-4 py-3">{getStatusBadge(invoice.status)}</td>
                       <td className="px-4 py-3 text-right">
                         <Button
-                          variant="outline"
                           size="sm"
+                          className="bg-tl-gradient text-white hover:opacity-95"
                           onClick={() => handleDownload(invoice)}
                           disabled={downloading === invoice.id}
                         >

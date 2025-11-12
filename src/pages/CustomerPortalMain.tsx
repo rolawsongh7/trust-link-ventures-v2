@@ -232,31 +232,21 @@ const CustomerPortalMain = () => {
                           space-y-5 sm:space-y-6 md:space-y-8">
             
             {/* Sticky Header */}
-            <div className="sticky top-0 z-20 
-                            bg-white/85 dark:bg-slate-900/75 
-                            backdrop-blur-md 
-                            border-b border-slate-200/70 dark:border-slate-800 
-                            shadow-sm
-                            -mx-4 sm:-mx-5 md:-mx-6 lg:-mx-8 
-                            px-4 sm:px-5 md:px-6 lg:px-8 
-                            py-3 sm:py-4
-                            mb-5 sm:mb-6 md:mb-8">
+            <div className="bg-tl-gradient text-white rounded-lg shadow-md p-4 sm:p-6 mb-5 sm:mb-6 md:mb-8">
               <div className="flex items-center justify-between">
                 {/* Left: Brand Icon */}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 
-                                  bg-gradient-to-br from-[#0077B6] to-[#003366] 
+                                  bg-white/20 
                                   rounded-xl flex items-center justify-center">
                     <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <div>
                     <h1 className="text-lg sm:text-xl md:text-2xl 
-                                   font-semibold 
-                                   text-[#0f2f57] dark:text-white">
+                                   font-semibold text-white">
                       Dashboard
                     </h1>
-                    <p className="text-xs sm:text-sm 
-                                  text-slate-500 dark:text-slate-400">
+                    <p className="text-xs sm:text-sm text-white/80">
                       Welcome back, {profile?.full_name || 'Customer'}
                     </p>
                   </div>
@@ -266,7 +256,7 @@ const CustomerPortalMain = () => {
                 <div className="flex items-center gap-2">
                   <div className="relative">
                     <Avatar className="h-9 w-9 sm:h-10 sm:w-10">
-                      <AvatarFallback className="bg-gradient-to-br from-[#0077B6] to-[#003366] text-white text-sm font-semibold">
+                      <AvatarFallback className="bg-white/20 text-white text-sm font-semibold">
                         {getInitials(profile?.full_name)}
                       </AvatarFallback>
                     </Avatar>
@@ -274,7 +264,7 @@ const CustomerPortalMain = () => {
                     <div className="absolute bottom-0 right-0 
                                     w-3 h-3 
                                     bg-green-500 
-                                    border-2 border-white dark:border-slate-900 
+                                    border-2 border-white
                                     rounded-full" />
                   </div>
                 </div>
@@ -320,7 +310,7 @@ const CustomerPortalMain = () => {
             <div className="space-y-4 sm:space-y-5">
               <h2 className="text-lg sm:text-xl md:text-2xl 
                              font-semibold 
-                             text-[#0f2f57] dark:text-white 
+                             text-tl-primary
                              px-0">
                 Quick Overview
               </h2>
@@ -329,106 +319,103 @@ const CustomerPortalMain = () => {
                               grid-cols-1 gap-3
                               sm:grid-cols-3 gap-4 md:gap-5">
                 {/* Active Quotes Card */}
-                <div className="rounded-2xl p-4 sm:p-5 
-                                bg-white/90 dark:bg-slate-900/80 
-                                border border-slate-200/60 dark:border-slate-800 
-                                shadow-sm hover:shadow-md 
+                <div className="bg-tl-surface border border-tl-border rounded-lg shadow-sm hover:shadow-md 
                                 transition-all duration-200 
                                 hover:translate-y-[-2px] 
                                 active:translate-y-0
                                 motion-reduce:transition-none
-                                cursor-pointer
-                                stagger-animation"
-                     style={{ animationDelay: '0ms' }}>
+                                cursor-pointer p-4 sm:p-5">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs sm:text-sm 
-                                    text-slate-500 dark:text-slate-400 
+                                    text-tl-muted
                                     font-medium mb-1">
                         Active Quotes
                       </p>
                       <p className="text-2xl sm:text-3xl md:text-4xl 
                                     font-bold 
-                                    text-[#0077B6] dark:text-[#2AA6FF]">
+                                    text-tl-primary">
                         {stats.pendingQuotes}
                       </p>
                     </div>
                     <div className="w-12 h-12 sm:w-14 sm:h-14 
                                     rounded-xl 
-                                    bg-gradient-to-br from-[#0077B6]/10 to-[#003366]/5 
+                                    bg-tl-accent/10
                                     flex items-center justify-center">
                       <FileText className="h-6 w-6 sm:h-7 sm:w-7 
-                                           text-[#0077B6] dark:text-[#2AA6FF]" />
+                                           text-tl-accent" />
                     </div>
+                  </div>
+                  <div className="mt-3">
+                    <span className="text-xs bg-[#E8F5E9] text-[#2E7D32] px-2 py-1 rounded-full inline-flex items-center">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      +12%
+                    </span>
                   </div>
                 </div>
 
                 {/* Total Orders Card */}
-                <div className="rounded-2xl p-4 sm:p-5 
-                                bg-white/90 dark:bg-slate-900/80 
-                                border border-slate-200/60 dark:border-slate-800 
-                                shadow-sm hover:shadow-md 
+                <div className="bg-tl-surface border border-tl-border rounded-lg shadow-sm hover:shadow-md 
                                 transition-all duration-200 
                                 hover:translate-y-[-2px] 
                                 active:translate-y-0
                                 motion-reduce:transition-none
-                                cursor-pointer
-                                stagger-animation"
-                     style={{ animationDelay: '25ms' }}>
+                                cursor-pointer p-4 sm:p-5">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs sm:text-sm 
-                                    text-slate-500 dark:text-slate-400 
+                                    text-tl-muted
                                     font-medium mb-1">
                         Total Orders
                       </p>
                       <p className="text-2xl sm:text-3xl md:text-4xl 
                                     font-bold 
-                                    text-[#00B4D8] dark:text-[#2AA6FF]">
+                                    text-tl-primary">
                         {stats.totalOrders}
                       </p>
                     </div>
                     <div className="w-12 h-12 sm:w-14 sm:h-14 
                                     rounded-xl 
-                                    bg-gradient-to-br from-[#00B4D8]/10 to-[#0077B6]/5 
+                                    bg-tl-gold/10
                                     flex items-center justify-center">
                       <Package className="h-6 w-6 sm:h-7 sm:w-7 
-                                         text-[#00B4D8] dark:text-[#2AA6FF]" />
+                                         text-tl-gold" />
                     </div>
+                  </div>
+                  <div className="mt-3">
+                    <span className="text-xs bg-[#E8F5E9] text-[#2E7D32] px-2 py-1 rounded-full inline-flex items-center">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      +8%
+                    </span>
                   </div>
                 </div>
 
                 {/* Cart Items Card */}
-                <div className="rounded-2xl p-4 sm:p-5 
-                                bg-white/90 dark:bg-slate-900/80 
-                                border border-slate-200/60 dark:border-slate-800 
-                                shadow-sm hover:shadow-md 
+                <div className="bg-tl-surface border border-tl-border rounded-lg shadow-sm hover:shadow-md 
                                 transition-all duration-200 
                                 hover:translate-y-[-2px] 
                                 active:translate-y-0
                                 motion-reduce:transition-none
-                                cursor-pointer
-                                stagger-animation"
-                     style={{ animationDelay: '50ms' }}>
+                                cursor-pointer p-4 sm:p-5">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs sm:text-sm 
-                                    text-slate-500 dark:text-slate-400 
+                                    text-tl-muted
                                     font-medium mb-1">
                         Cart Items
                       </p>
                       <p className="text-2xl sm:text-3xl md:text-4xl 
                                     font-bold 
-                                    text-[#0096C7] dark:text-[#2AA6FF]">
+                                    text-tl-primary">
                         {totalItems}
                       </p>
                     </div>
                     <div className="w-12 h-12 sm:w-14 sm:h-14 
                                     rounded-xl 
-                                    bg-gradient-to-br from-[#0096C7]/10 to-[#00B4D8]/5 
+                                    bg-tl-accent/10
                                     flex items-center justify-center">
                       <ShoppingCart className="h-6 w-6 sm:h-7 sm:w-7 
-                                               text-[#0096C7] dark:text-[#2AA6FF]" />
+                                               text-tl-accent" />
                     </div>
                   </div>
                 </div>
