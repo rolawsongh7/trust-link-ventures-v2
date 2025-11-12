@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Building2, Mail, Lock, User, KeyRound } from 'lucide-react';
+import { ArrowLeft, Building2, Mail, Lock, User, KeyRound, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +17,8 @@ const CustomerAuth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [activeTab, setActiveTab] = useState('signin');
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const { signIn, signUp, user, resetPassword, resendConfirmationEmail } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -258,26 +260,26 @@ const CustomerAuth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-safe pb-safe 
-                    bg-gradient-to-br from-[#E6F0FF] via-[#F8FBFF] to-white 
-                    dark:from-[#0A1320] dark:via-[#0C1729] dark:to-[#0A1320]
-                    motion-reduce:from-[#E6F0FF] motion-reduce:to-[#F8FBFF]
-                    motion-reduce:dark:from-[#0A1320] motion-reduce:dark:to-[#0C1729]">
-      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
+                    bg-gradient-to-b from-tl-bg via-[#F4F7FB] to-[#EAF1FF]">
+      <div className="w-full max-w-sm sm:max-w-md">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-400 
-                    hover:text-[#0077B6] dark:hover:text-[#2AA6FF] mb-6 md:mb-8 
-                    transition-colors motion-reduce:transition-none
-                    min-h-[44px] touch-manipulation"
+          className="inline-flex items-center gap-2 text-tl-muted 
+                    hover:text-tl-accent mb-6 md:mb-8 
+                    transition-colors rounded px-2
+                    min-h-[44px] touch-manipulation
+                    focus-visible:outline-none focus-visible:ring-2 
+                    focus-visible:ring-tl-accent"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Home
         </Link>
 
-        <div className="rounded-2xl shadow-md md:shadow-lg 
-                        bg-white/90 dark:bg-slate-900/80 
+        <div className="rounded-2xl shadow-lg 
+                        bg-tl-surface 
                         backdrop-blur-sm 
-                        border border-slate-200/60 dark:border-slate-800 
+                        border border-tl-border 
+                        hover:shadow-xl transition-shadow duration-300
                         p-6 md:p-8
                         space-y-5 md:space-y-6">
           
@@ -286,39 +288,37 @@ const CustomerAuth = () => {
             {/* Icon chip */}
             <div className="mx-auto mb-3 md:mb-4 inline-flex items-center justify-center 
                             w-14 h-14 md:w-16 md:h-16 rounded-full p-3 
-                            bg-gradient-to-r from-[#0077B6] to-[#003366] 
-                            shadow-md motion-reduce:shadow-sm">
+                            tl-gradient shadow-md">
               <Building2 className="w-7 h-7 md:w-8 md:h-8 text-white" />
             </div>
 
             {/* Title */}
             <h1 className="text-2xl md:text-3xl font-semibold 
-                          text-[#003366] dark:text-white 
+                          text-tl-primary 
                           text-center">
               Customer Portal
             </h1>
 
             {/* Subtitle */}
             <p className="text-sm md:text-base 
-                          text-gray-500 dark:text-slate-400 
+                          text-tl-muted 
                           text-center mt-1">
               Manage your orders, quotes, and deliveries
             </p>
           </div>
 
           {/* Tabs */}
-          <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-full flex gap-1 mt-4 mb-6">
+          <div className="bg-tl-bg border border-tl-border p-1 rounded-full flex gap-1 mt-4 mb-6">
             <button
               type="button"
               onClick={() => setActiveTab('signin')}
-              className={`flex-1 rounded-full px-4 py-1.5 md:py-2 
+              className={`flex-1 rounded-full px-4 py-2 
                           text-sm md:text-[15px] font-medium 
                           transition-all duration-200 
-                          motion-reduce:transition-none
                           min-h-[44px] touch-manipulation
                           ${activeTab === 'signin'
-                            ? 'text-white bg-gradient-to-r from-[#0077B6] to-[#003366] shadow-md'
-                            : 'text-gray-600 hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-slate-700'
+                            ? 'text-white tl-gradient shadow-md'
+                            : 'text-tl-muted hover:bg-tl-surface'
                           }`}
             >
               Sign In
@@ -326,14 +326,13 @@ const CustomerAuth = () => {
             <button
               type="button"
               onClick={() => setActiveTab('signup')}
-              className={`flex-1 rounded-full px-4 py-1.5 md:py-2 
+              className={`flex-1 rounded-full px-4 py-2 
                           text-sm md:text-[15px] font-medium 
                           transition-all duration-200 
-                          motion-reduce:transition-none
                           min-h-[44px] touch-manipulation
                           ${activeTab === 'signup'
-                            ? 'text-white bg-gradient-to-r from-[#0077B6] to-[#003366] shadow-md'
-                            : 'text-gray-600 hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-slate-700'
+                            ? 'text-white tl-gradient shadow-md'
+                            : 'text-tl-muted hover:bg-tl-surface'
                           }`}
             >
               Create Account
@@ -349,13 +348,13 @@ const CustomerAuth = () => {
                   <div className="relative mb-4 md:mb-5">
                     <label 
                       htmlFor="signin-email"
-                      className="absolute left-3 top-1.5 text-[11px] md:text-xs 
-                                text-gray-500 dark:text-slate-400 
+                      className="absolute left-3 top-2 text-xs 
+                                text-tl-muted 
                                 font-medium pointer-events-none z-10">
                       Email Address
                     </label>
-                    <Mail className="absolute left-3 top-3 md:top-3.5 h-4 w-4 
-                                    text-[#0077B6] dark:text-[#2AA6FF] z-10" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
+                                    text-tl-accent z-10" />
                     <input
                       id="signin-email"
                       type="email"
@@ -363,17 +362,17 @@ const CustomerAuth = () => {
                       onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
                       required
                       aria-label="Email address"
-                      className="w-full rounded-xl 
-                                border border-gray-300 dark:border-slate-700 
-                                bg-white dark:bg-slate-900 
-                                pl-10 pr-3 pt-6 pb-2 md:pt-7 md:pb-2.5
-                                text-sm md:text-[15px] 
-                                text-slate-800 dark:text-slate-100 
+                      aria-required="true"
+                      className="w-full rounded-lg 
+                                border border-tl-border 
+                                bg-tl-surface 
+                                pl-10 pr-3 pt-7 pb-3
+                                text-sm 
+                                text-tl-text 
                                 placeholder-transparent
-                                focus:border-[#0077B6] focus:ring-1 focus:ring-[#0077B6]/40 
-                                dark:focus:border-[#2AA6FF] dark:focus:ring-[#2AA6FF]/30
-                                transition-colors motion-reduce:transition-none
-                                min-h-[54px] md:min-h-[58px]
+                                focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
+                                transition-colors
+                                min-h-[58px]
                                 touch-manipulation"
                     />
                   </div>
@@ -382,33 +381,45 @@ const CustomerAuth = () => {
                   <div className="relative mb-4 md:mb-5">
                     <label 
                       htmlFor="signin-password"
-                      className="absolute left-3 top-1.5 text-[11px] md:text-xs 
-                                text-gray-500 dark:text-slate-400 
+                      className="absolute left-3 top-2 text-xs 
+                                text-tl-muted 
                                 font-medium pointer-events-none z-10">
                       Password
                     </label>
-                    <Lock className="absolute left-3 top-3 md:top-3.5 h-4 w-4 
-                                    text-[#0077B6] dark:text-[#2AA6FF] z-10" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
+                                    text-tl-accent z-10" />
                     <input
                       id="signin-password"
-                      type="password"
+                      type={showSignInPassword ? 'text' : 'password'}
                       value={signInData.password}
                       onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
                       required
                       aria-label="Password"
-                      className="w-full rounded-xl 
-                                border border-gray-300 dark:border-slate-700 
-                                bg-white dark:bg-slate-900 
-                                pl-10 pr-3 pt-6 pb-2 md:pt-7 md:pb-2.5
-                                text-sm md:text-[15px] 
-                                text-slate-800 dark:text-slate-100 
+                      aria-required="true"
+                      className="w-full rounded-lg 
+                                border border-tl-border 
+                                bg-tl-surface 
+                                pl-10 pr-12 pt-7 pb-3
+                                text-sm 
+                                text-tl-text 
                                 placeholder-transparent
-                                focus:border-[#0077B6] focus:ring-1 focus:ring-[#0077B6]/40 
-                                dark:focus:border-[#2AA6FF] dark:focus:ring-[#2AA6FF]/30
-                                transition-colors motion-reduce:transition-none
-                                min-h-[54px] md:min-h-[58px]
+                                focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
+                                transition-colors
+                                min-h-[58px]
                                 touch-manipulation"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignInPassword(!showSignInPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 mt-3 
+                                text-tl-muted hover:text-tl-accent transition-colors
+                                min-h-[44px] min-w-[44px] flex items-center justify-center
+                                focus-visible:outline-none focus-visible:ring-2 
+                                focus-visible:ring-tl-accent rounded"
+                      aria-label={showSignInPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showSignInPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
 
                   {/* Forgot Password Link */}
@@ -416,14 +427,14 @@ const CustomerAuth = () => {
                     <button
                       type="button"
                       onClick={() => setShowForgotPassword(true)}
-                      className="text-sm md:text-[15px] 
-                                text-[#0077B6] dark:text-[#2AA6FF] 
-                                hover:underline
-                                min-h-[44px] 
+                      className="text-sm 
+                                text-tl-accent 
+                                hover:text-tl-accent-hover hover:underline
+                                min-h-[44px] px-2
                                 touch-manipulation
                                 focus-visible:outline-none focus-visible:ring-2 
-                                focus-visible:ring-[#0077B6] dark:focus-visible:ring-[#2AA6FF] 
-                                rounded px-2">
+                                focus-visible:ring-tl-accent 
+                                rounded">
                       Forgot password?
                     </button>
                   </div>
@@ -433,27 +444,24 @@ const CustomerAuth = () => {
                     type="submit"
                     disabled={isLoading}
                     aria-busy={isLoading}
-                    className="w-full py-2.5 md:py-3 rounded-full 
-                              bg-gradient-to-r from-[#0077B6] to-[#003366] 
-                              text-white font-semibold text-base tracking-wide
-                              hover:from-[#00629b] hover:to-[#002b66] 
-                              active:scale-95 
-                              disabled:opacity-60 disabled:cursor-not-allowed
+                    className="w-full py-3 rounded-lg 
+                              tl-gradient 
+                              text-white font-semibold text-base
+                              shadow-md hover:opacity-95 
+                              disabled:opacity-50 disabled:cursor-not-allowed
                               transition-all duration-200 
-                              motion-reduce:transition-none motion-reduce:active:scale-100
-                              min-h-[48px] md:min-h-[52px]
-                              shadow-md hover:shadow-lg
+                              min-h-[50px]
                               touch-manipulation
                               focus-visible:outline-none focus-visible:ring-2 
-                              focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 
-                              dark:focus-visible:ring-[#2AA6FF]">
-                    {isLoading && (
-                      <svg className="inline-block w-4 h-4 mr-2 animate-spin" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
+                              focus-visible:ring-tl-accent focus-visible:ring-offset-2">
+                    {isLoading ? (
+                      <span className="flex items-center justify-center">
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        Signing in...
+                      </span>
+                    ) : (
+                      'Sign In'
                     )}
-                    {isLoading ? 'Signing in...' : 'Sign In'}
                   </button>
                 </form>
               ) : (
@@ -462,13 +470,13 @@ const CustomerAuth = () => {
                   <div className="relative mb-4 md:mb-5">
                     <label 
                       htmlFor="reset-email"
-                      className="absolute left-3 top-1.5 text-[11px] md:text-xs 
-                                text-gray-500 dark:text-slate-400 
+                      className="absolute left-3 top-2 text-xs 
+                                text-tl-muted 
                                 font-medium pointer-events-none z-10">
                       Email Address
                     </label>
-                    <KeyRound className="absolute left-3 top-3 md:top-3.5 h-4 w-4 
-                                        text-[#0077B6] dark:text-[#2AA6FF] z-10" />
+                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
+                                        text-tl-accent z-10" />
                     <input
                       id="reset-email"
                       type="email"
@@ -476,20 +484,20 @@ const CustomerAuth = () => {
                       onChange={(e) => setResetEmail(e.target.value)}
                       required
                       aria-label="Email address for password reset"
-                      className="w-full rounded-xl 
-                                border border-gray-300 dark:border-slate-700 
-                                bg-white dark:bg-slate-900 
-                                pl-10 pr-3 pt-6 pb-2 md:pt-7 md:pb-2.5
-                                text-sm md:text-[15px] 
-                                text-slate-800 dark:text-slate-100 
+                      aria-required="true"
+                      className="w-full rounded-lg 
+                                border border-tl-border 
+                                bg-tl-surface 
+                                pl-10 pr-3 pt-7 pb-3
+                                text-sm 
+                                text-tl-text 
                                 placeholder-transparent
-                                focus:border-[#0077B6] focus:ring-1 focus:ring-[#0077B6]/40 
-                                dark:focus:border-[#2AA6FF] dark:focus:ring-[#2AA6FF]/30
-                                transition-colors motion-reduce:transition-none
-                                min-h-[54px] md:min-h-[58px]
+                                focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
+                                transition-colors
+                                min-h-[58px]
                                 touch-manipulation"
                     />
-                    <p className="text-xs md:text-sm text-gray-500 dark:text-slate-400 mt-2">
+                    <p className="text-xs text-tl-muted mt-2">
                       We'll send you a link to reset your password
                     </p>
                   </div>
@@ -502,45 +510,40 @@ const CustomerAuth = () => {
                         setShowForgotPassword(false);
                         setResetEmail('');
                       }}
-                      className="flex-1 py-2.5 md:py-3 rounded-full 
-                                border-2 border-slate-300 dark:border-slate-600 
-                                text-slate-700 dark:text-slate-300 
+                      className="flex-1 py-3 rounded-lg 
+                                border border-tl-border 
+                                text-tl-text 
                                 font-medium text-base
-                                hover:bg-slate-100 dark:hover:bg-slate-800
-                                active:scale-95
+                                hover:bg-tl-bg
                                 transition-all duration-200 
-                                motion-reduce:transition-none motion-reduce:active:scale-100
-                                min-h-[48px] md:min-h-[52px]
+                                min-h-[50px]
                                 touch-manipulation
                                 focus-visible:outline-none focus-visible:ring-2 
-                                focus-visible:ring-slate-400 focus-visible:ring-offset-2">
+                                focus-visible:ring-tl-accent focus-visible:ring-offset-2">
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
                       aria-busy={isLoading}
-                      className="flex-1 py-2.5 md:py-3 rounded-full 
-                                bg-gradient-to-r from-[#0077B6] to-[#003366] 
-                                text-white font-semibold text-base tracking-wide
-                                hover:from-[#00629b] hover:to-[#002b66] 
-                                active:scale-95 
-                                disabled:opacity-60 disabled:cursor-not-allowed
+                      className="flex-1 py-3 rounded-lg 
+                                tl-gradient 
+                                text-white font-semibold text-base
+                                shadow-md hover:opacity-95 
+                                disabled:opacity-50 disabled:cursor-not-allowed
                                 transition-all duration-200 
-                                motion-reduce:transition-none motion-reduce:active:scale-100
-                                min-h-[48px] md:min-h-[52px]
-                                shadow-md hover:shadow-lg
+                                min-h-[50px]
                                 touch-manipulation
                                 focus-visible:outline-none focus-visible:ring-2 
-                                focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 
-                                dark:focus-visible:ring-[#2AA6FF]">
-                      {isLoading && (
-                        <svg className="inline-block w-4 h-4 mr-2 animate-spin" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
+                                focus-visible:ring-tl-accent focus-visible:ring-offset-2">
+                      {isLoading ? (
+                        <span className="flex items-center justify-center">
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                          Sending...
+                        </span>
+                      ) : (
+                        'Send Reset Link'
                       )}
-                      {isLoading ? 'Sending...' : 'Send Reset Link'}
                     </button>
                   </div>
                 </form>
@@ -556,13 +559,13 @@ const CustomerAuth = () => {
                 <div className="relative mb-4 md:mb-5">
                   <label 
                     htmlFor="signup-name"
-                    className="absolute left-3 top-1.5 text-[11px] md:text-xs 
-                              text-gray-500 dark:text-slate-400 
+                    className="absolute left-3 top-2 text-xs 
+                              text-tl-muted 
                               font-medium pointer-events-none z-10">
                     Full Name
                   </label>
-                  <User className="absolute left-3 top-3 md:top-3.5 h-4 w-4 
-                                  text-[#0077B6] dark:text-[#2AA6FF] z-10" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
+                                  text-tl-accent z-10" />
                   <input
                     id="signup-name"
                     type="text"
@@ -570,17 +573,17 @@ const CustomerAuth = () => {
                     onChange={(e) => setSignUpData({ ...signUpData, fullName: e.target.value })}
                     required
                     aria-label="Full name"
-                    className="w-full rounded-xl 
-                              border border-gray-300 dark:border-slate-700 
-                              bg-white dark:bg-slate-900 
-                              pl-10 pr-3 pt-6 pb-2 md:pt-7 md:pb-2.5
-                              text-sm md:text-[15px] 
-                              text-slate-800 dark:text-slate-100 
+                    aria-required="true"
+                    className="w-full rounded-lg 
+                              border border-tl-border 
+                              bg-tl-surface 
+                              pl-10 pr-3 pt-7 pb-3
+                              text-sm 
+                              text-tl-text 
                               placeholder-transparent
-                              focus:border-[#0077B6] focus:ring-1 focus:ring-[#0077B6]/40 
-                              dark:focus:border-[#2AA6FF] dark:focus:ring-[#2AA6FF]/30
-                              transition-colors motion-reduce:transition-none
-                              min-h-[54px] md:min-h-[58px]
+                              focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
+                              transition-colors
+                              min-h-[58px]
                               touch-manipulation"
                   />
                 </div>
@@ -589,13 +592,13 @@ const CustomerAuth = () => {
                 <div className="relative mb-4 md:mb-5">
                   <label 
                     htmlFor="signup-company"
-                    className="absolute left-3 top-1.5 text-[11px] md:text-xs 
-                              text-gray-500 dark:text-slate-400 
+                    className="absolute left-3 top-2 text-xs 
+                              text-tl-muted 
                               font-medium pointer-events-none z-10">
                     Company Name
                   </label>
-                  <Building2 className="absolute left-3 top-3 md:top-3.5 h-4 w-4 
-                                        text-[#0077B6] dark:text-[#2AA6FF] z-10" />
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
+                                        text-tl-accent z-10" />
                   <input
                     id="signup-company"
                     type="text"
@@ -603,17 +606,17 @@ const CustomerAuth = () => {
                     onChange={(e) => setSignUpData({ ...signUpData, companyName: e.target.value })}
                     required
                     aria-label="Company name"
-                    className="w-full rounded-xl 
-                              border border-gray-300 dark:border-slate-700 
-                              bg-white dark:bg-slate-900 
-                              pl-10 pr-3 pt-6 pb-2 md:pt-7 md:pb-2.5
-                              text-sm md:text-[15px] 
-                              text-slate-800 dark:text-slate-100 
+                    aria-required="true"
+                    className="w-full rounded-lg 
+                              border border-tl-border 
+                              bg-tl-surface 
+                              pl-10 pr-3 pt-7 pb-3
+                              text-sm 
+                              text-tl-text 
                               placeholder-transparent
-                              focus:border-[#0077B6] focus:ring-1 focus:ring-[#0077B6]/40 
-                              dark:focus:border-[#2AA6FF] dark:focus:ring-[#2AA6FF]/30
-                              transition-colors motion-reduce:transition-none
-                              min-h-[54px] md:min-h-[58px]
+                              focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
+                              transition-colors
+                              min-h-[58px]
                               touch-manipulation"
                   />
                 </div>
@@ -622,13 +625,13 @@ const CustomerAuth = () => {
                 <div className="relative mb-4 md:mb-5">
                   <label 
                     htmlFor="signup-email"
-                    className="absolute left-3 top-1.5 text-[11px] md:text-xs 
-                              text-gray-500 dark:text-slate-400 
+                    className="absolute left-3 top-2 text-xs 
+                              text-tl-muted 
                               font-medium pointer-events-none z-10">
                     Email Address
                   </label>
-                  <Mail className="absolute left-3 top-3 md:top-3.5 h-4 w-4 
-                                  text-[#0077B6] dark:text-[#2AA6FF] z-10" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
+                                  text-tl-accent z-10" />
                   <input
                     id="signup-email"
                     type="email"
@@ -636,17 +639,17 @@ const CustomerAuth = () => {
                     onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
                     required
                     aria-label="Email address"
-                    className="w-full rounded-xl 
-                              border border-gray-300 dark:border-slate-700 
-                              bg-white dark:bg-slate-900 
-                              pl-10 pr-3 pt-6 pb-2 md:pt-7 md:pb-2.5
-                              text-sm md:text-[15px] 
-                              text-slate-800 dark:text-slate-100 
+                    aria-required="true"
+                    className="w-full rounded-lg 
+                              border border-tl-border 
+                              bg-tl-surface 
+                              pl-10 pr-3 pt-7 pb-3
+                              text-sm 
+                              text-tl-text 
                               placeholder-transparent
-                              focus:border-[#0077B6] focus:ring-1 focus:ring-[#0077B6]/40 
-                              dark:focus:border-[#2AA6FF] dark:focus:ring-[#2AA6FF]/30
-                              transition-colors motion-reduce:transition-none
-                              min-h-[54px] md:min-h-[58px]
+                              focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
+                              transition-colors
+                              min-h-[58px]
                               touch-manipulation"
                   />
                 </div>
@@ -655,33 +658,45 @@ const CustomerAuth = () => {
                 <div className="relative mb-4 md:mb-5">
                   <label 
                     htmlFor="signup-password"
-                    className="absolute left-3 top-1.5 text-[11px] md:text-xs 
-                              text-gray-500 dark:text-slate-400 
+                    className="absolute left-3 top-2 text-xs 
+                              text-tl-muted 
                               font-medium pointer-events-none z-10">
                     Password
                   </label>
-                  <Lock className="absolute left-3 top-3 md:top-3.5 h-4 w-4 
-                                  text-[#0077B6] dark:text-[#2AA6FF] z-10" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
+                                  text-tl-accent z-10" />
                   <input
                     id="signup-password"
-                    type="password"
+                    type={showSignUpPassword ? 'text' : 'password'}
                     value={signUpData.password}
                     onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
                     required
                     aria-label="Password"
-                    className="w-full rounded-xl 
-                              border border-gray-300 dark:border-slate-700 
-                              bg-white dark:bg-slate-900 
-                              pl-10 pr-3 pt-6 pb-2 md:pt-7 md:pb-2.5
-                              text-sm md:text-[15px] 
-                              text-slate-800 dark:text-slate-100 
+                    aria-required="true"
+                    className="w-full rounded-lg 
+                              border border-tl-border 
+                              bg-tl-surface 
+                              pl-10 pr-12 pt-7 pb-3
+                              text-sm 
+                              text-tl-text 
                               placeholder-transparent
-                              focus:border-[#0077B6] focus:ring-1 focus:ring-[#0077B6]/40 
-                              dark:focus:border-[#2AA6FF] dark:focus:ring-[#2AA6FF]/30
-                              transition-colors motion-reduce:transition-none
-                              min-h-[54px] md:min-h-[58px]
+                              focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
+                              transition-colors
+                              min-h-[58px]
                               touch-manipulation"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 mt-3 
+                              text-tl-muted hover:text-tl-accent transition-colors
+                              min-h-[44px] min-w-[44px] flex items-center justify-center
+                              focus-visible:outline-none focus-visible:ring-2 
+                              focus-visible:ring-tl-accent rounded"
+                    aria-label={showSignUpPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showSignUpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
 
                 {/* Submit Button */}
@@ -689,27 +704,24 @@ const CustomerAuth = () => {
                   type="submit"
                   disabled={isLoading}
                   aria-busy={isLoading}
-                  className="w-full py-2.5 md:py-3 rounded-full 
-                            bg-gradient-to-r from-[#0077B6] to-[#003366] 
-                            text-white font-semibold text-base tracking-wide
-                            hover:from-[#00629b] hover:to-[#002b66] 
-                            active:scale-95 
-                            disabled:opacity-60 disabled:cursor-not-allowed
+                  className="w-full py-3 rounded-lg 
+                            tl-gradient 
+                            text-white font-semibold text-base
+                            shadow-md hover:opacity-95 
+                            disabled:opacity-50 disabled:cursor-not-allowed
                             transition-all duration-200 
-                            motion-reduce:transition-none motion-reduce:active:scale-100
-                            min-h-[48px] md:min-h-[52px]
-                            shadow-md hover:shadow-lg
+                            min-h-[50px]
                             touch-manipulation
                             focus-visible:outline-none focus-visible:ring-2 
-                            focus-visible:ring-[#0077B6] focus-visible:ring-offset-2 
-                            dark:focus-visible:ring-[#2AA6FF]">
-                  {isLoading && (
-                    <svg className="inline-block w-4 h-4 mr-2 animate-spin" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
+                            focus-visible:ring-tl-accent focus-visible:ring-offset-2">
+                  {isLoading ? (
+                    <span className="flex items-center justify-center">
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Creating Account...
+                    </span>
+                  ) : (
+                    'Create Account'
                   )}
-                  {isLoading ? 'Creating Account...' : 'Create Account'}
                 </button>
               </form>
             </div>
