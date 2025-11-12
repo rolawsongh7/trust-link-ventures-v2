@@ -17,6 +17,7 @@ import { ensureCustomerRecord } from '@/lib/customerUtils';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { MobileOrderCard } from './mobile/MobileOrderCard';
 import { InvoicePreviewDialog } from './InvoicePreviewDialog';
+import { OrderTimeline } from '@/components/orders/OrderTimeline';
 
 
 // Order interface matching database schema
@@ -185,17 +186,17 @@ export const CustomerOrders: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'quote_pending': return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'quote_sent': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'order_confirmed': return 'bg-cyan-100 text-cyan-800 border-cyan-200';
-      case 'payment_received': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'processing': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'ready_to_ship': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
-      case 'shipped': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'delivered': return 'bg-green-100 text-green-800 border-green-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-      case 'delivery_failed': return 'bg-rose-100 text-rose-800 border-rose-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'quote_pending': return 'bg-tl-muted/20 text-tl-muted border-tl-border';
+      case 'quote_sent': return 'bg-tl-accent/10 text-tl-accent border-tl-accent/30';
+      case 'order_confirmed': return 'bg-tl-info/10 text-tl-info border-tl-info/30';
+      case 'payment_received': return 'bg-tl-success/10 text-tl-success border-tl-success/30';
+      case 'processing': return 'bg-tl-warning/10 text-tl-warning border-tl-warning/30';
+      case 'ready_to_ship': return 'bg-tl-primary/10 text-tl-primary border-tl-primary/30';
+      case 'shipped': return 'bg-tl-warning/10 text-tl-warning border-tl-warning/30';
+      case 'delivered': return 'bg-tl-success/10 text-tl-success border-tl-success/30';
+      case 'cancelled': return 'bg-destructive/10 text-destructive border-destructive/30';
+      case 'delivery_failed': return 'bg-destructive/10 text-destructive border-destructive/30';
+      default: return 'bg-tl-muted/20 text-tl-muted border-tl-border';
     }
   };
 
@@ -211,12 +212,12 @@ export const CustomerOrders: React.FC = () => {
 
   const getCurrencyBadgeColor = (currency: string) => {
     const colors: Record<string, string> = {
-      'USD': 'bg-blue-100 text-blue-700 border-blue-300',
-      'EUR': 'bg-green-100 text-green-700 border-green-300',
-      'GBP': 'bg-purple-100 text-purple-700 border-purple-300',
-      'GHS': 'bg-orange-100 text-orange-700 border-orange-300'
+      'USD': 'bg-tl-accent/10 text-tl-accent border-tl-accent/30',
+      'EUR': 'bg-tl-success/10 text-tl-success border-tl-success/30',
+      'GBP': 'bg-tl-primary/10 text-tl-primary border-tl-primary/30',
+      'GHS': 'bg-tl-warning/10 text-tl-warning border-tl-warning/30'
     };
-    return colors[currency] || 'bg-gray-100 text-gray-700 border-gray-300';
+    return colors[currency] || 'bg-tl-muted/20 text-tl-muted border-tl-border';
   };
 
   const getStatusIcon = (status: string) => {
@@ -368,13 +369,13 @@ export const CustomerOrders: React.FC = () => {
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       {/* Address needed banner */}
       {orders.some(o => !o.delivery_address_id && ['payment_received', 'processing'].includes(o.status)) && (
-        <Card className="border-orange-200 bg-orange-50">
+        <Card className="border-tl-warning/30 bg-tl-warning/5 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-tl-warning mt-0.5" />
               <div className="flex-1">
-                <h3 className="font-semibold text-orange-900">Delivery Address Required</h3>
-                <p className="text-sm text-orange-800 mt-1">
+                <h3 className="font-semibold text-tl-warning">Delivery Address Required</h3>
+                <p className="text-sm text-tl-text/70 mt-1">
                   Some of your orders are waiting for delivery address information. Please provide your delivery address to proceed with shipping.
                 </p>
               </div>
@@ -385,35 +386,35 @@ export const CustomerOrders: React.FC = () => {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-tl-gradient bg-clip-text text-transparent">
             My Orders
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-tl-muted">
             Track your order status and delivery information
           </p>
         </div>
-        <Badge variant="secondary" className="text-lg px-4 py-2">
+        <Badge variant="secondary" className="text-lg px-4 py-2 bg-tl-surface border-tl-border">
           <Package className="h-4 w-4 mr-2" />
           {filteredOrders.length} Orders
         </Badge>
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="bg-tl-surface/80 backdrop-blur-md border-tl-border shadow-lg">
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-tl-muted" />
               <Input
                 placeholder="Search orders..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-tl-surface border-tl-border"
               />
             </div>
             
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-tl-surface border-tl-border">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
@@ -437,6 +438,7 @@ export const CustomerOrders: React.FC = () => {
                 setSearchTerm('');
                 setStatusFilter('all');
               }}
+              className="border-tl-border hover:bg-tl-surface"
             >
               Clear Filters
             </Button>
@@ -446,18 +448,20 @@ export const CustomerOrders: React.FC = () => {
 
       {/* Orders List */}
       {filteredOrders.length === 0 ? (
-        <Card className="text-center py-12">
+        <Card className="text-center py-12 bg-tl-surface border-tl-border">
           <CardContent>
-            <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No orders found</h3>
-            <p className="text-muted-foreground mb-6">
+            <div className="mx-auto mb-4 inline-flex items-center justify-center w-16 h-16 rounded-full bg-tl-gradient/10">
+              <Package className="h-8 w-8 text-tl-accent" />
+            </div>
+            <h3 className="text-xl font-semibold text-tl-primary mb-2">No orders found</h3>
+            <p className="text-tl-muted mb-6">
               {orders.length === 0 
                 ? "You haven't placed any orders yet." 
                 : "No orders match your current filters."
               }
             </p>
             {orders.length === 0 && (
-              <Button asChild>
+              <Button asChild className="bg-tl-gradient hover:opacity-90">
                 <a href="/customer/catalog">Browse Products</a>
               </Button>
             )}
@@ -489,16 +493,18 @@ export const CustomerOrders: React.FC = () => {
         <div className="space-y-4">
           {filteredOrders.map((order) => {
             const StatusIcon = getStatusIcon(order.status);
+            const showTimeline = ['quote_sent', 'order_confirmed', 'payment_received', 'ready_to_ship', 'shipped', 'in_transit', 'delivered'].includes(order.status);
+            
             return (
-              <Card key={order.id} className="hover:shadow-md transition-shadow">
+              <Card key={order.id} className="bg-tl-surface border-tl-border hover:shadow-lg hover:border-tl-accent/30 transition-all duration-300">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg mb-2 flex items-center gap-2">
-                        <StatusIcon className="h-5 w-5" />
+                      <CardTitle className="text-lg mb-2 flex items-center gap-2 text-tl-primary">
+                        <StatusIcon className="h-5 w-5 text-tl-accent" />
                         {order.order_number}
                       </CardTitle>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-4 text-sm text-tl-muted">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
                           Ordered {new Date(order.created_at).toLocaleDateString()}
@@ -510,7 +516,7 @@ export const CustomerOrders: React.FC = () => {
                           </div>
                         )}
                         {order.tracking_number && (
-                          <div className="font-mono text-xs bg-muted px-2 py-1 rounded">
+                          <div className="font-mono text-xs bg-tl-accent/10 text-tl-accent px-2 py-1 rounded border border-tl-accent/30">
                             {order.tracking_number}
                           </div>
                         )}
@@ -518,7 +524,7 @@ export const CustomerOrders: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="text-right">
-                        <div className="font-semibold flex items-center gap-2">
+                        <div className="font-semibold flex items-center gap-2 text-tl-text">
                           {getCurrencySymbol(order.currency)}{order.total_amount.toLocaleString()}
                           <Badge variant="outline" className={getCurrencyBadgeColor(order.currency)}>
                             {order.currency}
@@ -532,14 +538,19 @@ export const CustomerOrders: React.FC = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {/* Order Timeline */}
+                  {showTimeline && (
+                    <OrderTimeline currentStatus={order.status} className="mb-6" />
+                  )}
+
                   {order.order_items && order.order_items.length > 0 && (
                     <div className="mb-4">
-                      <h4 className="font-medium mb-2">Order Items:</h4>
+                      <h4 className="font-medium mb-2 text-tl-text">Order Items:</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {order.order_items.map((item, index) => (
-                          <div key={index} className="text-sm bg-muted/50 p-2 rounded">
-                            <span className="font-medium">{item.product_name}</span>
-                            <span className="text-muted-foreground ml-2">
+                          <div key={index} className="text-sm bg-tl-bg p-2 rounded border border-tl-border">
+                            <span className="font-medium text-tl-text">{item.product_name}</span>
+                            <span className="text-tl-muted ml-2">
                               {item.quantity} {item.unit}
                             </span>
                           </div>
@@ -551,15 +562,16 @@ export const CustomerOrders: React.FC = () => {
                   <div className="space-y-4">
                     {/* Payment Instructions for pending/payment_received orders */}
                     {['pending_payment', 'payment_received'].includes(order.status) && (
-                      <div className="pt-4 border-t">
+                      <div className="pt-4 border-t border-tl-border">
                         {showPaymentInstructions === order.id ? (
                           <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                              <h4 className="font-semibold">Payment Instructions</h4>
+                              <h4 className="font-semibold text-tl-text">Payment Instructions</h4>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setShowPaymentInstructions(null)}
+                                className="hover:bg-tl-bg"
                               >
                                 Hide
                               </Button>
@@ -577,7 +589,7 @@ export const CustomerOrders: React.FC = () => {
                             variant="default"
                             size="sm"
                             onClick={() => setShowPaymentInstructions(order.id)}
-                            className="w-full"
+                            className="w-full bg-tl-gradient hover:opacity-90"
                           >
                             <CreditCard className="h-4 w-4 mr-2" />
                             View Payment Instructions
@@ -595,7 +607,7 @@ export const CustomerOrders: React.FC = () => {
                             setSelectedOrderForPayment(order);
                             setPaymentProofDialogOpen(true);
                           }}
-                          className="bg-green-500 hover:bg-green-600"
+                          className="bg-tl-success hover:opacity-90"
                         >
                           <Upload className="h-4 w-4 mr-2" />
                           Upload Payment Proof
@@ -612,8 +624,8 @@ export const CustomerOrders: React.FC = () => {
                           }}
                           className={`${
                             order.delivery_address_requested_at 
-                              ? 'bg-orange-600 hover:bg-orange-700 animate-pulse border-2 border-orange-400' 
-                              : 'bg-orange-500 hover:bg-orange-600'
+                              ? 'bg-tl-warning hover:opacity-90 animate-pulse border-2 border-tl-warning/60' 
+                              : 'bg-tl-warning hover:opacity-90'
                           }`}
                         >
                           {order.delivery_address_requested_at && (
@@ -633,6 +645,7 @@ export const CustomerOrders: React.FC = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => handleTrackOrder(order)}
+                        className="border-tl-border hover:bg-tl-bg"
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Track Order
@@ -642,6 +655,7 @@ export const CustomerOrders: React.FC = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => handleReorder(order)}
+                        className="border-tl-border hover:bg-tl-bg"
                       >
                         <RotateCcw className="h-4 w-4 mr-2" />
                         Reorder
@@ -654,6 +668,7 @@ export const CustomerOrders: React.FC = () => {
                           setSelectedOrderForInvoice(order);
                           setInvoicePreviewOpen(true);
                         }}
+                        className="border-tl-border hover:bg-tl-bg"
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         View Invoice
