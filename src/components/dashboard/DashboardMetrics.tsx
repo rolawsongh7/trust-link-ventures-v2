@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { InteractiveCard } from '@/components/ui/interactive-card';
-import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, FileText, Users, Package, TrendingUp, TrendingDown } from 'lucide-react';
-import { useCounterAnimation } from '@/hooks/useCounterAnimation';
+import { DollarSign, FileText, Users, Package } from 'lucide-react';
 
 interface Metrics {
   monthlyRevenue: number;
@@ -114,129 +111,135 @@ export const DashboardMetrics = () => {
     }).format(value);
   };
 
-  const revenueCounter = useCounterAnimation({ end: metrics.monthlyRevenue, duration: 2000 });
-  const quotesCounter = useCounterAnimation({ end: metrics.activeQuotes, duration: 1500 });
-  const customersCounter = useCounterAnimation({ end: metrics.totalCustomers, duration: 1800 });
-  const ordersCounter = useCounterAnimation({ end: metrics.pendingOrders, duration: 1600 });
+  const [animatedRevenue, setAnimatedRevenue] = useState(0);
+  const [animatedQuotes, setAnimatedQuotes] = useState(0);
+  const [animatedCustomers, setAnimatedCustomers] = useState(0);
+  const [animatedOrders, setAnimatedOrders] = useState(0);
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map((i) => (
-          <InteractiveCard key={i} variant="glass" className="animate-pulse">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="h-4 bg-muted rounded w-24"></div>
-              <div className="h-4 w-4 bg-muted rounded"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 bg-muted rounded w-32 mb-2"></div>
-              <div className="h-4 bg-muted rounded w-40"></div>
-            </CardContent>
-          </InteractiveCard>
-        ))}
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!loading) {
+      animateValue(setAnimatedRevenue, metrics.monthlyRevenue, 2000);
+      animateValue(setAnimatedQuotes, metrics.activeQuotes, 1500);
+      animateValue(setAnimatedCustomers, metrics.totalCustomers, 1800);
+      animateValue(setAnimatedOrders, metrics.pendingOrders, 1600);
+    }
+  }, [loading, metrics]);
+
+  const animateValue = (setter: React.Dispatch<React.SetStateAction<number>>, end: number, duration: number) => {
+    let start = 0;
+    const range = end - start;
+    const increment = range / (duration / 16);
+    let current = start;
+    
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= end) {
+        setter(end);
+        clearInterval(timer);
+      } else {
+        setter(Math.floor(current));
+      }
+    }, 16);
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <InteractiveCard 
-        ref={revenueCounter.ref}
-        variant="glass" 
-        className="relative overflow-hidden border-primary/20 hover:border-primary/40 transition-all"
-      >
-        <div className="absolute inset-0 bg-gradient-primary opacity-5"></div>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-foreground">Monthly Revenue</CardTitle>
-          <div className="p-2 rounded-lg bg-primary/10">
-            <DollarSign className="h-5 w-5 text-primary" />
+    <>
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="animate-pulse bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="h-4 bg-[#E2E8F0] rounded w-1/2"></div>
+                <div className="h-10 w-10 bg-gradient-to-br from-[#3B82F6]/20 to-[#0EA5E9]/20 rounded-full"></div>
+              </div>
+              <div className="h-8 bg-[#E2E8F0] rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-[#E2E8F0] rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="group bg-white/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-white/20 hover:scale-[1.02]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium text-[#64748B]">Monthly Revenue</h3>
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#0EA5E9] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <DollarSign className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-[#0F172A] mb-2">
+              {formatCurrency(animatedRevenue)}
+            </div>
+            <div className="flex items-center gap-1 text-xs">
+              {metrics.revenueChange >= 0 ? (
+                <span className="text-green-600 font-semibold">↗ +{metrics.revenueChange.toFixed(1)}%</span>
+              ) : (
+                <span className="text-red-600 font-semibold">↘ {metrics.revenueChange.toFixed(1)}%</span>
+              )}
+              <span className="text-[#94A3B8]">from last month</span>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            {formatCurrency(parseInt(revenueCounter.count.replace(/[^0-9]/g, '')))}
-          </div>
-          <div className="flex items-center text-xs text-muted-foreground mt-2">
-            {metrics.revenueChange >= 0 ? (
-              <TrendingUp className="h-3 w-3 text-success mr-1" />
-            ) : (
-              <TrendingDown className="h-3 w-3 text-destructive mr-1" />
-            )}
-            <span className={metrics.revenueChange >= 0 ? "text-success" : "text-destructive"}>
-              {Math.abs(metrics.revenueChange).toFixed(1)}% from last month
-            </span>
-          </div>
-        </CardContent>
-      </InteractiveCard>
 
-      <InteractiveCard 
-        ref={quotesCounter.ref}
-        variant="glass"
-        className="relative overflow-hidden border-secondary/20 hover:border-secondary/40 transition-all"
-      >
-        <div className="absolute inset-0 bg-gradient-secondary opacity-5"></div>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-foreground">Active Quotes</CardTitle>
-          <div className="p-2 rounded-lg bg-secondary/10">
-            <FileText className="h-5 w-5 text-secondary" />
+          <div className="group bg-white/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-white/20 hover:scale-[1.02]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium text-[#64748B]">Active Quotes</h3>
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#8B5CF6] to-[#6366F1] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <FileText className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-[#0F172A] mb-2">
+              {animatedQuotes}
+            </div>
+            <div className="flex items-center gap-1 text-xs">
+              {metrics.quotesChange >= 0 ? (
+                <span className="text-green-600 font-semibold">↗ +{metrics.quotesChange}</span>
+              ) : (
+                <span className="text-red-600 font-semibold">↘ {metrics.quotesChange}</span>
+              )}
+              <span className="text-[#94A3B8]">from yesterday</span>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold bg-gradient-secondary bg-clip-text text-transparent">
-            {quotesCounter.count}
-          </div>
-          <div className="flex items-center text-xs text-muted-foreground mt-2">
-            <TrendingUp className="h-3 w-3 text-success mr-1" />
-            <span className="text-success">+{metrics.quotesChange} new this week</span>
-          </div>
-        </CardContent>
-      </InteractiveCard>
 
-      <InteractiveCard 
-        ref={customersCounter.ref}
-        variant="glass"
-        className="relative overflow-hidden border-accent/20 hover:border-accent/40 transition-all"
-      >
-        <div className="absolute inset-0 bg-gradient-accent opacity-5"></div>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-foreground">Total Customers</CardTitle>
-          <div className="p-2 rounded-lg bg-accent/10">
-            <Users className="h-5 w-5 text-accent" />
+          <div className="group bg-white/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-white/20 hover:scale-[1.02]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium text-[#64748B]">Total Customers</h3>
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#10B981] to-[#059669] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <Users className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-[#0F172A] mb-2">
+              {animatedCustomers}
+            </div>
+            <div className="flex items-center gap-1 text-xs">
+              {metrics.customersChange >= 0 ? (
+                <span className="text-green-600 font-semibold">↗ +{metrics.customersChange}</span>
+              ) : (
+                <span className="text-red-600 font-semibold">↘ {metrics.customersChange}</span>
+              )}
+              <span className="text-[#94A3B8]">new this month</span>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold bg-gradient-accent bg-clip-text text-transparent">
-            {customersCounter.count}
-          </div>
-          <div className="flex items-center text-xs text-muted-foreground mt-2">
-            <TrendingUp className="h-3 w-3 text-success mr-1" />
-            <span className="text-success">+{metrics.customersChange} new this month</span>
-          </div>
-        </CardContent>
-      </InteractiveCard>
 
-      <InteractiveCard 
-        ref={ordersCounter.ref}
-        variant="glass"
-        className="relative overflow-hidden border-warning/20 hover:border-warning/40 transition-all"
-      >
-        <div className="absolute inset-0 bg-gradient-subtle opacity-5"></div>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-foreground">Pending Orders</CardTitle>
-          <div className="p-2 rounded-lg bg-warning/10">
-            <Package className="h-5 w-5 text-warning" />
+          <div className="group bg-white/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-white/20 hover:scale-[1.02]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium text-[#64748B]">Pending Orders</h3>
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#F59E0B] to-[#D97706] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <Package className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-[#0F172A] mb-2">
+              {animatedOrders}
+            </div>
+            <div className="flex items-center gap-1 text-xs">
+              {metrics.ordersChange >= 0 ? (
+                <span className="text-green-600 font-semibold">↗ +{metrics.ordersChange}</span>
+              ) : (
+                <span className="text-red-600 font-semibold">↘ {metrics.ordersChange}</span>
+              )}
+              <span className="text-[#94A3B8]">from yesterday</span>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold text-foreground">
-            {ordersCounter.count}
-          </div>
-          <div className="flex items-center text-xs text-muted-foreground mt-2">
-            <TrendingUp className="h-3 w-3 text-success mr-1" />
-            <span className="text-success">+{metrics.ordersChange} this week</span>
-          </div>
-        </CardContent>
-      </InteractiveCard>
-    </div>
+        </div>
+      )}
+    </>
   );
 };

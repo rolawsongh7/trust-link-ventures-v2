@@ -39,34 +39,31 @@ export const QuickActions = () => {
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Quick Actions</CardTitle>
-        <CardDescription>Common tasks for faster workflow</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {actions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <Button
-                key={action.title}
-                variant="outline"
-                className="h-auto flex-col items-start p-4 hover:bg-muted"
-                onClick={action.action}
-              >
-                <div className={`p-2 rounded-lg mb-2 ${action.color}`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="text-left">
-                  <div className="font-semibold text-sm">{action.title}</div>
-                  <div className="text-xs text-muted-foreground mt-1">{action.description}</div>
-                </div>
-              </Button>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="bg-white/90 backdrop-blur-md shadow-lg border border-white/20 rounded-2xl p-6">
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-[#1E293B]">Quick Actions</h2>
+        <p className="text-sm text-[#64748B] mt-1">Common tasks for faster workflow</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {actions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <button
+              key={action.title}
+              onClick={action.action}
+              className="group relative h-auto flex flex-col items-start p-5 bg-white rounded-xl border border-[#E2E8F0] hover:border-[#3B82F6]/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+            >
+              <div className={`p-3 rounded-xl mb-3 ${action.color} bg-gradient-to-br group-hover:scale-110 transition-transform duration-200`}>
+                <Icon className="h-6 w-6" />
+              </div>
+              <div className="text-left">
+                <div className="font-semibold text-sm text-[#0F172A] mb-1">{action.title}</div>
+                <div className="text-xs text-[#64748B]">{action.description}</div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 };

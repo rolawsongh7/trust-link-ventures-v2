@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { FileText, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { FileText, Check, X, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -137,86 +134,96 @@ export const PendingApprovals = () => {
     }).format(value);
   };
 
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Pending Approvals</CardTitle>
-          <CardDescription>Items requiring your attention</CardDescription>
-        </CardHeader>
-        <CardContent>
+  return (
+    <>
+      {loading ? (
+        <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
+          <div className="mb-6">
+            <div className="h-6 bg-[#E2E8F0] rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-[#E2E8F0] rounded w-1/2"></div>
+          </div>
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="p-4 rounded-lg border bg-muted/50 animate-pulse">
-                <div className="h-4 bg-muted rounded w-1/2 mb-2"></div>
-                <div className="h-3 bg-muted rounded w-3/4"></div>
+              <div key={i} className="animate-pulse bg-white rounded-xl p-4 shadow-sm border border-[#E2E8F0]">
+                <div className="h-4 bg-[#E2E8F0] rounded w-3/4 mb-3"></div>
+                <div className="h-4 bg-[#E2E8F0] rounded w-1/2"></div>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Pending Approvals</CardTitle>
-        <CardDescription>Items requiring your attention</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+        </div>
+      ) : (
+        <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-[#1E293B]">Pending Approvals</h2>
+            <p className="text-sm text-[#64748B] mt-1">Items awaiting your review</p>
+          </div>
           {pendingItems.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No pending approvals</p>
+            <div className="text-center py-12">
+              <div className="h-16 w-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#3B82F6]/10 to-[#0EA5E9]/10 flex items-center justify-center">
+                <FileText className="h-8 w-8 text-[#3B82F6]/50" />
+              </div>
+              <p className="text-[#64748B]">No pending approvals</p>
+            </div>
           ) : (
-            pendingItems.map((item) => (
-              <div key={item.id} className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium text-sm">
-                        {item.type === 'quote' ? 'Quote' : 'Order'} {item.number}
+            <div className="space-y-3">
+              {pendingItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="group bg-white rounded-xl p-4 shadow-sm border border-[#E2E8F0] hover:border-[#3B82F6]/30 hover:shadow-md transition-all duration-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                          item.type === 'quote' 
+                            ? 'bg-gradient-to-r from-[#3B82F6] to-[#0EA5E9] text-white' 
+                            : 'bg-gradient-to-r from-[#8B5CF6] to-[#6366F1] text-white'
+                        }`}>
+                          {item.type.toUpperCase()} #{item.number}
+                        </span>
+                        <span className="text-sm font-semibold text-[#0F172A]">{item.customer}</span>
+                      </div>
+                      <p className="text-sm text-[#64748B]">
+                        <span className="font-semibold text-[#0F172A]">{formatCurrency(item.amount)}</span>
+                        <span className="mx-2">•</span>
+                        {new Date(item.created_at).toLocaleDateString()}
                       </p>
-                      <p className="text-xs text-muted-foreground">{item.customer}</p>
+                    </div>
+                    <div className="flex gap-2 ml-4">
+                      <button
+                        onClick={() => {
+                          if (item.type === 'quote') {
+                            navigate('/admin/quotes');
+                          } else {
+                            navigate('/admin/orders');
+                          }
+                        }}
+                        className="px-3 py-2 rounded-lg border border-[#E2E8F0] text-[#475569] hover:bg-[#F8FAFC] hover:border-[#CBD5E1] transition-all duration-200"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleApprove(item)}
+                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#3B82F6] to-[#0EA5E9] text-white font-medium hover:shadow-lg hover:scale-105 transition-all duration-200 flex items-center gap-1.5"
+                      >
+                        <Check className="h-4 w-4" />
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleReject(item)}
+                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#EF4444] to-[#DC2626] text-white font-medium hover:shadow-lg hover:scale-105 transition-all duration-200 flex items-center gap-1.5"
+                      >
+                        <X className="h-4 w-4" />
+                        Reject
+                      </button>
                     </div>
                   </div>
-                  <Badge variant="outline">{formatCurrency(item.amount)}</Badge>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => navigate(item.type === 'quote' ? '/quotes' : '/orders')}
-                  >
-                    <Eye className="h-3 w-3 mr-1" />
-                    View
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="default"
-                    className="flex-1"
-                    onClick={() => handleApprove(item)}
-                  >
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={() => handleReject(item)}
-                  >
-                    <XCircle className="h-3 w-3 mr-1" />
-                    Reject
-                  </Button>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </>
   );
 };

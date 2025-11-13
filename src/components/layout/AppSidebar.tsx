@@ -14,8 +14,10 @@ import {
   Clock,
   Bot,
   ExternalLink,
-  Receipt
+  Receipt,
+  Ship
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { navigateToPublicSite } from '@/utils/domainUtils';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { RealtimeIndicator } from '@/components/realtime/RealtimeIndicator';
@@ -62,28 +64,38 @@ export function AppSidebar() {
   const isExpanded = state === 'expanded';
 
   return (
-    <Sidebar className={isExpanded ? 'w-64' : 'w-16'} collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-4 py-2">
-          <div className="w-8 h-8 rounded-lg overflow-hidden bg-primary/10 p-1 flex-shrink-0">
+    <Sidebar className={cn(
+      "border-r border-border/50 transition-all duration-300 bg-gradient-to-b from-[#F7F9FC] to-[#EEF2F6]",
+      isExpanded ? "w-64" : "w-16"
+    )} collapsible="icon">
+      <SidebarHeader className="border-b border-border/50">
+        <div className={cn(
+          "flex items-center gap-3 px-4 py-4 rounded-xl bg-gradient-to-r from-[#3B82F6]/10 to-[#0EA5E9]/10",
+          !isExpanded && "justify-center"
+        )}>
+          <div className="w-8 h-8 rounded-lg overflow-hidden bg-white p-1 flex-shrink-0 shadow-sm">
             <img 
               src={getStorageUrl('logos', 'trust_link_ventures.png')} 
               alt="Trust Link Logo" 
-              className="w-full h-full object-contain bg-white rounded-md"
+              className="w-full h-full object-contain"
             />
           </div>
           {isExpanded && (
-            <div className="font-semibold text-sidebar-foreground">
-              <div className="text-sm font-bold">Trust Link Ventures</div>
+            <div>
+              <h2 className="font-semibold text-base bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent">Trust Link</h2>
+              <p className="text-xs text-[#64748B]">Ventures</p>
             </div>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-3 py-4">
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className={isExpanded ? 'block' : 'sr-only'}>
+          <SidebarGroupLabel className={cn(
+            "text-xs uppercase tracking-wider text-[#94A3B8] font-semibold mb-2",
+            !isExpanded && "sr-only"
+          )}>
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -94,16 +106,18 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
-                          isActive
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                            : 'hover:bg-sidebar-accent/50 text-sidebar-foreground hover:text-sidebar-accent-foreground'
-                        }`
+                        cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 relative",
+                          "hover:bg-[#EFF6FF] hover:scale-[1.02]",
+                          isActive && "bg-gradient-to-r from-[#3B82F6] to-[#0EA5E9] text-white font-semibold shadow-md before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-white before:rounded-l-lg",
+                          !isActive && "text-[#475569]",
+                          !isExpanded && "justify-center"
+                        )
                       }
                       end={item.url === '/'}
                     >
-                      <item.icon className="h-4 w-4" />
-                      {isExpanded && <span>{item.title}</span>}
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      {isExpanded && <span className="text-sm">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -115,7 +129,10 @@ export function AppSidebar() {
 
         {/* System Section */}
         <SidebarGroup>
-          <SidebarGroupLabel className={isExpanded ? 'block' : 'sr-only'}>
+          <SidebarGroupLabel className={cn(
+            "text-xs uppercase tracking-wider text-[#94A3B8] font-semibold mb-2",
+            !isExpanded && "sr-only"
+          )}>
             System
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -126,15 +143,17 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
-                          isActive
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                            : 'hover:bg-sidebar-accent/50 text-sidebar-foreground hover:text-sidebar-accent-foreground'
-                        }`
+                        cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 relative",
+                          "hover:bg-[#EFF6FF] hover:scale-[1.02]",
+                          isActive && "bg-gradient-to-r from-[#3B82F6] to-[#0EA5E9] text-white font-semibold shadow-md before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-white before:rounded-l-lg",
+                          !isActive && "text-[#475569]",
+                          !isExpanded && "justify-center"
+                        )
                       }
                     >
-                      <item.icon className="h-4 w-4" />
-                      {isExpanded && <span>{item.title}</span>}
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      {isExpanded && <span className="text-sm">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -145,10 +164,13 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild tooltip="View Public Site">
                   <button
                     onClick={navigateToPublicSite}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-sidebar-accent/50 text-sidebar-foreground hover:text-sidebar-accent-foreground w-full"
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-[#475569] hover:bg-[#EFF6FF] hover:scale-[1.02] w-full",
+                      !isExpanded && "justify-center"
+                    )}
                   >
-                    <ExternalLink className="h-4 w-4" />
-                    {isExpanded && <span>View Public Site</span>}
+                    <ExternalLink className="h-5 w-5 flex-shrink-0" />
+                    {isExpanded && <span className="text-sm">View Public Site</span>}
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>

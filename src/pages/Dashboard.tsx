@@ -8,22 +8,31 @@ import { PendingApprovals } from '@/components/dashboard/PendingApprovals';
 const Dashboard = () => {
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-[#F8FAFC] p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
+        {/* Gradient Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E40AF] via-[#3B82F6] to-[#0EA5E9] p-8 shadow-xl"
         >
-          <div className="flex items-center justify-between">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute inset-0" style={{
+              backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+              backgroundSize: '32px 32px'
+            }} />
+          </div>
+          
+          <div className="relative z-10 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-              <p className="text-muted-foreground">Welcome back! Here's what's happening with your business.</p>
+              <h1 className="text-3xl font-semibold text-white mb-2">Dashboard</h1>
+              <p className="text-white/90 text-base">Welcome back! Here's what's happening with your business.</p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Last updated</p>
-              <p className="text-sm font-medium">{new Date().toLocaleString()}</p>
+              <p className="text-sm text-white/70">Last updated</p>
+              <p className="text-sm font-medium text-white">{new Date().toLocaleString()}</p>
             </div>
           </div>
         </motion.div>
