@@ -10,9 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download } from 'lucide-react';
+import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download, Building, Package, Calendar, MessageSquare, Filter, CircleDot } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface QuoteRequest {
   id: string;
@@ -319,6 +320,27 @@ const QuoteRequestManagement = () => {
     }
   };
 
+  const formatQuoteNumber = (request: QuoteRequest) => {
+    return `QR-${new Date(request.created_at).getFullYear()}${String(new Date(request.created_at).getMonth() + 1).padStart(2, '0')}-${request.id.slice(0, 8).toUpperCase()}`;
+  };
+
+  const getEnhancedStatusStyle = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-gradient-to-r from-[#A855F7] to-[#9333EA] text-white shadow-md';
+      case 'reviewed':
+        return 'bg-gradient-to-r from-[#3B82F6] to-[#0EA5E9] text-white shadow-md';
+      case 'quoted':
+        return 'bg-gradient-to-r from-[#22C55E] to-[#16A34A] text-white shadow-md';
+      case 'converted':
+        return 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white shadow-md';
+      case 'declined':
+        return 'bg-gradient-to-r from-[#EF4444] to-[#DC2626] text-white shadow-md';
+      default:
+        return 'bg-gradient-to-r from-[#64748B] to-[#475569] text-white shadow-md';
+    }
+  };
+
   const filteredRequests = quoteRequests.filter(request => {
     const matchesSearch = 
       request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -344,292 +366,433 @@ const QuoteRequestManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-foreground">Quote Request Management</h2>
-        <p className="text-muted-foreground">Manage customer and lead quote requests</p>
-      </div>
-
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search requests..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+    <div className="space-y-6 min-h-screen bg-[#F8FAFC] p-6">
+      {/* Premium Gradient Header */}
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#1E40AF] via-[#3B82F6] to-[#0EA5E9] p-4 sm:p-6 md:p-8 mb-6 shadow-xl">
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.05) 10px, rgba(255,255,255,.05) 20px)'
+        }} />
+        
+        <div className="relative z-10">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
+            Customer Quote Inquiries
+          </h1>
+          <p className="text-blue-100 text-base sm:text-lg">
+            Manage and respond to all customer quote requests
+          </p>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="all">All ({getTabCount('all')})</TabsTrigger>
-          <TabsTrigger value="pending">Pending ({getTabCount('pending')})</TabsTrigger>
-          <TabsTrigger value="reviewed">Reviewed ({getTabCount('reviewed')})</TabsTrigger>
-          <TabsTrigger value="quoted">Quoted ({getTabCount('quoted')})</TabsTrigger>
-          <TabsTrigger value="converted">Converted ({getTabCount('converted')})</TabsTrigger>
-          <TabsTrigger value="declined">Declined ({getTabCount('declined')})</TabsTrigger>
-        </TabsList>
+      {/* Frosted Glass Filter Container */}
+      <div className="bg-white/90 backdrop-blur-md border border-white/20 rounded-2xl p-4 sm:p-6 shadow-lg space-y-4">
+        {/* Search Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#64748B] h-5 w-5" />
+            <Input
+              placeholder="Search by company, title, or quote number..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-12 h-10 sm:h-12 text-base rounded-xl border-[#E2E8F0] focus:border-[#3B82F6] transition-all"
+            />
+          </div>
+        </div>
 
-        <TabsContent value={activeTab} className="mt-6">
-          {filteredRequests.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <p className="text-muted-foreground">No quote requests found</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="p-0">
-                <Table>
-                   <TableHeader>
-                     <TableRow>
-                       <TableHead>Quote #</TableHead>
-                       <TableHead>Customer/Lead</TableHead>
-                       <TableHead>Status</TableHead>
-                       <TableHead>Urgency</TableHead>
-                       <TableHead>Items</TableHead>
-                       <TableHead>Created</TableHead>
-                       <TableHead>Actions</TableHead>
-                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredRequests.map((request) => (
-                       <TableRow key={request.id}>
-                          <TableCell className="font-medium">
-                            <div className="text-sm font-mono text-blue-600">
-                              {request.quote_number || `QR-${new Date(request.created_at).getFullYear()}${String(new Date(request.created_at).getMonth() + 1).padStart(2, '0')}-${request.id.slice(0, 8).toUpperCase()}`}
-                            </div>
-                          </TableCell>
-                         <TableCell className="font-medium">
-                           <div className="text-sm">
-                             {request.request_type === 'lead' ? request.lead_company_name : request.customer?.company_name}
-                           </div>
-                         </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusColor(request.status)} className="flex items-center gap-1 w-fit">
-                            {getStatusIcon(request.status)}
-                            {request.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${
-                              request.urgency === 'critical' ? 'bg-red-500' :
-                              request.urgency === 'high' ? 'bg-orange-500' :
-                              request.urgency === 'medium' ? 'bg-yellow-500' :
-                              'bg-green-500'
-                            }`} />
-                            <span className="capitalize text-sm">{request.urgency}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            {request.quote_request_items?.length || 0} item(s)
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(request.created_at), 'MMM dd, yyyy')}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedRequest(request);
-                                setShowDetailsDialog(true);
-                              }}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedRequest(request);
-                                setNewStatus(request.status);
-                                setAdminNotes(request.admin_notes || '');
-                                setShowUpdateDialog(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            {request.request_type === 'lead' && request.status !== 'converted' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => convertQuoteRequestToLead(request)}
-                              >
-                                <UserPlus className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {request.customer_id && request.status !== 'quoted' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => createQuoteFromRequest(request)}
-                                title="Create Quote"
-                              >
-                                <FileText className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+        {/* Enhanced Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 w-full bg-[#F1F5F9] p-1 rounded-xl h-auto">
+            <TabsTrigger 
+              value="all"
+              className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#3B82F6] data-[state=active]:to-[#0EA5E9] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-3"
+            >
+              <span className="flex items-center gap-2 text-xs sm:text-sm">
+                All
+                <Badge className="bg-white/20 text-current border-none text-xs">{getTabCount('all')}</Badge>
+              </span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pending"
+              className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#A855F7] data-[state=active]:to-[#9333EA] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-3"
+            >
+              <span className="flex items-center gap-2 text-xs sm:text-sm">
+                <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Pending</span>
+                <Badge className="bg-white/20 text-current border-none text-xs">{getTabCount('pending')}</Badge>
+              </span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="reviewed"
+              className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#3B82F6] data-[state=active]:to-[#0EA5E9] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-3"
+            >
+              <span className="flex items-center gap-2 text-xs sm:text-sm">
+                <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Reviewed</span>
+                <Badge className="bg-white/20 text-current border-none text-xs">{getTabCount('reviewed')}</Badge>
+              </span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="quoted"
+              className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#22C55E] data-[state=active]:to-[#16A34A] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-3"
+            >
+              <span className="flex items-center gap-2 text-xs sm:text-sm">
+                <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Quoted</span>
+                <Badge className="bg-white/20 text-current border-none text-xs">{getTabCount('quoted')}</Badge>
+              </span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="converted"
+              className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#F59E0B] data-[state=active]:to-[#D97706] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-3"
+            >
+              <span className="flex items-center gap-2 text-xs sm:text-sm">
+                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Converted</span>
+                <Badge className="bg-white/20 text-current border-none text-xs">{getTabCount('converted')}</Badge>
+              </span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="declined"
+              className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#EF4444] data-[state=active]:to-[#DC2626] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-3"
+            >
+              <span className="flex items-center gap-2 text-xs sm:text-sm">
+                <X className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Declined</span>
+                <Badge className="bg-white/20 text-current border-none text-xs">{getTabCount('declined')}</Badge>
+              </span>
+            </TabsTrigger>
+          </TabsList>
 
-      {/* Details Dialog */}
-      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span>Quote Request Details</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => selectedRequest && handleDownloadPDF(selectedRequest)}
-                  className="ml-auto"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-                </Button>
+          <TabsContent value={activeTab} className="mt-6">
+            {filteredRequests.length === 0 ? (
+              <div className="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center shadow-lg border border-white/20">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#3B82F6]/20 to-[#0EA5E9]/20 flex items-center justify-center">
+                  <FileText className="h-8 w-8 text-[#3B82F6]" />
+                </div>
+                <h3 className="text-xl font-semibold text-[#0F172A] mb-2">No quote requests found</h3>
+                <p className="text-[#64748B]">Try adjusting your filters or search terms</p>
               </div>
-              {selectedRequest && (
-                <div className="text-2xl font-bold font-mono text-primary bg-primary/10 px-4 py-2 rounded-lg border-2 border-primary/30">
-                  {selectedRequest.quote_number || `QR-${new Date(selectedRequest.created_at).getFullYear()}${String(new Date(selectedRequest.created_at).getMonth() + 1).padStart(2, '0')}-${selectedRequest.id.slice(0, 8).toUpperCase()}`}
-                </div>
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              View complete information about this quote request
-            </DialogDescription>
-          </DialogHeader>
-          
-          <ScrollArea className="h-[60vh] pr-4">
-            {selectedRequest && (
-              <div className="space-y-4 pb-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Title</label>
-                  <p className="text-sm text-muted-foreground">{selectedRequest.title}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Type</label>
-                  <p className="text-sm text-muted-foreground">{selectedRequest.request_type}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Status</label>
-                  <Badge variant={getStatusColor(selectedRequest.status)}>
-                    {selectedRequest.status}
-                  </Badge>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Urgency</label>
-                  <Badge variant={selectedRequest.urgency === 'high' ? 'destructive' : 'secondary'}>
-                    {selectedRequest.urgency}
-                  </Badge>
-                </div>
-              </div>
-
-              {selectedRequest.request_type === 'lead' ? (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Company</label>
-                    <p className="text-sm text-muted-foreground">{selectedRequest.lead_company_name}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Contact</label>
-                    <p className="text-sm text-muted-foreground">{selectedRequest.lead_contact_name}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Email</label>
-                    <p className="text-sm text-muted-foreground">{selectedRequest.lead_email}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Phone</label>
-                    <p className="text-sm text-muted-foreground">{selectedRequest.lead_phone}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Country</label>
-                    <p className="text-sm text-muted-foreground">{selectedRequest.lead_country}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Industry</label>
-                    <p className="text-sm text-muted-foreground">{selectedRequest.lead_industry}</p>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <label className="text-sm font-medium">Customer</label>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedRequest.customer?.company_name} - {selectedRequest.customer?.contact_name}
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <label className="text-sm font-medium">Message</label>
-                <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
-                  {selectedRequest.message}
-                </p>
-              </div>
-
-              {selectedRequest.admin_notes && (
-                <div>
-                  <label className="text-sm font-medium">Admin Notes</label>
-                  <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
-                    {selectedRequest.admin_notes}
-                  </p>
-                </div>
-              )}
-
-              {selectedRequest.quote_request_items && selectedRequest.quote_request_items.length > 0 && (
-                <div>
-                  <label className="text-sm font-medium">Requested Items</label>
-                  <Table className="mt-2">
+            ) : (
+              <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table className="min-w-[800px]">
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Product Name</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead>Unit</TableHead>
-                        <TableHead>Specifications</TableHead>
-                        <TableHead>Preferred Grade</TableHead>
+                      <TableRow className="bg-gradient-to-r from-[#F8FAFC] to-[#F1F5F9] border-b-2 border-[#E2E8F0] hover:bg-transparent">
+                        <TableHead className="font-semibold text-[#0F172A] text-sm py-4">Quote #</TableHead>
+                        <TableHead className="font-semibold text-[#0F172A] text-sm">Customer/Lead</TableHead>
+                        <TableHead className="font-semibold text-[#0F172A] text-sm">Status</TableHead>
+                        <TableHead className="font-semibold text-[#0F172A] text-sm">Urgency</TableHead>
+                        <TableHead className="font-semibold text-[#0F172A] text-sm">Items</TableHead>
+                        <TableHead className="font-semibold text-[#0F172A] text-sm">Created</TableHead>
+                        <TableHead className="font-semibold text-[#0F172A] text-sm">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {selectedRequest.quote_request_items.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.product_name}</TableCell>
-                          <TableCell>{item.quantity}</TableCell>
-                          <TableCell>{item.unit}</TableCell>
-                          <TableCell>{item.specifications || '-'}</TableCell>
-                          <TableCell>{item.preferred_grade || '-'}</TableCell>
+                      {filteredRequests.map((request) => (
+                        <TableRow 
+                          key={request.id}
+                          className="border-b border-[#E2E8F0]/50 hover:bg-[#F8FAFC] transition-colors group"
+                        >
+                          <TableCell className="font-medium py-4">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3B82F6] to-[#0EA5E9] flex items-center justify-center flex-shrink-0">
+                                <FileText className="h-4 w-4 text-white" />
+                              </div>
+                              <span className="font-mono text-sm text-[#3B82F6] font-semibold">
+                                {request.quote_number || formatQuoteNumber(request)}
+                              </span>
+                            </div>
+                          </TableCell>
+                          
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#3B82F6]/20 to-[#0EA5E9]/20 flex items-center justify-center flex-shrink-0">
+                                <Building className="h-5 w-5 text-[#3B82F6]" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-[#0F172A] text-sm">
+                                  {request.request_type === 'lead' ? request.lead_company_name : request.customer?.company_name}
+                                </p>
+                                <p className="text-xs text-[#64748B]">
+                                  {request.request_type === 'lead' ? request.lead_contact_name : request.customer?.contact_name}
+                                </p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          
+                          <TableCell>
+                            <Badge className={`px-3 py-1.5 rounded-full font-medium text-xs flex items-center gap-1.5 w-fit ${getEnhancedStatusStyle(request.status)}`}>
+                              {getStatusIcon(request.status)}
+                              <span className="capitalize">{request.status}</span>
+                            </Badge>
+                          </TableCell>
+                          
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3 h-3 rounded-full animate-pulse ${
+                                request.urgency === 'critical' ? 'bg-gradient-to-br from-red-500 to-red-600' :
+                                request.urgency === 'high' ? 'bg-gradient-to-br from-orange-500 to-orange-600' :
+                                request.urgency === 'medium' ? 'bg-gradient-to-br from-yellow-500 to-yellow-600' :
+                                'bg-gradient-to-br from-green-500 to-green-600'
+                              }`} />
+                              <span className="capitalize text-sm text-[#475569] font-medium">
+                                {request.urgency}
+                              </span>
+                            </div>
+                          </TableCell>
+                          
+                          <TableCell>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Package className="h-4 w-4 text-[#64748B]" />
+                              <span className="font-semibold text-[#0F172A]">
+                                {request.quote_request_items?.length || 0}
+                              </span>
+                              <span className="text-[#64748B]">items</span>
+                            </div>
+                          </TableCell>
+                          
+                          <TableCell>
+                            <div className="flex items-center gap-2 text-sm text-[#64748B]">
+                              <Calendar className="h-4 w-4" />
+                              {format(new Date(request.created_at), 'MMM dd, yyyy')}
+                            </div>
+                          </TableCell>
+                          
+                          <TableCell>
+                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedRequest(request);
+                                  setShowDetailsDialog(true);
+                                }}
+                                className="h-9 w-9 p-0 hover:bg-[#EFF6FF] hover:text-[#3B82F6] rounded-lg transition-all"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedRequest(request);
+                                  setNewStatus(request.status);
+                                  setAdminNotes(request.admin_notes || '');
+                                  setShowUpdateDialog(true);
+                                }}
+                                className="h-9 w-9 p-0 hover:bg-[#EFF6FF] hover:text-[#3B82F6] rounded-lg transition-all"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              
+                              {request.request_type === 'lead' && request.status !== 'converted' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => convertQuoteRequestToLead(request)}
+                                  className="h-9 w-9 p-0 hover:bg-[#F0FDF4] hover:text-[#22C55E] rounded-lg transition-all"
+                                  title="Convert to Lead"
+                                >
+                                  <UserPlus className="h-4 w-4" />
+                                </Button>
+                              )}
+                              
+                              {request.customer_id && request.status !== 'quoted' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => createQuoteFromRequest(request)}
+                                  className="h-9 w-9 p-0 hover:bg-[#F0F9FF] hover:text-[#0EA5E9] rounded-lg transition-all"
+                                  title="Create Quote"
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                              )}
+                              
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDownloadPDF(request)}
+                                className="h-9 w-9 p-0 hover:bg-[#FEF3C7] hover:text-[#F59E0B] rounded-lg transition-all"
+                                title="Download PDF"
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
-              )}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
 
-                <div className="flex justify-end pt-4">
-                  <Button
-                    onClick={() => selectedRequest && handleDownloadPDF(selectedRequest)}
-                    className="gap-2"
-                  >
-                    <Download className="h-4 w-4" />
-                    Download PDF
-                  </Button>
+      {/* Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col bg-white/95 backdrop-blur-xl border-2 border-white/20 shadow-2xl">
+          <DialogHeader className="bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] -m-6 mb-6 p-6 rounded-t-lg">
+            <DialogTitle className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-white">Quote Request Details</span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => selectedRequest && handleDownloadPDF(selectedRequest)}
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/30 gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Download PDF
+                </Button>
+              </div>
+              {selectedRequest && (
+                <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/30 w-fit">
+                  <FileText className="h-5 w-5 text-white" />
+                  <span className="text-xl font-bold font-mono text-white">
+                    {selectedRequest.quote_number || formatQuoteNumber(selectedRequest)}
+                  </span>
                 </div>
+              )}
+            </DialogTitle>
+            <DialogDescription className="text-blue-100">
+              Complete information about this quote request
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="flex-1 pr-4">
+            {selectedRequest && (
+              <div className="space-y-6 pb-4">
+                {/* Status & Urgency Bar */}
+                <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#F8FAFC] to-[#F1F5F9] rounded-xl border border-[#E2E8F0]">
+                  <div className="flex-1">
+                    <label className="text-xs font-medium text-[#64748B] uppercase tracking-wide">Status</label>
+                    <Badge className={`mt-1 ${getEnhancedStatusStyle(selectedRequest.status)}`}>
+                      {getStatusIcon(selectedRequest.status)}
+                      <span className="capitalize ml-1">{selectedRequest.status}</span>
+                    </Badge>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs font-medium text-[#64748B] uppercase tracking-wide">Urgency</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className={`w-3 h-3 rounded-full animate-pulse ${
+                        selectedRequest.urgency === 'critical' ? 'bg-gradient-to-br from-red-500 to-red-600' :
+                        selectedRequest.urgency === 'high' ? 'bg-gradient-to-br from-orange-500 to-orange-600' :
+                        selectedRequest.urgency === 'medium' ? 'bg-gradient-to-br from-yellow-500 to-yellow-600' :
+                        'bg-gradient-to-br from-green-500 to-green-600'
+                      }`} />
+                      <span className="capitalize font-semibold text-[#0F172A]">{selectedRequest.urgency}</span>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs font-medium text-[#64748B] uppercase tracking-wide">Type</label>
+                    <p className="text-sm font-semibold text-[#0F172A] mt-1 capitalize">{selectedRequest.request_type}</p>
+                  </div>
+                </div>
+
+                {/* Customer/Lead Info Card */}
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 border border-[#E2E8F0] shadow-sm">
+                  <h3 className="font-semibold text-[#0F172A] mb-4 flex items-center gap-2">
+                    <Building className="h-5 w-5 text-[#3B82F6]" />
+                    {selectedRequest.request_type === 'lead' ? 'Lead Information' : 'Customer Information'}
+                  </h3>
+                  
+                  {selectedRequest.request_type === 'lead' ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-[#64748B] uppercase tracking-wide">Company</label>
+                        <p className="text-sm font-semibold text-[#0F172A]">{selectedRequest.lead_company_name}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-[#64748B] uppercase tracking-wide">Contact</label>
+                        <p className="text-sm font-semibold text-[#0F172A]">{selectedRequest.lead_contact_name}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-[#64748B] uppercase tracking-wide">Email</label>
+                        <p className="text-sm text-[#475569]">{selectedRequest.lead_email}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-[#64748B] uppercase tracking-wide">Phone</label>
+                        <p className="text-sm text-[#475569]">{selectedRequest.lead_phone}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-[#64748B] uppercase tracking-wide">Country</label>
+                        <p className="text-sm text-[#475569]">{selectedRequest.lead_country}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-[#64748B] uppercase tracking-wide">Industry</label>
+                        <p className="text-sm text-[#475569]">{selectedRequest.lead_industry}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#3B82F6]/20 to-[#0EA5E9]/20 flex items-center justify-center">
+                        <Building className="h-7 w-7 text-[#3B82F6]" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-lg text-[#0F172A]">{selectedRequest.customer?.company_name}</p>
+                        <p className="text-sm text-[#64748B]">{selectedRequest.customer?.contact_name}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Message Card */}
+                <div className="bg-gradient-to-br from-[#F8FAFC] to-white rounded-xl p-6 border border-[#E2E8F0] shadow-sm">
+                  <label className="text-xs font-medium text-[#64748B] uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Customer Message
+                  </label>
+                  <p className="text-sm text-[#475569] leading-relaxed">{selectedRequest.message}</p>
+                </div>
+
+                {/* Admin Notes (if exist) */}
+                {selectedRequest.admin_notes && (
+                  <div className="bg-gradient-to-br from-[#FEF3C7] to-[#FDE68A] rounded-xl p-6 border border-[#F59E0B]/30 shadow-sm">
+                    <label className="text-xs font-medium text-[#92400E] uppercase tracking-wide mb-3 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Admin Notes
+                    </label>
+                    <p className="text-sm text-[#78350F] leading-relaxed">{selectedRequest.admin_notes}</p>
+                  </div>
+                )}
+
+                {/* Requested Items Table */}
+                {selectedRequest.quote_request_items && selectedRequest.quote_request_items.length > 0 && (
+                  <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 border border-[#E2E8F0] shadow-sm">
+                    <h3 className="font-semibold text-[#0F172A] mb-4 flex items-center gap-2">
+                      <Package className="h-5 w-5 text-[#3B82F6]" />
+                      Requested Items ({selectedRequest.quote_request_items.length})
+                    </h3>
+                    
+                    <div className="overflow-hidden rounded-lg border border-[#E2E8F0]">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-[#F8FAFC]">
+                            <TableHead className="font-semibold text-[#0F172A]">Product</TableHead>
+                            <TableHead className="font-semibold text-[#0F172A]">Quantity</TableHead>
+                            <TableHead className="font-semibold text-[#0F172A]">Unit</TableHead>
+                            <TableHead className="font-semibold text-[#0F172A]">Specifications</TableHead>
+                            <TableHead className="font-semibold text-[#0F172A]">Grade</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedRequest.quote_request_items.map((item, index) => (
+                            <TableRow key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-[#FAFBFC]'}>
+                              <TableCell className="font-medium text-[#0F172A]">{item.product_name}</TableCell>
+                              <TableCell className="text-[#475569]">{item.quantity}</TableCell>
+                              <TableCell className="text-[#475569]">{item.unit}</TableCell>
+                              <TableCell className="text-[#64748B] text-sm">{item.specifications || '-'}</TableCell>
+                              <TableCell className="text-[#64748B] text-sm">{item.preferred_grade || '-'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </ScrollArea>
@@ -638,52 +801,90 @@ const QuoteRequestManagement = () => {
 
       {/* Update Dialog */}
       <Dialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Update Quote Request</DialogTitle>
-            <DialogDescription>
-              Update the status and add admin notes
+        <DialogContent className="bg-white/95 backdrop-blur-xl border-2 border-white/20 shadow-2xl">
+          <DialogHeader className="bg-gradient-to-r from-[#3B82F6] to-[#0EA5E9] -m-6 mb-6 p-6 rounded-t-lg">
+            <DialogTitle className="text-2xl font-bold text-white">Update Quote Request</DialogTitle>
+            <DialogDescription className="text-blue-100">
+              Update the status and add internal notes
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Status</label>
+          <div className="space-y-6">
+            {/* Status Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-[#0F172A] flex items-center gap-2">
+                <CircleDot className="h-4 w-4 text-[#3B82F6]" />
+                Status
+              </label>
               <Select value={newStatus} onValueChange={setNewStatus}>
-                <SelectTrigger>
+                <SelectTrigger className="h-12 rounded-xl border-[#E2E8F0] focus:border-[#3B82F6] transition-all">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="reviewed">Reviewed</SelectItem>
-                  <SelectItem value="quoted">Quoted</SelectItem>
-                  <SelectItem value="converted">Converted</SelectItem>
-                  <SelectItem value="declined">Declined</SelectItem>
+                  <SelectItem value="pending" className="py-3">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-purple-500" />
+                      <span>Pending</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="reviewed" className="py-3">
+                    <div className="flex items-center gap-2">
+                      <Eye className="h-4 w-4 text-blue-500" />
+                      <span>Reviewed</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="quoted" className="py-3">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-green-500" />
+                      <span>Quoted</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="converted" className="py-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-yellow-500" />
+                      <span>Converted</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="declined" className="py-3">
+                    <div className="flex items-center gap-2">
+                      <X className="h-4 w-4 text-red-500" />
+                      <span>Declined</span>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div>
-              <label className="text-sm font-medium">Admin Notes</label>
+            {/* Admin Notes */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-[#0F172A] flex items-center gap-2">
+                <FileText className="h-4 w-4 text-[#3B82F6]" />
+                Admin Notes
+              </label>
               <Textarea
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
-                placeholder="Add notes about this request..."
-                rows={3}
+                placeholder="Add internal notes about this request..."
+                rows={4}
+                className="rounded-xl border-[#E2E8F0] focus:border-[#3B82F6] transition-all resize-none"
               />
             </div>
 
-            <div className="flex justify-end space-x-2">
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-4">
               <Button
                 variant="outline"
                 onClick={() => setShowUpdateDialog(false)}
+                className="h-11 px-6 rounded-xl border-[#E2E8F0] hover:bg-[#F8FAFC] transition-all"
               >
                 Cancel
               </Button>
               <Button
                 onClick={() => selectedRequest && updateRequestStatus(selectedRequest.id, newStatus, adminNotes)}
+                className="h-11 px-8 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#0EA5E9] hover:from-[#2563EB] hover:to-[#0284C7] text-white shadow-lg transition-all"
               >
-                Update
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Update Request
               </Button>
             </div>
           </div>
