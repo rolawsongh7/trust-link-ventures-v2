@@ -65,12 +65,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar className={cn(
-      "border-r border-border/50 transition-all duration-300 bg-gradient-to-b from-[#F7F9FC] to-[#EEF2F6]",
+      "border-r border-[#334155]/50 transition-all duration-300 bg-gradient-to-b from-[#1E293B] via-[#273548] to-[#334155]",
       isExpanded ? "w-64" : "w-16"
     )} collapsible="icon">
-      <SidebarHeader className="border-b border-border/50">
+      <SidebarHeader className="border-b border-[#334155]/50">
         <div className={cn(
-          "flex items-center gap-3 px-4 py-4 rounded-xl bg-gradient-to-r from-[#3B82F6]/10 to-[#0EA5E9]/10",
+          "flex items-center gap-3 px-4 py-4 rounded-xl bg-gradient-to-r from-[#3B82F6]/20 to-[#0EA5E9]/20",
           !isExpanded && "justify-center"
         )}>
           <div className="w-8 h-8 rounded-lg overflow-hidden bg-white p-1 flex-shrink-0 shadow-sm">
@@ -82,8 +82,8 @@ export function AppSidebar() {
           </div>
           {isExpanded && (
             <div>
-              <h2 className="font-semibold text-base bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent">Trust Link</h2>
-              <p className="text-xs text-[#64748B]">Ventures</p>
+              <h2 className="font-semibold text-base bg-gradient-to-r from-[#60A5FA] to-[#3B82F6] bg-clip-text text-transparent">Trust Link</h2>
+              <p className="text-xs text-[#94A3B8]">Ventures</p>
             </div>
           )}
         </div>
@@ -108,9 +108,9 @@ export function AppSidebar() {
                       className={({ isActive }) =>
                         cn(
                           "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 relative",
-                          "hover:bg-[#EFF6FF] hover:scale-[1.02]",
+                          "hover:bg-[#475569]/50 hover:scale-[1.02]",
                           isActive && "bg-gradient-to-r from-[#3B82F6] to-[#0EA5E9] text-white font-semibold shadow-md before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-white before:rounded-l-lg",
-                          !isActive && "text-[#475569]",
+                          !isActive && "text-[#E2E8F0]",
                           !isExpanded && "justify-center"
                         )
                       }
@@ -145,9 +145,9 @@ export function AppSidebar() {
                       className={({ isActive }) =>
                         cn(
                           "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 relative",
-                          "hover:bg-[#EFF6FF] hover:scale-[1.02]",
+                          "hover:bg-[#475569]/50 hover:scale-[1.02]",
                           isActive && "bg-gradient-to-r from-[#3B82F6] to-[#0EA5E9] text-white font-semibold shadow-md before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-white before:rounded-l-lg",
-                          !isActive && "text-[#475569]",
+                          !isActive && "text-[#E2E8F0]",
                           !isExpanded && "justify-center"
                         )
                       }
@@ -165,7 +165,7 @@ export function AppSidebar() {
                   <button
                     onClick={navigateToPublicSite}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-[#475569] hover:bg-[#EFF6FF] hover:scale-[1.02] w-full",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-[#E2E8F0] hover:bg-[#475569]/50 hover:scale-[1.02] w-full",
                       !isExpanded && "justify-center"
                     )}
                   >
