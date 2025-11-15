@@ -41,6 +41,7 @@ import { CustomerInvoices } from "@/components/customer/CustomerInvoices";
 import { CustomerAddresses } from "@/components/customer/CustomerAddresses";
 import CustomerNotifications from "@/pages/CustomerNotifications";
 import OrderTracking from "@/pages/OrderTracking";
+import CustomerTrackingHub from "@/pages/CustomerTrackingHub";
 import PaymentCallback from "@/pages/PaymentCallback";
 import AdminLogin from "./pages/AdminLogin";
 import Cookies from "./pages/Cookies";
@@ -194,6 +195,7 @@ const App = () => {
                         <Route path="quotes" element={<CustomerQuotes />} />
                         <Route path="orders" element={<CustomerOrders />} />
                         <Route path="orders/:orderId" element={<OrderTracking />} />
+                        <Route path="tracking" element={<CustomerTrackingHub />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="communications" element={<CustomerCommunications />} />
                         <Route path="addresses" element={<CustomerAddresses />} />
