@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Lock, AlertTriangle } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { QuoteOriginInfo } from '@/components/quotes/QuoteOriginInfo';
 
 interface EditOrderDetailsDialogProps {
   order: any;
@@ -101,9 +102,12 @@ export const EditOrderDetailsDialog = ({
           <ScrollArea className="max-h-[60vh]">
             <div className="pr-4">
               {order?.quote_id && (
-                <Badge variant="default" className="bg-blue-500 w-fit mb-4">
-                  🤖 Auto-generated from Quote
-                </Badge>
+                <>
+                  <Badge variant="default" className="bg-blue-500 w-fit mb-4">
+                    🤖 Auto-generated from Quote
+                  </Badge>
+                  <QuoteOriginInfo order={order} />
+                </>
               )}
 
               <form id="edit-order-form" onSubmit={handleSubmit} className="space-y-4">
