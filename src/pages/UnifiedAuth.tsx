@@ -75,8 +75,8 @@ const UnifiedAuth = () => {
       }
 
       // PRIORITY 3: If authenticated but not admin, route to customer portal
-      console.log('[UnifiedAuth] Non-admin user, navigating to customer portal');
-      navigate('/customer', { replace: true });
+      console.log('[UnifiedAuth] Non-admin user, navigating to /portal');
+      navigate('/portal', { replace: true });
     };
 
     routeUser();
