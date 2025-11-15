@@ -29,11 +29,13 @@ import {
   Grid3X3,
   ChevronDown,
   MapPin,
-  Menu
+  Menu,
+  Bell
 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { usePendingAddressRequests } from '@/hooks/usePendingAddressRequests';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -41,6 +43,7 @@ export const CustomerNavigation: React.FC = () => {
   const { profile, signOut } = useCustomerAuth();
   const { totalItems } = useShoppingCart();
   const { pendingCount } = usePendingAddressRequests();
+  const { unreadCount } = useRealtimeNotifications();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -295,16 +298,33 @@ export const CustomerNavigation: React.FC = () => {
                 <DropdownMenuSeparator />
                 
                 <DropdownMenuItem asChild>
-                  <Link to="/portal/profile" className="flex items-center w-full touch-safe">
-                    <User className="h-4 w-4 mr-2" />
-                    Profile Settings
+                  <Link to="/portal" className="flex items-center w-full touch-safe">
+                    <Grid3X3 className="h-4 w-4 mr-2 text-[#0077B6]" />
+                    Dashboard
                   </Link>
                 </DropdownMenuItem>
                 
                 <DropdownMenuItem asChild>
-                  <Link to="/portal" className="flex items-center w-full touch-safe">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Dashboard
+                  <Link to="/portal/notifications" className="flex items-center justify-between w-full touch-safe" aria-label="Notifications">
+                    <div className="flex items-center">
+                      <Bell className="h-4 w-4 mr-2 text-[#0077B6]" />
+                      Notifications
+                    </div>
+                    {unreadCount > 0 && (
+                      <Badge 
+                        className="bg-[#F4B400] text-white px-2 py-[2px] rounded-full text-xs font-semibold ml-2"
+                        aria-live="polite"
+                      >
+                        {unreadCount}
+                      </Badge>
+                    )}
+                  </Link>
+                </DropdownMenuItem>
+                
+                <DropdownMenuItem asChild>
+                  <Link to="/portal/profile" className="flex items-center w-full touch-safe">
+                    <User className="h-4 w-4 mr-2 text-[#0077B6]" />
+                    Profile Settings
                   </Link>
                 </DropdownMenuItem>
                 

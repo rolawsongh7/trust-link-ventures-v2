@@ -39,6 +39,7 @@ import { CustomerProfile } from "@/components/customer/CustomerProfile";
 import { CustomerCommunications } from "@/components/customer/CustomerCommunications";
 import { CustomerInvoices } from "@/components/customer/CustomerInvoices";
 import { CustomerAddresses } from "@/components/customer/CustomerAddresses";
+import CustomerNotifications from "@/pages/CustomerNotifications";
 import OrderTracking from "@/pages/OrderTracking";
 import PaymentCallback from "@/pages/PaymentCallback";
 import AdminLogin from "./pages/AdminLogin";
@@ -195,6 +196,7 @@ const App = () => {
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="communications" element={<CustomerCommunications />} />
                         <Route path="addresses" element={<CustomerAddresses />} />
+                        <Route path="notifications" element={<CustomerNotifications />} />
                         <Route path="profile" element={<CustomerProfile />} />
                         <Route path="payment-callback" element={<PaymentCallback />} />
                       </Route>
