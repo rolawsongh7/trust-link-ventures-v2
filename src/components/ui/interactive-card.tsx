@@ -37,12 +37,17 @@ export const InteractiveCard = React.forwardRef<HTMLDivElement, InteractiveCardP
         ref={ref}
         className={cn(
           getVariantClasses(),
-          interactive && 'interactive-element',
+          interactive && 'interactive-element cursor-pointer',
           loading && 'smart-loading loading',
           hapticFeedback && 'haptic-feedback',
           'focus-enhanced',
           className
         )}
+        style={interactive ? {
+          WebkitTapHighlightColor: 'transparent',
+          touchAction: 'manipulation',
+          ...(props.style || {})
+        } : props.style}
         tabIndex={interactive ? 0 : undefined}
         {...props}
       >
