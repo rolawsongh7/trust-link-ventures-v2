@@ -24,6 +24,7 @@ import { QuoteEditor } from './QuoteEditor';
 import { QuoteWizard } from './wizard/QuoteWizard';
 import { QuoteToOrderConverter } from './QuoteToOrderConverter';
 import QuoteAuditTrail from './QuoteAuditTrail';
+import { QuoteDetailsDialog } from './QuoteDetailsDialog';
 import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
@@ -86,6 +87,8 @@ const UnifiedQuoteManagement = () => {
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [isConverterOpen, setIsConverterOpen] = useState(false);
   const [convertingQuote, setConvertingQuote] = useState<Quote | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [selectedQuoteForDetails, setSelectedQuoteForDetails] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm({
@@ -705,6 +708,17 @@ const UnifiedQuoteManagement = () => {
             searchable={false}
             actions={(quote) => (
               <>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedQuoteForDetails(quote.id);
+                    setIsDetailsDialogOpen(true);
+                  }}
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Details & Audit Trail
+                </DropdownMenuItem>
+
                 {/* Lock Edit Prices after quote is sent */}
                 {(quote.status === 'draft' || quote.status === 'pending_review') ? (
                   <DropdownMenuItem
@@ -902,6 +916,12 @@ const UnifiedQuoteManagement = () => {
           onOrderCreated={fetchQuotes}
         />
       )}
+
+      <QuoteDetailsDialog
+        open={isDetailsDialogOpen}
+        onOpenChange={setIsDetailsDialogOpen}
+        quoteId={selectedQuoteForDetails}
+      />
     </div>
   );
 };

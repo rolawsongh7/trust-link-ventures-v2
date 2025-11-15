@@ -141,6 +141,19 @@ const QuoteView = () => {
         severity: 'low'
       });
 
+      // Broadcast real-time notification to admin channel
+      const channel = supabase.channel('quote-views');
+      channel.send({
+        type: 'broadcast',
+        event: 'quote_viewed',
+        payload: {
+          quoteId: tokenData.quote_id,
+          quoteNumber: quoteData.quote_number,
+          customerEmail: tokenData.customer_email,
+          viewedAt: new Date().toISOString()
+        }
+      });
+
     } catch (err: any) {
       console.error('Error fetching quote:', err);
       setError('Failed to load quote');

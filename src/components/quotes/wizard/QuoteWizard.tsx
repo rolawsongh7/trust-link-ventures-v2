@@ -31,6 +31,7 @@ export const QuoteWizard: React.FC<QuoteWizardProps> = ({
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [customItemDialogOpen, setCustomItemDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sendViewOnlyLink, setSendViewOnlyLink] = useState(false);
   const { toast } = useToast();
 
   const form = useForm({
@@ -156,6 +157,33 @@ export const QuoteWizard: React.FC<QuoteWizardProps> = ({
         title: 'Quote Created',
         description: `Quote ${quote.quote_number} created successfully`
       });
+
+      // Send view-only link if requested
+      if (sendViewOnlyLink && selectedCustomer?.email) {
+        try {
+          await supabase.functions.invoke('send-quote-email', {
+            body: {
+              quoteId: quote.id,
+              quoteNumber: quote.quote_number,
+              customerEmail: selectedCustomer.email,
+              customerName: selectedCustomer.contact_name || selectedCustomer.company_name,
+              sendViewOnlyLink: true
+            }
+          });
+
+          toast({
+            title: 'View-Only Link Sent',
+            description: 'Customer will receive a secure link to view the quote'
+          });
+        } catch (emailError) {
+          console.error('Error sending view-only link:', emailError);
+          toast({
+            title: 'Email Failed',
+            description: 'Quote created but failed to send view-only link',
+            variant: 'destructive'
+          });
+        }
+      }
 
       onQuoteCreated();
       onOpenChange(false);
@@ -364,6 +392,26 @@ export const QuoteWizard: React.FC<QuoteWizardProps> = ({
                     <div>{currency}</div>
                     <div className="text-muted-foreground">Valid Until:</div>
                     <div>{form.getValues('valid_until') || 'Not set'}</div>
+                  </div>
+                </div>
+
+                <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="sendViewOnlyLink"
+                      checked={sendViewOnlyLink}
+                      onChange={(e) => setSendViewOnlyLink(e.target.checked)}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <label htmlFor="sendViewOnlyLink" className="font-medium text-sm cursor-pointer">
+                        Send view-only link (for customers without accounts)
+                      </label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Customer will receive a secure magic link to view the quote without logging in
+                      </p>
+                    </div>
                   </div>
                 </div>
 
