@@ -31,7 +31,7 @@ export const CustomerProtectedRoute: React.FC<CustomerProtectedRouteProps> = ({ 
   }
 
   if (!user) {
-    return <Navigate to="/customer-auth" state={{ from: location }} replace />;
+    return <Navigate to="/portal-auth" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

@@ -50,7 +50,7 @@ export const PaymentCallback = () => {
         });
 
         setTimeout(() => {
-          navigate('/customer/orders');
+          navigate('/portal/orders');
         }, 3000);
 
       } else if (data.status === 'pending') {
@@ -102,7 +102,7 @@ export const PaymentCallback = () => {
                   Order Number: <span className="text-primary">{orderNumber}</span>
                 </p>
               )}
-              <Button onClick={() => navigate('/customer/orders')}>
+              <Button onClick={() => navigate('/portal/orders')}>
                 View My Orders
               </Button>
             </>
@@ -116,7 +116,7 @@ export const PaymentCallback = () => {
               <h2 className="text-2xl font-bold text-red-600 mb-2">Payment Failed</h2>
               <p className="text-muted-foreground mb-6">{message}</p>
               <div className="flex gap-3 justify-center">
-                <Button variant="outline" onClick={() => navigate('/customer/orders')}>
+                <Button variant="outline" onClick={() => navigate('/portal/orders')}>
                   View Orders
                 </Button>
                 <Button onClick={() => navigate('/customer/quotes')}>
@@ -136,7 +136,7 @@ export const PaymentCallback = () => {
               <p className="text-sm text-muted-foreground mb-6">
                 If payment was deducted from your account, please contact support with your transaction reference.
               </p>
-              <Button onClick={() => navigate('/customer/orders')}>
+              <Button onClick={() => navigate('/portal/orders')}>
                 Back to Orders
               </Button>
             </>

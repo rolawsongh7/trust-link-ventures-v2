@@ -224,7 +224,7 @@ export const OrderTracking: React.FC = () => {
                 {error || 'The order you are looking for could not be found.'}
               </p>
               <Button asChild>
-                <a href="/customer/orders">
+                <a href="/portal/orders">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Orders
                 </a>
@@ -427,7 +427,7 @@ export const OrderTracking: React.FC = () => {
         {/* Actions */}
         <div className="flex items-center gap-4">
           <Button variant="outline" asChild>
-            <a href="/customer/orders">
+            <a href="/portal/orders">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Orders
             </a>

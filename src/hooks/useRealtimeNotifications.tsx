@@ -134,6 +134,10 @@ export const useRealtimeNotifications = () => {
 
       if (error) throw error;
 
+      // Update local state immediately for instant feedback
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+
       toast({
         title: 'Success',
         description: 'All notifications marked as read',
