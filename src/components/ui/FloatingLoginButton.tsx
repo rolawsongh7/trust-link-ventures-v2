@@ -7,13 +7,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 export const FloatingLoginButton: React.FC = () => {
   const navigate = useNavigate();
-  const { user: authUser } = useAuth();
-  const { user: customerUser } = useCustomerAuth();
-  
-  // Don't show if any user is signed in
-  if (authUser || customerUser) {
-    return null;
-  }
 
   const handleLoginClick = () => {
     navigate('/portal-auth');
