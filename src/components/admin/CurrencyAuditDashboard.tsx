@@ -58,7 +58,7 @@ export const CurrencyAuditDashboard = () => {
           currency,
           total_amount,
           quote_id,
-          quotes (
+          quotes!quote_id (
             id,
             quote_number,
             currency
