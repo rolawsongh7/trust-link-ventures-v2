@@ -20,8 +20,11 @@ import {
   Calendar,
   Filter,
   Eye,
-  Beaker
+  Beaker,
+  DollarSign,
+  CheckCircle
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { InvoicePDFPreviewDialog } from './InvoicePDFPreviewDialog';

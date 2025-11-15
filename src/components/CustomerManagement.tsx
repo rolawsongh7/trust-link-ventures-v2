@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Search, Edit, Eye, Mail, Phone, Building, Users, Trash2, Download, Filter, X } from 'lucide-react';
+import { Plus, Search, Edit, Eye, Mail, Phone, Building, Users, Trash2, Download, Filter, X, Building2, CheckCircle, Clock, Star, TrendingUp, DollarSign } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -271,43 +272,54 @@ const CustomerManagement = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'destructive';
-      case 'medium': return 'default';
-      case 'low': return 'secondary';
-      default: return 'default';
+  const getEnhancedStatusStyle = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-gradient-to-r from-[#22C55E] to-[#16A34A] text-white shadow-md';
+      case 'inactive':
+        return 'bg-gradient-to-r from-[#64748B] to-[#475569] text-white shadow-md';
+      case 'prospect':
+        return 'bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white shadow-md';
+      case 'vip':
+        return 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white shadow-md';
+      default:
+        return 'bg-gradient-to-r from-[#64748B] to-[#475569] text-white shadow-md';
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'default';
-      case 'inactive': return 'secondary';
-      default: return 'default';
+  const getEnhancedPriorityStyle = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-gradient-to-r from-[#EF4444] to-[#DC2626] text-white shadow-md';
+      case 'medium':
+        return 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white shadow-md';
+      case 'low':
+        return 'bg-gradient-to-r from-[#64748B] to-[#475569] text-white shadow-md';
+      default:
+        return 'bg-gradient-to-r from-[#64748B] to-[#475569] text-white shadow-md';
     }
   };
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="h-8 bg-muted rounded w-48 animate-pulse"></div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 bg-muted rounded w-3/4"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="h-3 bg-muted rounded"></div>
-                  <div className="h-3 bg-muted rounded w-2/3"></div>
+      <div className="space-y-4 min-h-screen bg-[#F8FAFC] p-6">
+        {[1, 2, 3].map(i => (
+          <Card key={i} className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg animate-pulse">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="h-12 w-12 bg-gradient-to-br from-[#E2E8F0] to-[#CBD5E1] rounded-xl"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 bg-[#E2E8F0] rounded-lg w-1/3"></div>
+                  <div className="h-4 bg-[#F1F5F9] rounded-lg w-1/2"></div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 bg-[#F1F5F9] rounded w-full"></div>
+                <div className="h-3 bg-[#F1F5F9] rounded w-5/6"></div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   }
@@ -355,7 +367,8 @@ const CustomerManagement = () => {
       label: 'Status',
       sortable: true,
       render: (value) => (
-        <Badge variant={getStatusColor(value)}>
+        <Badge className={cn("px-3 py-1 rounded-full font-medium text-xs", getEnhancedStatusStyle(value))}>
+          <CheckCircle className="h-3 w-3 mr-1" />
           {value}
         </Badge>
       ),
@@ -365,7 +378,8 @@ const CustomerManagement = () => {
       label: 'Priority',
       sortable: true,
       render: (value) => (
-        <Badge variant={getPriorityColor(value)}>
+        <Badge className={cn("px-3 py-1 rounded-full font-medium text-xs", getEnhancedPriorityStyle(value))}>
+          <Star className="h-3 w-3 mr-1" />
           {value}
         </Badge>
       ),
@@ -635,11 +649,13 @@ const CustomerManagement = () => {
                     </CardTitle>
                     <CardDescription>{customer.contact_name}</CardDescription>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <Badge variant={getPriorityColor(customer.priority)}>
+                    <div className="flex flex-col gap-1">
+                    <Badge className={cn("px-3 py-1 rounded-full font-medium text-xs", getEnhancedPriorityStyle(customer.priority))}>
+                      <Star className="h-3 w-3 mr-1" />
                       {customer.priority}
                     </Badge>
-                    <Badge variant={getStatusColor(customer.customer_status)}>
+                    <Badge className={cn("px-3 py-1 rounded-full font-medium text-xs", getEnhancedStatusStyle(customer.customer_status))}>
+                      <CheckCircle className="h-3 w-3 mr-1" />
                       {customer.customer_status}
                     </Badge>
                   </div>

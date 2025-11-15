@@ -53,17 +53,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
   };
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-sm px-4">
-      <SidebarTrigger className="-ml-1" />
+    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b border-[#E2E8F0] bg-gradient-to-r from-white via-[#F8FAFC] to-white backdrop-blur-xl supports-[backdrop-filter]:bg-white/95 shadow-md px-4">
+      <SidebarTrigger className="-ml-1 hover:bg-[#EFF6FF] transition-colors" />
       
       <div className="flex-1 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <img 
             src={trustLinkLogo} 
             alt="Trust Link Ventures" 
-            className="h-10 w-auto hover:scale-105 transition-transform"
+            className="h-10 w-auto hover:scale-105 hover:drop-shadow-lg transition-all duration-300"
           />
-          <h1 className="text-lg font-semibold bg-gradient-primary bg-clip-text text-transparent">
+          <h1 className="text-lg font-semibold bg-gradient-to-r from-[#1E40AF] via-[#3B82F6] to-[#0EA5E9] bg-clip-text text-transparent">
             Trust Link Ventures
           </h1>
         </div>
@@ -74,11 +74,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
             variant="outline"
             size="sm"
             onClick={onOpenCommandPalette}
-            className="gap-2 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all"
+            className="gap-2 text-[#64748B] hover:bg-gradient-to-r hover:from-[#EFF6FF] hover:to-[#DBEAFE] hover:text-[#3B82F6] hover:border-[#3B82F6] transition-all duration-300"
           >
-            <Search className="h-4 w-4" />
+            <Search className="h-4 w-4 transition-transform group-hover:scale-110" />
             <span className="hidden sm:inline">Search...</span>
-            <Badge variant="outline" className="ml-2 hidden md:inline-flex text-xs border-primary/20">
+            <Badge variant="outline" className="ml-2 hidden md:inline-flex text-xs border-[#3B82F6]/30 bg-[#EFF6FF] text-[#3B82F6]">
               ⌘K
             </Badge>
           </Button>
@@ -86,16 +86,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:ring-2 hover:ring-primary/20 transition-all">
-                <Avatar className="h-8 w-8 ring-2 ring-border hover:ring-primary transition-all">
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:ring-2 hover:ring-[#3B82F6]/30 transition-all">
+                <Avatar className="h-8 w-8 ring-2 ring-gradient-to-r from-[#3B82F6] to-[#0EA5E9] hover:ring-[#F4B400] transition-all">
                   <AvatarImage src={user?.user_metadata?.avatar_url} alt="User" />
-                  <AvatarFallback className="text-xs bg-gradient-primary text-primary-foreground">
+                  <AvatarFallback className="text-xs bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white">
                     {getInitials(user?.user_metadata?.full_name)}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent className="w-56 bg-white/95 backdrop-blur-md border-[#E2E8F0] shadow-lg" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
