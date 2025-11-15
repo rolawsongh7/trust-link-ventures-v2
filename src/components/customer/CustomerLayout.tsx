@@ -2,7 +2,6 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { CustomerNavigation } from '@/components/customer/CustomerNavigation';
 import { FloatingLoginButton } from '@/components/ui/FloatingLoginButton';
-import { FloatingNotificationButton } from '@/components/ui/FloatingNotificationButton';
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { RealtimeIndicator } from '@/components/realtime/RealtimeIndicator';
 import { useBackgroundSync } from '@/hooks/useBackgroundSync';
@@ -24,7 +23,6 @@ export const CustomerLayout: React.FC = () => {
         <Outlet />
       </main>
       {mobileFeatures.showFloatingLogin && <FloatingLoginButton />}
-      {mobileFeatures.showFloatingNotifications && <FloatingNotificationButton />}
       {mobileFeatures.showPWAInstallPrompt && <PWAInstallPrompt />}
     </div>
   );
