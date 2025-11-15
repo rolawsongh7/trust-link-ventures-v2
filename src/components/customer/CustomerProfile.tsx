@@ -9,6 +9,7 @@ import { User, Building2, Mail, Phone, MapPin, Save, Shield, Lock } from 'lucide
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
+import { CustomerMFASetup } from './CustomerMFASetup';
 
 
 export const CustomerProfile: React.FC = () => {
@@ -17,6 +18,7 @@ export const CustomerProfile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showMFASetup, setShowMFASetup] = useState(false);
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     company_name: profile?.company_name || '',
@@ -274,6 +276,7 @@ export const CustomerProfile: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="w-full justify-start border-tl-border text-tl-text hover:bg-tl-muted/20"
+                onClick={() => setShowMFASetup(true)}
               >
                 <Shield className="h-4 w-4 mr-2" />
                 Two-Factor Authentication
@@ -320,6 +323,11 @@ export const CustomerProfile: React.FC = () => {
       <ChangePasswordDialog 
         open={showChangePassword} 
         onOpenChange={setShowChangePassword}
+      />
+
+      <CustomerMFASetup
+        open={showMFASetup}
+        onOpenChange={setShowMFASetup}
       />
     </div>
   );
