@@ -1234,6 +1234,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          id: string
+          message: string | null
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message?: string | null
+          read?: boolean | null
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message?: string | null
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       opportunities: {
         Row: {
           actual_close_date: string | null
@@ -2179,6 +2212,47 @@ export type Database = {
           validity_days?: number | null
         }
         Relationships: []
+      }
+      quote_view_analytics: {
+        Row: {
+          id: string
+          ip_address: unknown
+          quote_id: string | null
+          sections_viewed: Json | null
+          token: string
+          user_agent: string | null
+          view_duration: number | null
+          viewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          ip_address?: unknown
+          quote_id?: string | null
+          sections_viewed?: Json | null
+          token: string
+          user_agent?: string | null
+          view_duration?: number | null
+          viewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          ip_address?: unknown
+          quote_id?: string | null
+          sections_viewed?: Json | null
+          token?: string
+          user_agent?: string | null
+          view_duration?: number | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_view_analytics_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quote_view_tokens: {
         Row: {

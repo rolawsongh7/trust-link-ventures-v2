@@ -16,6 +16,7 @@ interface SendQuoteEmailRequest {
   customerEmail: string;
   customerName?: string;
   companyName?: string;
+  sendViewOnlyLink?: boolean;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -25,7 +26,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { quoteId, customerEmail, customerName, companyName }: SendQuoteEmailRequest = await req.json();
+    const { quoteId, customerEmail, customerName, companyName, sendViewOnlyLink }: SendQuoteEmailRequest = await req.json();
 
     if (!quoteId || !customerEmail) {
       throw new Error("Missing required fields: quoteId and customerEmail");
@@ -84,8 +85,15 @@ const handler = async (req: Request): Promise<Response> => {
     const finalCustomerName = customerName || quote.customers?.contact_name || "Valued Customer";
     const finalCompanyName = companyName || quote.customers?.company_name || "Your Company";
 
-    // Create magic link for quote approval
-    const approvalUrl = `${supabaseUrl.replace('.supabase.co', '')}/quote-approval/${quoteId}`;
+    // Create magic link for quote approval or view-only link
+    let viewLink = '';
+    if (sendViewOnlyLink) {
+      const { data: tokenData } = await supabase.functions.invoke('generate-quote-view-token', {
+        body: { quoteId, customerEmail }
+      });
+      viewLink = tokenData?.viewLink || '';
+    }
+    const approvalUrl = viewLink || `${supabaseUrl.replace('.supabase.co', '')}/quote-approval/${quoteId}`;
 
     // Send email to customer
     const customerEmailResponse = await resend.emails.send({

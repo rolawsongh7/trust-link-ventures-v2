@@ -40,6 +40,9 @@ import { CustomerCommunications } from "@/components/customer/CustomerCommunicat
 import { CustomerInvoices } from "@/components/customer/CustomerInvoices";
 import { CustomerAddresses } from "@/components/customer/CustomerAddresses";
 import CustomerNotifications from "@/pages/CustomerNotifications";
+import QuoteView from "@/pages/QuoteView";
+import ManualQuoteAnalytics from "@/components/analytics/ManualQuoteAnalytics";
+import CurrencyAnalytics from "@/components/analytics/CurrencyAnalytics";
 import OrderTracking from "@/pages/OrderTracking";
 import CustomerTrackingHub from "@/pages/CustomerTrackingHub";
 import PaymentCallback from "@/pages/PaymentCallback";
@@ -152,6 +155,8 @@ const App = () => {
                       }>
                         <Route index element={<Navigate to="/admin/dashboard" replace />} />
                         <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="analytics/manual-quotes" element={<ManualQuoteAnalytics />} />
+                        <Route path="analytics/currency" element={<CurrencyAnalytics />} />
                         <Route path="customers" element={<CustomersPage />} />
                         <Route path="leads" element={<LeadsPage />} />
                         <Route path="quotes" element={<QuotesPage />} />
@@ -178,6 +183,7 @@ const App = () => {
                         <Route path="/terms" element={<Terms />} />
                         <Route path="/cookies" element={<Cookies />} />
                         <Route path="/notifications" element={<NotificationDemo />} />
+                        <Route path="/quote-view/:token" element={<QuoteView />} />
                       </Route>
                       
                       {/* Portal routes (new primary path) */}
