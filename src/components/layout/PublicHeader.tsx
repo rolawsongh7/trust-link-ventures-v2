@@ -59,21 +59,6 @@ export const PublicHeader = () => {
           
           {/* Auth Actions */}
           <div className="ml-4 md:ml-6 flex items-center space-x-2 md:space-x-4">
-            {user && <NotificationCenter />}
-            
-            {/* Show Admin Portal button only for admin users AND web only */}
-            {hasAdminAccess && !isNativeApp() && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={navigateToAdminPortal}
-                className="hidden sm:flex touch-manipulation"
-              >
-                <Shield className="h-4 w-4 mr-2" />
-                <span>Admin Portal</span>
-              </Button>
-            )}
-            
             <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hidden sm:flex touch-manipulation">
               <Link to="/portal-auth">
                 <LogIn className="h-4 w-4 mr-2" />
