@@ -39,6 +39,9 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
       // Fetch quote items
       const { data: quoteItems, error: itemsError } = await supabase
         .from('quote_items')
@@ -60,11 +63,14 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
         .insert([{
           order_number: orderNumber,
           quote_id: quote.id,
+          source_quote_id: quote.id,
           customer_id: quote.customer_id,
           total_amount: quote.total_amount,
           currency: quote.currency,
           status: data.orderStatus,
           payment_method: data.paymentMethod,
+          manual_confirmation_method: data.confirmationMethod,
+          manual_confirmation_notes: data.confirmationNotes,
           notes: `Manually converted from Quote ${quote.quote_number}\n\nConfirmation Method: ${data.confirmationMethod}\nNotes: ${data.confirmationNotes}`
         }])
         .select()
@@ -99,6 +105,29 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
         .eq('id', quote.id);
 
       if (quoteUpdateError) throw quoteUpdateError;
+
+      // Log audit event
+      await supabase.from('audit_logs').insert({
+        user_id: user?.id,
+        event_type: 'quote_converted_to_order',
+        action: 'convert',
+        resource_type: 'order',
+        resource_id: order.id,
+        event_data: {
+          quote_id: quote.id,
+          quote_number: quote.quote_number,
+          order_number: order.order_number,
+          order_id: order.id,
+          conversion_type: 'manual',
+          confirmation_method: data.confirmationMethod,
+          payment_method: data.paymentMethod,
+          initial_status: data.orderStatus,
+          total_amount: quote.total_amount,
+          currency: quote.currency,
+          confirmation_notes: data.confirmationNotes
+        },
+        severity: 'low'
+      });
 
       toast({
         title: 'Order Created',

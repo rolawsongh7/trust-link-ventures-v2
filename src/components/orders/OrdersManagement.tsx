@@ -13,7 +13,7 @@ import { EditOrderDetailsDialog } from './EditOrderDetailsDialog';
 import OrderStatusHistory from './OrderStatusHistory';
 import { PaymentConfirmationDialog } from './PaymentConfirmationDialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
+import { QuoteOriginInfo } from '@/components/quotes/QuoteOriginInfo';
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -45,6 +45,9 @@ interface Order {
   payment_reference?: string;
   delivery_address_requested_at?: string;
   delivery_address_confirmed_at?: string;
+  source_quote_id?: string;
+  manual_confirmation_method?: string;
+  manual_confirmation_notes?: string;
   customer_addresses?: {
     street_address: string;
     city: string;

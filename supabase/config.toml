@@ -82,3 +82,9 @@ verify_jwt = true
 
 [functions.paystack-webhook]
 verify_jwt = false
+
+[functions.generate-quote-view-token]
+verify_jwt = false
+
+[functions.check-expiring-quotes]
+verify_jwt = false
