@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { OrderCardSkeleton } from '@/components/orders/OrderCardSkeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -240,14 +241,11 @@ const UnifiedOrdersManagement = () => {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        {[1, 2, 3].map(i => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-6">
-              <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-            </CardContent>
-          </Card>
+      <div className="space-y-4 p-6">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} style={{ animationDelay: `${i * 100}ms` }} className="animate-fade-in">
+            <OrderCardSkeleton />
+          </div>
         ))}
       </div>
     );
