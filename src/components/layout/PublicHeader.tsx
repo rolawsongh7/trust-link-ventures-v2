@@ -101,20 +101,6 @@ export const PublicHeader = () => {
                 </Link>
               ))}
               
-              {/* Admin Portal button in mobile menu - web only */}
-              {hasAdminAccess && !isNativeApp() && (
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    navigateToAdminPortal();
-                  }}
-                  className="block w-full text-left px-3 py-3 text-base font-medium text-primary hover:text-primary/80 transition-colors rounded-md hover:bg-muted/50 touch-manipulation"
-                >
-                  <Shield className="inline h-4 w-4 mr-2" />
-                  Admin Portal
-                </button>
-              )}
-              
               <Link
                 to="/portal-auth"
                 className="block px-3 py-3 text-base font-medium text-primary hover:text-primary/80 transition-colors rounded-md hover:bg-muted/50 touch-manipulation sm:hidden"
