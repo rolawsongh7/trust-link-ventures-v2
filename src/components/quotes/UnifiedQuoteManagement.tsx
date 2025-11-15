@@ -21,6 +21,8 @@ import { DataTable, Column } from '@/components/ui/data-table';
 import { GenerateQuoteDialog } from './GenerateQuoteDialog';
 import { QuotePreviewDialog } from './QuotePreviewDialog';
 import { QuoteEditor } from './QuoteEditor';
+import { QuoteWizard } from './wizard/QuoteWizard';
+import { QuoteToOrderConverter } from './QuoteToOrderConverter';
 import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
@@ -81,6 +83,8 @@ const UnifiedQuoteManagement = () => {
   const [selectedQuoteForPreview, setSelectedQuoteForPreview] = useState<Quote | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
+  const [isConverterOpen, setIsConverterOpen] = useState(false);
+  const [convertingQuote, setConvertingQuote] = useState<Quote | null>(null);
   const { toast } = useToast();
 
   const form = useForm({
@@ -658,13 +662,11 @@ const UnifiedQuoteManagement = () => {
           </p>
         </div>
         <div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                New Quote
-              </Button>
-            </DialogTrigger>
+          <QuoteWizard
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            onQuoteCreated={fetchQuotes}
+          />
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Quote</DialogTitle>
@@ -834,9 +836,11 @@ const UnifiedQuoteManagement = () => {
                 </div>
               </form>
             </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Quote
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center space-x-4">
