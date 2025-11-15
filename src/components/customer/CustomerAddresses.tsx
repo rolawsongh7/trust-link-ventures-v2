@@ -147,7 +147,7 @@ export const CustomerAddresses = () => {
       setPendingOrderNumber(null);
       
       setTimeout(() => {
-        navigate(`/customer/orders?highlight=${orderId}`);
+        navigate(`/portal/orders?highlight=${orderId}`);
       }, 1500);
     } catch (error: any) {
       console.error('Error linking address to order:', error);

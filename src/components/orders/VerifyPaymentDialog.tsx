@@ -101,7 +101,7 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
           type: 'system',
           title: 'Payment Verified - Order Processing',
           message: `Great news! Your payment for order ${order.order_number} has been verified and your order is now being processed. We'll notify you when it's ready to ship.`,
-          link: '/customer/orders',
+          link: '/portal/orders',
         });
         
         if (notifError) {
