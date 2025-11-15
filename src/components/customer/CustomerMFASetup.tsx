@@ -4,7 +4,7 @@ import { MFAService } from '@/lib/advancedSecurity';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, Copy, Check, X } from 'lucide-react';
+import { Shield, Copy, Check, X, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface CustomerMFASetupProps {
   open: boolean;
@@ -29,6 +30,7 @@ export function CustomerMFASetup({ open, onOpenChange }: CustomerMFASetupProps) 
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   useEffect(() => {
     if (open && user) {
@@ -235,37 +237,130 @@ export function CustomerMFASetup({ open, onOpenChange }: CustomerMFASetupProps) 
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {/* QR Code */}
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium text-tl-text mb-2">Step 1: Scan QR Code</h4>
-                      <p className="text-sm text-tl-muted-foreground mb-4">
-                        Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
-                      </p>
-                    </div>
-                    <div className="flex justify-center p-4 bg-white rounded-lg">
-                      <img src={qrCode} alt="QR Code" className="w-48 h-48" />
-                    </div>
-                  </div>
+                  {/* Mobile Alert */}
+                  {isMobile && (
+                    <Alert className="border-primary/50 bg-primary/5">
+                      <Smartphone className="h-4 w-4" />
+                      <AlertTitle>Setting up on mobile?</AlertTitle>
+                      <AlertDescription>
+                        Use the manual entry method below since you can't scan a QR code on the same device.
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
-                  {/* Manual Entry */}
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-tl-text">Or enter manually:</h4>
-                    <div className="flex items-center gap-2 p-3 bg-tl-muted/10 rounded-lg border border-tl-border">
-                      <code className="flex-1 text-sm font-mono text-tl-text break-all">{secret}</code>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => copyCode(secret)}
-                      >
-                        {copiedCode === secret ? (
-                          <Check className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
+                  {isMobile ? (
+                    // Mobile: Show Manual Entry FIRST
+                    <>
+                      {/* Manual Entry Section - Enhanced for Mobile */}
+                      <div className="space-y-4 p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                            1
+                          </div>
+                          <h4 className="font-semibold text-lg">Manual Entry Setup</h4>
+                        </div>
+                        
+                        <div className="space-y-2 text-sm text-muted-foreground">
+                          <p className="font-medium text-foreground">Step-by-step instructions:</p>
+                          <ol className="list-decimal list-inside space-y-1.5 ml-2">
+                            <li>Download an authenticator app:
+                              <ul className="list-disc list-inside ml-6 mt-1 space-y-0.5">
+                                <li>Google Authenticator (iOS/Android)</li>
+                                <li>Microsoft Authenticator (iOS/Android)</li>
+                                <li>Authy (iOS/Android)</li>
+                              </ul>
+                            </li>
+                            <li>Open the app and tap "Add Account" or "+"</li>
+                            <li>Select "Enter a setup key" or "Manual entry"</li>
+                            <li>Copy the secret key below and paste it</li>
+                            <li>Name it "Customer Portal"</li>
+                            <li>Enter the 6-digit code shown in the app</li>
+                          </ol>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Secret Key</Label>
+                          <div 
+                            className="flex items-center gap-2 p-4 bg-background rounded-lg border-2 border-border hover:border-primary transition-colors cursor-pointer active:scale-[0.99]"
+                            onClick={() => copyCode(secret)}
+                          >
+                            <code className="flex-1 text-base font-mono break-all select-all">
+                              {secret}
+                            </code>
+                            <Button size="sm" variant="ghost" className="shrink-0">
+                              {copiedCode === secret ? (
+                                <Check className="h-5 w-5 text-green-500" />
+                              ) : (
+                                <Copy className="h-5 w-5" />
+                              )}
+                            </Button>
+                          </div>
+                          {copiedCode === secret && (
+                            <p className="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+                              <Check className="h-4 w-4" />
+                              Copied! Now paste it in your authenticator app
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            💡 Tap the box above to copy the secret key
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* QR Code Section - Secondary for Mobile */}
+                      <div className="space-y-4 opacity-60">
+                        <div>
+                          <h4 className="font-medium text-tl-text mb-2">Alternative: Scan QR Code</h4>
+                          <p className="text-sm text-tl-muted-foreground mb-4">
+                            If viewing on a different device, you can scan this QR code
+                          </p>
+                        </div>
+                        <div className="flex justify-center p-4 bg-white rounded-lg">
+                          <img src={qrCode} alt="QR Code" className="w-48 h-48" />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    // Desktop: Show QR Code FIRST
+                    <>
+                      {/* QR Code Section */}
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="font-medium text-tl-text mb-2">Step 1: Scan QR Code</h4>
+                          <p className="text-sm text-tl-muted-foreground mb-4">
+                            Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
+                          </p>
+                        </div>
+                        <div className="flex justify-center p-4 bg-white rounded-lg">
+                          <img src={qrCode} alt="QR Code" className="w-48 h-48" />
+                        </div>
+                      </div>
+
+                      {/* Manual Entry Section */}
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-tl-text">Or enter manually:</h4>
+                        <div className="flex items-center gap-2 p-3 bg-tl-muted/10 rounded-lg border border-tl-border">
+                          <code className="flex-1 text-sm font-mono text-tl-text break-all">{secret}</code>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => copyCode(secret)}
+                          >
+                            {copiedCode === secret ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                        {copiedCode === secret && (
+                          <p className="text-sm text-green-600 dark:text-green-400">
+                            ✓ Secret key copied to clipboard
+                          </p>
                         )}
-                      </Button>
-                    </div>
-                  </div>
+                      </div>
+                    </>
+                  )}
 
                   {/* Verification */}
                   <div className="space-y-4">
