@@ -140,7 +140,7 @@ export const OrderTracking: React.FC = () => {
       .select(`
         *,
         order_items(*),
-        quotes(
+        quotes!quote_id(
           quote_number,
           customers(company_name, contact_name)
         )

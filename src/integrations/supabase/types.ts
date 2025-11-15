@@ -1416,6 +1416,8 @@ export type Database = {
           ghipss_transaction_id: string | null
           id: string
           internal_notes: string | null
+          manual_confirmation_method: string | null
+          manual_confirmation_notes: string | null
           notes: string | null
           order_number: string
           payment_amount_paid: number | null
@@ -1434,6 +1436,8 @@ export type Database = {
           quote_id: string | null
           ready_to_ship_at: string | null
           shipped_at: string | null
+          source_quote_id: string | null
+          source_type: string | null
           status: Database["public"]["Enums"]["order_status_enum"]
           total_amount: number
           tracking_number: string | null
@@ -1467,6 +1471,8 @@ export type Database = {
           ghipss_transaction_id?: string | null
           id?: string
           internal_notes?: string | null
+          manual_confirmation_method?: string | null
+          manual_confirmation_notes?: string | null
           notes?: string | null
           order_number: string
           payment_amount_paid?: number | null
@@ -1485,6 +1491,8 @@ export type Database = {
           quote_id?: string | null
           ready_to_ship_at?: string | null
           shipped_at?: string | null
+          source_quote_id?: string | null
+          source_type?: string | null
           status?: Database["public"]["Enums"]["order_status_enum"]
           total_amount: number
           tracking_number?: string | null
@@ -1518,6 +1526,8 @@ export type Database = {
           ghipss_transaction_id?: string | null
           id?: string
           internal_notes?: string | null
+          manual_confirmation_method?: string | null
+          manual_confirmation_notes?: string | null
           notes?: string | null
           order_number?: string
           payment_amount_paid?: number | null
@@ -1536,6 +1546,8 @@ export type Database = {
           quote_id?: string | null
           ready_to_ship_at?: string | null
           shipped_at?: string | null
+          source_quote_id?: string | null
+          source_type?: string | null
           status?: Database["public"]["Enums"]["order_status_enum"]
           total_amount?: number
           tracking_number?: string | null
@@ -1559,6 +1571,13 @@ export type Database = {
           {
             foreignKeyName: "orders_quote_id_fkey"
             columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_source_quote_id_fkey"
+            columns: ["source_quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
             referencedColumns: ["id"]
@@ -2161,10 +2180,56 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_view_tokens: {
+        Row: {
+          access_count: number | null
+          created_at: string
+          customer_email: string
+          expires_at: string
+          id: string
+          last_accessed_at: string | null
+          quote_id: string
+          token: string
+        }
+        Insert: {
+          access_count?: number | null
+          created_at?: string
+          customer_email: string
+          expires_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          quote_id: string
+          token?: string
+        }
+        Update: {
+          access_count?: number | null
+          created_at?: string
+          customer_email?: string
+          expires_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          quote_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_view_tokens_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quotes: {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          conversion_method: string | null
+          conversion_notes: string | null
+          conversion_type: string | null
+          converted_at: string | null
+          converted_by: string | null
           created_at: string
           created_by: string | null
           currency: string
@@ -2191,6 +2256,11 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          conversion_method?: string | null
+          conversion_notes?: string | null
+          conversion_type?: string | null
+          converted_at?: string | null
+          converted_by?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -2217,6 +2287,11 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          conversion_method?: string | null
+          conversion_notes?: string | null
+          conversion_type?: string | null
+          converted_at?: string | null
+          converted_by?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string

@@ -788,6 +788,20 @@ const UnifiedQuoteManagement = () => {
                   </DropdownMenuItem>
                 )}
 
+                {/* Convert to Order - for manual quotes or approved quotes */}
+                {(quote.status === 'approved' || quote.status === 'sent') && !quote.orders?.length && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConvertingQuote(quote);
+                      setIsConverterOpen(true);
+                    }}
+                  >
+                    <Package className="mr-2 h-4 w-4" />
+                    Convert to Order
+                  </DropdownMenuItem>
+                )}
+
                 {/* Show why action is disabled */}
                 {!quote.final_file_url && (quote.status === 'draft' || quote.status === 'pending_review') && (
                   <DropdownMenuItem disabled>
@@ -876,6 +890,15 @@ const UnifiedQuoteManagement = () => {
           open={isEditorOpen}
           onOpenChange={setIsEditorOpen}
           onSuccess={fetchQuotes}
+        />
+      )}
+
+      {convertingQuote && (
+        <QuoteToOrderConverter
+          quote={convertingQuote}
+          open={isConverterOpen}
+          onOpenChange={setIsConverterOpen}
+          onOrderCreated={fetchQuotes}
         />
       )}
     </div>

@@ -128,7 +128,7 @@ const OrdersManagement = () => {
         .from('orders')
         .select(`
           *,
-          quotes(quote_number, title),
+          quotes!quote_id(quote_number, title),
           customers(company_name, contact_name, email),
           customer_addresses(street_address, city, region, ghana_digital_address)
         `)
@@ -200,7 +200,7 @@ const OrdersManagement = () => {
         .from('orders')
         .select(`
           *,
-          quotes(
+          quotes!quote_id(
             customers(email, contact_name, company_name)
           )
         `)
