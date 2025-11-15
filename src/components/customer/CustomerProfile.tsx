@@ -5,11 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { User, Building2, Mail, Phone, MapPin, Save, Shield, Lock } from 'lucide-react';
+import { User, Building2, Mail, Phone, MapPin, Save, LogOut, X } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { CustomerMFASetup } from './CustomerMFASetup';
+import { ProfileAvatar } from './ProfileAvatar';
+import { ProfileCompletion } from './ProfileCompletion';
+import { SecurityScore } from './SecurityScore';
+import { AccountStats } from './AccountStats';
 
 
 export const CustomerProfile: React.FC = () => {
@@ -83,21 +87,35 @@ export const CustomerProfile: React.FC = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
-      {/* Gradient Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-tl-gradient p-8 sm:p-10 shadow-xl">
+    <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
+      {/* Enhanced Gradient Header with Avatar */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-maritime-600 via-maritime-500 to-maritime-400 p-8 sm:p-10 shadow-2xl">
         <div className="absolute inset-0 bg-[url('/placeholder.svg')] opacity-5" />
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm">
-              <User className="h-6 w-6 text-white" />
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <ProfileAvatar />
+            <div className="flex-1 text-center sm:text-left">
+              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+                Profile Settings
+              </h1>
+              <p className="text-lg font-medium text-white/90">
+                {profile?.full_name || 'Guest User'}
+              </p>
+              <p className="text-sm text-white/70">
+                {profile?.company_name || 'No company specified'}
+              </p>
+              <div className="flex items-center justify-center sm:justify-start gap-2 mt-2">
+                <span className="px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+                  ⭐ Verified Customer
+                </span>
+                <span className="px-2 py-1 bg-emerald-500/20 backdrop-blur-sm rounded-full text-xs text-white font-medium flex items-center gap-1">
+                  ✓ Email Verified
+                </span>
+              </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-white">
-              Profile Settings
-            </h1>
           </div>
-          <p className="text-white/90 text-base max-w-2xl">
-            Manage your account information and preferences
+          <p className="text-white/80 text-sm mt-6 max-w-2xl">
+            Manage your account information, security settings, and preferences
           </p>
         </div>
       </div>
@@ -254,67 +272,28 @@ export const CustomerProfile: React.FC = () => {
           </Card>
         </div>
 
-        {/* Account Actions */}
+        {/* Right Column - Stats & Security */}
         <div className="space-y-6">
-          <Card className="bg-tl-surface/80 backdrop-blur-md border-tl-border shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="border-b border-tl-border/50">
-              <CardTitle className="flex items-center gap-2 text-tl-text">
-                <Shield className="h-5 w-5 text-tl-primary" />
-                Account Security
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-6">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start border-tl-border text-tl-text hover:bg-tl-muted/20"
-                onClick={() => setShowChangePassword(true)}
+          {/* Account Stats Dashboard */}
+          <AccountStats />
+
+          {/* Enhanced Security Section */}
+          <SecurityScore
+            onChangePassword={() => setShowChangePassword(true)}
+            onSetupMFA={() => setShowMFASetup(true)}
+          />
+
+          {/* Quick Sign Out */}
+          <Card className="border-l-4 border-l-red-500 shadow-lg hover:shadow-xl transition-all">
+            <CardContent className="pt-6">
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={signOut}
               >
-                <Lock className="h-4 w-4 mr-2" />
-                Change Password
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full justify-start border-tl-border text-tl-text hover:bg-tl-muted/20"
-                onClick={() => setShowMFASetup(true)}
-              >
-                <Shield className="h-4 w-4 mr-2" />
-                Two-Factor Authentication
-              </Button>
-              
-              <div className="h-px bg-gradient-to-r from-transparent via-tl-border to-transparent" />
-              
-              <Button 
-                variant="destructive" 
-                className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-md hover:shadow-lg transition-all"
-                onClick={() => signOut()}
-              >
+                <LogOut className="mr-2 h-4 w-4" />
                 Sign Out
               </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-tl-surface/80 backdrop-blur-md border-tl-border shadow-lg">
-            <CardHeader className="border-b border-tl-border/50">
-              <CardTitle className="text-base text-tl-text">Account Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm pt-6">
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-tl-muted">Account Type:</span>
-                <span className="text-tl-text">Customer</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-tl-muted">Member Since:</span>
-                <span className="text-tl-text">January 2024</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-tl-muted">Total Orders:</span>
-                <span className="text-tl-text">0</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-tl-muted">Total Quotes:</span>
-                <span className="text-tl-text">0</span>
-              </div>
             </CardContent>
           </Card>
         </div>
