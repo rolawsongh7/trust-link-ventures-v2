@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CustomerAuthProvider } from "@/hooks/useCustomerAuth";
@@ -131,11 +131,12 @@ const App = () => {
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <BrowserRouter>
-                <ScrollToTop />
-                {/* Hard block admin routes in native apps */}
-                {nativeApp && <BlockAdmin />}
-                <Routes>
+              {nativeApp ? (
+                <HashRouter>
+                  <ScrollToTop />
+                  {/* Hard block admin routes in native apps */}
+                  <BlockAdmin />
+                  <Routes>
                   {/* LOVABLE PREVIEW MODE - Show both admin and public routes */}
                   {showBothRoutes && (
                     <>
@@ -302,8 +303,163 @@ const App = () => {
                     </>
                   )}
                 </Routes>
-                {nativeApp && <MobileBottomNav />}
+                <MobileBottomNav />
+              </HashRouter>
+            ) : (
+              <BrowserRouter>
+                <ScrollToTop />
+                <Routes>
+                  {/* Same routes for web */}
+                  {showBothRoutes && (
+                    <>
+                      {/* Admin routes */}
+                      <Route path="/admin/login" element={<AdminAuth />} />
+                      <Route path="/unauthorized" element={<Unauthorized />} />
+                      
+                      <Route path="/admin" element={
+                        <AdminProtectedRoute>
+                          <AdminLayout />
+                        </AdminProtectedRoute>
+                      }>
+                        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                        <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="customers" element={<CustomersPage />} />
+                        <Route path="leads" element={<LeadsPage />} />
+                        <Route path="quotes" element={<QuotesPage />} />
+                        <Route path="orders" element={<UnifiedOrdersManagement />} />
+                        <Route path="invoices" element={<InvoicesPage />} />
+                        <Route path="analytics" element={<AnalyticsPage />} />
+                        <Route path="crm" element={<CRM />} />
+                        <Route path="quote-inquiries" element={<QuoteRequestManagement />} />
+                        <Route path="communication" element={<CommunicationPage />} />
+                        <Route path="quote-system" element={<QuoteSystem />} />
+                        <Route path="settings" element={<Settings />} />
+                        <Route path="virtual-assistant" element={<VirtualAssistant />} />
+                      </Route>
+                      
+                      {/* Public routes */}
+                      <Route element={<PublicLayout />}>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/contact" element={<Contact />} />
+                        <Route path="/products" element={<Products />} />
+                        <Route path="/partners" element={<Partners />} />
+                        <Route path="/quote-request" element={<QuoteRequest />} />
+                        <Route path="/privacy" element={<Privacy />} />
+                        <Route path="/terms" element={<Terms />} />
+                        <Route path="/cookies" element={<Cookies />} />
+                        <Route path="/notifications" element={<NotificationDemo />} />
+                      </Route>
+                      
+                      {/* Customer Portal routes */}
+                      <Route path="/portal-auth" element={<UnifiedAuth />} />
+                      <Route path="/login" element={<UnifiedAuth />} />
+                      
+                      <Route path="/portal" element={
+                        <CustomerProtectedRoute>
+                          <CustomerLayout />
+                        </CustomerProtectedRoute>
+                      }>
+                        <Route index element={<CustomerPortalMain />} />
+                        <Route path="catalog" element={<CustomerCatalog />} />
+                        <Route path="cart" element={<CustomerCart />} />
+                        <Route path="quotes" element={<CustomerQuotes />} />
+                        <Route path="orders" element={<CustomerOrders />} />
+                        <Route path="invoices" element={<CustomerInvoices />} />
+                        <Route path="communications" element={<CustomerCommunications />} />
+                        <Route path="addresses" element={<CustomerAddresses />} />
+                        <Route path="profile" element={<CustomerProfile />} />
+                        <Route path="notifications" element={<CustomerNotifications />} />
+                      </Route>
+                      
+                      {/* Public tracking and payment pages */}
+                      <Route path="/track" element={<OrderTracking />} />
+                      <Route path="/payment/callback" element={<PaymentCallback />} />
+                      
+                      {/* 404 */}
+                      <Route path="*" element={<NotFound />} />
+                    </>
+                  )}
+                  
+                  {showOnlyAdminRoutes && (
+                    <>
+                      <Route path="/admin/login" element={<AdminAuth />} />
+                      <Route path="/unauthorized" element={<Unauthorized />} />
+                      
+                      <Route path="/admin" element={
+                        <AdminProtectedRoute>
+                          <AdminLayout />
+                        </AdminProtectedRoute>
+                      }>
+                        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                        <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="customers" element={<CustomersPage />} />
+                        <Route path="leads" element={<LeadsPage />} />
+                        <Route path="quotes" element={<QuotesPage />} />
+                        <Route path="orders" element={<UnifiedOrdersManagement />} />
+                        <Route path="invoices" element={<InvoicesPage />} />
+                        <Route path="analytics" element={<AnalyticsPage />} />
+                        <Route path="crm" element={<CRM />} />
+                        <Route path="quote-inquiries" element={<QuoteRequestManagement />} />
+                        <Route path="communication" element={<CommunicationPage />} />
+                        <Route path="quote-system" element={<QuoteSystem />} />
+                        <Route path="settings" element={<Settings />} />
+                        <Route path="virtual-assistant" element={<VirtualAssistant />} />
+                      </Route>
+                      
+                      {/* Redirect all other routes to admin login */}
+                      <Route path="*" element={<Navigate to="/admin/login" replace />} />
+                    </>
+                  )}
+                  
+                  {showOnlyPublicRoutes && (
+                    <>
+                      {/* Public routes */}
+                      <Route element={<PublicLayout />}>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/contact" element={<Contact />} />
+                        <Route path="/products" element={<Products />} />
+                        <Route path="/partners" element={<Partners />} />
+                        <Route path="/quote-request" element={<QuoteRequest />} />
+                        <Route path="/privacy" element={<Privacy />} />
+                        <Route path="/terms" element={<Terms />} />
+                        <Route path="/cookies" element={<Cookies />} />
+                        <Route path="/notifications" element={<NotificationDemo />} />
+                      </Route>
+                      
+                      {/* Customer Portal routes */}
+                      <Route path="/portal-auth" element={<UnifiedAuth />} />
+                      <Route path="/login" element={<UnifiedAuth />} />
+                      
+                      <Route path="/portal" element={
+                        <CustomerProtectedRoute>
+                          <CustomerLayout />
+                        </CustomerProtectedRoute>
+                      }>
+                        <Route index element={<CustomerPortalMain />} />
+                        <Route path="catalog" element={<CustomerCatalog />} />
+                        <Route path="cart" element={<CustomerCart />} />
+                        <Route path="quotes" element={<CustomerQuotes />} />
+                        <Route path="orders" element={<CustomerOrders />} />
+                        <Route path="invoices" element={<CustomerInvoices />} />
+                        <Route path="communications" element={<CustomerCommunications />} />
+                        <Route path="addresses" element={<CustomerAddresses />} />
+                        <Route path="profile" element={<CustomerProfile />} />
+                        <Route path="notifications" element={<CustomerNotifications />} />
+                      </Route>
+                      
+                      {/* Public tracking and payment pages */}
+                      <Route path="/track" element={<OrderTracking />} />
+                      <Route path="/payment/callback" element={<PaymentCallback />} />
+                      
+                      {/* 404 */}
+                      <Route path="*" element={<NotFound />} />
+                    </>
+                  )}
+                </Routes>
               </BrowserRouter>
+            )}
             </TooltipProvider>
           </CustomerAuthProvider>
         </AuthProvider>

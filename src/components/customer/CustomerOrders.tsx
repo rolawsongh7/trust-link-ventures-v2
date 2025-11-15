@@ -338,8 +338,9 @@ export const CustomerOrders: React.FC = () => {
         return;
       }
 
-      // Navigate to public tracking page with token
-      window.open(`/track?token=${data.token}`, '_blank');
+      // Navigate to public tracking page with token (in-app navigation for mobile)
+      console.log('🔵 Navigating to track page:', data.token);
+      navigate(`/track?token=${data.token}`);
     } catch (error) {
       console.error('Error fetching tracking token:', error);
       toast({

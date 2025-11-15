@@ -147,7 +147,11 @@ export const MobileOrderCard = ({
       <div className="flex gap-2 pt-2">
         {needsAddress ? (
           <Button 
-            onClick={onAddAddress}
+            onClick={(e) => {
+              console.log('🔵 Add Address clicked:', order.order_number);
+              e.stopPropagation();
+              onAddAddress();
+            }}
             size="sm" 
             className="flex-1 h-9 text-xs"
           >
@@ -156,7 +160,11 @@ export const MobileOrderCard = ({
           </Button>
         ) : needsPaymentProof ? (
           <Button 
-            onClick={onUploadPayment}
+            onClick={(e) => {
+              console.log('🔵 Upload Payment clicked:', order.order_number);
+              e.stopPropagation();
+              onUploadPayment();
+            }}
             size="sm" 
             className="flex-1 h-9 text-xs"
           >
@@ -166,7 +174,11 @@ export const MobileOrderCard = ({
         ) : (
           <>
               <Button 
-                onClick={onTrack}
+                onClick={(e) => {
+                  console.log('🔵 Track button clicked:', order.order_number);
+                  e.stopPropagation();
+                  onTrack();
+                }}
                 size="sm" 
                 className="flex-1 h-9"
               >
@@ -174,7 +186,11 @@ export const MobileOrderCard = ({
                 <span className="text-xs">Track</span>
               </Button>
             <Button 
-              onClick={onReorder}
+              onClick={(e) => {
+                console.log('🔵 Reorder button clicked:', order.order_number);
+                e.stopPropagation();
+                onReorder();
+              }}
               variant="outline" 
               size="sm" 
               className="flex-1 h-9"

@@ -846,6 +846,9 @@
     transform-origin: center;
     position: relative;
     overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
   }
   
   .interactive-element::before {
