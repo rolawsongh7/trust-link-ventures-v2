@@ -91,9 +91,13 @@ export const CustomerAddresses = () => {
   }, [profile]);
 
   const fetchAddresses = async () => {
-    if (!profile) return;
+    if (!profile) {
+      setLoading(false);
+      return;
+    }
 
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('customer_addresses')
         .select('*')
@@ -104,9 +108,10 @@ export const CustomerAddresses = () => {
       if (error) throw error;
       setAddresses(data || []);
     } catch (error: any) {
+      console.error('Error fetching addresses:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to load addresses',
+        title: 'Error Loading Addresses',
+        description: error?.message || 'Failed to load addresses. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -296,8 +301,62 @@ export const CustomerAddresses = () => {
     }
   };
 
+  // Show loading skeleton while fetching data
   if (loading) {
-    return <div className="flex items-center justify-center p-8">Loading addresses...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted/20 p-4 sm:p-6">
+        <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+          <Card className="overflow-hidden">
+            <div className="p-6 sm:p-8">
+              <div className="space-y-4">
+                <div className="h-8 bg-muted/50 rounded-lg animate-pulse w-48" />
+                <div className="h-4 bg-muted/30 rounded animate-pulse w-64" />
+              </div>
+            </div>
+          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-6">
+              <div className="space-y-3">
+                <div className="h-6 bg-muted/50 rounded animate-pulse w-3/4" />
+                <div className="h-4 bg-muted/30 rounded animate-pulse w-full" />
+                <div className="h-4 bg-muted/30 rounded animate-pulse w-5/6" />
+              </div>
+            </Card>
+            <Card className="p-6">
+              <div className="space-y-3">
+                <div className="h-6 bg-muted/50 rounded animate-pulse w-3/4" />
+                <div className="h-4 bg-muted/30 rounded animate-pulse w-full" />
+                <div className="h-4 bg-muted/30 rounded animate-pulse w-5/6" />
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if profile is not available
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted/20 p-4 sm:p-6">
+        <div className="max-w-7xl mx-auto">
+          <Card className="p-6 sm:p-8">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <AlertCircle className="w-12 h-12 text-muted-foreground" />
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Profile Not Available</h3>
+                <p className="text-muted-foreground">
+                  Please log in to view and manage your delivery addresses.
+                </p>
+              </div>
+              <Button onClick={() => navigate('/portal-auth')}>
+                Go to Login
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
