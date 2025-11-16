@@ -497,7 +497,7 @@ export const CustomerOrders: React.FC = () => {
               }}
               onTrack={() => handleTrackOrder(order)}
               onReorder={() => handleReorder(order)}
-              onViewInvoices={() => navigate('/customer/invoices')}
+              onViewInvoices={() => navigate('/portal/invoices')}
               onAddAddress={() => {
                 setSelectedOrderForAddress(order);
                 setAddressDialogOpen(true);
@@ -745,7 +745,7 @@ export const CustomerOrders: React.FC = () => {
             handleReorder(selectedOrderForDetail);
           }
         }}
-        onViewInvoices={() => navigate('/customer/invoices')}
+        onViewInvoices={() => navigate('/portal/invoices')}
         onAddAddress={() => {
           if (selectedOrderForDetail) {
             setSelectedOrderForAddress(selectedOrderForDetail);
