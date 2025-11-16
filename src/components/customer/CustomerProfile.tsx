@@ -86,39 +86,106 @@ export const CustomerProfile: React.FC = () => {
     'Food Service', 'Manufacturing', 'Other'
   ];
 
+  const calculateCompletion = () => {
+    if (!profile) return 0;
+    
+    const fields = [
+      profile.full_name,
+      profile.company_name,
+      profile.email,
+      profile.phone,
+      profile.country,
+      profile.industry,
+    ];
+    
+    const filledFields = fields.filter(field => field && field.trim() !== '').length;
+    return Math.round((filledFields / fields.length) * 100);
+  };
+
+  const completionPercentage = calculateCompletion();
+
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
       {/* Enhanced Gradient Header with Avatar */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-maritime-600 via-maritime-500 to-maritime-400 p-8 sm:p-10 shadow-2xl">
-        <div className="absolute inset-0 bg-[url('/placeholder.svg')] opacity-5" />
+      <div className="relative overflow-hidden rounded-t-xl bg-gradient-to-r from-trustlink-navy to-trustlink-maritime p-6 text-white shadow-md">
+        {/* Animated background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="profile-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#profile-grid)" />
+          </svg>
+        </div>
+        
+        {/* Content */}
         <div className="relative z-10">
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            <ProfileAvatar />
-            <div className="flex-1 text-center sm:text-left">
-              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-                Profile Settings
-              </h1>
-              <p className="text-lg font-medium text-white/90">
-                {profile?.full_name || 'Guest User'}
+          {/* Top Section: Title + Profile Completion Badge */}
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-semibold mb-1 text-white">Profile Settings</h1>
+              <p className="text-sm md:text-base text-white/90">
+                Manage your account settings and preferences
               </p>
-              <p className="text-sm text-white/70">
-                {profile?.company_name || 'No company specified'}
-              </p>
-              <div className="flex items-center justify-center sm:justify-start gap-2 mt-2">
-                <span className="px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs text-white font-medium">
-                  ⭐ Verified Customer
-                </span>
-                <span className="px-2 py-1 bg-emerald-500/20 backdrop-blur-sm rounded-full text-xs text-white font-medium flex items-center gap-1">
-                  ✓ Email Verified
-                </span>
+            </div>
+            
+            {/* Profile Completion Badge */}
+            <div className="rounded-full bg-trustlink-gold px-4 py-2 shadow-md">
+              <div className="flex items-center gap-2">
+                <User className="h-5 w-5 text-white" />
+                <span className="text-white font-semibold text-lg">{completionPercentage}%</span>
               </div>
             </div>
           </div>
-          <p className="text-white/80 text-sm mt-6 max-w-2xl">
-            Manage your account information, security settings, and preferences
-          </p>
+          
+          {/* Avatar + Info Section */}
+          <div className="flex flex-col sm:flex-row items-center gap-6 mt-6">
+            <ProfileAvatar />
+            <div className="flex-1 text-center sm:text-left">
+              <h2 className="text-xl font-semibold text-white">{profile?.full_name || 'Guest User'}</h2>
+              <p className="text-white/80">{profile?.email}</p>
+              <div className="flex items-center justify-center sm:justify-start gap-2 mt-2">
+                {profile?.email && (
+                  <span className="text-xs bg-white/20 border border-white/30 text-white px-2 py-1 rounded-full backdrop-blur-sm">
+                    ✓ Email Verified
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Quick Stats Pills */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm text-white">
+              <Building2 className="h-4 w-4" />
+              <div className="min-w-0 flex-1">
+                <div className="text-xs opacity-90">Company</div>
+                <div className="text-sm font-semibold truncate">{profile?.company_name || 'Not set'}</div>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm text-white">
+              <MapPin className="h-4 w-4" />
+              <div className="min-w-0 flex-1">
+                <div className="text-xs opacity-90">Country</div>
+                <div className="text-sm font-semibold truncate">{profile?.country || 'Not set'}</div>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm text-white">
+              <Phone className="h-4 w-4" />
+              <div className="min-w-0 flex-1">
+                <div className="text-xs opacity-90">Phone</div>
+                <div className="text-sm font-semibold truncate">{profile?.phone || 'Not set'}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Profile Content */}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Information */}
