@@ -70,7 +70,7 @@ export const QuoteToOrderPipeline: React.FC = () => {
         .select(`
           *,
           customers (company_name),
-          orders (id, order_number, status)
+          orders!quote_id(id, order_number, status)
         `)
         .order('created_at', { ascending: false });
 
