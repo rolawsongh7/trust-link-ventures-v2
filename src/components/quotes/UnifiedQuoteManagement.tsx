@@ -187,7 +187,7 @@ const UnifiedQuoteManagement = () => {
           customers(company_name, contact_name),
           leads(title),
           rfqs(id, status, deadline),
-          orders(id, order_number, status)
+          orders!orders_quote_id_fkey(id, order_number, status)
         `)
         .order('created_at', { ascending: false });
 

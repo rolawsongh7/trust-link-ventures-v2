@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download, Building, Package, Calendar, MessageSquare, Filter, CircleDot } from 'lucide-react';
+import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download, Building, Package, Calendar, MessageSquare, Filter, CircleDot, RefreshCw } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -60,6 +60,7 @@ const QuoteRequestManagement = () => {
   const [quoteRequests, setQuoteRequests] = useState<QuoteRequest[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingItems, setLoadingItems] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<QuoteRequest | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
@@ -191,6 +192,39 @@ const QuoteRequestManagement = () => {
       console.error('Error converting to lead:', error);
       toast.error('Failed to convert quote request to lead');
     }
+  };
+
+  const handlePreviewClick = async (request: QuoteRequest) => {
+    setLoadingItems(true);
+    
+    // Re-fetch full details if items are missing
+    if (!request.quote_request_items || request.quote_request_items.length === 0) {
+      try {
+        const { data, error } = await supabase
+          .from('quote_requests')
+          .select(`
+            *,
+            customer:customers(company_name, contact_name, email),
+            quote_request_items(*)
+          `)
+          .eq('id', request.id)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          setSelectedRequest(data);
+        }
+      } catch (error) {
+        console.error('Error fetching request details:', error);
+        toast.error('Failed to load request details');
+      }
+    } else {
+      setSelectedRequest(request);
+    }
+    
+    setLoadingItems(false);
+    setShowDetailsDialog(true);
   };
 
   const handleDownloadPDF = async (request: QuoteRequest) => {
@@ -562,10 +596,7 @@ const QuoteRequestManagement = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                  setSelectedRequest(request);
-                                  setShowDetailsDialog(true);
-                                }}
+                                onClick={() => handlePreviewClick(request)}
                                 className="h-9 w-9 p-0 hover:bg-[#EFF6FF] hover:text-[#3B82F6] rounded-lg transition-all"
                               >
                                 <Eye className="h-4 w-4" />
@@ -633,20 +664,36 @@ const QuoteRequestManagement = () => {
 
       {/* Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col bg-white/95 backdrop-blur-xl border-2 border-white/20 shadow-2xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden bg-white/95 backdrop-blur-xl border-2 border-white/20 shadow-2xl">
           <DialogHeader className="bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] -m-6 mb-6 p-6 rounded-t-lg">
             <DialogTitle className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-2xl font-bold text-white">Quote Request Details</span>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => selectedRequest && handleDownloadPDF(selectedRequest)}
-                  className="bg-white/20 hover:bg-white/30 text-white border-white/30 gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Download PDF
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => selectedRequest && handlePreviewClick(selectedRequest)}
+                    className="bg-white/20 hover:bg-white/30 text-white border-white/30 gap-2"
+                    disabled={loadingItems}
+                  >
+                    {loadingItems ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    Refresh
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => selectedRequest && handleDownloadPDF(selectedRequest)}
+                    className="bg-white/20 hover:bg-white/30 text-white border-white/30 gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download PDF
+                  </Button>
+                </div>
               </div>
               {selectedRequest && (
                 <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/30 w-fit">
@@ -662,7 +709,7 @@ const QuoteRequestManagement = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 pr-4">
+          <ScrollArea className="h-[calc(90vh-180px)] pr-4">
             {selectedRequest && (
               <div className="space-y-6 pb-4">
                 {/* Status & Urgency Bar */}
@@ -760,13 +807,23 @@ const QuoteRequestManagement = () => {
                 )}
 
                 {/* Requested Items Table */}
-                {selectedRequest.quote_request_items && selectedRequest.quote_request_items.length > 0 && (
-                  <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 border border-[#E2E8F0] shadow-sm">
-                    <h3 className="font-semibold text-[#0F172A] mb-4 flex items-center gap-2">
-                      <Package className="h-5 w-5 text-[#3B82F6]" />
-                      Requested Items ({selectedRequest.quote_request_items.length})
-                    </h3>
-                    
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 border border-[#E2E8F0] shadow-sm">
+                  <h3 className="font-semibold text-[#0F172A] mb-4 flex items-center gap-2">
+                    <Package className="h-5 w-5 text-[#3B82F6]" />
+                    Requested Items ({selectedRequest.quote_request_items?.length || 0})
+                  </h3>
+                  
+                  {loadingItems ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+                      <p className="ml-3 text-gray-600">Loading items...</p>
+                    </div>
+                  ) : !selectedRequest.quote_request_items || selectedRequest.quote_request_items.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Package className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                      <p>No items found. Try clicking Refresh to reload data.</p>
+                    </div>
+                  ) : (
                     <div className="overflow-hidden rounded-lg border border-[#E2E8F0]">
                       <Table>
                         <TableHeader>
@@ -791,8 +848,8 @@ const QuoteRequestManagement = () => {
                         </TableBody>
                       </Table>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
           </ScrollArea>
