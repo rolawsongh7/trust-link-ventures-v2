@@ -11,7 +11,7 @@ import { WorkflowAutomation } from '@/components/workflow/WorkflowAutomation';
 import { ActivityTimeline } from '@/components/activity/ActivityTimeline';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, DollarSign, FileText, Target } from 'lucide-react';
+import { TrendingUp, DollarSign, Package, Target } from 'lucide-react';
 
 const AdvancedAnalytics = () => {
   const { user, loading: authLoading } = useAuth();
@@ -33,14 +33,24 @@ const AdvancedAnalytics = () => {
   }
 
   const isLoading = ordersLoading || quotesLoading || customersLoading || leadsLoading;
+  const totalRevenue = orders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0;
+  const conversionRate = quotes?.length ? Math.round(((quotes?.filter(q => q.status === 'accepted').length || 0) / quotes.length) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Analytics & Automation</h1>
-          <p className="text-muted-foreground">Business intelligence and workflow automation</p>
-        </div>
+        <PortalPageHeader
+          variant="admin"
+          title="Advanced Analytics"
+          subtitle="Business intelligence and workflow automation"
+          totalIcon={TrendingUp}
+          totalCount={orders?.length || 0}
+          stats={[
+            { label: 'Revenue', count: totalRevenue, icon: DollarSign },
+            { label: 'Active Orders', count: orders?.filter(o => o.status === 'processing').length || 0, icon: Package },
+            { label: 'Conversion', count: conversionRate, icon: Target },
+          ]}
+        />
 
         <Tabs defaultValue="analytics" className="space-y-6">
           <TabsList>

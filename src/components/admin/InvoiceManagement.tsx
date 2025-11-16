@@ -25,7 +25,8 @@ import {
   DollarSign,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  CheckCircle2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -423,13 +424,20 @@ export default function InvoiceManagement() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-primary bg-clip-text text-transparent">
-            Invoice Management
-          </h1>
-          <p className="text-muted-foreground mt-2">Manage and track all your invoices</p>
-        </div>
+      <PortalPageHeader
+        variant="admin"
+        title="Invoice Management"
+        subtitle="Manage and track all your invoices"
+        totalIcon={FileText}
+        totalCount={invoices?.length || 0}
+        stats={[
+          { label: 'Pending', count: invoices?.filter(i => i.status === 'pending').length || 0, icon: Clock },
+          { label: 'Paid', count: invoices?.filter(i => i.status === 'paid').length || 0, icon: CheckCircle2 },
+          { label: 'Overdue', count: invoices?.filter(i => i.status === 'overdue').length || 0, icon: XCircle },
+        ]}
+      />
+      
+      <div className="flex justify-end">
         <Button
           onClick={handleRegenerateMissingPDFs}
           disabled={regeneratingAll}

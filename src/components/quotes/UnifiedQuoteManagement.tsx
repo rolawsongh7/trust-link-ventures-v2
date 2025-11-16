@@ -78,6 +78,8 @@ const UnifiedQuoteManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showQuoteUpload, setShowQuoteUpload] = useState(false);
+  const [showQuoteWizard, setShowQuoteWizard] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedQuoteForUpload, setSelectedQuoteForUpload] = useState<Quote | null>(null);
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
@@ -644,47 +646,41 @@ const UnifiedQuoteManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">Quote Management</h1>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button className="text-muted-foreground hover:text-foreground transition-colors">
-                    <HelpCircle className="h-5 w-5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="max-w-sm">
-                  <div className="space-y-2">
-                    <p className="font-semibold">Quote Workflow:</p>
-                    <ol className="list-decimal list-inside space-y-1 text-sm">
-                      <li>Create quote and add line items (saves as <strong>draft</strong>)</li>
-                      <li>Generate PDF to create final quote document</li>
-                      <li>Send email to customer (marks as <strong>sent</strong>)</li>
-                      <li>Customer accepts/rejects quote</li>
-                      <li>Accepted quotes auto-convert to orders</li>
-                    </ol>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <p className="text-muted-foreground">
-            Unified view of all quotes, RFQs, and order conversions
-          </p>
-        </div>
-        <div>
-          <QuoteWizard
-            open={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
-            onQuoteCreated={fetchQuotes}
-          />
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Quote
-          </Button>
-        </div>
+      <PortalPageHeader
+        variant="admin"
+        title="Quotes Management"
+        subtitle="Unified view of all quotes, RFQs, and order conversions"
+        totalIcon={FileText}
+        totalCount={quotes.length}
+        stats={[
+          { label: 'Pending', count: quotes.filter(q => q.status === 'pending').length, icon: Clock },
+          { label: 'Sent', count: quotes.filter(q => q.status === 'sent').length, icon: Send },
+          { label: 'Accepted', count: quotes.filter(q => q.status === 'accepted').length, icon: CheckCircle },
+          { label: 'Draft', count: quotes.filter(q => q.status === 'draft').length, icon: CircleDot },
+        ]}
+      />
+      
+      <div className="flex gap-2 justify-end">
+        <Button onClick={() => setShowQuoteWizard(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Quote Wizard
+        </Button>
+        <Button
+          onClick={() => setShowQuoteUpload(true)}
+          variant="outline"
+        >
+          <Upload className="mr-2 h-4 w-4" />
+          Upload Quote
+        </Button>
+        <Button 
+          onClick={() => {
+            form.reset();
+            setIsDialogOpen(true);
+          }}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          New Quote
+        </Button>
       </div>
 
       <div className="flex items-center space-x-4">

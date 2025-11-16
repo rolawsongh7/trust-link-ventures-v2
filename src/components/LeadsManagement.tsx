@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PortalPageHeader } from '@/components/customer/PortalPageHeader';
-import { Plus, Search, Edit, TrendingUp, Calendar, DollarSign, Users, Target, Eye, Filter, Star, Clock, CircleDot } from 'lucide-react';
+import { Plus, Search, Edit, TrendingUp, Calendar, DollarSign, Users, Target, Eye, Filter, Star, Clock, CircleDot, CheckCircle } from 'lucide-react';
 import LeadConversion from './LeadConversion';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -277,11 +277,20 @@ const LeadsManagement = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Leads</h2>
-          <p className="text-muted-foreground">Manage your sales pipeline</p>
-        </div>
+      <PortalPageHeader
+        variant="admin"
+        title="Leads Management"
+        subtitle="Track and nurture your sales pipeline"
+        totalIcon={Target}
+        totalCount={leads.length}
+        stats={[
+          { label: 'New', count: leads.filter(l => l.status === 'new').length, icon: CircleDot },
+          { label: 'Qualified', count: leads.filter(l => l.status === 'qualified').length, icon: CheckCircle },
+          { label: 'In Progress', count: leads.filter(l => ['contacted', 'proposal', 'negotiation'].includes(l.status)).length, icon: Clock },
+        ]}
+      />
+      
+      <div className="flex justify-end">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => setEditingLead(null)}>
