@@ -355,7 +355,7 @@ export const CustomerCart: React.FC = () => {
         </div>
 
         <div className="space-y-6">
-          <Card className="bg-tl-surface border-tl-border shadow-sm">
+          <Card className="bg-tl-surface border-tl-border border-l-4 border-l-maritime-500 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-tl-text">
                 <MessageSquare className="h-5 w-5" />
@@ -397,7 +397,7 @@ export const CustomerCart: React.FC = () => {
           </Card>
 
           {profile && (
-            <Card className="bg-tl-surface border-tl-border shadow-sm">
+            <Card className="bg-tl-surface border-tl-border border-l-4 border-l-indigo-500 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-base text-tl-text">Quote Details</CardTitle>
               </CardHeader>

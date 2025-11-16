@@ -387,8 +387,8 @@ export const CustomerInvoices = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          <Card className="bg-tl-surface border border-tl-border rounded-lg shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
+      <Card className="bg-tl-surface border border-tl-border border-l-4 border-l-maritime-500 rounded-lg shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-tl-primary/5 sticky top-0">
                   <tr>

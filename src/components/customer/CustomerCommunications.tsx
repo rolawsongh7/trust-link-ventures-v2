@@ -239,7 +239,7 @@ export const CustomerCommunications: React.FC = () => {
       </div>
 
       {/* Send New Message */}
-      <Card>
+      <Card className="border-l-4 border-l-indigo-400">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Send className="h-5 w-5" />
@@ -281,7 +281,7 @@ export const CustomerCommunications: React.FC = () => {
       </Card>
 
       {/* Contact Information */}
-      <Card>
+      <Card className="border-l-4 border-l-indigo-400">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -309,7 +309,7 @@ export const CustomerCommunications: React.FC = () => {
       </Card>
 
       {/* Communication History */}
-      <Card>
+      <Card className="border-l-4 border-l-indigo-400">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
@@ -328,7 +328,7 @@ export const CustomerCommunications: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {communications.map((comm) => (
-                <div key={comm.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <div key={comm.id} className="p-4 border border-l-4 border-l-indigo-400 rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       {getMessageIcon(comm.communication_type, comm.direction)}

@@ -194,7 +194,7 @@ export const CustomerProfile: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Information */}
         <div className="lg:col-span-2">
-          <Card className="bg-tl-surface/80 backdrop-blur-md border-tl-border shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="bg-tl-surface/80 backdrop-blur-md border-tl-border border-l-4 border-l-maritime-500 shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="border-b border-tl-border/50">
               <CardTitle className="flex items-center gap-2 text-tl-text">
                 <User className="h-5 w-5 text-tl-primary" />
