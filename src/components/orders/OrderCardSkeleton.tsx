@@ -1,51 +1,114 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { motion } from 'framer-motion';
 
 export const OrderCardSkeleton = () => {
   return (
-    <Card className="w-full border-l-4 border-l-gray-300 dark:border-l-gray-700">
-      <CardContent className="p-4 sm:p-5">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex-1 min-w-0 space-y-2">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-4 w-40" />
+    <Card className="overflow-hidden border-l-4 border-l-muted">
+      <CardContent className="p-4 md:p-6">
+        <div className="flex items-start justify-between mb-4">
+          {/* Order number skeleton */}
+          <div className="space-y-2">
+            <motion.div 
+              className="h-6 w-32 bg-muted rounded shimmer"
+              animate={{
+                backgroundPosition: ['200% 0', '-200% 0'],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'linear',
+              }}
+            />
+            <motion.div 
+              className="h-4 w-24 bg-muted rounded shimmer"
+              animate={{
+                backgroundPosition: ['200% 0', '-200% 0'],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'linear',
+                delay: 0.1,
+              }}
+            />
           </div>
-          <div className="flex items-center gap-2 ml-3">
-            <Skeleton className="h-7 w-24 rounded-full" />
-            <Skeleton className="h-9 w-9 rounded-full" />
-          </div>
+
+          {/* Status badge skeleton */}
+          <motion.div 
+            className="h-8 w-28 bg-muted rounded-full shimmer"
+            animate={{
+              backgroundPosition: ['200% 0', '-200% 0'],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'linear',
+              delay: 0.2,
+            }}
+          />
         </div>
 
-        {/* Details Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          {/* Amount Box */}
-          <div className="col-span-2 bg-muted/30 rounded-lg p-4">
-            <Skeleton className="h-3 w-24 mb-2" />
-            <div className="flex items-baseline gap-2">
-              <Skeleton className="h-8 w-32" />
-              <Skeleton className="h-5 w-12 rounded-full" />
+        {/* Content skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="space-y-2 p-3 rounded-lg bg-muted/30">
+              <motion.div 
+                className="h-4 w-20 bg-muted rounded shimmer"
+                animate={{
+                  backgroundPosition: ['200% 0', '-200% 0'],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: 'linear',
+                  delay: 0.1 * i,
+                }}
+              />
+              <motion.div 
+                className="h-6 w-full bg-muted rounded shimmer"
+                animate={{
+                  backgroundPosition: ['200% 0', '-200% 0'],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: 'linear',
+                  delay: 0.1 * i + 0.1,
+                }}
+              />
             </div>
-          </div>
+          ))}
+        </div>
 
-          {/* Items */}
-          <div className="bg-muted/30 rounded-lg p-3">
-            <Skeleton className="h-3 w-16 mb-2" />
-            <Skeleton className="h-5 w-12" />
-          </div>
-
-          {/* Created */}
-          <div className="bg-muted/30 rounded-lg p-3">
-            <Skeleton className="h-3 w-16 mb-2" />
-            <Skeleton className="h-5 w-24" />
-          </div>
-
-          {/* Origin */}
-          <div className="col-span-2">
-            <Skeleton className="h-5 w-32" />
-          </div>
+        {/* Actions skeleton */}
+        <div className="flex gap-2 mt-6">
+          {[...Array(2)].map((_, i) => (
+            <motion.div 
+              key={i}
+              className="h-10 flex-1 bg-muted rounded shimmer"
+              animate={{
+                backgroundPosition: ['200% 0', '-200% 0'],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'linear',
+                delay: 0.3 + (0.1 * i),
+              }}
+            />
+          ))}
         </div>
       </CardContent>
     </Card>
   );
 };
+
+export function OrderCardSkeletonGrid({ count = 6 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-1 gap-4">
+      {[...Array(count)].map((_, i) => (
+        <OrderCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
