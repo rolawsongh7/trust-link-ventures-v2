@@ -85,18 +85,34 @@ const handler = async (req: Request): Promise<Response> => {
     const finalCustomerName = customerName || quote.customers?.contact_name || "Valued Customer";
     const finalCompanyName = companyName || quote.customers?.company_name || "Your Company";
 
-    // Create view-only token for customer quote access
-    const { data: tokenData, error: tokenError } = await supabase.functions.invoke('generate-quote-view-token', {
-      body: { quoteId, customerEmail }
-    });
+    // Generate secure approval token
+    const approvalToken = crypto.randomUUID();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // Token valid for 7 days
+
+    const { error: tokenError } = await supabase
+      .from('magic_link_tokens')
+      .insert({
+        quote_id: quoteId,
+        supplier_email: customerEmail, // Field name is reused for customer email
+        token: approvalToken,
+        token_type: 'quote_approval',
+        expires_at: expiresAt.toISOString(),
+        metadata: {
+          quote_number: quote.quote_number,
+          company_name: finalCompanyName,
+          customer_name: finalCustomerName
+        }
+      });
 
     if (tokenError) {
-      console.error('Failed to generate view token:', tokenError);
+      console.error('Failed to generate approval token:', tokenError);
+      throw new Error('Failed to generate approval link');
     }
 
-    // Use the generated view link or fallback to customer portal
-    const viewLink = tokenData?.viewLink || `https://trustlinkcompany.com/customer/quotes`;
-    const approvalUrl = viewLink;
+    // Generate approve and reject URLs
+    const approveUrl = `${supabaseUrl}/functions/v1/quote-approval?token=${approvalToken}&action=approve`;
+    const rejectUrl = `${supabaseUrl}/functions/v1/quote-approval?token=${approvalToken}&action=reject`;
 
     // Send email to customer
     const customerEmailResponse = await resend.emails.send({
@@ -133,10 +149,22 @@ const handler = async (req: Request): Promise<Response> => {
                   ${quote.valid_until ? `<strong>Valid Until:</strong> ${new Date(quote.valid_until).toLocaleDateString()}<br>` : ''}
                 </div>
 
-                <p>Please review the attached quote and let us know if you have any questions or would like to proceed with the order.</p>
-
-                <p>You can also view and respond to this quote online:</p>
-                <a href="${approvalUrl}" class="button">View Quote & Respond</a>
+                <p>Please review the attached quote. You can approve or reject it using the buttons below:</p>
+                
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 30px auto;">
+                  <tr>
+                    <td style="padding-right: 10px;">
+                      <a href="${approveUrl}" style="display: inline-block; background-color: #10b981; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                        ✓ Approve Quote
+                      </a>
+                    </td>
+                    <td style="padding-left: 10px;">
+                      <a href="${rejectUrl}" style="display: inline-block; background-color: #ef4444; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                        ✗ Reject Quote
+                      </a>
+                    </td>
+                  </tr>
+                </table>
 
                 <p>We look forward to working with you!</p>
                 

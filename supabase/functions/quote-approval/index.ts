@@ -89,6 +89,122 @@ function generateSuccessPage(title: string, message: string, isApproval: boolean
   `;
 }
 
+function generateChoicePage(quote: any, token: string): string {
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Quote Response - ${quote.quote_number}</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          margin: 0;
+          padding: 20px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          min-height: 100vh;
+        }
+        .container {
+          background: white;
+          border-radius: 12px;
+          padding: 40px;
+          max-width: 600px;
+          margin: 0 auto;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+          text-align: center;
+          margin-bottom: 30px;
+          padding-bottom: 20px;
+          border-bottom: 2px solid #e5e7eb;
+        }
+        h1 {
+          color: #1f2937;
+          margin-bottom: 10px;
+        }
+        .quote-details {
+          background: #f9fafb;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 20px 0;
+        }
+        .button-group {
+          display: flex;
+          gap: 15px;
+          margin: 30px 0;
+        }
+        .btn {
+          flex: 1;
+          padding: 16px 24px;
+          border: none;
+          border-radius: 8px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          text-decoration: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          transition: opacity 0.2s;
+        }
+        .btn:hover {
+          opacity: 0.9;
+        }
+        .btn-approve {
+          background: #10b981;
+        }
+        .btn-reject {
+          background: #ef4444;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #e5e7eb;
+          color: #6b7280;
+          font-size: 14px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Quote Response Required</h1>
+          <p style="color: #6b7280; margin: 0;">Quote Number: ${quote.quote_number}</p>
+        </div>
+
+        <div class="quote-details">
+          <h3 style="margin-top: 0;">Quote Summary</h3>
+          <p><strong>Title:</strong> ${quote.title || 'N/A'}</p>
+          <p><strong>Total Amount:</strong> ${quote.currency} ${quote.total_amount?.toLocaleString() || '0'}</p>
+          <p><strong>Valid Until:</strong> ${quote.valid_until ? new Date(quote.valid_until).toLocaleDateString() : 'N/A'}</p>
+        </div>
+
+        <p style="text-align: center; color: #6b7280;">
+          Please choose your response to this quote:
+        </p>
+
+        <div class="button-group">
+          <a href="?token=${token}&action=approve" class="btn btn-approve">
+            ✓ Approve Quote
+          </a>
+          <a href="?token=${token}&action=reject" class="btn btn-reject">
+            ✗ Reject Quote
+          </a>
+        </div>
+
+        <div class="footer">
+          <strong>TrustLink Ventures</strong><br>
+          If you have any questions, please contact us at info@trustlinkcompany.com
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
 function generateFormPage(quote: any, token: string, action: string): string {
   const isApproval = action === 'approve';
   const actionTitle = isApproval ? 'Approve Quote' : 'Reject Quote';
@@ -226,7 +342,58 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response('Missing token', { status: 400 });
     }
 
-    if (!action || !['approve', 'reject'].includes(action)) {
+    // If no action specified, show choice page with both buttons
+    if (!action) {
+      // First verify token exists
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('magic_link_tokens')
+        .select('*, quotes(*)')
+        .eq('token', token)
+        .eq('token_type', 'quote_approval')
+        .single();
+
+      if (tokenError || !tokenData) {
+        return new Response(generateSuccessPage(
+          'Link Expired',
+          'This quote approval link has expired or is invalid. Please contact us if you need assistance.',
+          false
+        ), {
+          headers: { 'Content-Type': 'text/html' },
+          status: 400
+        });
+      }
+
+      // Check if token is expired
+      if (new Date(tokenData.expires_at) < new Date()) {
+        return new Response(generateSuccessPage(
+          'Link Expired',
+          'This quote approval link has expired. Please contact us for a new link.',
+          false
+        ), {
+          headers: { 'Content-Type': 'text/html' },
+          status: 400
+        });
+      }
+
+      // Check if token was already used
+      if (tokenData.used_at) {
+        return new Response(generateSuccessPage(
+          'Already Processed',
+          'This quote has already been processed. Thank you!',
+          false
+        ), {
+          headers: { 'Content-Type': 'text/html' },
+          status: 400
+        });
+      }
+
+      return new Response(generateChoicePage(tokenData.quotes, token), {
+        headers: { 'Content-Type': 'text/html' },
+        status: 200
+      });
+    }
+
+    if (!['approve', 'reject'].includes(action)) {
       return new Response('Invalid action', { status: 400 });
     }
 
