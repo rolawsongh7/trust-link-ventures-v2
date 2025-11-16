@@ -28,6 +28,7 @@ interface Order {
 
 interface MobileOrderCardProps {
   order: Order;
+  onViewDetails: () => void;
   onTrack: () => void;
   onReorder: () => void;
   onViewInvoices: () => void;
@@ -36,7 +37,8 @@ interface MobileOrderCardProps {
 }
 
 export const MobileOrderCard = ({ 
-  order, 
+  order,
+  onViewDetails,
   onTrack, 
   onReorder, 
   onViewInvoices,
@@ -81,7 +83,7 @@ export const MobileOrderCard = ({
   const needsPaymentProof = order.status === 'order_confirmed';
 
   return (
-    <InteractiveCard variant="elevated" className="p-4 space-y-3" onClick={() => onTrack()}>
+    <InteractiveCard variant="elevated" className="p-4 space-y-3" onClick={onViewDetails}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -120,7 +122,10 @@ export const MobileOrderCard = ({
       {order.order_items && order.order_items.length > 0 && (
         <div className="border-t pt-3">
           <button
-            onClick={() => setShowItems(!showItems)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowItems(!showItems);
+            }}
             className="flex items-center justify-between w-full text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             <span>Order Items ({order.order_items.length})</span>
