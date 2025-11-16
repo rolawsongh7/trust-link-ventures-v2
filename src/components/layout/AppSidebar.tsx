@@ -13,12 +13,10 @@ import {
   Bell,
   Clock,
   Bot,
-  ExternalLink,
   Receipt,
   Ship
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { navigateToPublicSite } from '@/utils/domainUtils';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { RealtimeIndicator } from '@/components/realtime/RealtimeIndicator';
 import { useBackgroundSync } from '@/hooks/useBackgroundSync';
@@ -217,24 +215,6 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              
-              {/* Public Site Link */}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="View Public Site">
-                  <button
-                    onClick={navigateToPublicSite}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group w-full",
-                      "text-slate-100 border-l-4 border-l-transparent",
-                      "hover:bg-slate-800/60 hover:scale-[1.02] hover:shadow-lg",
-                      !isExpanded && "justify-center"
-                    )}
-                  >
-                    <ExternalLink className="h-6 w-6 flex-shrink-0 group-hover:text-[#0EA5E9] transition-colors duration-200" />
-                    {isExpanded && <span className="text-sm">View Public Site</span>}
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
 
               {/* Notifications */}
               <SidebarMenuItem>
