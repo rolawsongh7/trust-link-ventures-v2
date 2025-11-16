@@ -133,7 +133,7 @@ export const PipelineDashboard: React.FC = () => {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Quotes Pipeline */}
-        <Card>
+        <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Quotes Pipeline</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -144,10 +144,10 @@ export const PipelineDashboard: React.FC = () => {
               Active quotes worth ${stats?.quotes.totalValue.toLocaleString() || 0}
             </p>
             <div className="mt-3 flex gap-2">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/20">
                 {stats?.quotes.draft || 0} Draft
               </Badge>
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
                 {stats?.quotes.accepted || 0} Accepted
               </Badge>
             </div>
@@ -155,7 +155,7 @@ export const PipelineDashboard: React.FC = () => {
         </Card>
 
         {/* Payment Pipeline */}
-        <Card>
+        <Card className="border-l-4 border-l-yellow-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Payment</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -166,7 +166,7 @@ export const PipelineDashboard: React.FC = () => {
               Pending ${stats?.payment.totalPending.toLocaleString() || 0}
             </p>
             <div className="mt-3">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
                 {stats?.payment.received || 0} Received
               </Badge>
             </div>
@@ -174,7 +174,7 @@ export const PipelineDashboard: React.FC = () => {
         </Card>
 
         {/* Fulfillment Pipeline */}
-        <Card>
+        <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Fulfillment</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
@@ -183,7 +183,7 @@ export const PipelineDashboard: React.FC = () => {
             <div className="text-2xl font-bold">{stats?.fulfillment.processing || 0}</div>
             <p className="text-xs text-muted-foreground">Currently processing</p>
             <div className="mt-3">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-600 border-orange-500/20">
                 {stats?.fulfillment.readyToShip || 0} Ready to Ship
               </Badge>
             </div>
@@ -191,7 +191,7 @@ export const PipelineDashboard: React.FC = () => {
         </Card>
 
         {/* Delivery Pipeline */}
-        <Card>
+        <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Delivery</CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
@@ -200,7 +200,7 @@ export const PipelineDashboard: React.FC = () => {
             <div className="text-2xl font-bold">{stats?.delivery.shipped || 0}</div>
             <p className="text-xs text-muted-foreground">Currently in transit</p>
             <div className="mt-3 flex gap-2">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
                 {stats?.delivery.delivered || 0} Delivered
               </Badge>
               {stats && stats.delivery.needsAddress > 0 && (

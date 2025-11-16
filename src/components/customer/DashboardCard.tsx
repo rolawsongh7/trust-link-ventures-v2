@@ -10,6 +10,7 @@ interface DashboardCardProps {
   color?: string;
   badge?: number;
   delay?: number;
+  borderColor?: string;
 }
 
 export const DashboardCard: React.FC<DashboardCardProps> = ({
@@ -20,11 +21,12 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
   color = 'from-[#0077B6] to-[#003366]',
   badge,
   delay = 0,
+  borderColor,
 }) => {
   return (
     <Link
       to={to}
-      className="group relative rounded-2xl p-4 sm:p-5 
+      className={`group relative rounded-2xl p-4 sm:p-5 
                  bg-white/90 dark:bg-slate-900/80 
                  border border-slate-200/60 dark:border-slate-800 
                  shadow-sm hover:shadow-md 
@@ -34,7 +36,8 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
                  focus-maritime
                  min-h-[120px] sm:min-h-[130px]
                  flex flex-col
-                 stagger-animation"
+                 stagger-animation
+                 ${borderColor ? `border-l-4 ${borderColor}` : ''}`}
       style={{ animationDelay: `${delay}ms` }}
       aria-label={`${title}: ${description}`}
     >

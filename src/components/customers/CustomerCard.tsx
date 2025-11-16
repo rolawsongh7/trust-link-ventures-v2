@@ -21,13 +21,22 @@ const getStatusColor = (status?: string) => {
   return colors[status || 'active'] || 'bg-muted';
 };
 
+const getCustomerBorderColor = (status?: string) => {
+  const borders: Record<string, string> = {
+    active: 'border-l-green-500',
+    prospect: 'border-l-blue-500',
+    inactive: 'border-l-slate-500',
+  };
+  return borders[status || 'active'] || 'border-l-gray-300';
+};
+
 export const CustomerCard: React.FC<CustomerCardProps> = ({
   customer,
   onView,
   onEdit,
 }) => {
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={`hover:shadow-md transition-shadow border-l-4 ${getCustomerBorderColor(customer.customer_status)}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">

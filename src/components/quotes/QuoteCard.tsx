@@ -25,6 +25,16 @@ const getStatusColor = (status: string) => {
   return colors[status] || 'bg-muted';
 };
 
+const getQuoteBorderColor = (status: string) => {
+  const borders: Record<string, string> = {
+    draft: 'border-l-slate-500',
+    sent: 'border-l-blue-500',
+    accepted: 'border-l-green-500',
+    rejected: 'border-l-red-500',
+  };
+  return borders[status] || 'border-l-gray-300';
+};
+
 export const QuoteCard: React.FC<QuoteCardProps> = ({
   quote,
   onView,
@@ -34,7 +44,7 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
   onReject,
 }) => {
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={`hover:shadow-md transition-shadow border-l-4 ${getQuoteBorderColor(quote.status)}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
