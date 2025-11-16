@@ -85,15 +85,18 @@ const handler = async (req: Request): Promise<Response> => {
     const finalCustomerName = customerName || quote.customers?.contact_name || "Valued Customer";
     const finalCompanyName = companyName || quote.customers?.company_name || "Your Company";
 
-    // Create magic link for quote approval or view-only link
-    let viewLink = '';
-    if (sendViewOnlyLink) {
-      const { data: tokenData } = await supabase.functions.invoke('generate-quote-view-token', {
-        body: { quoteId, customerEmail }
-      });
-      viewLink = tokenData?.viewLink || '';
+    // Create view-only token for customer quote access
+    const { data: tokenData, error: tokenError } = await supabase.functions.invoke('generate-quote-view-token', {
+      body: { quoteId, customerEmail }
+    });
+
+    if (tokenError) {
+      console.error('Failed to generate view token:', tokenError);
     }
-    const approvalUrl = viewLink || `${supabaseUrl.replace('.supabase.co', '')}/quote-approval/${quoteId}`;
+
+    // Use the generated view link or fallback to customer portal
+    const viewLink = tokenData?.viewLink || `https://trustlinkcompany.com/customer/quotes`;
+    const approvalUrl = viewLink;
 
     // Send email to customer
     const customerEmailResponse = await resend.emails.send({
