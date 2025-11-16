@@ -510,7 +510,7 @@ export const CustomerOrders: React.FC = () => {
             const showTimeline = ['quote_sent', 'order_confirmed', 'payment_received', 'ready_to_ship', 'shipped', 'in_transit', 'delivered'].includes(order.status);
             
             return (
-              <Card key={order.id} className="bg-tl-surface border-tl-border hover:shadow-lg hover:border-tl-accent/30 transition-all duration-300">
+              <Card key={order.id} className="bg-tl-surface border-tl-border border-l-4 border-l-maritime-500 hover:shadow-lg hover:border-tl-accent/30 transition-all duration-300">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

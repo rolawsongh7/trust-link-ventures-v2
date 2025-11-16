@@ -234,7 +234,7 @@ export const CustomerCatalog: React.FC = () => {
       </Card>
 
       {/* Filters Card */}
-      <Card className="bg-tl-surface border-tl-border shadow-sm">
+      <Card className="bg-tl-surface border-tl-border border-l-4 border-l-slate-400 shadow-sm">
         <CardContent className="p-4 md:p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
@@ -308,10 +308,10 @@ export const CustomerCatalog: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {filteredProducts.map((product) => (
-            <article 
-              key={product.id} 
-              className="bg-tl-surface border border-tl-border rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 overflow-hidden"
-            >
+          <article 
+            key={product.id} 
+            className="bg-tl-surface border border-tl-border border-l-4 border-l-maritime-400 rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 overflow-hidden"
+          >
               {product.image_public_url && (
                 <div className="h-40 w-full overflow-hidden">
                   <img

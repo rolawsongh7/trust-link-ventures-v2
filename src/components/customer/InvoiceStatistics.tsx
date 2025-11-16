@@ -46,7 +46,7 @@ export const InvoiceStatistics = ({ stats, loading }: InvoiceStatisticsProps) =>
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       {/* Total Invoices Card */}
-      <Card className="bg-tl-surface border border-tl-border rounded-lg shadow-sm hover:shadow-md transition-all">
+      <Card className="bg-tl-surface border border-tl-border border-l-4 border-l-indigo-500 rounded-lg shadow-sm hover:shadow-md transition-all">
         <CardContent className="p-5">
           <div className="flex items-center justify-between">
             <div>
@@ -61,7 +61,7 @@ export const InvoiceStatistics = ({ stats, loading }: InvoiceStatisticsProps) =>
       </Card>
 
       {/* Total Amount Card */}
-      <Card className="bg-tl-surface border border-tl-border rounded-lg shadow-sm hover:shadow-md transition-all">
+      <Card className="bg-tl-surface border border-tl-border border-l-4 border-l-indigo-500 rounded-lg shadow-sm hover:shadow-md transition-all">
         <CardContent className="p-5">
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -87,7 +87,7 @@ export const InvoiceStatistics = ({ stats, loading }: InvoiceStatisticsProps) =>
 
       {/* Unpaid Balance Card */}
       <Card
-        className={`border rounded-lg shadow-sm hover:shadow-md transition-all ${
+        className={`border border-l-4 border-l-indigo-500 rounded-lg shadow-sm hover:shadow-md transition-all ${
           hasUnpaid ? 'bg-[#FFF8E1] border-[#F4B400]/30' : 'bg-tl-surface border-tl-border'
         }`}
       >

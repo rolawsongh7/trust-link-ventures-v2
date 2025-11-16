@@ -555,7 +555,7 @@ export const CustomerAddresses = () => {
 
       {/* Pending Order Banner */}
       {pendingOrderId && pendingOrderNumber && (
-        <Card className="border-[#2196F3]/30 bg-[#E3F2FD]">
+        <Card className="border-[#2196F3]/30 border-l-4 border-l-maritime-400 bg-[#E3F2FD]">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-[#2196F3] mt-0.5 flex-shrink-0" />
@@ -595,7 +595,7 @@ export const CustomerAddresses = () => {
           {addresses.map((address) => (
             <Card
               key={address.id}
-              className="bg-tl-surface border border-tl-border rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 group"
+              className="bg-tl-surface border border-tl-border border-l-4 border-l-maritime-400 rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 group"
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
