@@ -9,6 +9,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { PortalPageHeader } from './PortalPageHeader';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
+import { MobileCommunicationCard } from './mobile/MobileCommunicationCard';
+import { MobileCommunicationDetailDialog } from './mobile/MobileCommunicationDetailDialog';
 import { 
   MessageSquare, 
   Send, 
@@ -35,6 +38,7 @@ interface Communication {
 export const CustomerCommunications: React.FC = () => {
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
+  const { isMobile } = useMobileDetection();
   
   const [communications, setCommunications] = useState<Communication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +47,8 @@ export const CustomerCommunications: React.FC = () => {
     subject: '',
     content: ''
   });
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedCommunication, setSelectedCommunication] = useState<Communication | null>(null);
 
   useEffect(() => {
     fetchCommunications();
@@ -211,6 +217,11 @@ export const CustomerCommunications: React.FC = () => {
     );
   };
 
+  const handleViewCommunicationDetails = (communication: Communication) => {
+    setSelectedCommunication(communication);
+    setDetailDialogOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -340,37 +351,56 @@ export const CustomerCommunications: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {communications.map((comm) => (
-                <div key={comm.id} className="p-4 border border-l-4 border-l-indigo-400 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      {getMessageIcon(comm.communication_type, comm.direction)}
-                      <div>
-                        <h4 className="font-medium">{comm.subject}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {comm.direction === 'outbound' ? 'To: Support Team' : `From: ${comm.contact_person}`}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getDirectionBadge(comm.direction)}
-                      <div className="text-right">
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(comm.communication_date).toLocaleDateString()}
+                isMobile ? (
+                  <MobileCommunicationCard
+                    key={comm.id}
+                    communication={comm}
+                    onClick={() => handleViewCommunicationDetails(comm)}
+                  />
+                ) : (
+                  <div 
+                    key={comm.id} 
+                    className="p-4 border border-l-4 border-l-indigo-400 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => handleViewCommunicationDetails(comm)}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        {getMessageIcon(comm.communication_type, comm.direction)}
+                        <div>
+                          <h4 className="font-medium">{comm.subject}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {comm.direction === 'outbound' ? 'To: Support Team' : `From: ${comm.contact_person}`}
+                          </p>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(comm.communication_date).toLocaleTimeString()}
-                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {getDirectionBadge(comm.direction)}
+                        <div className="text-right">
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(comm.communication_date).toLocaleDateString()}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(comm.communication_date).toLocaleTimeString()}
+                          </p>
+                        </div>
                       </div>
                     </div>
+                    <p className="text-sm pl-7">{comm.content}</p>
                   </div>
-                  <p className="text-sm pl-7">{comm.content}</p>
-                </div>
+                )
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Communication Detail Dialog */}
+      <MobileCommunicationDetailDialog
+        communication={selectedCommunication}
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+      />
     </div>
   );
 };
