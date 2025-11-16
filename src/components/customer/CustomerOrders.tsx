@@ -17,6 +17,7 @@ import { OrderPaymentInstructions } from './OrderPaymentInstructions';
 import { ensureCustomerRecord } from '@/lib/customerUtils';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { MobileOrderCard } from './mobile/MobileOrderCard';
+import { MobileOrderDetailDialog } from './mobile/MobileOrderDetailDialog';
 import { InvoicePreviewDialog } from './InvoicePreviewDialog';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
 
@@ -56,6 +57,8 @@ export const CustomerOrders: React.FC = () => {
   const [showPaymentInstructions, setShowPaymentInstructions] = useState<string | null>(null);
   const [invoicePreviewOpen, setInvoicePreviewOpen] = useState(false);
   const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState<Order | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<Order | null>(null);
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -488,6 +491,10 @@ export const CustomerOrders: React.FC = () => {
             <MobileOrderCard
               key={order.id}
               order={order}
+              onViewDetails={() => {
+                setSelectedOrderForDetail(order);
+                setDetailDialogOpen(true);
+              }}
               onTrack={() => handleTrackOrder(order)}
               onReorder={() => handleReorder(order)}
               onViewInvoices={() => navigate('/customer/invoices')}
@@ -722,6 +729,38 @@ export const CustomerOrders: React.FC = () => {
           orderNumber={selectedOrderForInvoice.order_number}
         />
       )}
+
+      {/* Mobile Order Detail Dialog */}
+      <MobileOrderDetailDialog
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        order={selectedOrderForDetail}
+        onTrack={() => {
+          if (selectedOrderForDetail) {
+            handleTrackOrder(selectedOrderForDetail);
+          }
+        }}
+        onReorder={() => {
+          if (selectedOrderForDetail) {
+            handleReorder(selectedOrderForDetail);
+          }
+        }}
+        onViewInvoices={() => navigate('/customer/invoices')}
+        onAddAddress={() => {
+          if (selectedOrderForDetail) {
+            setSelectedOrderForAddress(selectedOrderForDetail);
+            setAddressDialogOpen(true);
+            setDetailDialogOpen(false);
+          }
+        }}
+        onUploadPayment={() => {
+          if (selectedOrderForDetail) {
+            setSelectedOrderForPayment(selectedOrderForDetail);
+            setPaymentProofDialogOpen(true);
+            setDetailDialogOpen(false);
+          }
+        }}
+      />
     </div>
   );
 };
