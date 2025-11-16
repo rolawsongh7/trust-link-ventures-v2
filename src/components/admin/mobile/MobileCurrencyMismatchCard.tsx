@@ -17,9 +17,10 @@ interface CurrencyMismatch {
 
 interface MobileCurrencyMismatchCardProps {
   mismatch: CurrencyMismatch;
+  onClick?: () => void;
 }
 
-export const MobileCurrencyMismatchCard = ({ mismatch }: MobileCurrencyMismatchCardProps) => {
+export const MobileCurrencyMismatchCard = ({ mismatch, onClick }: MobileCurrencyMismatchCardProps) => {
   const getCurrencyColor = (currency?: string) => {
     switch (currency) {
       case 'USD': return 'bg-green-100 text-green-800';
@@ -31,7 +32,7 @@ export const MobileCurrencyMismatchCard = ({ mismatch }: MobileCurrencyMismatchC
   };
 
   return (
-    <InteractiveCard variant="elevated" className="p-4 space-y-3 border-l-4 border-l-orange-500">
+    <InteractiveCard variant="elevated" className="p-4 space-y-3 border-l-4 border-l-orange-500" onClick={onClick}>
       {/* Header */}
       <div className="flex items-center gap-2">
         <AlertTriangle className="h-5 w-5 text-orange-600" />
