@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Building2, Mail, Lock, User, KeyRound, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building2, Mail, Lock, User, Eye, EyeOff, Loader2, Shield, ArrowRight } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -259,85 +259,134 @@ const CustomerAuth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 pt-safe pb-safe 
-                    bg-gradient-to-b from-tl-bg via-[#F4F7FB] to-[#EAF1FF]">
-      <div className="w-full max-w-sm sm:max-w-md">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 
+                    bg-gradient-to-br from-[hsl(var(--portal-bg-gradient-start))] 
+                    to-[hsl(var(--portal-bg-gradient-end))]
+                    relative overflow-hidden">
+      
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+           style={{
+             backgroundImage: `radial-gradient(circle at 2px 2px, hsl(var(--portal-primary-500)) 1px, transparent 0)`,
+             backgroundSize: '32px 32px'
+           }}
+      />
+      
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-md portal-animate-in">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-tl-muted 
-                    hover:text-tl-accent mb-6 md:mb-8 
-                    transition-colors rounded px-2
-                    min-h-[44px] touch-manipulation
-                    focus-visible:outline-none focus-visible:ring-2 
-                    focus-visible:ring-tl-accent"
+          className="inline-flex items-center gap-2 
+                     text-[hsl(var(--portal-subtext))] 
+                     hover:text-[hsl(var(--portal-primary-500))]
+                     mb-8 transition-all duration-200
+                     text-sm font-medium
+                     group
+                     focus-visible:outline-none 
+                     focus-visible:ring-2 
+                     focus-visible:ring-[hsl(var(--portal-primary-500))] 
+                     focus-visible:ring-offset-2 
+                     focus-visible:ring-offset-[hsl(var(--portal-bg))]
+                     rounded-lg px-3 py-2 -ml-3"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Home
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          <span>Back to Home</span>
         </Link>
 
-        <div className="rounded-2xl shadow-lg 
-                        bg-tl-surface 
-                        backdrop-blur-sm 
-                        border border-tl-border 
-                        hover:shadow-xl transition-shadow duration-300
-                        p-6 md:p-8
-                        space-y-5 md:space-y-6">
+        <div className="rounded-3xl 
+                        bg-[hsl(var(--portal-surface))] 
+                        shadow-[var(--portal-shadow-xl)]
+                        border border-[hsl(var(--portal-border))]
+                        p-8 md:p-10
+                        transition-all duration-300
+                        hover:shadow-[0_25px_50px_rgba(8,132,255,0.15),0_10px_20px_rgba(0,0,0,0.1)]
+                        space-y-8
+                        portal-card-scale">
           
-          {/* Header */}
-          <div className="text-center space-y-3 md:space-y-4">
-            {/* Icon chip */}
-            <div className="mx-auto mb-3 md:mb-4 inline-flex items-center justify-center 
-                            w-14 h-14 md:w-16 md:h-16 rounded-full p-3 
-                            tl-gradient shadow-md">
-              <Building2 className="w-7 h-7 md:w-8 md:h-8 text-white" />
+          {/* Header Section */}
+          <div className="text-center space-y-6">
+            {/* Enterprise Icon with Glow Effect */}
+            <div className="mx-auto w-16 h-16 rounded-2xl 
+                            bg-gradient-to-br from-[hsl(var(--portal-primary-500))] 
+                            to-[hsl(var(--portal-teal-500))]
+                            shadow-[0_8px_32px_rgba(8,132,255,0.3)]
+                            flex items-center justify-center
+                            relative
+                            portal-icon-glow
+                            transition-shadow duration-300">
+              {/* Glow ring effect */}
+              <div className="absolute inset-0 rounded-2xl 
+                              bg-gradient-to-br from-[hsl(var(--portal-primary-500))] 
+                              to-[hsl(var(--portal-teal-500))]
+                              opacity-30 blur-xl animate-pulse" />
+              
+              {/* Icon */}
+              <Shield className="w-8 h-8 text-white relative z-10" />
             </div>
 
-            {/* Title */}
-            <h1 className="text-2xl md:text-3xl font-semibold 
-                          text-tl-primary 
-                          text-center">
-              Customer Portal
-            </h1>
-
-            {/* Subtitle */}
-            <p className="text-sm md:text-base 
-                          text-tl-muted 
-                          text-center mt-1">
-              Manage your orders, quotes, and deliveries
-            </p>
+            {/* Welcome Text */}
+            <div className="space-y-2">
+              <h1 className="portal-title">
+                {activeTab === 'signin' ? 'Welcome Back' : 'Create Your Account'}
+              </h1>
+              <p className="portal-subtitle max-w-sm mx-auto">
+                {activeTab === 'signin' 
+                  ? 'Sign in to manage your orders, quotes, and deliveries' 
+                  : 'Get started with Trust Link Ventures today'}
+              </p>
+            </div>
           </div>
 
-          {/* Tabs */}
-          <div className="bg-tl-bg border border-tl-border p-1 rounded-full flex gap-1 mt-4 mb-6">
-            <button
-              type="button"
-              onClick={() => setActiveTab('signin')}
-              className={`flex-1 rounded-full px-4 py-2 
-                          text-sm md:text-[15px] font-medium 
-                          transition-all duration-200 
-                          min-h-[44px] touch-manipulation
-                          ${activeTab === 'signin'
-                            ? 'text-white tl-gradient shadow-md'
-                            : 'text-tl-muted hover:bg-tl-surface'
-                          }`}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('signup')}
-              className={`flex-1 rounded-full px-4 py-2 
-                          text-sm md:text-[15px] font-medium 
-                          transition-all duration-200 
-                          min-h-[44px] touch-manipulation
-                          ${activeTab === 'signup'
-                            ? 'text-white tl-gradient shadow-md'
-                            : 'text-tl-muted hover:bg-tl-surface'
-                          }`}
-            >
-              Create Account
-            </button>
-          </div>
+          {/* Tab Switcher */}
+          {!showForgotPassword && (
+            <div className="relative bg-[hsl(var(--portal-bg-subtle))] 
+                            p-1.5 rounded-2xl 
+                            border border-[hsl(var(--portal-border))]
+                            shadow-inner">
+              <div className="flex gap-1.5 relative z-10">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('signin')}
+                  className={`
+                    flex-1 rounded-xl px-6 py-3.5
+                    text-sm font-semibold
+                    transition-all duration-300
+                    touch-manipulation min-h-[50px]
+                    focus-visible:outline-none 
+                    focus-visible:ring-2 
+                    focus-visible:ring-[hsl(var(--portal-primary-500))] 
+                    focus-visible:ring-offset-2
+                    ${activeTab === 'signin'
+                      ? 'bg-gradient-to-r from-[hsl(var(--portal-primary-500))] to-[hsl(var(--portal-primary-600))] text-white shadow-lg shadow-[hsl(var(--portal-primary-500))]/30 scale-[1.02]'
+                      : 'text-[hsl(var(--portal-subtext))] hover:bg-white/60 hover:text-[hsl(var(--portal-text))]'
+                    }
+                  `}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('signup')}
+                  className={`
+                    flex-1 rounded-xl px-6 py-3.5
+                    text-sm font-semibold
+                    transition-all duration-300
+                    touch-manipulation min-h-[50px]
+                    focus-visible:outline-none 
+                    focus-visible:ring-2 
+                    focus-visible:ring-[hsl(var(--portal-primary-500))] 
+                    focus-visible:ring-offset-2
+                    ${activeTab === 'signup'
+                      ? 'bg-gradient-to-r from-[hsl(var(--portal-primary-500))] to-[hsl(var(--portal-primary-600))] text-white shadow-lg shadow-[hsl(var(--portal-primary-500))]/30 scale-[1.02]'
+                      : 'text-[hsl(var(--portal-subtext))] hover:bg-white/60 hover:text-[hsl(var(--portal-text))]'
+                    }
+                  `}
+                >
+                  Create Account
+                </button>
+              </div>
+            </div>
+          )}
                 
           {/* Sign In Form */}
           {activeTab === 'signin' && (
@@ -475,7 +524,7 @@ const CustomerAuth = () => {
                                 font-medium pointer-events-none z-10">
                       Email Address
                     </label>
-                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
                                         text-tl-accent z-10" />
                     <input
                       id="reset-email"
