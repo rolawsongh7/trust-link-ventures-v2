@@ -294,6 +294,9 @@ const App = () => {
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="communications" element={<CustomerCommunications />} />
                         <Route path="addresses" element={<CustomerAddresses />} />
+                        <Route path="notifications" element={<CustomerNotifications />} />
+                        <Route path="analytics" element={<CustomerAnalytics />} />
+                        <Route path="tracking" element={<CustomerTrackingHub />} />
                         <Route path="profile" element={<CustomerProfile />} />
                         <Route path="payment-callback" element={<PaymentCallback />} />
                       </Route>
