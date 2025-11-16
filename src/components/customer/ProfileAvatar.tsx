@@ -53,15 +53,15 @@ export const ProfileAvatar: React.FC = () => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <Avatar className="h-28 w-28 border-4 border-background shadow-lg">
+        <Avatar className="h-28 w-28 border-4 border-white shadow-lg">
           <AvatarImage src={avatarUrl || undefined} alt={profile?.full_name || 'User'} />
-          <AvatarFallback className="text-3xl font-bold bg-gradient-to-br from-maritime-500 to-maritime-600 text-white">
+          <AvatarFallback className="text-3xl font-bold bg-gradient-to-br from-trustlink-navy to-trustlink-maritime text-white">
             {getInitials()}
           </AvatarFallback>
         </Avatar>
 
         {/* Verification badge */}
-        <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-1 border-2 border-background">
+        <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-1 border-2 border-white shadow-md">
           <CheckCircle2 className="h-5 w-5 text-white" />
         </div>
 
@@ -77,7 +77,7 @@ export const ProfileAvatar: React.FC = () => {
       <Button
         size="sm"
         variant="outline"
-        className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-background shadow-md hover:shadow-lg transition-all"
+        className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white shadow-md hover:shadow-lg transition-all"
       >
         <Upload className="h-3 w-3 mr-1" />
         Change
