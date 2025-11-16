@@ -88,3 +88,6 @@ verify_jwt = false
 
 [functions.check-expiring-quotes]
 verify_jwt = false
+
+[functions.quote-approval]
+verify_jwt = false
