@@ -6,6 +6,7 @@ import { useCounterAnimation } from '@/hooks/useCounterAnimation';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { format, formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface StatCardProps {
   icon: React.ReactNode;
@@ -36,6 +37,7 @@ const StatCard: React.FC<StatCardProps> = ({ icon, label, value, trend }) => (
 
 export const AccountStats: React.FC = () => {
   const { profile } = useCustomerAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalQuotes: 0,
@@ -148,7 +150,12 @@ export const AccountStats: React.FC = () => {
         </div>
 
         {/* CTA */}
-        <Button variant="outline" className="w-full" size="sm">
+        <Button 
+          variant="outline" 
+          className="w-full" 
+          size="sm"
+          onClick={() => navigate('/portal/analytics')}
+        >
           View Detailed Analytics →
         </Button>
       </CardContent>
