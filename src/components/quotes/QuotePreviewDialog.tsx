@@ -1,6 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Check, X, ExternalLink } from 'lucide-react';
@@ -172,19 +173,21 @@ export const QuotePreviewDialog: React.FC<QuotePreviewDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 border rounded-lg overflow-hidden bg-muted/30">
-          {quote.final_file_url ? (
-            <iframe
-              src={quote.final_file_url}
-              className="w-full h-full"
-              title="Quote Preview"
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-muted-foreground">No quote file available</p>
-            </div>
-          )}
-        </div>
+        <ScrollArea className="flex-1 border rounded-lg bg-muted/30">
+          <div className="min-h-[calc(90vh-200px)]">
+            {quote.final_file_url ? (
+              <iframe
+                src={`${quote.final_file_url}#view=FitH`}
+                className="w-full h-full min-h-[calc(90vh-200px)]"
+                title="Quote Preview"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[400px]">
+                <p className="text-muted-foreground">No quote file available</p>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
 
         <DialogFooter className="flex-row justify-between items-center">
           <Button
