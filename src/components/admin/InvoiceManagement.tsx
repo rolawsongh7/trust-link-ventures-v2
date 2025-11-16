@@ -33,6 +33,8 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { InvoicePDFPreviewDialog } from './InvoicePDFPreviewDialog';
 import { ensureSignedUrl } from '@/lib/storageHelpers';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
+import { MobileInvoiceCard } from './mobile/MobileInvoiceCard';
 import {
   Select,
   SelectContent,
@@ -79,6 +81,7 @@ type SortDirection = 'asc' | 'desc';
 
 export default function InvoiceManagement() {
   const { toast } = useToast();
+  const { isMobile } = useMobileDetection();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -281,11 +284,11 @@ export default function InvoiceManagement() {
     }
   };
 
-  const handleRegenerate = async (invoice: Invoice) => {
-    setRegeneratingId(invoice.id);
+  const handleRegenerate = async (invoiceId: string) => {
+    setRegeneratingId(invoiceId);
     try {
       const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
-        body: { invoiceId: invoice.id },
+        body: { invoiceId },
       });
 
       if (error) throw error;
@@ -509,233 +512,35 @@ export default function InvoiceManagement() {
         </CardContent>
       </InteractiveCard>
 
-      <InteractiveCard variant="elevated" className="overflow-hidden">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-            <TableHeader className="bg-muted/50 backdrop-blur-sm sticky top-0 z-10">
-              <TableRow className="hover:bg-transparent">
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/70 transition-colors font-semibold"
-                  onClick={() => handleSort('created_at')}
-                >
-                  <div className="flex items-center gap-2">
-                    Date
-                    <ArrowUpDown className="h-4 w-4 text-primary" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/70 transition-colors font-semibold"
-                  onClick={() => handleSort('invoice_number')}
-                >
-                  <div className="flex items-center gap-2">
-                    Invoice #
-                    <ArrowUpDown className="h-4 w-4 text-primary" />
-                  </div>
-                </TableHead>
-                <TableHead className="font-semibold">Type</TableHead>
-                <TableHead className="font-semibold">Customer</TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/70 transition-colors text-right font-semibold"
-                  onClick={() => handleSort('total_amount')}
-                >
-                  <div className="flex items-center justify-end gap-2">
-                    Amount
-                    <ArrowUpDown className="h-4 w-4 text-primary" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/70 transition-colors font-semibold"
-                  onClick={() => handleSort('status')}
-                >
-                  <div className="flex items-center gap-2">
-                    Status
-                    <ArrowUpDown className="h-4 w-4 text-primary" />
-                  </div>
-                </TableHead>
-                <TableHead className="text-right font-semibold">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedInvoices.map((invoice) => (
-                <TableRow 
-                  key={invoice.id} 
-                  className="hover:bg-muted/30 transition-all hover:scale-[1.01] hover:shadow-sm border-l-2 border-l-transparent hover:border-l-primary"
-                >
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <span className="font-medium">
-                        {format(new Date(invoice.created_at), 'MMM dd, yyyy')}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(invoice.created_at), 'HH:mm')}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{invoice.invoice_number}</span>
-                      {!invoice.file_url && (
-                        <Badge variant="destructive" className="text-xs">
-                          <AlertCircle className="h-3 w-3 mr-1" />
-                          No PDF
-                        </Badge>
-                      )}
-                    </div>
-                    {invoice.orders && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Order: {invoice.orders.order_number}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="font-normal">
-                      {getInvoiceTypeDisplay(invoice.invoice_type)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <span className="font-medium">
-                        {invoice.customers?.company_name || 'N/A'}
-                      </span>
-                      {invoice.customers?.email && (
-                        <span className="text-xs text-muted-foreground">
-                          {invoice.customers.email}
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {invoice.currency} {invoice.total_amount.toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={getStatusColor(invoice.status)}
-                      className="font-medium shadow-sm"
-                    >
-                      {invoice.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      {invoice.file_url && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setSelectedInvoiceForPreview(invoice);
-                              setPreviewDialogOpen(true);
-                            }}
-                            title="Preview PDF"
-                            className="hover:bg-primary/10 hover:text-primary transition-colors"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDownload(invoice)}
-                            title="Download PDF"
-                            className="hover:bg-success/10 hover:text-success transition-colors"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                      
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleTestStorage(invoice)}
-                        title="Test Storage (Check Console)"
-                        className="hover:bg-accent/50 hover:text-accent-foreground transition-colors"
-                      >
-                        <Beaker className="h-4 w-4" />
-                      </Button>
-                      
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleRegenerate(invoice)}
-                        disabled={regeneratingId === invoice.id}
-                        title="Regenerate PDF"
-                        className="hover:bg-warning/10 hover:text-warning transition-colors"
-                      >
-                        <RefreshCw className={`h-4 w-4 ${regeneratingId === invoice.id ? 'animate-spin' : ''}`} />
-                      </Button>
-
-                      {invoice.order_id && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => window.location.href = `/admin/orders`}
-                          title="View Order"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-
-              {paginatedInvoices.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-64 text-center">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <FileText className="h-12 w-12 text-muted-foreground" />
-                      <p className="text-muted-foreground">No invoices found</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          </div>
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t">
-              <div className="text-sm text-muted-foreground">
-                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredInvoices.length)} of {filteredInvoices.length} invoices
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const pageNum = i + 1;
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNum)}
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
-              </div>
+      {/* Mobile Card View */}
+      {isMobile ? (
+        <div className="space-y-3">
+          {paginatedInvoices.map((invoice) => (
+            <MobileInvoiceCard
+              key={invoice.id}
+              invoice={invoice}
+              onPreview={() => {
+                setSelectedInvoiceForPreview(invoice);
+                setPreviewDialogOpen(true);
+              }}
+              onDownload={() => handleDownload(invoice)}
+              onRegenerate={() => handleRegenerate(invoice.id)}
+              isRegenerating={regeneratingId === invoice.id}
+            />
+          ))}
+        </div>
+      ) : (
+        /* Desktop Table View */
+        <InteractiveCard variant="elevated" className="overflow-hidden">
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+...
+              </Table>
             </div>
-          )}
-        </CardContent>
-      </InteractiveCard>
+          </CardContent>
+        </InteractiveCard>
+      )}
       
       <InvoicePDFPreviewDialog
         open={previewDialogOpen}

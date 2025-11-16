@@ -8,6 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
+import { MobileCurrencyMismatchCard } from './mobile/MobileCurrencyMismatchCard';
 
 interface CurrencyMismatch {
   type: 'order-quote' | 'invoice-order';
@@ -40,6 +42,7 @@ interface CurrencyStats {
 export const CurrencyAuditDashboard = () => {
   const [stats, setStats] = useState<CurrencyStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const { isMobile } = useMobileDetection();
 
   useEffect(() => {
     fetchCurrencyAudit();
@@ -367,47 +370,55 @@ export const CurrencyAuditDashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {stats.mismatches.map((mismatch, index) => (
-                <div key={index} className="p-4 border border-destructive/50 rounded-lg bg-destructive/5">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <Badge variant="destructive" className="text-xs">
-                        {mismatch.type === 'order-quote' ? 'Order ≠ Quote' : 'Invoice ≠ Order'}
-                      </Badge>
-                      {mismatch.type === 'order-quote' && (
-                        <div className="text-sm space-y-1">
-                          <div>
-                            <span className="text-muted-foreground">Order:</span> 
-                            <span className="ml-2 font-medium">{mismatch.orderNumber}</span>
-                            <Badge variant="outline" className="ml-2">{mismatch.orderCurrency}</Badge>
+            {isMobile ? (
+              <div className="space-y-3">
+                {stats.mismatches.map((mismatch, index) => (
+                  <MobileCurrencyMismatchCard key={index} mismatch={mismatch} />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {stats.mismatches.map((mismatch, index) => (
+                  <div key={index} className="p-4 border border-destructive/50 rounded-lg bg-destructive/5">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <Badge variant="destructive" className="text-xs">
+                          {mismatch.type === 'order-quote' ? 'Order ≠ Quote' : 'Invoice ≠ Order'}
+                        </Badge>
+                        {mismatch.type === 'order-quote' && (
+                          <div className="text-sm space-y-1">
+                            <div>
+                              <span className="text-muted-foreground">Order:</span> 
+                              <span className="ml-2 font-medium">{mismatch.orderNumber}</span>
+                              <Badge variant="outline" className="ml-2">{mismatch.orderCurrency}</Badge>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Quote:</span> 
+                              <span className="ml-2 font-medium">{mismatch.quoteNumber}</span>
+                              <Badge variant="outline" className="ml-2">{mismatch.quoteCurrency}</Badge>
+                            </div>
                           </div>
-                          <div>
-                            <span className="text-muted-foreground">Quote:</span> 
-                            <span className="ml-2 font-medium">{mismatch.quoteNumber}</span>
-                            <Badge variant="outline" className="ml-2">{mismatch.quoteCurrency}</Badge>
+                        )}
+                        {mismatch.type === 'invoice-order' && (
+                          <div className="text-sm space-y-1">
+                            <div>
+                              <span className="text-muted-foreground">Invoice:</span> 
+                              <span className="ml-2 font-medium">{mismatch.invoiceNumber}</span>
+                              <Badge variant="outline" className="ml-2">{mismatch.invoiceCurrency}</Badge>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Order:</span> 
+                              <span className="ml-2 font-medium">{mismatch.orderNumber}</span>
+                              <Badge variant="outline" className="ml-2">{mismatch.orderCurrency}</Badge>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      {mismatch.type === 'invoice-order' && (
-                        <div className="text-sm space-y-1">
-                          <div>
-                            <span className="text-muted-foreground">Invoice:</span> 
-                            <span className="ml-2 font-medium">{mismatch.invoiceNumber}</span>
-                            <Badge variant="outline" className="ml-2">{mismatch.invoiceCurrency}</Badge>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Order:</span> 
-                            <span className="ml-2 font-medium">{mismatch.orderNumber}</span>
-                            <Badge variant="outline" className="ml-2">{mismatch.orderCurrency}</Badge>
-                          </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
