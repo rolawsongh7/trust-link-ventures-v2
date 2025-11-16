@@ -81,7 +81,7 @@ export const MobileOrderCard = ({
   const needsPaymentProof = order.status === 'order_confirmed';
 
   return (
-    <InteractiveCard variant="elevated" className="p-4 space-y-3">
+    <InteractiveCard variant="elevated" className="p-4 space-y-3" onClick={() => onTrack()}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

@@ -65,7 +65,7 @@ export const MobileInvoiceCard = ({ invoice, onDownload, downloading }: MobileIn
   };
 
   return (
-    <InteractiveCard variant="elevated" className="p-4 space-y-3">
+    <InteractiveCard variant="elevated" className="p-4 space-y-3" onClick={() => onDownload(invoice)}>
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-1 min-w-0">
