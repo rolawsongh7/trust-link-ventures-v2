@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, Plus, ShoppingCart, Package } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 interface Product {
   id: string;
@@ -62,11 +63,32 @@ export const ProductCatalogSelector: React.FC<ProductCatalogSelectorProps> = ({
 
       if (error) throw error;
 
-      setProducts(data || []);
+      // Apply same filtering as customer catalog to exclude packaging products
+      const filteredProducts = (data || []).filter(product => {
+        if (product.supplier === 'J. Marr') {
+          const name = product.name.toLowerCase();
+          const packagingKeywords = [
+            'carton', 'package', 'box', 'bag', 'frozen', 'seph', 'china', 'norway', 
+            'japan', 'chile', 'ireland', 'peru', 'oman', 'namibia', 'irish', 
+            'atlantic', 'antarctic', 'oceana', 'kamoyasu', 'daikokuya', 'abecho',
+            'exalmar', 'kontiki', 'diamante', 'premier', 'sunshine', 'lech drob',
+            'koch foods', 'killybegs', 'marr box', 'oshongo', 'pelican', 
+            'fosnavaag', 'global', 'sperre', 'vikomar', 'yamada', 'yelpi',
+            'nabejyu', 'olav', 'casings', 'da yang', 'animex'
+          ];
+          const hasPackagingKeyword = packagingKeywords.some(keyword => 
+            name.includes(keyword)
+          );
+          if (hasPackagingKeyword) return false;
+        }
+        return true;
+      });
+
+      setProducts(filteredProducts);
       
       // Extract unique categories and suppliers
-      const uniqueCategories = [...new Set(data?.map(p => p.category) || [])];
-      const uniqueSuppliers = [...new Set(data?.map(p => p.supplier) || [])];
+      const uniqueCategories = [...new Set(filteredProducts?.map(p => p.category) || [])];
+      const uniqueSuppliers = [...new Set(filteredProducts?.map(p => p.supplier) || [])];
       setCategories(uniqueCategories);
       setSuppliers(uniqueSuppliers);
     } catch (error) {
@@ -215,34 +237,43 @@ export const ProductCatalogSelector: React.FC<ProductCatalogSelectorProps> = ({
                       )}
 
                       {selected && item && (
-                        <div className="grid grid-cols-3 gap-2 mt-3">
-                          <Input
-                            type="number"
-                            placeholder="Qty"
-                            value={item.quantity}
-                            onChange={(e) =>
-                              handleUpdateItem(product.id, 'quantity', Number(e.target.value))
-                            }
-                            min="1"
-                          />
-                          <Input
-                            type="text"
-                            placeholder="Unit"
-                            value={item.unit}
-                            onChange={(e) =>
-                              handleUpdateItem(product.id, 'unit', e.target.value)
-                            }
-                          />
-                          <Input
-                            type="number"
-                            placeholder={`Price (${currency})`}
-                            value={item.unitPrice}
-                            onChange={(e) =>
-                              handleUpdateItem(product.id, 'unitPrice', Number(e.target.value))
-                            }
-                            min="0"
-                            step="0.01"
-                          />
+                        <div className="grid grid-cols-3 gap-3 mt-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Quantity</Label>
+                            <Input
+                              type="number"
+                              placeholder="Qty"
+                              value={item.quantity}
+                              onChange={(e) =>
+                                handleUpdateItem(product.id, 'quantity', Number(e.target.value))
+                              }
+                              min="1"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Unit</Label>
+                            <Input
+                              type="text"
+                              placeholder="Unit"
+                              value={item.unit}
+                              onChange={(e) =>
+                                handleUpdateItem(product.id, 'unit', e.target.value)
+                              }
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Unit Price ({currency})</Label>
+                            <Input
+                              type="number"
+                              placeholder="0.00"
+                              value={item.unitPrice}
+                              onChange={(e) =>
+                                handleUpdateItem(product.id, 'unitPrice', Number(e.target.value))
+                              }
+                              min="0"
+                              step="0.01"
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
