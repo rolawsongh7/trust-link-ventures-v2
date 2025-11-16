@@ -398,23 +398,31 @@ const CustomerManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Customer Management</h2>
-          <p className="text-muted-foreground">Manage your customer relationships and information</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportToCSV}>
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setEditingCustomer(null)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Customer
-              </Button>
-            </DialogTrigger>
+      <PortalPageHeader
+        variant="admin"
+        title="Customer Management"
+        subtitle="Manage your customer relationships and information"
+        totalIcon={Users}
+        totalCount={customers.length}
+        stats={[
+          { label: 'Active', count: customers.filter(c => c.customer_status === 'active').length, icon: UserCheck },
+          { label: 'Inactive', count: customers.filter(c => c.customer_status === 'inactive').length, icon: UserX },
+          { label: 'VIP', count: customers.filter(c => c.priority === 'high').length, icon: Star },
+        ]}
+      />
+      
+      <div className="flex gap-2 justify-end">
+        <Button variant="outline" onClick={exportToCSV}>
+          <Download className="h-4 w-4 mr-2" />
+          Export CSV
+        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setEditingCustomer(null)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Customer
+            </Button>
+          </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingCustomer ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>
@@ -586,7 +594,6 @@ const CustomerManagement = () => {
             </Form>
           </DialogContent>
         </Dialog>
-        </div>
       </div>
 
       {/* Filters Bar */}

@@ -311,11 +311,25 @@ const CommunicationsManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Communications</h2>
-          <p className="text-muted-foreground">Track all customer communications and interactions</p>
-        </div>
+      <PortalPageHeader
+        variant="admin"
+        title="Communications Hub"
+        subtitle="Track all customer communications and interactions"
+        totalIcon={MessageSquare}
+        totalCount={communications.length}
+        stats={[
+          { label: 'Today', count: communications.filter(c => new Date(c.communication_date).toDateString() === new Date().toDateString()).length, icon: Clock },
+          { label: 'This Week', count: communications.filter(c => {
+            const date = new Date(c.communication_date);
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return date >= weekAgo;
+          }).length, icon: Calendar },
+          { label: 'Emails', count: communications.filter(c => c.communication_type === 'email').length, icon: Inbox },
+        ]}
+      />
+      
+      <div className="flex justify-end">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => {
