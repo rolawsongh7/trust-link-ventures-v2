@@ -61,8 +61,10 @@ serve(async (req) => {
       )
     }
 
-    // Generate view link
-    const origin = req.headers.get('origin') || 'https://trustlinkcompany.com'
+    // Generate view link with dynamic origin detection
+    const origin = req.headers.get('origin') || 
+                   req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 
+                   'https://trustlinkcompany.com'
     const viewLink = `${origin}/quote-view/${token}`
 
     // Log token generation

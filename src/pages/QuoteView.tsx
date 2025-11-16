@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { FileText, Download, Mail, CheckCircle, Clock, AlertCircle, Loader2 } from 'lucide-react';
+import { FileText, Download, Mail, CheckCircle, Clock, AlertCircle, Loader2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface QuoteViewData {
   id: string;
@@ -46,6 +47,9 @@ const QuoteView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewStartTime] = useState(Date.now());
+  const [approving, setApproving] = useState(false);
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -193,6 +197,62 @@ const QuoteView = () => {
     window.location.href = mailtoLink;
   };
 
+  const handleApprove = async () => {
+    if (!quote || !token) return;
+
+    setApproving(true);
+    try {
+      const { error } = await supabase.functions.invoke('quote-approval', {
+        body: {
+          token,
+          action: 'approve',
+          quoteId: quote.id,
+          customerEmail: quote.customers?.email
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success('Quote approved successfully!');
+      
+      // Update local state
+      setQuote({ ...quote, status: 'approved' });
+    } catch (err: any) {
+      console.error('Error approving quote:', err);
+      toast.error('Failed to approve quote. Please try again.');
+    } finally {
+      setApproving(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!quote || !token) return;
+
+    setApproving(true);
+    try {
+      const { error } = await supabase.functions.invoke('quote-approval', {
+        body: {
+          token,
+          action: 'reject',
+          quoteId: quote.id,
+          customerEmail: quote.customers?.email
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success('Quote rejected successfully.');
+      
+      // Update local state
+      setQuote({ ...quote, status: 'rejected' });
+    } catch (err: any) {
+      console.error('Error rejecting quote:', err);
+      toast.error('Failed to reject quote. Please try again.');
+    } finally {
+      setApproving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -336,18 +396,60 @@ const QuoteView = () => {
         {/* Actions */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row gap-3">
-              {(quote.final_file_url || quote.file_url) && (
-                <Button onClick={handleDownloadPDF} className="flex-1">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-                </Button>
+            <div className="space-y-4">
+              {/* Approve/Reject Actions */}
+              {quote.status !== 'approved' && quote.status !== 'rejected' && !isExpired && (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button 
+                    onClick={() => setShowApproveDialog(true)} 
+                    className="flex-1"
+                    disabled={approving}
+                  >
+                    <ThumbsUp className="h-4 w-4 mr-2" />
+                    {approving ? 'Processing...' : 'Approve Quote'}
+                  </Button>
+                  <Button 
+                    onClick={() => setShowRejectDialog(true)} 
+                    variant="destructive" 
+                    className="flex-1"
+                    disabled={approving}
+                  >
+                    <ThumbsDown className="h-4 w-4 mr-2" />
+                    Reject Quote
+                  </Button>
+                </div>
               )}
-              <Button onClick={handleRequestChanges} variant="outline" className="flex-1">
-                <Mail className="h-4 w-4 mr-2" />
-                Request Changes
-              </Button>
+
+              {/* Status Message */}
+              {quote.status === 'approved' && (
+                <div className="flex items-center justify-center gap-2 text-green-600 dark:text-green-400 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-semibold">Quote Approved</span>
+                </div>
+              )}
+
+              {quote.status === 'rejected' && (
+                <div className="flex items-center justify-center gap-2 text-red-600 dark:text-red-400 p-3 bg-red-50 dark:bg-red-950 rounded-lg">
+                  <AlertCircle className="h-5 w-5" />
+                  <span className="font-semibold">Quote Rejected</span>
+                </div>
+              )}
+
+              {/* Other Actions */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                {(quote.final_file_url || quote.file_url) && (
+                  <Button onClick={handleDownloadPDF} variant="outline" className="flex-1">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                  </Button>
+                )}
+                <Button onClick={handleRequestChanges} variant="outline" className="flex-1">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Request Changes
+                </Button>
+              </div>
             </div>
+
             <p className="text-xs text-muted-foreground text-center mt-4">
               This quote is valid until {quote.valid_until ? format(new Date(quote.valid_until), 'MMMM dd, yyyy') : 'specified date'}.
               <br />
@@ -356,6 +458,27 @@ const QuoteView = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Confirmation Dialogs */}
+      <ConfirmationDialog
+        open={showApproveDialog}
+        onOpenChange={setShowApproveDialog}
+        title="Approve Quote"
+        description="Are you sure you want to approve this quote? This action will notify the sales team."
+        onConfirm={handleApprove}
+        confirmText="Approve"
+        variant="default"
+      />
+
+      <ConfirmationDialog
+        open={showRejectDialog}
+        onOpenChange={setShowRejectDialog}
+        title="Reject Quote"
+        description="Are you sure you want to reject this quote? You can still contact the sales team to discuss alternatives."
+        onConfirm={handleReject}
+        confirmText="Reject"
+        variant="destructive"
+      />
     </div>
   );
 };
