@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { Download, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
+import { MobilePaymentTransactionCard } from './mobile/MobilePaymentTransactionCard';
 
 interface PaymentTransaction {
   id: string;
@@ -31,6 +33,7 @@ export const PaymentTransactionsSummary = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateRange, setDateRange] = useState('7days');
+  const { isMobile } = useMobileDetection();
 
   useEffect(() => {
     fetchTransactions();
@@ -211,6 +214,12 @@ export const PaymentTransactionsSummary = () => {
           ) : transactions.length === 0 ? (
             <div className="text-center p-8 text-muted-foreground">
               No transactions found
+            </div>
+          ) : isMobile ? (
+            <div className="space-y-3">
+              {transactions.map((transaction) => (
+                <MobilePaymentTransactionCard key={transaction.id} transaction={transaction} />
+              ))}
             </div>
           ) : (
             <div className="rounded-md border">
