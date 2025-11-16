@@ -6,6 +6,7 @@ import { InteractiveCard } from "@/components/ui/interactive-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { PortalPageHeader } from '@/components/customer/PortalPageHeader';
 import { 
   FileText, 
   Download, 
@@ -22,7 +23,9 @@ import {
   Eye,
   Beaker,
   DollarSign,
-  CheckCircle
+  CheckCircle,
+  Clock,
+  XCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";

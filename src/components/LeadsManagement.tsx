@@ -8,7 +8,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Edit, TrendingUp, Calendar, DollarSign, Users, Target, Eye, Filter } from 'lucide-react';
+import { PortalPageHeader } from '@/components/customer/PortalPageHeader';
+import { Plus, Search, Edit, TrendingUp, Calendar, DollarSign, Users, Target, Eye, Filter, Star, Clock, CircleDot } from 'lucide-react';
 import LeadConversion from './LeadConversion';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';

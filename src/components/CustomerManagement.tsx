@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Search, Edit, Eye, Mail, Phone, Building, Users, Trash2, Download, Filter, X, Building2, CheckCircle, Clock, Star, TrendingUp, DollarSign } from 'lucide-react';
+import { PortalPageHeader } from '@/components/customer/PortalPageHeader';
+import { Plus, Search, Edit, Eye, Mail, Phone, Building, Users, Trash2, Download, Filter, X, Building2, CheckCircle, Clock, Star, TrendingUp, DollarSign, UserCheck, UserX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { DataTable, Column } from '@/components/ui/data-table';
