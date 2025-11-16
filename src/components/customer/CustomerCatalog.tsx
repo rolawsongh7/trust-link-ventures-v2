@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Search, Filter, Package, Plus, ShoppingCart } from 'lucide-react';
+import { Search, Filter, Package, Plus, ShoppingCart, Grid3X3, Building2, CheckCircle } from 'lucide-react';
+import { PortalPageHeader } from './PortalPageHeader';
 import { supabase } from '@/integrations/supabase/client';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { useToast } from '@/hooks/use-toast';
@@ -205,22 +206,32 @@ export const CustomerCatalog: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
       {/* Gradient Header Section */}
-      <div className="bg-tl-gradient rounded-lg shadow-md p-6 md:p-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-white">
-              Product Catalog
-            </h1>
-            <p className="text-white/80 text-sm md:text-base mt-1">
-              Browse premium frozen & fresh products
-            </p>
-          </div>
-          <div className="hidden sm:inline-flex bg-white/10 backdrop-blur-sm border border-white/30 px-4 py-2 rounded-full text-white font-medium">
-            <Package className="h-4 w-4 mr-2" />
-            {filteredProducts.length} Products
-          </div>
-        </div>
-      </div>
+      <Card className="overflow-hidden">
+        <PortalPageHeader
+          title="Product Catalog"
+          subtitle="Browse our premium frozen & fresh products"
+          totalCount={filteredProducts.length}
+          totalIcon={Package}
+          patternId="catalog-grid"
+          stats={[
+            {
+              label: "Categories",
+              count: categories.length,
+              icon: Grid3X3
+            },
+            {
+              label: "Suppliers",
+              count: suppliers.length,
+              icon: Building2
+            },
+            {
+              label: "In Stock",
+              count: products.length,
+              icon: CheckCircle
+            }
+          ]}
+        />
+      </Card>
 
       {/* Filters Card */}
       <Card className="bg-tl-surface border-tl-border shadow-sm">
