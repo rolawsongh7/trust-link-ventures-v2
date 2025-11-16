@@ -20,6 +20,7 @@ interface Invoice {
 
 interface MobileInvoiceCardProps {
   invoice: Invoice;
+  onClick?: () => void;
   onPreview: () => void;
   onDownload: () => void;
   onRegenerate: () => void;
@@ -28,6 +29,7 @@ interface MobileInvoiceCardProps {
 
 export const MobileInvoiceCard = ({
   invoice,
+  onClick,
   onPreview,
   onDownload,
   onRegenerate,
@@ -63,7 +65,7 @@ export const MobileInvoiceCard = ({
   };
 
   return (
-    <InteractiveCard variant="elevated" className="p-4 space-y-3">
+    <InteractiveCard variant="elevated" className="p-4 space-y-3" onClick={onClick}>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">

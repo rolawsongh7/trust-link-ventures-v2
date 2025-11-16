@@ -8,6 +8,7 @@ import { Download, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { MobilePaymentTransactionCard } from './mobile/MobilePaymentTransactionCard';
+import { MobilePaymentTransactionDetailDialog } from './mobile/MobilePaymentTransactionDetailDialog';
 
 interface PaymentTransaction {
   id: string;
@@ -33,6 +34,8 @@ export const PaymentTransactionsSummary = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateRange, setDateRange] = useState('7days');
+  const [selectedTransaction, setSelectedTransaction] = useState<PaymentTransaction | null>(null);
+  const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
   const { isMobile } = useMobileDetection();
 
   useEffect(() => {
@@ -218,7 +221,14 @@ export const PaymentTransactionsSummary = () => {
           ) : isMobile ? (
             <div className="space-y-3">
               {transactions.map((transaction) => (
-                <MobilePaymentTransactionCard key={transaction.id} transaction={transaction} />
+                <MobilePaymentTransactionCard 
+                  key={transaction.id} 
+                  transaction={transaction}
+                  onClick={() => {
+                    setSelectedTransaction(transaction);
+                    setTransactionDialogOpen(true);
+                  }}
+                />
               ))}
             </div>
           ) : (
@@ -267,6 +277,12 @@ export const PaymentTransactionsSummary = () => {
           )}
         </CardContent>
       </Card>
+
+      <MobilePaymentTransactionDetailDialog
+        transaction={selectedTransaction}
+        open={transactionDialogOpen}
+        onOpenChange={setTransactionDialogOpen}
+      />
     </div>
   );
 };

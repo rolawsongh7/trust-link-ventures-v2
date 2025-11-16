@@ -35,6 +35,7 @@ import { InvoicePDFPreviewDialog } from './InvoicePDFPreviewDialog';
 import { ensureSignedUrl } from '@/lib/storageHelpers';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { MobileInvoiceCard } from './mobile/MobileInvoiceCard';
+import { MobileInvoiceDetailDialog } from './mobile/MobileInvoiceDetailDialog';
 import {
   Select,
   SelectContent,
@@ -94,6 +95,8 @@ export default function InvoiceManagement() {
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [selectedInvoiceForPreview, setSelectedInvoiceForPreview] = useState<Invoice | null>(null);
   const [regeneratingAll, setRegeneratingAll] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedInvoiceForDetail, setSelectedInvoiceForDetail] = useState<Invoice | null>(null);
 
   const { data: invoices, isLoading, refetch } = useQuery({
     queryKey: ['admin-invoices'],
@@ -519,6 +522,10 @@ export default function InvoiceManagement() {
             <MobileInvoiceCard
               key={invoice.id}
               invoice={invoice}
+              onClick={() => {
+                setSelectedInvoiceForDetail(invoice);
+                setDetailDialogOpen(true);
+              }}
               onPreview={() => {
                 setSelectedInvoiceForPreview(invoice);
                 setPreviewDialogOpen(true);
@@ -546,6 +553,25 @@ export default function InvoiceManagement() {
         open={previewDialogOpen}
         onOpenChange={setPreviewDialogOpen}
         invoice={selectedInvoiceForPreview}
+      />
+
+      <MobileInvoiceDetailDialog
+        invoice={selectedInvoiceForDetail}
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        onPreview={(invoice) => {
+          const fullInvoice = paginatedInvoices.find(i => i.id === invoice.id);
+          if (fullInvoice) {
+            setSelectedInvoiceForPreview(fullInvoice);
+            setPreviewDialogOpen(true);
+          }
+        }}
+        onDownload={(invoice) => {
+          const fullInvoice = paginatedInvoices.find(i => i.id === invoice.id);
+          if (fullInvoice) handleDownload(fullInvoice);
+        }}
+        onRegenerate={(id) => handleRegenerate(id)}
+        isRegenerating={selectedInvoiceForDetail ? regeneratingId === selectedInvoiceForDetail.id : false}
       />
     </div>
   );

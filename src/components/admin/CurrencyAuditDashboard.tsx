@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { MobileCurrencyMismatchCard } from './mobile/MobileCurrencyMismatchCard';
+import { MobileCurrencyMismatchDetailDialog } from './mobile/MobileCurrencyMismatchDetailDialog';
 
 interface CurrencyMismatch {
   type: 'order-quote' | 'invoice-order';
@@ -42,6 +43,8 @@ interface CurrencyStats {
 export const CurrencyAuditDashboard = () => {
   const [stats, setStats] = useState<CurrencyStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedMismatch, setSelectedMismatch] = useState<CurrencyMismatch | null>(null);
+  const [mismatchDialogOpen, setMismatchDialogOpen] = useState(false);
   const { isMobile } = useMobileDetection();
 
   useEffect(() => {
@@ -459,6 +462,12 @@ export const CurrencyAuditDashboard = () => {
           </CardContent>
         </Card>
       )}
+
+      <MobileCurrencyMismatchDetailDialog
+        mismatch={selectedMismatch}
+        open={mismatchDialogOpen}
+        onOpenChange={setMismatchDialogOpen}
+      />
     </div>
   );
 };

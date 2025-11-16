@@ -23,9 +23,10 @@ interface PaymentTransaction {
 
 interface MobilePaymentTransactionCardProps {
   transaction: PaymentTransaction;
+  onClick?: () => void;
 }
 
-export const MobilePaymentTransactionCard = ({ transaction }: MobilePaymentTransactionCardProps) => {
+export const MobilePaymentTransactionCard = ({ transaction, onClick }: MobilePaymentTransactionCardProps) => {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'success':
@@ -63,7 +64,7 @@ export const MobilePaymentTransactionCard = ({ transaction }: MobilePaymentTrans
   };
 
   return (
-    <InteractiveCard variant="elevated" className="p-4 space-y-3">
+    <InteractiveCard variant="elevated" className="p-4 space-y-3" onClick={onClick}>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
