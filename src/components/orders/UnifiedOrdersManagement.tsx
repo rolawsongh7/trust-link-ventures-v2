@@ -55,6 +55,7 @@ const UnifiedOrdersManagement = () => {
   const { orders, isLoading: loading, refetch } = useOrdersQuery();
   
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
