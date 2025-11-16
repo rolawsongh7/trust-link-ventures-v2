@@ -14,6 +14,8 @@ import { ProfileAvatar } from './ProfileAvatar';
 import { ProfileCompletion } from './ProfileCompletion';
 import { SecurityScore } from './SecurityScore';
 import { AccountStats } from './AccountStats';
+import { ActiveSessionsDialog } from './ActiveSessionsDialog';
+import { SecurityAlertsDialog } from './SecurityAlertsDialog';
 
 
 export const CustomerProfile: React.FC = () => {
@@ -23,6 +25,8 @@ export const CustomerProfile: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showMFASetup, setShowMFASetup] = useState(false);
+  const [showActiveSessions, setShowActiveSessions] = useState(false);
+  const [showSecurityAlerts, setShowSecurityAlerts] = useState(false);
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     company_name: profile?.company_name || '',
@@ -345,9 +349,11 @@ export const CustomerProfile: React.FC = () => {
           <AccountStats />
 
           {/* Enhanced Security Section */}
-          <SecurityScore
+          <SecurityScore 
             onChangePassword={() => setShowChangePassword(true)}
             onSetupMFA={() => setShowMFASetup(true)}
+            onViewSessions={() => setShowActiveSessions(true)}
+            onManageAlerts={() => setShowSecurityAlerts(true)}
           />
 
           {/* Quick Sign Out */}
@@ -374,6 +380,16 @@ export const CustomerProfile: React.FC = () => {
       <CustomerMFASetup
         open={showMFASetup}
         onOpenChange={setShowMFASetup}
+      />
+
+      <ActiveSessionsDialog
+        open={showActiveSessions}
+        onOpenChange={setShowActiveSessions}
+      />
+
+      <SecurityAlertsDialog
+        open={showSecurityAlerts}
+        onOpenChange={setShowSecurityAlerts}
       />
     </div>
   );

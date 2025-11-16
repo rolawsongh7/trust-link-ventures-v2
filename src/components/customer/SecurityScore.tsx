@@ -54,13 +54,17 @@ const SecurityItem: React.FC<SecurityItemProps> = ({
 interface SecurityScoreProps {
   onChangePassword: () => void;
   onSetupMFA: () => void;
+  onViewSessions?: () => void;
+  onManageAlerts?: () => void;
 }
 
 export const SecurityScore: React.FC<SecurityScoreProps> = ({
   onChangePassword,
   onSetupMFA,
+  onViewSessions,
+  onManageAlerts,
 }) => {
-  const securityScore = 70;
+  const securityScore = 7;
 
   return (
     <Card className="border-l-4 border-l-emerald-500 shadow-lg hover:shadow-xl transition-all">
@@ -110,6 +114,7 @@ export const SecurityScore: React.FC<SecurityScoreProps> = ({
             description="2 active devices • Last login: 2 hours ago"
             status="active"
             actionLabel="View All"
+            onAction={onViewSessions}
           />
 
           <SecurityItem
@@ -118,6 +123,7 @@ export const SecurityScore: React.FC<SecurityScoreProps> = ({
             description="Email notifications for security events"
             status="active"
             actionLabel="Manage"
+            onAction={onManageAlerts}
           />
         </div>
       </CardContent>
