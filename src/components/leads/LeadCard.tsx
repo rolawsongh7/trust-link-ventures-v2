@@ -33,6 +33,19 @@ const getScoreColor = (score?: number) => {
   return 'text-red-600';
 };
 
+const getLeadBorderColor = (status: string) => {
+  const borders: Record<string, string> = {
+    new: 'border-l-blue-500',
+    contacted: 'border-l-purple-500',
+    qualified: 'border-l-green-500',
+    proposal: 'border-l-yellow-500',
+    negotiation: 'border-l-orange-500',
+    closed_won: 'border-l-emerald-500',
+    closed_lost: 'border-l-red-500',
+  };
+  return borders[status] || 'border-l-gray-300';
+};
+
 export const LeadCard: React.FC<LeadCardProps> = ({
   lead,
   onView,
@@ -40,7 +53,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({
   onConvert,
 }) => {
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={`hover:shadow-md transition-shadow border-l-4 ${getLeadBorderColor(lead.status)}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">

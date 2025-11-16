@@ -87,7 +87,8 @@ const CustomerPortalMain = () => {
       description: 'Explore our premium seafood catalog',
       icon: Grid3X3,
       href: '/portal/catalog',
-      color: 'from-[#0077B6] to-[#003366]'
+      color: 'from-[#0077B6] to-[#003366]',
+      borderColor: 'border-l-primary'
     },
     {
       title: 'My Cart',
@@ -95,42 +96,48 @@ const CustomerPortalMain = () => {
       icon: ShoppingCart,
       href: '/portal/cart',
       color: 'from-[#00B4D8] to-[#0077B6]',
-      badge: totalItems > 0 ? totalItems : undefined
+      badge: totalItems > 0 ? totalItems : undefined,
+      borderColor: 'border-l-orange-500'
     },
     {
       title: 'My Quotes',
       description: 'View requested and generated quotes',
       icon: FileText,
       href: '/portal/quotes',
-      color: 'from-[#0096C7] to-[#0077B6]'
+      color: 'from-[#0096C7] to-[#0077B6]',
+      borderColor: 'border-l-blue-500'
     },
     {
       title: 'My Orders',
       description: 'Track shipments and order history',
       icon: Package,
       href: '/portal/orders',
-      color: 'from-[#023E8A] to-[#0077B6]'
+      color: 'from-[#023E8A] to-[#0077B6]',
+      borderColor: 'border-l-green-500'
     },
     {
       title: 'Communications',
       description: 'Send messages to our team',
       icon: MessageSquare,
       href: '/portal/communications',
-      color: 'from-[#0077B6] to-[#03045E]'
+      color: 'from-[#0077B6] to-[#03045E]',
+      borderColor: 'border-l-purple-500'
     },
     {
       title: 'Profile',
       description: 'Manage your account settings',
       icon: User,
       href: '/portal/profile',
-      color: 'from-[#0096C7] to-[#023E8A]'
+      color: 'from-[#0096C7] to-[#023E8A]',
+      borderColor: 'border-l-primary'
     },
     {
       title: 'Invoices',
       description: 'View and download invoices',
       icon: DollarSign,
       href: '/portal/invoices',
-      color: 'from-[#00B4D8] to-[#0096C7]'
+      color: 'from-[#00B4D8] to-[#0096C7]',
+      borderColor: 'border-l-yellow-500'
     },
     {
       title: 'Track Shipment',
@@ -301,6 +308,7 @@ const CustomerPortalMain = () => {
                     color={action.color}
                     badge={action.badge}
                     delay={index * 25}
+                    borderColor={action.borderColor}
                   />
                 ))}
               </div>
