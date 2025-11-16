@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -48,6 +49,7 @@ export const CustomerAddresses = () => {
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isMobile } = useMobileDetection();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -329,229 +331,218 @@ export const CustomerAddresses = () => {
       </Card>
 
       {/* Add Address Dialog */}
-      <div>
-        <div className="flex justify-end mb-4">
-          <Dialog
-            open={dialogOpen}
-            onOpenChange={(open) => {
-              setDialogOpen(open);
-              if (!open) {
-                form.reset();
-                setEditingAddress(null);
-              }
-            }}
-          >
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            form.reset();
+            setEditingAddress(null);
+          }
+        }}
+      >
+        {/* Desktop Button */}
+        {!isMobile && (
+          <div className="flex justify-end mb-4">
             <DialogTrigger asChild>
               <Button className="bg-white/20 border border-white/30 text-white hover:bg-white/10 h-11 sm:h-10 touch-manipulation">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Address
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-tl-surface max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
-              <DialogHeader>
-                <DialogTitle className="text-2xl text-tl-primary">
-                  {editingAddress ? 'Edit' : 'Add'} Delivery Address
-                </DialogTitle>
-                <DialogDescription className="text-tl-muted">
-                  Enter the delivery address details. Ghana Digital Address is required.
-                </DialogDescription>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="receiver_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-tl-text">Receiver Name *</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            className="rounded-lg border-tl-border focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 h-11 sm:h-10 text-base sm:text-sm"
-                            placeholder="John Doe"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs sm:text-sm" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="phone_number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-tl-text">Phone Number *</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            className="rounded-lg border-tl-border focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 h-11 sm:h-10 text-base sm:text-sm"
-                            placeholder="+233244123456 or 0244123456"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs sm:text-sm" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="ghana_digital_address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-tl-text">Ghana Digital Address *</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            className="rounded-lg border-tl-border focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 h-11 sm:h-10 text-base sm:text-sm"
-                            placeholder="GA-123-4567"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs sm:text-sm" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <FormField
-                      control={form.control}
-                      name="region"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-tl-text">Region *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="border-tl-border focus:border-tl-accent h-11 sm:h-10 text-base sm:text-sm">
-                                <SelectValue placeholder="Select region" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="max-h-60">
-                              {GHANA_REGIONS.map((region) => (
-                                <SelectItem key={region} value={region} className="h-11 sm:h-10">
-                                  {region}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage className="text-xs sm:text-sm" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-tl-text">City *</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              className="rounded-lg border-tl-border focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 h-11 sm:h-10 text-base sm:text-sm"
-                              placeholder="Accra"
-                            />
-                          </FormControl>
-                          <FormMessage className="text-xs sm:text-sm" />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
+          </div>
+        )}
+        
+        <DialogContent className="bg-tl-surface max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-tl-primary">
+              {editingAddress ? 'Edit' : 'Add'} Delivery Address
+            </DialogTitle>
+            <DialogDescription className="text-tl-muted">
+              Enter the delivery address details. Ghana Digital Address is required.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="area"
+                  name="receiver_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-tl-text">Area/Neighborhood</FormLabel>
+                      <FormLabel className="text-tl-primary">Receiver Name *</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          className="rounded-lg border-tl-border focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 h-11 sm:h-10 text-base sm:text-sm"
-                          placeholder="Osu"
-                        />
+                        <Input {...field} className="bg-white/5 border-white/10 text-white h-11 sm:h-10 touch-manipulation" placeholder="John Doe" />
                       </FormControl>
-                      <FormMessage className="text-xs sm:text-sm" />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
-
+                
                 <FormField
                   control={form.control}
-                  name="street_address"
+                  name="phone_number"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-tl-text">Street Address *</FormLabel>
+                      <FormLabel className="text-tl-primary">Phone Number *</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          className="rounded-lg border-tl-border focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 h-11 sm:h-10 text-base sm:text-sm"
-                          placeholder="123 Main Street, House Number"
-                        />
+                        <Input {...field} className="bg-white/5 border-white/10 text-white h-11 sm:h-10 touch-manipulation" placeholder="+233XXXXXXXXX or 0XXXXXXXXX" />
                       </FormControl>
-                      <FormMessage className="text-xs sm:text-sm" />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
+              </div>
 
+              <FormField
+                control={form.control}
+                name="ghana_digital_address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-tl-primary">Ghana Digital Address *</FormLabel>
+                    <FormControl>
+                      <Input {...field} className="bg-white/5 border-white/10 text-white h-11 sm:h-10 touch-manipulation" placeholder="GA-123-4567" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="additional_directions"
+                  name="region"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-tl-text">Additional Directions</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          className="rounded-lg border-tl-border focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 min-h-20 sm:min-h-16 text-base sm:text-sm resize-none"
-                          placeholder="Landmarks, special instructions, etc."
-                        />
-                      </FormControl>
-                      <FormMessage className="text-xs sm:text-sm" />
+                      <FormLabel className="text-tl-primary">Region *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="bg-white/5 border-white/10 text-white h-11 sm:h-10 touch-manipulation">
+                            <SelectValue placeholder="Select region" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {GHANA_REGIONS.map((region) => (
+                            <SelectItem key={region} value={region}>
+                              {region}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
-
+                
                 <FormField
                   control={form.control}
-                  name="is_default"
+                  name="city"
                   render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border border-tl-border p-3 sm:p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-tl-text">Set as default address</FormLabel>
-                      </div>
+                    <FormItem>
+                      <FormLabel className="text-tl-primary">City *</FormLabel>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          className="scale-110 sm:scale-100"
-                        />
+                        <Input {...field} className="bg-white/5 border-white/10 text-white h-11 sm:h-10 touch-manipulation" placeholder="Accra" />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
+              </div>
 
-                <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setDialogOpen(false)}
-                    className="border-tl-border hover:bg-tl-bg h-11 sm:h-10 w-full sm:w-auto text-base sm:text-sm touch-manipulation"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="bg-tl-gradient text-white hover:opacity-95 h-11 sm:h-10 w-full sm:w-auto text-base sm:text-sm touch-manipulation"
-                  >
-                    {editingAddress ? 'Update' : 'Add'} Address
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-        </div>
-      </div>
+              <FormField
+                control={form.control}
+                name="area"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-tl-primary">Area/Neighborhood</FormLabel>
+                    <FormControl>
+                      <Input {...field} className="bg-white/5 border-white/10 text-white h-11 sm:h-10 touch-manipulation" placeholder="Osu" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="street_address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-tl-primary">Street Address *</FormLabel>
+                    <FormControl>
+                      <Input {...field} className="bg-white/5 border-white/10 text-white h-11 sm:h-10 touch-manipulation" placeholder="123 Main Street" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="additional_directions"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-tl-primary">Additional Directions</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        {...field} 
+                        className="bg-white/5 border-white/10 text-white min-h-[80px] touch-manipulation" 
+                        placeholder="Near blue house with gate"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="is_default"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/10 p-3 sm:p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base text-tl-primary">
+                        Set as Default Address
+                      </FormLabel>
+                      <FormLabel className="text-sm text-tl-muted">
+                        This address will be used by default for orders
+                      </FormLabel>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setDialogOpen(false);
+                    form.reset();
+                    setEditingAddress(null);
+                  }}
+                  className="border-white/10 text-white hover:bg-white/10 h-11 sm:h-10 touch-manipulation"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="bg-tl-gradient text-white hover:opacity-95 h-11 sm:h-10 touch-manipulation"
+                >
+                  {editingAddress ? 'Update' : 'Add'} Address
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       {/* Pending Order Banner */}
       {pendingOrderId && pendingOrderNumber && (
@@ -672,6 +663,18 @@ export const CustomerAddresses = () => {
             </Card>
           ))}
         </div>
+      )}
+      
+      {/* Mobile FAB */}
+      {isMobile && (
+        <DialogTrigger asChild>
+          <Button
+            className="fixed bottom-20 right-4 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 z-40"
+            size="icon"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+        </DialogTrigger>
       )}
     </div>
   );
