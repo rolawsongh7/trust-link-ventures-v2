@@ -260,7 +260,9 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
       sortable: true,
       render: (value: any, row: Order) => (
         <div className="max-w-[200px] truncate">
-          {row.customers?.company_name}
+          {row.customers?.company_name || (
+            <span className="text-muted-foreground italic text-sm">No customer</span>
+          )}
         </div>
       ),
     },
@@ -270,7 +272,7 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
       sortable: false,
       width: '180px',
       render: (value: any, row: Order) => {
-        if (row.quotes) {
+        if (row.quotes && row.quotes.quote_number) {
           return (
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="bg-blue-50 border-blue-200">
@@ -289,8 +291,8 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
           );
         }
         return (
-          <Badge variant="outline" className="text-gray-500">
-            No Quote
+          <Badge variant="outline" className="bg-muted text-muted-foreground">
+            Manual Order
           </Badge>
         );
       },

@@ -3,9 +3,31 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
-export type Order = Database['public']['Tables']['orders']['Row'];
+type BaseOrder = Database['public']['Tables']['orders']['Row'];
 type OrderInsert = Database['public']['Tables']['orders']['Insert'];
 type OrderUpdate = Database['public']['Tables']['orders']['Update'];
+
+// Extended Order type with joined relationships
+export interface Order extends BaseOrder {
+  customers?: {
+    id: string;
+    company_name: string;
+    contact_name?: string;
+    email?: string;
+  } | null;
+  quotes?: {
+    id?: string;
+    quote_number: string;
+    title: string;
+  } | null;
+  customer_addresses?: {
+    street_address: string;
+    city: string;
+    region: string;
+    ghana_digital_address?: string;
+  } | null;
+  order_items?: any[];
+}
 
 export const useOrdersQuery = (customerId?: string) => {
   const queryClient = useQueryClient();
@@ -18,9 +40,9 @@ export const useOrdersQuery = (customerId?: string) => {
         .from('orders')
         .select(`
           *,
-          quotes(quote_number, title),
-          customers(company_name, contact_name, email),
-          customer_addresses(street_address, city, region, ghana_digital_address)
+          quotes!orders_quote_id_fkey(quote_number, title, id),
+          customers!left(company_name, contact_name, email, id),
+          customer_addresses!left(street_address, city, region, ghana_digital_address)
         `)
         .order('created_at', { ascending: false });
 
@@ -29,7 +51,16 @@ export const useOrdersQuery = (customerId?: string) => {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      
+      if (error) {
+        console.error('Orders query error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
 
       // Fetch order items in parallel for each order
       const ordersWithItems = await Promise.all(
@@ -41,10 +72,20 @@ export const useOrdersQuery = (customerId?: string) => {
 
           if (itemsError) {
             console.error('Error fetching order items:', itemsError);
-            return { ...order, order_items: [] };
+            return { 
+              ...order, 
+              order_items: [],
+              customers: order.customers || null,
+              quotes: order.quotes || null
+            };
           }
 
-          return { ...order, order_items: items || [] };
+          return { 
+            ...order, 
+            order_items: items || [],
+            customers: order.customers || null,
+            quotes: order.quotes || null
+          };
         })
       );
 
