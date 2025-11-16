@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign, Download, MapPin, AlertCircle, Upload, CreditCard, Clock } from 'lucide-react';
+import { Package, Search, Truck, Eye, RotateCcw, Calendar, DollarSign, Download, MapPin, AlertCircle, Upload, CreditCard, Clock, CheckCircle } from 'lucide-react';
+import { PortalPageHeader } from './PortalPageHeader';
 import { formatDistanceToNow } from 'date-fns';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -385,20 +386,32 @@ export const CustomerOrders: React.FC = () => {
         </Card>
       )}
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-tl-gradient bg-clip-text text-transparent">
-            My Orders
-          </h1>
-          <p className="text-tl-muted">
-            Track your order status and delivery information
-          </p>
-        </div>
-        <Badge variant="secondary" className="text-lg px-4 py-2 bg-tl-surface border-tl-border">
-          <Package className="h-4 w-4 mr-2" />
-          {filteredOrders.length} Orders
-        </Badge>
-      </div>
+      <Card className="overflow-hidden">
+        <PortalPageHeader
+          title="My Orders"
+          subtitle="Track your order status and delivery information"
+          totalCount={filteredOrders.length}
+          totalIcon={Package}
+          patternId="orders-grid"
+          stats={[
+            {
+              label: "Pending",
+              count: orders.filter(o => ['pending', 'awaiting_payment'].includes(o.status)).length,
+              icon: Clock
+            },
+            {
+              label: "In Transit",
+              count: orders.filter(o => ['in_transit', 'shipped'].includes(o.status)).length,
+              icon: Truck
+            },
+            {
+              label: "Delivered",
+              count: orders.filter(o => o.status === 'delivered').length,
+              icon: CheckCircle
+            }
+          ]}
+        />
+      </Card>
 
       {/* Filters */}
       <Card className="bg-tl-surface/80 backdrop-blur-md border-tl-border shadow-lg">

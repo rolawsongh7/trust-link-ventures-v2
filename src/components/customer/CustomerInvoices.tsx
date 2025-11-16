@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Loader2, Filter } from 'lucide-react';
+import { FileText, Download, Loader2, Filter, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { PortalPageHeader } from './PortalPageHeader';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
@@ -297,27 +298,43 @@ export const CustomerInvoices = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
       {/* Gradient Header */}
-      <div className="bg-tl-gradient text-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold">My Invoices</h1>
-            <p className="text-white/80 text-sm mt-1">View and download your invoices</p>
-          </div>
-          <div className="hidden sm:flex items-center gap-3">
-            <Badge className="bg-white/20 border border-white/30 text-white text-lg px-4 py-2">
-              <FileText className="h-4 w-4 mr-2" />
-              {filteredInvoices.length} Invoices
-            </Badge>
-            <Button
-              variant="outline"
-              className="border-white/30 text-white hover:bg-white/10"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Filters
-            </Button>
-          </div>
-        </div>
+      <Card className="overflow-hidden">
+        <PortalPageHeader
+          title="My Invoices"
+          subtitle="View and download your invoices"
+          totalCount={filteredInvoices.length}
+          totalIcon={FileText}
+          patternId="invoices-grid"
+          stats={[
+            {
+              label: "Paid",
+              count: invoices.filter(i => i.status === 'paid').length,
+              icon: CheckCircle
+            },
+            {
+              label: "Pending",
+              count: invoices.filter(i => i.status === 'pending').length,
+              icon: Clock
+            },
+            {
+              label: "Unpaid",
+              count: invoices.filter(i => i.status === 'unpaid').length,
+              icon: AlertCircle
+            }
+          ]}
+        />
+      </Card>
+
+      {/* Filter Toggle Button for Mobile */}
+      <div className="sm:hidden">
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Filter className="h-4 w-4 mr-2" />
+          {showFilters ? 'Hide' : 'Show'} Filters
+        </Button>
       </div>
 
       {/* Filter Panel */}

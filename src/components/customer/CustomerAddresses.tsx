@@ -14,7 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Plus, MapPin, Edit2, Trash2, Check, AlertCircle } from 'lucide-react';
+import { Plus, MapPin, Edit2, Trash2, Check, AlertCircle, Star, CheckCircle } from 'lucide-react';
+import { PortalPageHeader } from './PortalPageHeader';
 
 const GHANA_REGIONS = [
   'Greater Accra', 'Ashanti', 'Western', 'Central', 'Eastern', 'Volta',
@@ -300,12 +301,36 @@ export const CustomerAddresses = () => {
   return (
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
       {/* Gradient Header */}
-      <div className="bg-tl-gradient text-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold">Delivery Addresses</h1>
-            <p className="text-white/80 text-sm mt-1">Manage your delivery addresses</p>
-          </div>
+      <Card className="overflow-hidden">
+        <PortalPageHeader
+          title="Delivery Addresses"
+          subtitle="Manage your delivery addresses"
+          totalCount={addresses.length}
+          totalIcon={MapPin}
+          patternId="addresses-grid"
+          stats={[
+            {
+              label: "Default",
+              count: addresses.filter(a => a.is_default).length,
+              icon: Star
+            },
+            {
+              label: "Active",
+              count: addresses.length,
+              icon: CheckCircle
+            },
+            {
+              label: "Complete",
+              count: addresses.filter(a => a.ghana_digital_address && a.city && a.region).length,
+              icon: MapPin
+            }
+          ]}
+        />
+      </Card>
+
+      {/* Add Address Dialog */}
+      <div>
+        <div className="flex justify-end mb-4">
           <Dialog
             open={dialogOpen}
             onOpenChange={(open) => {
