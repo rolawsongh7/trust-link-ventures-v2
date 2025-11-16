@@ -13,6 +13,7 @@ interface PortalPageHeaderProps {
   totalIcon: React.ComponentType<{ className?: string }>;
   stats: StatPillData[];
   patternId?: string;
+  variant?: 'customer' | 'admin';
 }
 
 const StatPill: React.FC<StatPillData> = ({ label, count, icon: Icon }) => {
@@ -33,10 +34,15 @@ export const PortalPageHeader: React.FC<PortalPageHeaderProps> = ({
   totalCount,
   totalIcon: TotalIcon,
   stats,
-  patternId = 'portal-grid'
+  patternId = 'portal-grid',
+  variant = 'customer'
 }) => {
+  const gradientClasses = variant === 'admin' 
+    ? 'bg-gradient-to-r from-primary to-accent' 
+    : 'bg-gradient-to-r from-trustlink-navy to-trustlink-maritime';
+  
   return (
-    <div className="relative overflow-hidden rounded-t-xl bg-gradient-to-r from-trustlink-navy to-trustlink-maritime p-6 text-white shadow-md">
+    <div className={`relative overflow-hidden rounded-t-xl ${gradientClasses} p-6 text-white shadow-md`}>
       {/* Animated background pattern */}
       <div className="absolute inset-0 opacity-10">
         <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">

@@ -5,11 +5,13 @@ import { useOrdersQuery } from '@/hooks/useOrdersQuery';
 import { useQuotesQuery } from '@/hooks/useQuotesQuery';
 import { useCustomersQuery } from '@/hooks/useCustomersQuery';
 import { useLeadsQuery } from '@/hooks/useLeadsQuery';
+import { PortalPageHeader } from '@/components/customer/PortalPageHeader';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
 import { WorkflowAutomation } from '@/components/workflow/WorkflowAutomation';
 import { ActivityTimeline } from '@/components/activity/ActivityTimeline';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TrendingUp, DollarSign, FileText, Target } from 'lucide-react';
 
 const AdvancedAnalytics = () => {
   const { user, loading: authLoading } = useAuth();

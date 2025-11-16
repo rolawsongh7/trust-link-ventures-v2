@@ -150,29 +150,31 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Convert Quote to Order</DialogTitle>
         </DialogHeader>
 
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            This will create an order without customer acceptance. Use this for phone confirmations,
-            WhatsApp messages, or in-person agreements.
-          </AlertDescription>
-        </Alert>
+        <ScrollArea className="max-h-[calc(90vh-8rem)] pr-4">
+          <div className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                This will create an order without customer acceptance. Use this for phone confirmations,
+                WhatsApp messages, or in-person agreements.
+              </AlertDescription>
+            </Alert>
 
-        <div className="border rounded-lg p-4 bg-muted/30 space-y-2">
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="text-muted-foreground">Quote:</div>
-            <div className="font-medium">{quote?.quote_number}</div>
-            <div className="text-muted-foreground">Customer:</div>
-            <div className="font-medium">{quote?.customers?.company_name}</div>
-            <div className="text-muted-foreground">Total:</div>
-            <div className="font-medium">{quote?.currency} {quote?.total_amount?.toFixed(2)}</div>
-          </div>
-        </div>
+            <div className="border rounded-lg p-4 bg-muted/30 space-y-2">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-muted-foreground">Quote:</div>
+                <div className="font-medium">{quote?.quote_number}</div>
+                <div className="text-muted-foreground">Customer:</div>
+                <div className="font-medium">{quote?.customers?.company_name}</div>
+                <div className="text-muted-foreground">Total:</div>
+                <div className="font-medium">{quote?.currency} {quote?.total_amount?.toFixed(2)}</div>
+              </div>
+            </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -220,8 +222,9 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
                   <FormLabel>Confirmation Notes *</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Customer confirmed via phone call on Dec 15, 2024. Discussed delivery details..."
                       {...field}
+                      placeholder="Describe how the order was confirmed. Include contact name, date/time, and any key details..."
+                      rows={3}
                     />
                   </FormControl>
                   <FormMessage />
@@ -234,7 +237,7 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
               name="paymentMethod"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Payment Method</FormLabel>
+                  <FormLabel>Payment Method *</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
@@ -242,20 +245,20 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
                       className="grid grid-cols-2 gap-4"
                     >
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="bank_transfer" id="bank_transfer" />
-                        <Label htmlFor="bank_transfer">Bank Transfer</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
                         <RadioGroupItem value="cash" id="cash" />
                         <Label htmlFor="cash">Cash</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="mobile_money" id="mobile_money" />
-                        <Label htmlFor="mobile_money">Mobile Money</Label>
+                        <RadioGroupItem value="mobile_money" id="mobile" />
+                        <Label htmlFor="mobile">Mobile Money</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="credit_terms" id="credit_terms" />
-                        <Label htmlFor="credit_terms">Credit Terms</Label>
+                        <RadioGroupItem value="bank_transfer" id="bank" />
+                        <Label htmlFor="bank">Bank Transfer</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="credit" id="credit" />
+                        <Label htmlFor="credit">Credit Terms</Label>
                       </div>
                     </RadioGroup>
                   </FormControl>
@@ -269,12 +272,12 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
               name="orderStatus"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Order Status</FormLabel>
+                  <FormLabel>Initial Order Status *</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      className="space-y-2"
+                      className="grid grid-cols-2 gap-4"
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="pending_payment" id="pending" />
@@ -294,18 +297,20 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
                 </FormItem>
               )}
             />
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Order
-              </Button>
-            </div>
           </form>
         </Form>
+        </div>
+      </ScrollArea>
+
+      <div className="flex justify-end gap-2 pt-4 border-t">
+        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSubmitting} onClick={form.handleSubmit(onSubmit)}>
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Create Order
+        </Button>
+      </div>
       </DialogContent>
     </Dialog>
   );

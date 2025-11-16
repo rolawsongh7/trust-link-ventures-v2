@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { PortalPageHeader } from './PortalPageHeader';
 import { 
   MessageSquare, 
   Send, 
@@ -15,7 +16,9 @@ import {
   User,
   Mail,
   Phone,
-  AlertCircle
+  AlertCircle,
+  Inbox,
+  CheckCircle2
 } from 'lucide-react';
 
 interface Communication {
@@ -223,23 +226,32 @@ export const CustomerCommunications: React.FC = () => {
     );
   }
 
+  const totalMessages = communications.length;
+  const unreadCount = communications.filter(c => c.direction === 'inbound').length;
+  const recentCount = communications.filter(c => {
+    const daysDiff = Math.floor((new Date().getTime() - new Date(c.communication_date).getTime()) / (1000 * 60 * 60 * 24));
+    return daysDiff <= 7;
+  }).length;
+
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Communications</h1>
-          <p className="text-muted-foreground mt-1">
-            Send messages to our team and view communication history
-          </p>
-        </div>
-        <Badge variant="secondary" className="px-3 py-1">
-          {communications.length} Messages
-        </Badge>
-      </div>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Portal Page Header */}
+      <PortalPageHeader
+        title="Communications"
+        subtitle="Send messages to our team and view communication history"
+        totalCount={totalMessages}
+        totalIcon={MessageSquare}
+        stats={[
+          { label: 'Total', count: totalMessages, icon: MessageSquare },
+          { label: 'Unread', count: unreadCount, icon: Inbox },
+          { label: 'Recent', count: recentCount, icon: CheckCircle2 }
+        ]}
+        variant="customer"
+      />
 
       {/* Send New Message */}
-      <Card className="border-l-4 border-l-indigo-400">
+      <Card className="border-l-4 border-l-primary"
+>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Send className="h-5 w-5" />
