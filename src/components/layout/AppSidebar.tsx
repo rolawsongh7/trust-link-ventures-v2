@@ -47,7 +47,7 @@ const navigationItems = [
   { title: 'Orders', url: '/admin/orders', icon: ShoppingCart, badge: 'orders' as const },
   { title: 'Quotes', url: '/admin/quotes', icon: FileText, badge: 'quotes' as const },
   { title: 'Invoices', url: '/admin/invoices', icon: Receipt, badge: null },
-  { title: 'Customer Quote Inquiries', url: '/admin/quote-inquiries', icon: MessageSquare, badge: 'quoteInquiries' as const },
+  { title: 'Customer Quote Requests', url: '/admin/quote-inquiries', icon: MessageSquare, badge: 'quoteInquiries' as const },
   { title: 'Communication', url: '/admin/communication', icon: Phone, badge: 'communications' as const },
 ];
 

@@ -191,13 +191,21 @@ const UnifiedQuoteManagement = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Quote fetch error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
       setQuotes(data || []);
-    } catch (error) {
-      console.error('Error fetching quotes:', error);
+    } catch (error: any) {
+      console.error('Full error object:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch quotes",
+        description: `Failed to fetch quotes: ${error.message || 'Unknown error'}. Please check console for details.`,
         variant: "destructive",
       });
     } finally {

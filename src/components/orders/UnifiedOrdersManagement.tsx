@@ -32,11 +32,11 @@ interface Order {
   payment_reference?: string;
   notes?: string;
   customer_id: string;
-  customers: {
+  customers?: {
     company_name: string;
     contact_name?: string;
     email?: string;
-  };
+  } | null;
   quotes?: {
     quote_number: string;
     title: string;
@@ -51,15 +51,8 @@ interface Order {
 }
 
 const UnifiedOrdersManagement = () => {
-  // Use React Query for data fetching with caching
-  const { orders: queryOrders, isLoading: queryLoading, refetch } = useOrdersQuery();
-  
-  // Keep real-time updates for live notifications
-  const { orders: realtimeOrders, loading: realtimeLoading } = useRealtimeOrders();
-  
-  // Merge cached data with real-time updates (use queryOrders as the primary source)
-  const orders = queryOrders.length > 0 ? queryOrders : realtimeOrders;
-  const loading = queryLoading || realtimeLoading;
+  // Use React Query ONLY for data fetching with caching
+  const { orders, isLoading: loading, refetch } = useOrdersQuery();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
@@ -72,12 +65,33 @@ const UnifiedOrdersManagement = () => {
   const [manualOrderDialogOpen, setManualOrderDialogOpen] = useState(false);
   const [verifyPaymentDialogOpen, setVerifyPaymentDialogOpen] = useState(false);
 
-  // Refetch when real-time updates come in
+  // Set up real-time subscription for notifications only
   useEffect(() => {
-    if (realtimeOrders.length > 0) {
-      refetch();
-    }
-  }, [realtimeOrders.length, refetch]);
+    const subscription = supabase
+      .channel('orders-notifications')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'orders' },
+        (payload) => {
+          // Just show toast notifications, let React Query handle the refetch
+          if (payload.eventType === 'INSERT') {
+            toast.success(`New order ${payload.new.order_number} created`);
+            refetch();
+          } else if (payload.eventType === 'UPDATE') {
+            const oldStatus = payload.old?.status;
+            const newStatus = payload.new?.status;
+            if (oldStatus !== newStatus) {
+              toast.info(`Order ${payload.new.order_number} status: ${newStatus}`);
+              refetch();
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [refetch]);
 
   const handleEditDetails = (order: Order) => {
     setSelectedOrder(order);
@@ -219,7 +233,7 @@ const UnifiedOrdersManagement = () => {
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.customers.company_name.toLowerCase().includes(searchTerm.toLowerCase());
+                         order.customers?.company_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
     let matchesTab = false;
     if (selectedTab === 'all') {
