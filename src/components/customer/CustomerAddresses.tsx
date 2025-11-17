@@ -90,6 +90,17 @@ export const CustomerAddresses = () => {
     }
   }, [profile]);
 
+  // Debug logging to help troubleshoot
+  useEffect(() => {
+    if (profile) {
+      console.log('👤 Customer Profile:', {
+        id: profile.id,
+        email: profile.email,
+        company: profile.company_name
+      });
+    }
+  }, [profile]);
+
   const fetchAddresses = async () => {
     if (!profile) {
       setLoading(false);
@@ -98,14 +109,39 @@ export const CustomerAddresses = () => {
 
     try {
       setLoading(true);
+      
+      // First, try to get the customer_id from customer_users mapping
+      const { data: customerMapping } = await supabase
+        .from('customer_users')
+        .select('customer_id')
+        .eq('user_id', profile.id)
+        .single();
+
+      // Use mapped customer_id if exists, otherwise fall back to profile.id
+      const customerId = customerMapping?.customer_id || profile.id;
+      
+      console.log('🔍 Fetching addresses for customer_id:', customerId);
+      
       const { data, error } = await supabase
         .from('customer_addresses')
         .select('*')
-        .eq('customer_id', profile.id)
+        .eq('customer_id', customerId)
         .order('is_default', { ascending: false })
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching addresses:', error);
+        throw error;
+      }
+
+      console.log('✅ Fetched addresses:', data?.length || 0);
+      console.log('🔐 RLS Check:', {
+        profileId: profile.id,
+        customerId: customerId,
+        addressCount: data?.length || 0,
+        error: error?.message
+      });
+      
       setAddresses(data || []);
     } catch (error: any) {
       console.error('Error fetching addresses:', error);
@@ -184,13 +220,25 @@ export const CustomerAddresses = () => {
     if (!profile) return;
 
     try {
+      // Get the correct customer_id using the same logic as fetchAddresses
+      const { data: customerMapping } = await supabase
+        .from('customer_users')
+        .select('customer_id')
+        .eq('user_id', profile.id)
+        .single();
+
+      const customerId = customerMapping?.customer_id || profile.id;
+      
+      console.log('💾 Saving address for customer_id:', customerId);
+
       let addressId: string;
       
       if (editingAddress) {
         const { error } = await supabase
           .from('customer_addresses')
           .update(data)
-          .eq('id', editingAddress.id);
+          .eq('id', editingAddress.id)
+          .eq('customer_id', customerId);
 
         if (error) throw error;
         addressId = editingAddress.id;
@@ -199,7 +247,7 @@ export const CustomerAddresses = () => {
         const { data: newAddress, error } = await supabase
           .from('customer_addresses')
           .insert([{
-            customer_id: profile.id,
+            customer_id: customerId,
             receiver_name: data.receiver_name,
             phone_number: data.phone_number,
             ghana_digital_address: data.ghana_digital_address,
@@ -226,7 +274,7 @@ export const CustomerAddresses = () => {
         const { data: pendingOrders } = await supabase
           .from('orders')
           .select('id, order_number')
-          .eq('customer_id', profile.id)
+          .eq('customer_id', customerId)
           .not('delivery_address_requested_at', 'is', null)
           .is('delivery_address_id', null)
           .order('delivery_address_requested_at', { ascending: false })
@@ -247,6 +295,7 @@ export const CustomerAddresses = () => {
       setEditingAddress(null);
       fetchAddresses();
     } catch (error: any) {
+      console.error('❌ Error saving address:', error);
       toast({
         title: 'Error',
         description: error.message || 'Failed to save address',
