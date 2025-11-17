@@ -8,8 +8,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, LogIn } from 'lucide-react';
+import { Loader2, ArrowLeft, Eye, EyeOff, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel';
 
 const UnifiedAuth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,6 +19,7 @@ const UnifiedAuth = () => {
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -153,120 +155,178 @@ const UnifiedAuth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        {/* Back to Home */}
-        <Button
-          asChild
-          variant="ghost"
-          size="sm"
-          className="mb-4"
-        >
-          <Link to="/">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Link>
-        </Button>
+    <div className="min-h-screen flex">
+      {/* Brand Panel - Desktop Only */}
+      <AuthBrandPanel />
 
-        <Card className="border-0 shadow-xl">
-          <CardHeader className="text-center space-y-2">
-            <div className="flex justify-center">
-              <div className="p-3 bg-primary/10 rounded-full">
-                <LogIn className="h-6 w-6 text-primary" />
+      {/* Auth Form Panel */}
+      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-background via-background to-accent/5 p-4 lg:p-8">
+        <div className="w-full max-w-md space-y-6 animate-fade-in">
+          {/* Back to Home - Mobile */}
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="mb-4 lg:absolute lg:top-8 lg:left-8"
+          >
+            <Link to="/">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Link>
+          </Button>
+
+          {/* Mobile Logo */}
+          <div className="lg:hidden text-center mb-6 animate-fade-in">
+            <img 
+              src="/src/assets/trust-link-logo.png" 
+              alt="Trust Link Ventures" 
+              className="h-12 w-auto mx-auto mb-4"
+            />
+            <h2 className="text-2xl font-poppins font-bold text-foreground mb-2">
+              Your Gateway to <span className="text-[hsl(var(--tl-gold-500))]">Global Excellence</span>
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Secure access to your business portal
+            </p>
+          </div>
+
+          <Card className="border-border/50 shadow-2xl backdrop-blur-sm bg-card/95">
+            <CardHeader className="space-y-3 pb-6">
+              <div className="flex items-center justify-center mb-2">
+                <div className="p-3 bg-primary/10 rounded-2xl ring-4 ring-primary/5">
+                  <Lock className="h-7 w-7 text-primary" />
+                </div>
               </div>
-            </div>
-            <CardTitle className="text-2xl font-poppins">
-              {isLogin ? 'Welcome Back' : 'Create Account'}
-            </CardTitle>
-            <CardDescription>
-              {isLogin 
-                ? 'Sign in to access your portal' 
-                : 'Sign up for customer access'
-              }
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="space-y-4">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="companyName">Company Name</Label>
-                    <Input
-                      id="companyName"
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      required
-                    />
-                  </div>
-                </>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {isLogin ? 'Signing in...' : 'Creating account...'}
-                  </>
-                ) : (
-                  isLogin ? 'Sign In' : 'Sign Up'
-                )}
-              </Button>
-            </form>
-            
-            <div className="text-center">
-              <Button
-                variant="link"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-sm"
-              >
+              <CardTitle className="text-3xl font-poppins font-bold text-center text-foreground">
+                {isLogin ? 'Welcome Back' : 'Create Account'}
+              </CardTitle>
+              <CardDescription className="text-center text-base">
                 {isLogin 
-                  ? "Don't have an account? Sign up" 
-                  : "Already have an account? Sign in"
+                  ? 'Sign in to access your portal' 
+                  : 'Join our network of global partners'
                 }
-              </Button>
-            </div>
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {!isLogin && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName" className="text-sm font-semibold">Full Name</Label>
+                      <Input
+                        id="fullName"
+                        type="text"
+                        placeholder="John Doe"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="h-12 border-border/50 focus:border-primary transition-colors"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="companyName" className="text-sm font-semibold">Company Name</Label>
+                      <Input
+                        id="companyName"
+                        type="text"
+                        placeholder="Your Company Inc."
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        className="h-12 border-border/50 focus:border-primary transition-colors"
+                        required
+                      />
+                    </div>
+                  </>
+                )}
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-semibold">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-12 border-border/50 focus:border-primary transition-colors"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-semibold">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-12 pr-12 border-border/50 focus:border-primary transition-colors"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                
+                <Button
+                  type="submit"
+                  className="w-full h-12 text-base font-semibold bg-gradient-to-r from-[hsl(var(--tl-gold-500))] to-[hsl(var(--tl-gold-600))] hover:from-[hsl(var(--tl-gold-600))] hover:to-[hsl(var(--tl-gold-700))] text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      {isLogin ? 'Signing in...' : 'Creating account...'}
+                    </>
+                  ) : (
+                    isLogin ? 'Sign In' : 'Create Account'
+                  )}
+                </Button>
+              </form>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border/50"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-4 text-muted-foreground font-medium">or</span>
+                </div>
+              </div>
 
-          </CardContent>
-        </Card>
+              <div className="text-center">
+                <Button
+                  variant="link"
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-sm font-medium text-primary hover:text-primary/80"
+                >
+                  {isLogin 
+                    ? "Don't have an account? Sign up" 
+                    : "Already have an account? Sign in"
+                  }
+                </Button>
+              </div>
+
+              {/* Trust Badge */}
+              <div className="pt-4 border-t border-border/50">
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <Lock className="h-3.5 w-3.5" />
+                  <span>Secured by enterprise-grade encryption</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
