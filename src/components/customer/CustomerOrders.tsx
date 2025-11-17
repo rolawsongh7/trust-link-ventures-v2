@@ -292,13 +292,20 @@ export const CustomerOrders: React.FC = () => {
 
       toast({
         title: "Reorder Successful",
-        description: `${cartItems.length} item${cartItems.length > 1 ? 's' : ''} from ${order.order_number} ${cartItems.length > 1 ? 'have' : 'has'} been added to your cart.`,
+        description: `${cartItems.length} item${cartItems.length > 1 ? 's' : ''} added to cart`,
+        action: (
+          <Button 
+            size="sm" 
+            onClick={() => navigate('/portal/cart')}
+            className="bg-[hsl(var(--tl-gold-500))] hover:bg-[hsl(var(--tl-gold-600))]"
+          >
+            View Cart
+          </Button>
+        ),
       });
 
-      // Navigate to cart after small delay for user to see toast
-      setTimeout(() => {
-        navigate('/customer/cart');
-      }, 800);
+      // Close the mobile detail dialog if open
+      setSelectedOrderForDetail(null);
       
     } catch (error: any) {
       console.error('🔴 [Reorder] Error:', error);
@@ -373,9 +380,29 @@ export const CustomerOrders: React.FC = () => {
 
       if (!data || !data.token) {
         console.warn('⚠️ [Track Order] No tracking token found for order:', order.id);
+        
+        // Show status-specific messages
+        let message = "Tracking information will be available once your order ships.";
+        
+        switch (order.status) {
+          case 'processing':
+          case 'payment_received':
+            message = "Your order is being processed. Tracking will be available once it ships.";
+            break;
+          case 'ready_to_ship':
+            message = "Your order is ready to ship. Tracking information will be available soon.";
+            break;
+          case 'shipped':
+          case 'delivered':
+            message = "Tracking information is being prepared. Please check back shortly or contact support.";
+            break;
+          default:
+            message = "Tracking will be available once your order is shipped.";
+        }
+        
         toast({
           title: "Tracking Not Ready",
-          description: "Tracking information will be available once your order ships.",
+          description: message,
         });
         return;
       }
