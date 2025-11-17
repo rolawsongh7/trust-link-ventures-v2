@@ -47,29 +47,30 @@ export const ActiveSessionsDialog: React.FC<ActiveSessionsDialogProps> = ({
   const fetchSessions = async () => {
     setLoading(true);
     try {
-      // Fetch recent MFA login attempts as proxy for sessions
+      // Fetch recent login events from audit_logs
       const { data, error } = await supabase
-        .from('mfa_login_attempts')
+        .from('audit_logs')
         .select('*')
         .eq('user_id', user?.id)
-        .order('attempt_time', { ascending: false })
-        .limit(10);
+        .in('event_type', ['successful_login', 'failed_login'])
+        .order('created_at', { ascending: false })
+        .limit(20);
 
       if (error) throw error;
 
-      // Group by IP and user agent to simulate sessions
+      // Group by IP and user agent to show unique login sessions
       const sessionMap = new Map<string, Session>();
       
-      data?.forEach((attempt, index) => {
-        const key = `${attempt.ip_address}-${attempt.user_agent}`;
-        if (!sessionMap.has(key)) {
+      data?.forEach((log, index) => {
+        const key = `${log.ip_address}-${log.user_agent}`;
+        if (!sessionMap.has(key) && log.event_type === 'successful_login') {
           sessionMap.set(key, {
-            id: attempt.id,
-            device_type: detectDeviceType(attempt.user_agent || ''),
-            browser: detectBrowser(attempt.user_agent || ''),
-            ip_address: String(attempt.ip_address || 'Unknown'),
-            location: 'Unknown', // Would need geo-IP lookup
-            last_active: attempt.attempt_time,
+            id: log.id,
+            device_type: detectDeviceType(log.user_agent || ''),
+            browser: detectBrowser(log.user_agent || ''),
+            ip_address: String(log.ip_address || 'Unknown'),
+            location: 'Unknown',
+            last_active: log.created_at,
             is_current: index === 0,
           });
         }
@@ -81,7 +82,7 @@ export const ActiveSessionsDialog: React.FC<ActiveSessionsDialogProps> = ({
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to load active sessions',
+        description: 'Failed to load login history',
       });
     } finally {
       setLoading(false);
@@ -124,9 +125,9 @@ export const ActiveSessionsDialog: React.FC<ActiveSessionsDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Active Sessions</DialogTitle>
+          <DialogTitle>Recent Login History</DialogTitle>
           <DialogDescription>
-            Manage your active login sessions across all devices
+            View your recent successful login attempts across different devices
           </DialogDescription>
         </DialogHeader>
 
@@ -137,7 +138,7 @@ export const ActiveSessionsDialog: React.FC<ActiveSessionsDialogProps> = ({
             </div>
           ) : sessions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No active sessions found
+              No recent login activity found
             </div>
           ) : (
             sessions.map((session) => (
@@ -196,7 +197,7 @@ export const ActiveSessionsDialog: React.FC<ActiveSessionsDialogProps> = ({
 
         <div className="flex justify-between items-center mt-6 pt-4 border-t">
           <p className="text-sm text-muted-foreground">
-            {sessions.length} active session{sessions.length !== 1 ? 's' : ''}
+            {sessions.length} recent login{sessions.length !== 1 ? 's' : ''}
           </p>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close

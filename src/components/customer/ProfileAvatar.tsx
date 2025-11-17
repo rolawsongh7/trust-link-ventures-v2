@@ -77,10 +77,10 @@ export const ProfileAvatar: React.FC = () => {
       <Button
         size="sm"
         variant="outline"
-        className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white shadow-md hover:shadow-lg transition-all"
+        className="mt-3 bg-white shadow-md hover:shadow-lg transition-all w-full"
       >
         <Upload className="h-3 w-3 mr-1" />
-        Change
+        Change Photo
       </Button>
     </div>
   );
