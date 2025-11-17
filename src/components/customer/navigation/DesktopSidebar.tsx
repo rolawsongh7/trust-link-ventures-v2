@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Package, ShoppingCart, FileText, UserCircle, MessageSquare, Clock, DollarSign } from 'lucide-react';
+import { Home, Package, ShoppingCart, FileText, UserCircle, MessageSquare, Clock, DollarSign, MapPin } from 'lucide-react';
 
 interface NavItem {
   label: string;
@@ -22,6 +22,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ cartItemsCount =
     { label: 'My Cart', path: '/portal/cart', icon: ShoppingCart, badge: cartItemsCount },
     { label: 'Quotes', path: '/portal/quotes', icon: FileText },
     { label: 'Orders', path: '/portal/orders', icon: ShoppingCart },
+    { label: 'Addresses', path: '/portal/addresses', icon: MapPin },
     { label: 'Communications', path: '/portal/communications', icon: MessageSquare },
     { label: 'Profile', path: '/portal/profile', icon: UserCircle },
   ];
