@@ -250,9 +250,12 @@ export type Database = {
           ip_address: unknown
           lead_id: string | null
           order_id: string | null
+          parent_communication_id: string | null
           scheduled_date: string | null
           subject: string | null
           submission_metadata: Json | null
+          thread_id: string | null
+          thread_position: number | null
           updated_at: string
           verification_status: string | null
         }
@@ -272,9 +275,12 @@ export type Database = {
           ip_address?: unknown
           lead_id?: string | null
           order_id?: string | null
+          parent_communication_id?: string | null
           scheduled_date?: string | null
           subject?: string | null
           submission_metadata?: Json | null
+          thread_id?: string | null
+          thread_position?: number | null
           updated_at?: string
           verification_status?: string | null
         }
@@ -294,9 +300,12 @@ export type Database = {
           ip_address?: unknown
           lead_id?: string | null
           order_id?: string | null
+          parent_communication_id?: string | null
           scheduled_date?: string | null
           subject?: string | null
           submission_metadata?: Json | null
+          thread_id?: string | null
+          thread_position?: number | null
           updated_at?: string
           verification_status?: string | null
         }
@@ -320,6 +329,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communications_parent_communication_id_fkey"
+            columns: ["parent_communication_id"]
+            isOneToOne: false
+            referencedRelation: "communications"
             referencedColumns: ["id"]
           },
         ]
@@ -3257,6 +3273,23 @@ export type Database = {
           count: number
           event_type: string
           last_occurrence: string
+        }[]
+      }
+      get_customer_communication_threads: {
+        Args: { customer_uuid: string }
+        Returns: {
+          communication_date: string
+          communication_type: Database["public"]["Enums"]["communication_type"]
+          contact_person: string
+          content: string
+          created_at: string
+          direction: string
+          id: string
+          parent_communication_id: string
+          reply_count: number
+          subject: string
+          thread_id: string
+          thread_position: number
         }[]
       }
       get_order_by_tracking_token: {

@@ -182,13 +182,18 @@ const CommunicationsManagement = () => {
     try {
       // Clean up empty string UUIDs to null
       const cleanedData = {
-        ...data,
+        communication_type: data.communication_type,
+        subject: data.subject || '',
+        content: data.content || '',
         customer_id: data.customer_id || null,
         lead_id: data.lead_id || null,
-        order_id: data.order_id || null,
+        communication_date: data.communication_date || new Date().toISOString(),
+        direction: 'inbound',
+        contact_person: 'Support Team'
       };
 
       if (editingCommunication) {
+        // Update existing communication (don't modify threading fields)
         const { error } = await supabase
           .from('communications')
           .update(cleanedData)
@@ -200,26 +205,53 @@ const CommunicationsManagement = () => {
           title: "Success",
           description: "Communication updated successfully",
         });
-      } else {
-        // If replying, get customer info from the original communication
-        const insertData = replyingToCommunication?.customers 
-          ? {
-              ...cleanedData,
-              customer_id: (replyingToCommunication as any).customers.id,
-              direction: 'inbound',
-              contact_person: 'Admin Team'
-            }
-          : cleanedData;
-
+      } else if (replyingToCommunication) {
+        // Insert reply with threading info
+        const replyData = {
+          ...cleanedData,
+          customer_id: (replyingToCommunication as any).customers?.id || cleanedData.customer_id,
+          parent_communication_id: replyingToCommunication.id,
+          thread_id: (replyingToCommunication as any).thread_id || replyingToCommunication.id,
+          thread_position: ((replyingToCommunication as any).thread_position || 0) + 1,
+          subject: data.subject || `Re: ${replyingToCommunication.subject}`
+        };
+        
         const { error } = await supabase
           .from('communications')
-          .insert([insertData]);
+          .insert(replyData);
 
         if (error) throw error;
 
         toast({
           title: "Success",
-          description: replyingToCommunication ? "Reply sent successfully" : "Communication logged successfully",
+          description: "Reply sent successfully",
+        });
+      } else {
+        // Insert new communication (start new thread)
+        const { data: insertedData, error: insertError } = await supabase
+          .from('communications')
+          .insert({
+            ...cleanedData,
+            parent_communication_id: null,
+            thread_id: null, // Will be set to message ID after insert
+            thread_position: 0
+          })
+          .select()
+          .single();
+        
+        if (insertError) throw insertError;
+        
+        // Update thread_id to self for new conversations
+        if (insertedData) {
+          await supabase
+            .from('communications')
+            .update({ thread_id: insertedData.id })
+            .eq('id', insertedData.id);
+        }
+
+        toast({
+          title: "Success",
+          description: "Communication logged successfully",
         });
       }
 

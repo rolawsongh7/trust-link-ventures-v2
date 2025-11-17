@@ -12,6 +12,8 @@ import { PortalPageHeader } from './PortalPageHeader';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { MobileCommunicationCard } from './mobile/MobileCommunicationCard';
 import { MobileCommunicationDetailDialog } from './mobile/MobileCommunicationDetailDialog';
+import { MobileCommunicationThreadCard, CommunicationThread } from './mobile/MobileCommunicationThreadCard';
+import { MobileCommunicationThreadView } from './mobile/MobileCommunicationThreadView';
 import { 
   MessageSquare, 
   Send, 
@@ -33,6 +35,9 @@ interface Communication {
   communication_date: string;
   created_by?: string;
   contact_person?: string;
+  parent_communication_id?: string | null;
+  thread_id?: string | null;
+  thread_position?: number;
 }
 
 export const CustomerCommunications: React.FC = () => {
@@ -49,9 +54,35 @@ export const CustomerCommunications: React.FC = () => {
   });
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedCommunication, setSelectedCommunication] = useState<Communication | null>(null);
+  const [threadViewOpen, setThreadViewOpen] = useState(false);
+  const [selectedThread, setSelectedThread] = useState<CommunicationThread | null>(null);
 
   useEffect(() => {
     fetchCommunications();
+  }, [profile]);
+
+  // Real-time subscription for thread updates
+  useEffect(() => {
+    if (!profile?.email) return;
+
+    const channel = supabase
+      .channel('customer-communications-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'communications'
+        },
+        () => {
+          fetchCommunications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [profile]);
 
   const fetchCommunications = async () => {
@@ -75,7 +106,7 @@ export const CustomerCommunications: React.FC = () => {
         return;
       }
 
-      // Fetch communications for this customer
+      // Fetch communications for this customer with threading info
       const { data: commsData, error: commsError } = await supabase
         .from('communications')
         .select('*')
@@ -92,7 +123,10 @@ export const CustomerCommunications: React.FC = () => {
         communication_type: comm.communication_type || 'email',
         direction: (comm.direction === 'outbound' ? 'outbound' : 'inbound') as 'inbound' | 'outbound',
         communication_date: comm.communication_date || comm.created_at,
-        contact_person: comm.contact_person || 'Support Team'
+        contact_person: comm.contact_person || 'Support Team',
+        parent_communication_id: comm.parent_communication_id,
+        thread_id: comm.thread_id,
+        thread_position: comm.thread_position || 0
       }));
       
       setCommunications(transformedComms);
@@ -164,7 +198,7 @@ export const CustomerCommunications: React.FC = () => {
       }
 
       // Insert the communication record
-      const { error: commError } = await supabase
+      const { data, error } = await supabase
         .from('communications')
         .insert({
           customer_id: customerId,
@@ -173,10 +207,23 @@ export const CustomerCommunications: React.FC = () => {
           content: newMessage.content,
           direction: 'outbound',
           contact_person: profile.full_name || 'Customer',
-          communication_date: new Date().toISOString()
-        });
+          communication_date: new Date().toISOString(),
+          parent_communication_id: null,
+          thread_id: null, // Will be set to message ID after insert
+          thread_position: 0
+        })
+        .select()
+        .single();
 
-      if (commError) throw commError;
+      if (error) throw error;
+
+      // Update thread_id to self for new conversations
+      if (data) {
+        await supabase
+          .from('communications')
+          .update({ thread_id: data.id })
+          .eq('id', data.id);
+      }
 
       // Refresh communications list
       await fetchCommunications();
@@ -222,6 +269,62 @@ export const CustomerCommunications: React.FC = () => {
     setDetailDialogOpen(true);
   };
 
+  const handleViewThread = (thread: CommunicationThread) => {
+    setSelectedThread(thread);
+    setThreadViewOpen(true);
+  };
+
+  // Group communications into threads
+  const groupCommunicationsIntoThreads = (comms: Communication[]): CommunicationThread[] => {
+    const threadMap = new Map<string, CommunicationThread>();
+    
+    comms.forEach(comm => {
+      const threadId = comm.thread_id || comm.id;
+      
+      if (!threadMap.has(threadId)) {
+        threadMap.set(threadId, {
+          id: threadId,
+          subject: comm.subject,
+          latestMessage: comm.content,
+          latestDate: comm.communication_date,
+          messageCount: 0,
+          unreadCount: 0,
+          communications: []
+        });
+      }
+      
+      const thread = threadMap.get(threadId)!;
+      thread.communications.push(comm);
+      thread.messageCount++;
+      
+      // Update latest message info if this message is newer
+      if (new Date(comm.communication_date) > new Date(thread.latestDate)) {
+        thread.latestMessage = comm.content;
+        thread.latestDate = comm.communication_date;
+      }
+    });
+    
+    // Sort each thread's communications by position and date
+    threadMap.forEach(thread => {
+      thread.communications.sort((a, b) => {
+        const posA = a.thread_position || 0;
+        const posB = b.thread_position || 0;
+        if (posA !== posB) return posA - posB;
+        return new Date(a.communication_date).getTime() - new Date(b.communication_date).getTime();
+      });
+    });
+    
+    // Sort threads by latest activity
+    return Array.from(threadMap.values()).sort(
+      (a, b) => new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime()
+    );
+  };
+
+  const threads = useMemo(() => 
+    groupCommunicationsIntoThreads(communications),
+    [communications]
+  );
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -238,7 +341,8 @@ export const CustomerCommunications: React.FC = () => {
   }
 
   const totalMessages = communications.length;
-  const unreadCount = communications.filter(c => c.direction === 'inbound').length;
+  const totalThreads = threads.length;
+  const unreadCount = 0; // This would need to be tracked in the database
   const recentCount = communications.filter(c => {
     const daysDiff = Math.floor((new Date().getTime() - new Date(c.communication_date).getTime()) / (1000 * 60 * 60 * 24));
     return daysDiff <= 7;
@@ -250,11 +354,11 @@ export const CustomerCommunications: React.FC = () => {
       <PortalPageHeader
         title="Communications"
         subtitle="Send messages to our team and view communication history"
-        totalCount={totalMessages}
+        totalCount={totalThreads}
         totalIcon={MessageSquare}
         stats={[
-          { label: 'Total', count: totalMessages, icon: MessageSquare },
-          { label: 'Unread', count: unreadCount, icon: Inbox },
+          { label: 'Conversations', count: totalThreads, icon: MessageSquare },
+          { label: 'Total Messages', count: totalMessages, icon: Inbox },
           { label: 'Recent', count: recentCount, icon: CheckCircle2 }
         ]}
         variant="customer"
@@ -340,7 +444,7 @@ export const CustomerCommunications: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {communications.length === 0 ? (
+          {threads.length === 0 ? (
             <div className="text-center py-8">
               <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-muted-foreground mb-2">No communications yet</h3>
@@ -350,50 +454,70 @@ export const CustomerCommunications: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {communications.map((comm) => (
-                isMobile ? (
-                  <MobileCommunicationCard
-                    key={comm.id}
-                    communication={comm}
-                    onClick={() => handleViewCommunicationDetails(comm)}
+              {isMobile ? (
+                // Mobile view - use thread cards
+                threads.map(thread => (
+                  <MobileCommunicationThreadCard
+                    key={thread.id}
+                    thread={thread}
+                    onClick={() => handleViewThread(thread)}
                   />
-                ) : (
+                ))
+              ) : (
+                // Desktop view - use thread cards
+                threads.map(thread => (
                   <div 
-                    key={comm.id} 
+                    key={thread.id} 
                     className="p-4 border border-l-4 border-l-indigo-400 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                    onClick={() => handleViewCommunicationDetails(comm)}
+                    onClick={() => handleViewThread(thread)}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        {getMessageIcon(comm.communication_type, comm.direction)}
+                        <MessageSquare className="h-5 w-5 text-primary" />
                         <div>
-                          <h4 className="font-medium">{comm.subject}</h4>
+                          <h4 className="font-medium">{thread.subject}</h4>
                           <p className="text-sm text-muted-foreground">
-                            {comm.direction === 'outbound' ? 'To: Support Team' : `From: ${comm.contact_person}`}
+                            {thread.messageCount} {thread.messageCount === 1 ? 'message' : 'messages'} in conversation
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {getDirectionBadge(comm.direction)}
+                        <Badge variant="secondary">{thread.messageCount}</Badge>
                         <div className="text-right">
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Calendar className="h-3 w-3" />
-                            {new Date(comm.communication_date).toLocaleDateString()}
+                            {new Date(thread.latestDate).toLocaleDateString()}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(comm.communication_date).toLocaleTimeString()}
+                            {new Date(thread.latestDate).toLocaleTimeString()}
                           </p>
                         </div>
                       </div>
                     </div>
-                    <p className="text-sm pl-7">{comm.content}</p>
+                    <p className="text-sm text-muted-foreground pl-8 line-clamp-2">{thread.latestMessage}</p>
                   </div>
-                )
-              ))}
+                ))
+              )}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Mobile Thread View Dialog */}
+      <MobileCommunicationThreadView
+        thread={selectedThread}
+        open={threadViewOpen}
+        onOpenChange={setThreadViewOpen}
+      />
+
+      {/* Legacy Detail Dialog (fallback) */}
+      {selectedCommunication && (
+        <MobileCommunicationDetailDialog
+          communication={selectedCommunication}
+          open={detailDialogOpen}
+          onOpenChange={setDetailDialogOpen}
+        />
+      )}
 
       {/* Communication Detail Dialog */}
       <MobileCommunicationDetailDialog
