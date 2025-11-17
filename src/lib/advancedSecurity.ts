@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import QRCode from 'qrcode';
+import { authenticator } from 'otplib';
 
 // Simple MFA Service without complex OTPAuth dependencies
 export class MFAService {
@@ -37,38 +38,13 @@ export class MFAService {
 
   static verifyToken(secret: string, token: string): boolean {
     try {
-      // Simple TOTP verification (for demonstration)
-      // In production, use a proper TOTP library
-      const epoch = Math.floor(Date.now() / 1000);
-      const timeStep = Math.floor(epoch / 30);
-      
-      // Generate expected token (simplified)
-      const expectedToken = this.generateTOTP(secret, timeStep);
-      const previousToken = this.generateTOTP(secret, timeStep - 1);
-      const nextToken = this.generateTOTP(secret, timeStep + 1);
-      
-      return token === expectedToken || token === previousToken || token === nextToken;
+      // Use proper RFC 6238 TOTP verification with otplib
+      // This allows a 1-step window (30 seconds before/after) for time drift
+      return authenticator.verify({ token, secret });
     } catch (error) {
       console.error('Error verifying token:', error);
       return false;
     }
-  }
-
-  private static generateTOTP(secret: string, timeStep: number): string {
-    // Simplified TOTP generation (for demonstration only)
-    // In production, use a proper crypto library
-    const hash = this.simpleHash(secret + timeStep.toString());
-    return (parseInt(hash.slice(-6), 16) % 1000000).toString().padStart(6, '0');
-  }
-
-  private static simpleHash(input: string): string {
-    let hash = 0;
-    for (let i = 0; i < input.length; i++) {
-      const char = input.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return Math.abs(hash).toString(16);
   }
 
   static async enableMFA(userId: string, secret: string): Promise<boolean> {
