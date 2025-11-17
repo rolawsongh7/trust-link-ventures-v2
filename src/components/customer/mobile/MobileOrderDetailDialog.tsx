@@ -203,16 +203,21 @@ export const MobileOrderDetailDialog = ({
                 </Button>
               ) : (
                 <>
-                  {order.tracking_number && (
-                    <Button 
-                      className="w-full" 
+                  {/* Track Order - Show for all statuses except cancelled */}
+                  {!['cancelled'].includes(order.status) && (
+                    <Button
                       onClick={() => {
                         onOpenChange(false); // Close dialog first
                         setTimeout(() => onTrack(), 100); // Then trigger track with delay
                       }}
+                      variant={['shipped', 'delivered'].includes(order.status) ? "default" : "outline"}
+                      className="w-full"
                     >
-                      <Truck className="h-4 w-4 mr-2" />
-                      Track Order
+                      <Truck className="mr-2 h-4 w-4" />
+                      {['shipped', 'delivered'].includes(order.status) 
+                        ? 'Track Order' 
+                        : 'View Order Status'
+                      }
                     </Button>
                   )}
                   <Button onClick={onViewInvoices} variant="outline" className="w-full">

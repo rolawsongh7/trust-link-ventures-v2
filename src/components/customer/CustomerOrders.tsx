@@ -357,65 +357,100 @@ export const CustomerOrders: React.FC = () => {
 
   const handleTrackOrder = async (order: Order) => {
     try {
-      console.log('🔵 [Track Order] Starting for order:', order.order_number);
+      console.log('🔍 [Track Order] Starting tracking flow for order:', order.id, 'Status:', order.status);
       
-      // Fetch tracking token for this order
-      const { data, error } = await supabase
+      // Step 1: Check if token exists
+      const { data: existingToken, error: tokenError } = await supabase
         .from('delivery_tracking_tokens')
         .select('token')
         .eq('order_id', order.id)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid error if no row
+        .maybeSingle();
 
-      console.log('🔵 [Track Order] Token query result:', { data, error });
+      console.log('🔑 [Track Order] Existing token check:', { existingToken, tokenError });
 
-      if (error) {
-        console.error('🔴 [Track Order] Database error:', error);
-        toast({
-          title: "Tracking Unavailable",
-          description: "Unable to load tracking information. Please try again.",
-          variant: "destructive",
-        });
+      if (existingToken && existingToken.token) {
+        // Token exists, open tracking page
+        const trackingUrl = `${window.location.origin}/track?token=${existingToken.token}`;
+        console.log('✅ [Track Order] Opening tracking URL with existing token');
+        window.open(trackingUrl, '_blank');
         return;
       }
 
-      if (!data || !data.token) {
-        console.warn('⚠️ [Track Order] No tracking token found for order:', order.id);
-        
-        // Show status-specific messages
+      // Step 2: No token exists - check if order is shippable
+      if (!['shipped', 'delivered'].includes(order.status)) {
+        // Order not yet shipped, show appropriate message
         let message = "Tracking information will be available once your order ships.";
+        let title = "Tracking Not Ready";
         
         switch (order.status) {
-          case 'processing':
+          case 'order_confirmed':
+          case 'pending_payment':
+            message = "Your order is confirmed. Tracking will be available after payment and shipping.";
+            break;
           case 'payment_received':
+            message = "Payment received. Your order will be processed and shipped soon.";
+            break;
+          case 'processing':
             message = "Your order is being processed. Tracking will be available once it ships.";
+            title = "Order Being Processed";
             break;
           case 'ready_to_ship':
-            message = "Your order is ready to ship. Tracking information will be available soon.";
+            message = "Your order is ready to ship. Tracking information will be available shortly.";
+            title = "Ready to Ship";
             break;
-          case 'shipped':
-          case 'delivered':
-            message = "Tracking information is being prepared. Please check back shortly or contact support.";
+          case 'cancelled':
+            message = "This order has been cancelled.";
+            title = "Order Cancelled";
             break;
           default:
             message = "Tracking will be available once your order is shipped.";
         }
         
         toast({
-          title: "Tracking Not Ready",
+          title: title,
           description: message,
         });
         return;
       }
 
-      // Close any open mobile dialogs first (prevent navigation race condition)
-      setSelectedOrderForDetail(null);
+      // Step 3: Order is shipped/delivered but no token - generate one on the fly
+      console.log('🔄 [Track Order] Order is shipped but no token exists. Generating...');
       
-      // Small delay to ensure dialog closes before navigation
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Navigate to public tracking page with token
-      console.log('🔵 [Track Order] Navigating with token:', data.token);
-      navigate(`/track?token=${data.token}`);
+      toast({
+        title: "Generating Tracking Link",
+        description: "Please wait while we prepare your tracking information...",
+      });
+
+      const { data: newTokenData, error: generateError } = await supabase
+        .rpc('generate_tracking_token_for_order', { p_order_id: order.id });
+
+      console.log('🎫 [Track Order] Token generation result:', { newTokenData, generateError });
+
+      if (generateError) {
+        console.error('❌ [Track Order] Failed to generate token:', generateError);
+        throw generateError;
+      }
+
+      // Type assertion for RPC response
+      const tokenResponse = newTokenData as { success: boolean; token?: string; error?: string } | null;
+
+      if (tokenResponse && tokenResponse.success && tokenResponse.token) {
+        // Token generated successfully
+        const trackingUrl = `${window.location.origin}/track?token=${tokenResponse.token}`;
+        console.log('✅ [Track Order] Token generated, opening tracking URL');
+        
+        toast({
+          title: "Tracking Ready",
+          description: "Opening tracking page...",
+        });
+
+        setTimeout(() => {
+          window.open(trackingUrl, '_blank');
+        }, 500);
+      } else {
+        console.error('❌ [Track Order] Token generation returned error:', tokenResponse?.error);
+        throw new Error(tokenResponse?.error || 'Failed to generate tracking token');
+      }
       
     } catch (error) {
       console.error('🔴 [Track Order] Unexpected error:', error);

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Package, MapPin, Calendar, Truck, CheckCircle2, Clock, AlertCircle, FileText, Download } from 'lucide-react';
 import { format } from 'date-fns';
+import { OrderStatusDisplay } from '@/components/customer/OrderStatusDisplay';
 
 interface OrderDetails {
   order_id: string;
@@ -52,31 +53,146 @@ const OrderTracking = () => {
 
   const fetchOrderDetails = async () => {
     try {
-      const { data, error } = await supabase
+      console.log('🔍 [OrderTracking] Fetching order with token:', token);
+
+      // Step 1: Try RPC function first (preferred method with rate limiting)
+      const { data: rpcData, error: rpcError } = await supabase
         .rpc('get_order_by_tracking_token', { p_token: token });
 
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        setOrder(data[0]);
+      console.log('📦 [OrderTracking] RPC result:', { rpcData, rpcError });
+
+      if (rpcData && rpcData.length > 0) {
+        console.log('✅ [OrderTracking] Order loaded via RPC');
+        setOrder(rpcData[0]);
         
-        // Fetch invoices for this order
+        // Fetch invoices
         const { data: invoicesData } = await supabase
           .from('invoices')
           .select('id, invoice_number, invoice_type, file_url, status')
-          .eq('order_id', data[0].order_id)
+          .eq('order_id', rpcData[0].order_id)
           .in('invoice_type', ['commercial', 'packing_list'])
           .not('file_url', 'is', null);
         
         if (invoicesData) {
           setInvoices(invoicesData);
         }
+      } else if (rpcError) {
+        console.warn('⚠️ [OrderTracking] RPC failed, trying direct order fetch:', rpcError);
+        
+        // Step 2: Fallback - Try to get order ID from tracking token directly
+        const { data: tokenData } = await supabase
+          .from('delivery_tracking_tokens')
+          .select('order_id, expires_at')
+          .eq('token', token)
+          .single();
+
+        console.log('🔑 [OrderTracking] Token lookup result:', tokenData);
+
+        if (tokenData && new Date(tokenData.expires_at) > new Date()) {
+          // Token is valid, fetch order details directly
+          const { data: orderData, error: orderError } = await supabase
+            .from('orders')
+            .select(`
+              id,
+              order_number,
+              status,
+              tracking_number,
+              carrier,
+              estimated_delivery_date,
+              actual_delivery_date,
+              created_at,
+              shipped_at,
+              delivered_at,
+              delivery_notes,
+              delivery_window,
+              customer_id,
+              delivery_address_id
+            `)
+            .eq('id', tokenData.order_id)
+            .single();
+
+          console.log('📋 [OrderTracking] Direct order fetch:', { orderData, orderError });
+
+          if (orderData) {
+            // Fetch customer and address info
+            const { data: customerData } = await supabase
+              .from('customers')
+              .select('company_name')
+              .eq('id', orderData.customer_id)
+              .single();
+
+            let deliveryAddress = 'Address not available';
+            if (orderData.delivery_address_id) {
+              const { data: addressData } = await supabase
+                .from('customer_addresses')
+                .select('*')
+                .eq('id', orderData.delivery_address_id)
+                .single();
+
+              if (addressData) {
+                deliveryAddress = `${addressData.street_address}, ${addressData.area ? addressData.area + ', ' : ''}${addressData.city}, ${addressData.region} - ${addressData.ghana_digital_address}`;
+              }
+            }
+
+            // Format as RPC return structure
+            const formattedOrder = {
+              order_id: orderData.id,
+              order_number: orderData.order_number,
+              status: orderData.status,
+              tracking_number: orderData.tracking_number,
+              carrier: orderData.carrier,
+              estimated_delivery_date: orderData.estimated_delivery_date,
+              actual_delivery_date: orderData.actual_delivery_date,
+              created_at: orderData.created_at,
+              shipped_at: orderData.shipped_at,
+              delivered_at: orderData.delivered_at,
+              delivery_notes: orderData.delivery_notes,
+              delivery_window: orderData.delivery_window,
+              customer_name: customerData?.company_name || 'Customer',
+              delivery_address: deliveryAddress
+            };
+
+            console.log('✅ [OrderTracking] Order loaded via fallback method');
+            setOrder(formattedOrder);
+
+            // Fetch invoices
+            const { data: invoicesData } = await supabase
+              .from('invoices')
+              .select('id, invoice_number, invoice_type, file_url, status')
+              .eq('order_id', orderData.id)
+              .in('invoice_type', ['commercial', 'packing_list'])
+              .not('file_url', 'is', null);
+            
+            if (invoicesData) {
+              setInvoices(invoicesData);
+            }
+          } else {
+            console.error('❌ [OrderTracking] Order not found for token');
+            setError('Order details not found. Please contact support with your tracking link.');
+          }
+        } else {
+          console.error('❌ [OrderTracking] Token invalid or expired');
+          setError('Invalid or expired tracking link. Please request a new tracking link.');
+        }
       } else {
+        console.error('❌ [OrderTracking] No data returned from RPC');
         setError('Invalid or expired tracking link');
       }
-    } catch (err) {
-      console.error('Error fetching order:', err);
-      setError('Failed to load order details');
+    } catch (err: any) {
+      console.error('🔴 [OrderTracking] Fatal error:', err);
+      
+      // Log structured error for debugging
+      await supabase.from('audit_logs').insert({
+        event_type: 'tracking_page_error',
+        event_data: {
+          error: err.message,
+          token: token?.substring(0, 10) + '...',
+          timestamp: new Date().toISOString()
+        },
+        severity: 'high'
+      });
+
+      setError(`Failed to load order details. Error: ${err.message}. Please contact support.`);
     } finally {
       setLoading(false);
     }
@@ -135,9 +251,21 @@ const OrderTracking = () => {
               <AlertCircle className="h-5 w-5 text-destructive" />
               Tracking Error
             </CardTitle>
+            <CardDescription className="mt-2">
+              {error || 'Unable to load order information'}
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">{error}</p>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              If you continue to experience issues, please contact our support team with your tracking link.
+            </p>
+            <Button
+              onClick={() => window.location.href = 'mailto:support@trustlinkventures.com?subject=Tracking%20Issue'}
+              variant="outline"
+              className="w-full"
+            >
+              Contact Support
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -232,6 +360,23 @@ const OrderTracking = () => {
                 </div>
               </>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Visual Order Timeline */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Order Progress</CardTitle>
+            <CardDescription>Track your order through each stage</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OrderStatusDisplay
+              status={order.status}
+              createdAt={order.created_at}
+              shippedAt={order.shipped_at}
+              deliveredAt={order.delivered_at}
+              estimatedDeliveryDate={order.estimated_delivery_date}
+            />
           </CardContent>
         </Card>
 
