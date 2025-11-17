@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
-import { useMobileDetection } from '@/hooks/useMobileDetection';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -49,7 +49,8 @@ export const CustomerAddresses = () => {
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isMobile } = useMobileDetection();
+  const isMobile = useIsMobile();
+  const [mobileDetected, setMobileDetected] = useState(false);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -90,6 +91,15 @@ export const CustomerAddresses = () => {
     }
   }, [profile]);
 
+  // Wait for mobile detection to complete
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMobileDetected(true);
+      console.log('📱 Mobile detection complete:', { isMobile });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [isMobile]);
+
   // Debug logging to help troubleshoot
   useEffect(() => {
     if (profile) {
@@ -105,6 +115,7 @@ export const CustomerAddresses = () => {
   useEffect(() => {
     const debugInfo = {
       isMobile,
+      mobileDetected,
       loading,
       hasProfile: !!profile,
       profileId: profile?.id,
@@ -113,10 +124,22 @@ export const CustomerAddresses = () => {
       viewport: {
         width: window.innerWidth,
         height: window.innerHeight
-      }
+      },
+      documentHeight: document.documentElement.scrollHeight,
+      bodyHeight: document.body.scrollHeight,
+      visibleContent: document.body.offsetHeight > 0,
+      scrollY: window.scrollY
     };
     console.log('📱 Mobile Address Page State:', debugInfo);
-  }, [isMobile, loading, profile, addresses]);
+    
+    // Check if container is rendered
+    if (isMobile && mobileDetected) {
+      setTimeout(() => {
+        const container = document.querySelector('[data-mobile-addresses]');
+        console.log('📱 Container found:', !!container, container?.clientHeight);
+      }, 100);
+    }
+  }, [isMobile, mobileDetected, loading, profile, addresses]);
 
   const fetchAddresses = async () => {
     if (!profile) {
@@ -368,7 +391,7 @@ export const CustomerAddresses = () => {
   };
 
   // Show loading skeleton while fetching data
-  if (loading) {
+  if (loading || !mobileDetected) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted/20 p-4 sm:p-6">
         <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
@@ -426,7 +449,7 @@ export const CustomerAddresses = () => {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-6 min-h-screen pb-24" data-mobile-addresses="true">
       {/* Gradient Header */}
       <Card className="overflow-hidden">
         <PortalPageHeader
@@ -691,10 +714,10 @@ export const CustomerAddresses = () => {
 
       {/* Mobile Floating Add Button */}
       {isMobile && addresses.length > 0 && (
-        <div className="fixed bottom-20 right-4 z-50">
+        <div className="fixed bottom-24 right-4 z-[60]">
           <Button
             size="lg"
-            className="rounded-full w-14 h-14 shadow-lg bg-tl-gradient"
+            className="rounded-full w-14 h-14 shadow-2xl bg-tl-gradient hover:scale-110 transition-transform"
             onClick={() => setDialogOpen(true)}
           >
             <Plus className="w-6 h-6" />
