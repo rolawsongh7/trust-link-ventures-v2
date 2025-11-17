@@ -1,5 +1,6 @@
 import React from 'react';
 import { Shield, Building2, Globe2, Lock } from 'lucide-react';
+import trustLinkLogo from '@/assets/trust-link-logo.png';
 
 export const AuthBrandPanel = () => {
   return (
@@ -15,7 +16,7 @@ export const AuthBrandPanel = () => {
         {/* Logo */}
         <div className="mb-8 animate-fade-in">
           <img 
-            src="/src/assets/trust-link-logo.png" 
+            src={trustLinkLogo} 
             alt="Trust Link Ventures" 
             className="h-16 w-auto mb-6"
           />

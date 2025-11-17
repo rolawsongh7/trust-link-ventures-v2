@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, Eye, EyeOff, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel';
+import trustLinkLogo from '@/assets/trust-link-logo.png';
 
 const UnifiedAuth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -185,7 +186,7 @@ const UnifiedAuth = () => {
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-6 p-6 rounded-2xl bg-gradient-to-r from-[hsl(var(--tl-navy-500))]/10 via-[hsl(var(--tl-maritime-500))]/10 to-[hsl(var(--tl-gold-500))]/10 border border-[hsl(var(--tl-maritime-500))]/20 animate-fade-in">
             <img 
-              src="/src/assets/trust-link-logo.png" 
+              src={trustLinkLogo} 
               alt="Trust Link Ventures" 
               className="h-12 w-auto mx-auto mb-4"
             />
