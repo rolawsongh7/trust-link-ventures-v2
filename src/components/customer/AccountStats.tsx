@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Package, MessageSquare, DollarSign, TrendingUp, Calendar, Award, Clock } from 'lucide-react';
 import { useCounterAnimation } from '@/hooks/useCounterAnimation';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { format, formatDistanceToNow } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
 
 interface StatCardProps {
   icon: React.ReactNode;
@@ -37,7 +35,6 @@ const StatCard: React.FC<StatCardProps> = ({ icon, label, value, trend }) => (
 
 export const AccountStats: React.FC = () => {
   const { profile } = useCustomerAuth();
-  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalQuotes: 0,
@@ -53,24 +50,33 @@ export const AccountStats: React.FC = () => {
     const fetchStats = async () => {
       if (!profile?.id) return;
 
+      // First, get the customer_id from customer_users table
+      const { data: customerMapping } = await supabase
+        .from('customer_users')
+        .select('customer_id')
+        .eq('user_id', profile.id)
+        .single();
+
+      const customerId = customerMapping?.customer_id || profile.id;
+
       // Fetch orders count and total
       const { data: orders } = await supabase
         .from('orders')
         .select('total_amount')
-        .eq('customer_id', profile.id)
+        .eq('customer_id', customerId)
         .not('status', 'eq', 'cancelled');
 
       // Fetch quotes count
       const { data: quotes } = await supabase
         .from('quote_requests')
         .select('id')
-        .eq('customer_id', profile.id);
+        .eq('customer_id', customerId);
 
       // Get customer created date
       const { data: customer } = await supabase
         .from('customers')
         .select('created_at')
-        .eq('id', profile.id)
+        .eq('id', customerId)
         .single();
 
       setStats({
@@ -148,16 +154,6 @@ export const AccountStats: React.FC = () => {
             <span className="font-medium text-emerald-600">{'< 2 hours'}</span>
           </div>
         </div>
-
-        {/* CTA */}
-        <Button 
-          variant="outline" 
-          className="w-full" 
-          size="sm"
-          onClick={() => navigate('/portal/analytics')}
-        >
-          View Detailed Analytics →
-        </Button>
       </CardContent>
     </Card>
   );

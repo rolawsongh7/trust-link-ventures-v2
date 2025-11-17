@@ -145,9 +145,11 @@ export const CustomerProfile: React.FC = () => {
           </div>
           
           {/* Avatar + Info Section */}
-          <div className="flex flex-col sm:flex-row items-center gap-6 mt-6">
-            <ProfileAvatar />
-            <div className="flex-1 text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row items-center gap-6 mt-8">
+            <div className="flex flex-col items-center sm:items-start">
+              <ProfileAvatar />
+            </div>
+            <div className="flex-1 text-center sm:text-left mt-4 sm:mt-0">
               <h2 className="text-xl font-semibold text-white">{profile?.full_name || 'Guest User'}</h2>
               <p className="text-white/80">{profile?.email}</p>
               <div className="flex items-center justify-center sm:justify-start gap-2 mt-2">
@@ -235,16 +237,16 @@ export const CustomerProfile: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-tl-text">Email Address</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-tl-muted" />
+                  <Mail className="absolute left-3.5 top-3 h-4 w-4 text-tl-muted" />
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     disabled
-                    className="pl-10 bg-tl-muted/20 border-tl-border text-tl-muted"
+                    className="pl-11 bg-tl-muted/20 border-tl-border text-tl-muted"
                   />
                 </div>
-                <p className="text-xs text-tl-muted">
+                <p className="text-xs text-tl-muted mt-1">
                   Email address cannot be changed. Contact support if you need to update this.
                 </p>
               </div>
