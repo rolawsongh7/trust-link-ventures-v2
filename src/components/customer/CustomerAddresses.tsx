@@ -91,14 +91,43 @@ export const CustomerAddresses = () => {
     }
   }, [profile]);
 
-  // Wait for mobile detection to complete
+  // Wait for mobile detection to complete (Step 4: Increased timeout)
   useEffect(() => {
     const timer = setTimeout(() => {
       setMobileDetected(true);
       console.log('📱 Mobile detection complete:', { isMobile });
-    }, 100);
+    }, 300);
     return () => clearTimeout(timer);
   }, [isMobile]);
+
+  // Step 3: Add Visibility Logging with IntersectionObserver
+  useEffect(() => {
+    if (!isMobile || !mobileDetected) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          console.log('📱 IntersectionObserver:', {
+            isIntersecting: entry.isIntersecting,
+            intersectionRatio: entry.intersectionRatio,
+            boundingClientRect: entry.boundingClientRect,
+            target: entry.target.getAttribute('data-mobile-addresses')
+          });
+        });
+      },
+      { threshold: [0, 0.25, 0.5, 0.75, 1] }
+    );
+
+    const container = document.querySelector('[data-mobile-addresses]');
+    if (container) {
+      observer.observe(container);
+      console.log('📱 IntersectionObserver attached to container');
+    } else {
+      console.warn('📱 Container not found for IntersectionObserver');
+    }
+
+    return () => observer.disconnect();
+  }, [isMobile, mobileDetected]);
 
   // Debug logging to help troubleshoot
   useEffect(() => {
@@ -444,6 +473,156 @@ export const CustomerAddresses = () => {
             </div>
           </Card>
         </div>
+      </div>
+    );
+  }
+
+  // Step 1: Emergency Debug UI - Shows state when ?debug=true
+  if (isMobile && typeof window !== 'undefined' && window.location.search.includes('debug=true')) {
+    return (
+      <div className="p-4 bg-yellow-50 dark:bg-yellow-950 text-sm font-mono space-y-4 min-h-screen">
+        <h1 className="text-xl font-bold text-yellow-900 dark:text-yellow-100">🐛 Debug Mode - Mobile Addresses</h1>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded border border-yellow-300 dark:border-yellow-700">
+          <h2 className="font-bold mb-2">Component State:</h2>
+          <pre className="text-xs overflow-auto">{JSON.stringify({
+            isMobile,
+            mobileDetected,
+            loading,
+            hasProfile: !!profile,
+            profileId: profile?.id,
+            addressCount: addresses.length,
+            viewport: {
+              width: window.innerWidth,
+              height: window.innerHeight
+            },
+            documentHeight: document.documentElement.scrollHeight,
+            bodyHeight: document.body.scrollHeight,
+            scrollY: window.scrollY,
+            userAgent: navigator.userAgent
+          }, null, 2)}</pre>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded border border-yellow-300 dark:border-yellow-700">
+          <h2 className="font-bold mb-2">Addresses Data:</h2>
+          <pre className="text-xs overflow-auto">{JSON.stringify(addresses, null, 2)}</pre>
+        </div>
+        <Button 
+          onClick={() => window.location.href = '/portal/addresses'}
+          className="w-full"
+        >
+          Exit Debug Mode
+        </Button>
+      </div>
+    );
+  }
+
+  // Step 5: Fallback Rendering - Safe Mode when ?safemode=true
+  if (isMobile && typeof window !== 'undefined' && window.location.search.includes('safemode=true')) {
+    return (
+      <div className="p-4 space-y-4 min-h-screen bg-background">
+        <Card>
+          <CardHeader>
+            <CardTitle>🔧 Safe Mode - Addresses</CardTitle>
+            <CardDescription>Simplified view for troubleshooting</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-sm">
+              <p><strong>Profile:</strong> {profile?.id ? '✅ Loaded' : '❌ Missing'}</p>
+              <p><strong>Addresses:</strong> {addresses.length} found</p>
+              <p><strong>Loading:</strong> {loading ? 'Yes' : 'No'}</p>
+            </div>
+            
+            {addresses.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">No addresses found</p>
+                <Button onClick={() => setDialogOpen(true)}>Add Address</Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {addresses.map((address) => (
+                  <Card key={address.id} className="p-4">
+                    <p className="font-medium">{address.receiver_name}</p>
+                    <p className="text-sm text-muted-foreground">{address.city}, {address.region}</p>
+                    <p className="text-xs text-muted-foreground">{address.phone_number}</p>
+                  </Card>
+                ))}
+                <Button onClick={() => setDialogOpen(true)} className="w-full">Add New</Button>
+              </div>
+            )}
+            
+            <Button 
+              onClick={() => window.location.href = '/portal/addresses'}
+              variant="outline"
+              className="w-full"
+            >
+              Exit Safe Mode
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Include the dialog for safe mode */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>{editingAddress ? 'Edit Address' : 'Add New Address'}</DialogTitle>
+              <DialogDescription>
+                {editingAddress ? 'Update your delivery address information' : 'Add a new delivery address'}
+              </DialogDescription>
+            </DialogHeader>
+            {/* Simplified form - just close dialog */}
+            <Button onClick={() => setDialogOpen(false)}>Close</Button>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // Step 2: Mobile-Specific Error Boundary
+  try {
+    if (!profile?.id) {
+      throw new Error('Profile not loaded');
+    }
+    if (isMobile && !mobileDetected) {
+      throw new Error('Mobile detection incomplete');
+    }
+  } catch (error) {
+    console.error('📱 Mobile Addresses Error Boundary:', error);
+    return (
+      <div className="p-4 min-h-screen bg-background">
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">⚠️ Rendering Error</CardTitle>
+            <CardDescription>
+              The addresses page encountered an error on mobile
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-sm bg-destructive/10 p-3 rounded">
+              <p className="font-mono">{(error as Error).message}</p>
+            </div>
+            <div className="space-y-2">
+              <Button 
+                onClick={() => window.location.href = '/portal/addresses?safemode=true'}
+                className="w-full"
+              >
+                Try Safe Mode
+              </Button>
+              <Button 
+                onClick={() => window.location.href = '/portal/addresses?debug=true'}
+                variant="outline"
+                className="w-full"
+              >
+                View Debug Info
+              </Button>
+              <Button 
+                onClick={() => window.location.reload()}
+                variant="outline"
+                className="w-full"
+              >
+                Reload Page
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
