@@ -252,6 +252,8 @@ export const CustomerOrders: React.FC = () => {
     }
 
     try {
+      console.log('🔵 [Reorder] Starting reorder for:', order.order_number);
+      
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -263,30 +265,52 @@ export const CustomerOrders: React.FC = () => {
         return;
       }
 
-      // Add each order item to the cart
-      for (const item of order.order_items) {
-        await supabase.from('cart_items').insert({
-          user_id: user.id,
-          product_name: item.product_name,
-          product_description: item.product_description,
-          quantity: item.quantity,
-          unit: item.unit,
-          specifications: item.specifications,
-        });
+      // Prepare cart items for bulk insert
+      const cartItems = order.order_items.map(item => ({
+        user_id: user.id,
+        product_name: item.product_name,
+        product_description: item.product_description || '',
+        quantity: item.quantity || 1,
+        unit: item.unit || 'kg',
+        specifications: item.specifications || '',
+      }));
+
+      console.log('🔵 [Reorder] Inserting items:', cartItems.length);
+
+      // Bulk insert all items at once
+      const { data, error } = await supabase
+        .from('cart_items')
+        .insert(cartItems)
+        .select();
+
+      if (error) {
+        console.error('🔴 [Reorder] Insert error:', error);
+        throw error;
       }
+
+      console.log('✅ [Reorder] Successfully added items:', data?.length);
 
       toast({
         title: "Reorder Successful",
-        description: `${order.order_items.length} items from ${order.order_number} have been added to your cart.`,
+        description: `${cartItems.length} item${cartItems.length > 1 ? 's' : ''} from ${order.order_number} ${cartItems.length > 1 ? 'have' : 'has'} been added to your cart.`,
       });
 
-      // Navigate to cart
-      navigate('/customer/cart');
-    } catch (error) {
-      console.error('Error reordering:', error);
+      // Navigate to cart after small delay for user to see toast
+      setTimeout(() => {
+        navigate('/customer/cart');
+      }, 800);
+      
+    } catch (error: any) {
+      console.error('🔴 [Reorder] Error:', error);
+      
+      // Check for specific error types
+      const errorMessage = error?.message?.includes('duplicate')
+        ? "Some items are already in your cart."
+        : "Failed to add items to cart. Please try again.";
+      
       toast({
         title: "Reorder Failed",
-        description: "Failed to add items to cart. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -326,27 +350,48 @@ export const CustomerOrders: React.FC = () => {
 
   const handleTrackOrder = async (order: Order) => {
     try {
+      console.log('🔵 [Track Order] Starting for order:', order.order_number);
+      
       // Fetch tracking token for this order
       const { data, error } = await supabase
         .from('delivery_tracking_tokens')
         .select('token')
         .eq('order_id', order.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid error if no row
 
-      if (error || !data) {
+      console.log('🔵 [Track Order] Token query result:', { data, error });
+
+      if (error) {
+        console.error('🔴 [Track Order] Database error:', error);
         toast({
           title: "Tracking Unavailable",
-          description: "Tracking information is not yet available for this order.",
+          description: "Unable to load tracking information. Please try again.",
           variant: "destructive",
         });
         return;
       }
 
-      // Navigate to public tracking page with token (in-app navigation for mobile)
-      console.log('🔵 Navigating to track page:', data.token);
+      if (!data || !data.token) {
+        console.warn('⚠️ [Track Order] No tracking token found for order:', order.id);
+        toast({
+          title: "Tracking Not Ready",
+          description: "Tracking information will be available once your order ships.",
+        });
+        return;
+      }
+
+      // Close any open mobile dialogs first (prevent navigation race condition)
+      setSelectedOrderForDetail(null);
+      
+      // Small delay to ensure dialog closes before navigation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Navigate to public tracking page with token
+      console.log('🔵 [Track Order] Navigating with token:', data.token);
       navigate(`/track?token=${data.token}`);
+      
     } catch (error) {
-      console.error('Error fetching tracking token:', error);
+      console.error('🔴 [Track Order] Unexpected error:', error);
       toast({
         title: "Error",
         description: "Failed to load tracking information.",
