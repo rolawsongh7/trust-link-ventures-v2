@@ -101,6 +101,23 @@ export const CustomerAddresses = () => {
     }
   }, [profile]);
 
+  // Mobile-specific debugging
+  useEffect(() => {
+    const debugInfo = {
+      isMobile,
+      loading,
+      hasProfile: !!profile,
+      profileId: profile?.id,
+      addressCount: addresses.length,
+      pathname: window.location.pathname,
+      viewport: {
+        width: window.innerWidth,
+        height: window.innerHeight
+      }
+    };
+    console.log('📱 Mobile Address Page State:', debugInfo);
+  }, [isMobile, loading, profile, addresses]);
+
   const fetchAddresses = async () => {
     if (!profile) {
       setLoading(false);
@@ -409,7 +426,7 @@ export const CustomerAddresses = () => {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
+    <div className="space-y-4 sm:space-y-6">
       {/* Gradient Header */}
       <Card className="overflow-hidden">
         <PortalPageHeader
@@ -672,6 +689,19 @@ export const CustomerAddresses = () => {
         </Card>
       )}
 
+      {/* Mobile Floating Add Button */}
+      {isMobile && addresses.length > 0 && (
+        <div className="fixed bottom-20 right-4 z-50">
+          <Button
+            size="lg"
+            className="rounded-full w-14 h-14 shadow-lg bg-tl-gradient"
+            onClick={() => setDialogOpen(true)}
+          >
+            <Plus className="w-6 h-6" />
+          </Button>
+        </div>
+      )}
+
       {addresses.length === 0 ? (
         <Card className="text-center py-12 bg-tl-surface border border-tl-border rounded-lg shadow-sm">
           <CardContent>
@@ -681,10 +711,11 @@ export const CustomerAddresses = () => {
             <h3 className="text-xl font-semibold text-tl-primary mb-2">No addresses yet</h3>
             <p className="text-tl-muted mb-6">Add a delivery address to complete your orders</p>
             <Button
-              className="bg-tl-gradient text-white hover:opacity-95"
+              className="bg-tl-gradient text-white hover:opacity-95 h-11 sm:h-10 touch-manipulation"
               onClick={() => setDialogOpen(true)}
+              size="lg"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-5 w-5 mr-2" />
               Add Your First Address
             </Button>
           </CardContent>
