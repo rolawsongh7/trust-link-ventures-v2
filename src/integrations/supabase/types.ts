@@ -3238,6 +3238,10 @@ export type Database = {
       generate_order_number: { Args: never; Returns: string }
       generate_quote_request_number: { Args: never; Returns: string }
       generate_secure_token: { Args: never; Returns: string }
+      generate_tracking_token_for_order: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
       get_anomaly_statistics: {
         Args: { p_days?: number; p_user_id: string }
         Returns: {
