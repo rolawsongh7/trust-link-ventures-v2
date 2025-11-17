@@ -8,26 +8,6 @@ import { useBackgroundSync } from '@/hooks/useBackgroundSync';
 import { mobileFeatures } from '@/config/mobile.config';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-const MobileDebugOverlay = () => {
-  const isMobile = useIsMobile();
-  const [mounted, setMounted] = useState(false);
-  
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  
-  if (!mounted || !isMobile) return null;
-  
-  return (
-    <div className="fixed top-0 right-0 bg-black/80 text-white text-xs p-2 z-[9999] rounded-bl">
-      Mobile: {window.innerWidth}x{window.innerHeight}
-      <br />
-      Route: {window.location.pathname}
-      <br />
-      Browser: {navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Other'}
-    </div>
-  );
-};
 
 export const CustomerLayout: React.FC = () => {
   const { isSyncing } = useBackgroundSync();
@@ -43,7 +23,6 @@ export const CustomerLayout: React.FC = () => {
       </div>
       <main className="container mx-auto px-2 sm:px-3 md:px-4 lg:px-6 py-4 sm:py-6 max-w-full">
         <Outlet />
-        <MobileDebugOverlay />
       </main>
       {mobileFeatures.showFloatingLogin && <FloatingLoginButton />}
       {mobileFeatures.showPWAInstallPrompt && <PWAInstallPrompt />}
