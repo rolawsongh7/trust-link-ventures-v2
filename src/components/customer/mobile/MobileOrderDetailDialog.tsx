@@ -204,7 +204,13 @@ export const MobileOrderDetailDialog = ({
               ) : (
                 <>
                   {order.tracking_number && (
-                    <Button onClick={onTrack} className="w-full">
+                    <Button 
+                      className="w-full" 
+                      onClick={() => {
+                        onOpenChange(false); // Close dialog first
+                        setTimeout(() => onTrack(), 100); // Then trigger track with delay
+                      }}
+                    >
                       <Truck className="h-4 w-4 mr-2" />
                       Track Order
                     </Button>
