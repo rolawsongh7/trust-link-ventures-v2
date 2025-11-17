@@ -138,13 +138,6 @@ const CustomerPortalMain = () => {
       href: '/portal/invoices',
       color: 'from-[#00B4D8] to-[#0096C7]',
       borderColor: 'border-l-yellow-500'
-    },
-    {
-      title: 'Track Shipment',
-      description: 'Monitor your delivery status',
-      icon: TrendingUp,
-      href: '/portal/tracking',
-      color: 'from-[#023E8A] to-[#03045E]'
     }
   ];
 
