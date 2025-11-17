@@ -45,7 +45,7 @@ import QuoteView from "@/pages/QuoteView";
 import ManualQuoteAnalytics from "@/components/analytics/ManualQuoteAnalytics";
 import CurrencyAnalytics from "@/components/analytics/CurrencyAnalytics";
 import OrderTracking from "@/pages/OrderTracking";
-import CustomerTrackingHub from "@/pages/CustomerTrackingHub";
+
 import PaymentCallback from "@/pages/PaymentCallback";
 import AdminLogin from "./pages/AdminLogin";
 import Cookies from "./pages/Cookies";
@@ -202,7 +202,6 @@ const App = () => {
                         <Route path="quotes" element={<CustomerQuotes />} />
                         <Route path="orders" element={<CustomerOrders />} />
                         <Route path="orders/:orderId" element={<OrderTracking />} />
-                        <Route path="tracking" element={<CustomerTrackingHub />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="communications" element={<CustomerCommunications />} />
                         <Route path="addresses" element={<CustomerAddresses />} />
@@ -296,7 +295,7 @@ const App = () => {
                         <Route path="addresses" element={<CustomerAddresses />} />
                         <Route path="notifications" element={<CustomerNotifications />} />
                         <Route path="analytics" element={<CustomerAnalytics />} />
-                        <Route path="tracking" element={<CustomerTrackingHub />} />
+                        
                         <Route path="profile" element={<CustomerProfile />} />
                         <Route path="payment-callback" element={<PaymentCallback />} />
                       </Route>
