@@ -160,8 +160,15 @@ const UnifiedAuth = () => {
       <AuthBrandPanel />
 
       {/* Auth Form Panel */}
-      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-background via-background to-accent/5 p-4 lg:p-8">
-        <div className="w-full max-w-md space-y-6 animate-fade-in">
+      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-[#E1F5FE] via-[#F0F9FF] to-[#FFF8E1] p-4 lg:p-8 relative overflow-hidden">
+        {/* Decorative Gradient Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 right-20 w-32 h-32 bg-[hsl(var(--tl-maritime-500))]/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 left-20 w-40 h-40 bg-[hsl(var(--tl-gold-500))]/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[hsl(var(--tl-navy-500))]/5 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="w-full max-w-md space-y-6 animate-fade-in relative z-10">
           {/* Back to Home - Mobile */}
           <Button
             asChild
@@ -176,7 +183,7 @@ const UnifiedAuth = () => {
           </Button>
 
           {/* Mobile Logo */}
-          <div className="lg:hidden text-center mb-6 animate-fade-in">
+          <div className="lg:hidden text-center mb-6 p-6 rounded-2xl bg-gradient-to-r from-[hsl(var(--tl-navy-500))]/10 via-[hsl(var(--tl-maritime-500))]/10 to-[hsl(var(--tl-gold-500))]/10 border border-[hsl(var(--tl-maritime-500))]/20 animate-fade-in">
             <img 
               src="/src/assets/trust-link-logo.png" 
               alt="Trust Link Ventures" 
@@ -190,11 +197,11 @@ const UnifiedAuth = () => {
             </p>
           </div>
 
-          <Card className="border-border/50 shadow-2xl backdrop-blur-sm bg-card/95">
+          <Card className="border-[hsl(var(--tl-maritime-500))]/20 shadow-2xl bg-white/90 backdrop-blur-sm ring-1 ring-[hsl(var(--tl-maritime-500))]/5">
             <CardHeader className="space-y-3 pb-6">
               <div className="flex items-center justify-center mb-2">
-                <div className="p-3 bg-primary/10 rounded-2xl ring-4 ring-primary/5">
-                  <Lock className="h-7 w-7 text-primary" />
+                <div className="p-3 bg-[hsl(var(--tl-maritime-500))]/10 rounded-2xl ring-4 ring-[hsl(var(--tl-maritime-500))]/20">
+                  <Lock className="h-7 w-7 text-[hsl(var(--tl-maritime-500))]" />
                 </div>
               </div>
               <CardTitle className="text-3xl font-poppins font-bold text-center text-foreground">
@@ -220,7 +227,7 @@ const UnifiedAuth = () => {
                         placeholder="John Doe"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="h-12 border-border/50 focus:border-primary transition-colors"
+                        className="h-12 border-border/50 focus:border-[hsl(var(--tl-maritime-500))] focus:ring-2 focus:ring-[hsl(var(--tl-maritime-500))]/20 transition-all"
                         required
                       />
                     </div>
@@ -233,7 +240,7 @@ const UnifiedAuth = () => {
                         placeholder="Your Company Inc."
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        className="h-12 border-border/50 focus:border-primary transition-colors"
+                        className="h-12 border-border/50 focus:border-[hsl(var(--tl-maritime-500))] focus:ring-2 focus:ring-[hsl(var(--tl-maritime-500))]/20 transition-all"
                         required
                       />
                     </div>
@@ -248,7 +255,7 @@ const UnifiedAuth = () => {
                     placeholder="you@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-12 border-border/50 focus:border-primary transition-colors"
+                    className="h-12 border-border/50 focus:border-[hsl(var(--tl-maritime-500))] focus:ring-2 focus:ring-[hsl(var(--tl-maritime-500))]/20 transition-all"
                     required
                   />
                 </div>
@@ -262,7 +269,7 @@ const UnifiedAuth = () => {
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 pr-12 border-border/50 focus:border-primary transition-colors"
+                      className="h-12 pr-12 border-border/50 focus:border-[hsl(var(--tl-maritime-500))] focus:ring-2 focus:ring-[hsl(var(--tl-maritime-500))]/20 transition-all"
                       required
                     />
                     <button
@@ -281,7 +288,7 @@ const UnifiedAuth = () => {
                 
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-semibold bg-gradient-to-r from-[hsl(var(--tl-gold-500))] to-[hsl(var(--tl-gold-600))] hover:from-[hsl(var(--tl-gold-600))] hover:to-[hsl(var(--tl-gold-700))] text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                  className="w-full h-12 text-base font-semibold bg-gradient-to-r from-[hsl(var(--tl-gold-500))] to-[hsl(var(--tl-gold-600))] hover:from-[hsl(var(--tl-gold-600))] hover:to-[hsl(var(--tl-gold-700))] text-white shadow-lg hover:shadow-xl hover:shadow-[hsl(var(--tl-gold-500))]/30 transition-all duration-200 hover:scale-[1.02]"
                   disabled={loading}
                 >
                   {loading ? (
@@ -297,14 +304,14 @@ const UnifiedAuth = () => {
               
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border/50"></div>
+                  <div className="w-full border-t border-transparent bg-gradient-to-r from-transparent via-[hsl(var(--tl-maritime-500))]/20 to-transparent h-px"></div>
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-4 text-muted-foreground font-medium">or</span>
+                  <span className="bg-white px-4 text-muted-foreground font-medium">or</span>
                 </div>
               </div>
 
-              <div className="text-center">
+              <div className="text-center bg-gradient-to-b from-transparent to-[hsl(var(--tl-maritime-500))]/5 pt-2 pb-2 rounded-lg">
                 <Button
                   variant="link"
                   onClick={() => setIsLogin(!isLogin)}
