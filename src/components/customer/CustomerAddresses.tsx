@@ -91,14 +91,28 @@ export const CustomerAddresses = () => {
     }
   }, [profile]);
 
-  // Wait for mobile detection to complete (Step 4: Increased timeout)
+  // Wait for mobile detection to complete (Step 4: Reduced timeout)
   useEffect(() => {
     const timer = setTimeout(() => {
       setMobileDetected(true);
       console.log('📱 Mobile detection complete:', { isMobile });
-    }, 300);
+    }, 100);
     return () => clearTimeout(timer);
   }, [isMobile]);
+
+  // Step 2: Chrome-Specific Force Re-render
+  const [chromeRenderKey, setChromeRenderKey] = useState(0);
+
+  useEffect(() => {
+    if (mobileDetected && isMobile) {
+      // Force Chrome to re-render by updating key
+      const timer = setTimeout(() => {
+        setChromeRenderKey(prev => prev + 1);
+        console.log('🔄 Chrome render key updated:', chromeRenderKey + 1);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [mobileDetected, isMobile]);
 
   // Step 3: Add Visibility Logging with IntersectionObserver
   useEffect(() => {
@@ -127,6 +141,20 @@ export const CustomerAddresses = () => {
     }
 
     return () => observer.disconnect();
+  }, [isMobile, mobileDetected]);
+
+  // Step 4: Chrome Mobile Cache Buster
+  useEffect(() => {
+    if (isMobile && typeof navigator !== 'undefined') {
+      const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+      if (isChrome) {
+        console.log('🔍 Chrome mobile detected, forcing layout recalculation');
+        // Force Chrome to recalculate layout
+        document.body.style.display = 'none';
+        document.body.offsetHeight; // Trigger reflow
+        document.body.style.display = '';
+      }
+    }
   }, [isMobile, mobileDetected]);
 
   // Debug logging to help troubleshoot
@@ -495,10 +523,14 @@ export const CustomerAddresses = () => {
               width: window.innerWidth,
               height: window.innerHeight
             },
+            browser: {
+              userAgent: navigator.userAgent,
+              isChrome: /Chrome/.test(navigator.userAgent),
+              vendor: navigator.vendor
+            },
             documentHeight: document.documentElement.scrollHeight,
             bodyHeight: document.body.scrollHeight,
-            scrollY: window.scrollY,
-            userAgent: navigator.userAgent
+            scrollY: window.scrollY
           }, null, 2)}</pre>
         </div>
         <div className="bg-white dark:bg-gray-800 p-4 rounded border border-yellow-300 dark:border-yellow-700">
@@ -628,7 +660,7 @@ export const CustomerAddresses = () => {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 min-h-screen pb-24" data-mobile-addresses="true">
+    <div key={chromeRenderKey} className="space-y-4 sm:space-y-6 min-h-screen pb-24" data-mobile-addresses="true">
       {/* Gradient Header */}
       <Card className="overflow-hidden">
         <PortalPageHeader
