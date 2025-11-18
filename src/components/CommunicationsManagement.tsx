@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,9 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
+import { ThreadCard } from '@/components/communications/ThreadCard';
+import { ThreadView } from '@/components/communications/ThreadView';
+import { groupCommunicationsIntoThreads } from '@/components/communications/groupThreads';
 
 interface Communication {
   id: string;
@@ -21,10 +24,19 @@ interface Communication {
   content: string;
   communication_date: string;
   created_at: string;
+  direction: string;
+  thread_id?: string;
+  thread_position?: number;
+  parent_communication_id?: string;
+  contact_person?: string;
+  created_by?: string;
   customers?: {
+    id: string;
     company_name: string;
+    contact_name?: string;
   };
   leads?: {
+    id: string;
     title: string;
   };
 }
@@ -49,6 +61,8 @@ const CommunicationsManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCommunication, setEditingCommunication] = useState<Communication | null>(null);
   const [replyingToCommunication, setReplyingToCommunication] = useState<Communication | null>(null);
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
+  const [isThreadViewOpen, setIsThreadViewOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm({
@@ -285,19 +299,79 @@ const CommunicationsManagement = () => {
     setIsDialogOpen(true);
   };
 
-  const filteredCommunications = communications.filter(comm => {
-    const matchesSearch = comm.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      comm.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      comm.customers?.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      comm.leads?.title?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesType = typeFilter === 'all' || comm.communication_type === typeFilter;
-    const matchesContactForm = typeFilter === 'contact_form' 
-      ? comm.subject?.includes('Contact Form:')
-      : true;
-    
-    return matchesSearch && (matchesType || matchesContactForm);
-  });
+  const handleQuickReply = async (threadId: string, content: string, type: string) => {
+    try {
+      const thread = threads.find(t => t.id === threadId);
+      if (!thread) return;
+
+      const lastMessage = thread.messages[thread.messages.length - 1];
+      const firstMessage = thread.messages[0];
+      
+      // Map 'call' to 'phone' for database compatibility
+      const commType = type === 'call' ? 'phone' : type;
+      
+      const replyData = {
+        communication_type: commType as 'email' | 'phone' | 'meeting' | 'note',
+        subject: `Re: ${thread.subject}`,
+        content,
+        customer_id: firstMessage.customers?.id || null,
+        lead_id: null,
+        communication_date: new Date().toISOString(),
+        direction: 'outbound',
+        contact_person: 'Support Team',
+        parent_communication_id: lastMessage.id,
+        thread_id: threadId,
+        thread_position: (lastMessage.thread_position || 0) + 1,
+      };
+
+      const { error } = await supabase
+        .from('communications')
+        .insert([replyData]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Reply sent successfully",
+      });
+
+      fetchCommunications();
+    } catch (error: any) {
+      console.error('Error sending reply:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send reply",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Group communications into threads
+  const threads = useMemo(() => {
+    return groupCommunicationsIntoThreads(communications);
+  }, [communications]);
+
+  const filteredThreads = useMemo(() => {
+    return threads.filter(thread => {
+      const matchesSearch = 
+        thread.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        thread.messages.some(msg => 
+          msg.content?.toLowerCase().includes(searchTerm.toLowerCase())
+        ) ||
+        thread.customer?.company_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesType = typeFilter === 'all' || 
+        thread.messages.some(msg => msg.communication_type === typeFilter);
+      
+      const matchesContactForm = typeFilter === 'contact_form' 
+        ? thread.subject?.includes('Contact Form:')
+        : true;
+      
+      return matchesSearch && (matchesType || matchesContactForm);
+    });
+  }, [threads, searchTerm, typeFilter]);
+
+  const selectedThread = threads.find(t => t.id === selectedThreadId);
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -564,110 +638,38 @@ const CommunicationsManagement = () => {
       </div>
 
       <div className="space-y-4">
-        {filteredCommunications.map((comm) => {
-          const TypeIcon = getTypeIcon(comm.communication_type);
-          return (
-            <Card key={comm.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <TypeIcon className="h-4 w-4" />
-                      {comm.subject}
-                      {comm.subject?.includes('Contact Form:') && (
-                        <Badge variant="default" className="bg-blue-500 ml-2">
-                          📧 Contact Form
-                        </Badge>
-                      )}
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                      {(comm.customers?.company_name || comm.leads?.title) && (
-                        <CardDescription>
-                          {comm.customers?.company_name || comm.leads?.title}
-                        </CardDescription>
-                      )}
-                      {comm.leads?.title && (
-                        <Badge variant="outline" className="text-xs">
-                          Lead: {comm.leads.title}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Badge variant={getTypeColor(comm.communication_type)}>
-                      {comm.communication_type}
-                    </Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-3">
-                  {comm.content && (
-                    <p className="text-sm text-muted-foreground line-clamp-3">
-                      {comm.content}
-                    </p>
-                  )}
-                  
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {new Date(comm.created_at).toLocaleDateString()}
-                      </div>
-                      {comm.communication_date && (
-                        <div>
-                          Date: {new Date(comm.communication_date).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
-                     <div className="flex gap-2">
-                      {comm.customers && (
-                        <Button 
-                          size="sm" 
-                          variant="default"
-                          onClick={() => handleReply(comm)}
-                        >
-                          <MessageSquare className="h-3 w-3 mr-1" />
-                          Reply
-                        </Button>
-                      )}
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => {
-                          setEditingCommunication(comm);
-                          setIsDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {filteredThreads.map((thread) => (
+          <ThreadCard
+            key={thread.id}
+            thread={thread}
+            onClick={() => {
+              setSelectedThreadId(thread.id);
+              setIsThreadViewOpen(true);
+            }}
+          />
+        ))}
+
+        {filteredThreads.length === 0 && (
+          <Card className="border-2 border-dashed">
+            <CardContent className="py-12 text-center">
+              <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+              <p className="text-muted-foreground text-lg font-medium">No communications found</p>
+              <p className="text-sm text-muted-foreground/70 mt-2">
+                {searchTerm || typeFilter !== 'all' 
+                  ? 'Try adjusting your search or filters' 
+                  : 'Start by logging your first communication'}
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {filteredCommunications.length === 0 && !loading && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No communications found</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              {searchTerm ? 'No communications match your search criteria.' : 'Start logging customer communications.'}
-            </p>
-            {!searchTerm && (
-              <Button onClick={() => setIsDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Log Communication
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <ThreadView
+        thread={selectedThread || null}
+        open={isThreadViewOpen}
+        onOpenChange={setIsThreadViewOpen}
+        onReply={handleQuickReply}
+      />
     </div>
   );
 };
