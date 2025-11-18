@@ -51,7 +51,6 @@ const navigationItems = [
 
 
 const systemItems = [
-  { title: 'Virtual Assistant', url: '/admin/virtual-assistant', icon: Bot },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];
 
