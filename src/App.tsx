@@ -68,7 +68,7 @@ import AdminAuth from "./pages/AdminAuth";
 import CustomerAuth from "./pages/CustomerAuth";
 import Unauthorized from "./pages/Unauthorized";
 import NotificationDemo from "./pages/NotificationDemo";
-import VirtualAssistant from "./pages/VirtualAssistant";
+
 
 const queryClient = new QueryClient();
 
@@ -169,7 +169,6 @@ const App = () => {
                         <Route path="communication" element={<CommunicationPage />} />
                         <Route path="quote-system" element={<QuoteSystem />} />
                         <Route path="settings" element={<Settings />} />
-                        <Route path="virtual-assistant" element={<VirtualAssistant />} />
                       </Route>
                       
                       {/* Public routes */}
@@ -251,7 +250,6 @@ const App = () => {
                         <Route path="communication" element={<CommunicationPage />} />
                         <Route path="quote-system" element={<QuoteSystem />} />
                         <Route path="settings" element={<Settings />} />
-                        <Route path="virtual-assistant" element={<VirtualAssistant />} />
                       </Route>
                       
                       <Route path="*" element={<Navigate to="/" replace />} />
@@ -346,7 +344,6 @@ const App = () => {
                         <Route path="communication" element={<CommunicationPage />} />
                         <Route path="quote-system" element={<QuoteSystem />} />
                         <Route path="settings" element={<Settings />} />
-                        <Route path="virtual-assistant" element={<VirtualAssistant />} />
                       </Route>
                       
                       {/* Public routes */}
@@ -416,7 +413,6 @@ const App = () => {
                         <Route path="communication" element={<CommunicationPage />} />
                         <Route path="quote-system" element={<QuoteSystem />} />
                         <Route path="settings" element={<Settings />} />
-                        <Route path="virtual-assistant" element={<VirtualAssistant />} />
                       </Route>
                       
                       {/* Redirect all other routes to admin login */}
