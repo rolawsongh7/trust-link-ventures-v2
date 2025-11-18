@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import { OrderCardSkeleton } from '@/components/orders/OrderCardSkeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,6 @@ import { EditOrderDetailsDialog } from './EditOrderDetailsDialog';
 import OrderStatusHistory from './OrderStatusHistory';
 import { PaymentConfirmationDialog } from './PaymentConfirmationDialog';
 import { ViewRelatedQuoteDialog } from './ViewRelatedQuoteDialog';
-import { ManualOrderCreationDialog } from './ManualOrderCreationDialog';
 import { VerifyPaymentDialog } from './VerifyPaymentDialog';
 
 interface Order {
@@ -51,6 +51,8 @@ interface Order {
 }
 
 const UnifiedOrdersManagement = () => {
+  const navigate = useNavigate();
+  
   // Use React Query ONLY for data fetching with caching
   const { orders, isLoading: loading, refetch } = useOrdersQuery();
   
@@ -63,7 +65,6 @@ const UnifiedOrdersManagement = () => {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [viewQuoteDialogOpen, setViewQuoteDialogOpen] = useState(false);
-  const [manualOrderDialogOpen, setManualOrderDialogOpen] = useState(false);
   const [verifyPaymentDialogOpen, setVerifyPaymentDialogOpen] = useState(false);
 
   // Set up real-time subscription for notifications only
@@ -250,7 +251,6 @@ const UnifiedOrdersManagement = () => {
     return matchesSearch && matchesTab;
   });
 
-  const manualOrdersCount = orders.filter(o => !o.quote_id).length;
   const autoOrdersCount = orders.filter(o => !!o.quote_id).length;
   const pendingAddressCount = orders.filter(o => !o.delivery_address_id && ['payment_received', 'processing'].includes(o.status)).length;
 
@@ -272,12 +272,12 @@ const UnifiedOrdersManagement = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Orders Management</h1>
           <p className="text-muted-foreground">
-            Track and manage all orders - auto-generated and manual
+            Track and manage all orders from accepted quotes
           </p>
         </div>
-        <Button onClick={() => setManualOrderDialogOpen(true)}>
+        <Button onClick={() => navigate('/quotes')} variant="default">
           <Plus className="mr-2 h-4 w-4" />
-          Create Manual Order
+          Create New Quote
         </Button>
       </div>
 
@@ -296,15 +296,9 @@ const UnifiedOrdersManagement = () => {
       )}
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="flex md:grid md:grid-cols-8 w-full overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+        <TabsList className="flex md:grid md:grid-cols-7 w-full overflow-x-auto snap-x snap-mandatory scrollbar-hide">
           <TabsTrigger value="all" className="flex-shrink-0 snap-center min-w-[100px] md:min-w-0">
             All ({orders.length})
-          </TabsTrigger>
-          <TabsTrigger value="auto" className="flex-shrink-0 snap-center min-w-[100px] md:min-w-0">
-            Auto ({autoOrdersCount})
-          </TabsTrigger>
-          <TabsTrigger value="manual" className="flex-shrink-0 snap-center min-w-[100px] md:min-w-0">
-            Manual ({manualOrdersCount})
           </TabsTrigger>
           <TabsTrigger value="order_confirmed" className="flex-shrink-0 snap-center min-w-[100px] md:min-w-0">
             Confirmed
@@ -328,13 +322,13 @@ const UnifiedOrdersManagement = () => {
             <Card>
               <CardContent className="p-8 text-center">
                 <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
                 <p className="text-gray-500 mb-4">
-                  Orders can be created manually or automatically from accepted quotes.
+                  Orders are automatically created when customers accept quotes.
                 </p>
-                <Button onClick={() => setManualOrderDialogOpen(true)}>
+                <Button onClick={() => navigate('/quotes')}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Manual Order
+                  Create Quote to Get Started
                 </Button>
               </CardContent>
             </Card>
@@ -385,12 +379,6 @@ const UnifiedOrdersManagement = () => {
         open={viewQuoteDialogOpen}
         onOpenChange={setViewQuoteDialogOpen}
         quoteId={selectedOrder?.quote_id || null}
-      />
-
-      <ManualOrderCreationDialog
-        open={manualOrderDialogOpen}
-        onOpenChange={setManualOrderDialogOpen}
-        onSuccess={refetch}
       />
 
       {selectedOrder && (
