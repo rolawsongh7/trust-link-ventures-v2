@@ -365,69 +365,82 @@ export const CustomerCommunications: React.FC = () => {
       />
 
       {/* Send New Message */}
-      <Card className="border-l-4 border-l-primary"
->
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5" />
+      <Card className="relative overflow-hidden border-2 border-primary/30 shadow-xl hover:shadow-2xl transition-all duration-300">
+        {/* Gradient background overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
+        
+        <CardHeader className="relative border-b bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <div className="p-2 bg-primary/20 rounded-lg shadow-sm">
+              <Send className="h-6 w-6 text-primary" />
+            </div>
             Send New Message
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 relative pt-6">
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Subject</label>
+              <label className="text-sm font-semibold">Subject</label>
               <Input
                 placeholder="Enter message subject"
                 value={newMessage.subject}
                 onChange={(e) => setNewMessage(prev => ({ ...prev, subject: e.target.value }))}
+                className="border-2 focus:ring-2 focus:ring-primary/20 transition-all"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Message</label>
+              <label className="text-sm font-semibold">Message</label>
               <Textarea
                 placeholder="Type your message here..."
                 rows={4}
                 value={newMessage.content}
                 onChange={(e) => setNewMessage(prev => ({ ...prev, content: e.target.value }))}
+                className="border-2 focus:ring-2 focus:ring-primary/20 transition-all"
               />
             </div>
           </div>
           
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-2">
             <Button
               onClick={handleSendMessage}
               disabled={sending || !newMessage.subject.trim() || !newMessage.content.trim()}
-              className="flex-1 bg-gradient-to-r from-primary to-primary/90"
+              className="relative overflow-hidden flex-1 bg-gradient-to-r from-primary via-primary/90 to-accent hover:shadow-xl transition-all duration-300 group"
             >
-              <Send className="h-4 w-4 mr-2" />
-              {sending ? 'Sending...' : 'Send Message'}
+              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              <Send className="h-4 w-4 mr-2 relative z-10" />
+              <span className="relative z-10">{sending ? 'Sending...' : 'Send Message'}</span>
             </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Contact Information */}
-      <Card className="border-l-4 border-l-indigo-400">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+      <Card className="border-2 border-accent/30 bg-gradient-to-br from-background via-accent/5 to-background shadow-lg hover:shadow-xl transition-all duration-300">
+        <CardHeader className="bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border-b">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <div className="p-2 bg-accent/20 rounded-lg shadow-sm">
+              <User className="h-6 w-6 text-accent" />
+            </div>
             Contact Information
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-              <Mail className="h-5 w-5 text-primary" />
+            <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-primary/5 to-background rounded-xl border-2 border-primary/20 hover:shadow-lg transition-all">
+              <div className="p-3 bg-primary/20 rounded-lg shadow-sm">
+                <Mail className="h-6 w-6 text-primary" />
+              </div>
               <div>
-                <p className="font-medium">Email Support</p>
+                <p className="font-semibold text-foreground">Email Support</p>
                 <p className="text-sm text-muted-foreground">support@trustlinkventures.com</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-              <Phone className="h-5 w-5 text-primary" />
+            <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-green-50/50 to-background rounded-xl border-2 border-green-200/50 hover:shadow-lg transition-all">
+              <div className="p-3 bg-green-100 rounded-lg shadow-sm">
+                <Phone className="h-6 w-6 text-green-600" />
+              </div>
               <div>
-                <p className="font-medium">Phone Support</p>
+                <p className="font-semibold text-foreground">Phone Support</p>
                 <p className="text-sm text-muted-foreground">+233 (0) 24 123 4567</p>
               </div>
             </div>
@@ -436,19 +449,24 @@ export const CustomerCommunications: React.FC = () => {
       </Card>
 
       {/* Communication History */}
-      <Card className="border-l-4 border-l-indigo-400">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
+      <Card className="border-2 border-indigo-400/30 bg-gradient-to-br from-background via-indigo-50/5 to-background shadow-lg hover:shadow-xl transition-all duration-300">
+        <CardHeader className="bg-gradient-to-r from-indigo-400/10 via-indigo-400/5 to-transparent border-b">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <div className="p-2 bg-indigo-400/20 rounded-lg shadow-sm">
+              <MessageSquare className="h-6 w-6 text-indigo-400" />
+            </div>
             Communication History
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {threads.length === 0 ? (
-            <div className="text-center py-8">
-              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-muted-foreground mb-2">No communications yet</h3>
-              <p className="text-muted-foreground">
+            <div className="text-center py-12 px-6">
+              <div className="mb-6 relative">
+                <div className="absolute inset-0 blur-3xl opacity-30 bg-gradient-to-r from-primary via-accent to-primary animate-pulse" />
+                <MessageSquare className="h-20 w-20 text-primary/40 mx-auto relative z-10" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-2">No communications yet</h3>
+              <p className="text-muted-foreground max-w-sm mx-auto">
                 Send your first message to start communicating with our team
               </p>
             </div>
