@@ -149,6 +149,7 @@ export const MobileCommunicationDetailDialog: React.FC<MobileCommunicationDetail
               </div>
             </div>
           </div>
+          </div>
         </ScrollArea>
       </DialogContent>
     </Dialog>
