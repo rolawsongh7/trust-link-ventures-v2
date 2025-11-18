@@ -561,7 +561,21 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
                 order={order}
                 onView={onEditDetails}
                 onEdit={onEditDetails}
-                onGenerateInvoice={() => {}}
+                onViewHistory={onViewHistory}
+                onRequestAddress={onRequestAddress}
+                onLinkAddress={(order) => setAddressLinkDialog({ 
+                  open: true, 
+                  orderId: order.id,
+                  orderNumber: order.order_number,
+                  customerId: order.customer_id 
+                })}
+                onViewQuote={onViewQuote}
+                onViewPaymentReceipt={(order) => setReceiptPreviewDialog({ open: true, order })}
+                onVerifyPayment={onVerifyPayment}
+                onConfirmPayment={onConfirmPayment}
+                onQuickStatusChange={onQuickStatusChange}
+                onSendTracking={onSendTracking}
+                getStatusColor={getStatusColor}
               />
             ))
           )}
