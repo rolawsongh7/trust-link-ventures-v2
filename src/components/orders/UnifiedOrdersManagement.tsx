@@ -296,15 +296,31 @@ const UnifiedOrdersManagement = () => {
       )}
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid grid-cols-8 w-full">
-          <TabsTrigger value="all">All ({orders.length})</TabsTrigger>
-          <TabsTrigger value="auto">Auto ({autoOrdersCount})</TabsTrigger>
-          <TabsTrigger value="manual">Manual ({manualOrdersCount})</TabsTrigger>
-          <TabsTrigger value="order_confirmed">Confirmed</TabsTrigger>
-          <TabsTrigger value="payment_received">Payment</TabsTrigger>
-          <TabsTrigger value="processing">Processing</TabsTrigger>
-          <TabsTrigger value="shipped">Shipped</TabsTrigger>
-          <TabsTrigger value="delivered">Delivered</TabsTrigger>
+        <TabsList className="flex md:grid md:grid-cols-8 w-full overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+          <TabsTrigger value="all" className="flex-shrink-0 snap-center min-w-[100px] md:min-w-0">
+            All ({orders.length})
+          </TabsTrigger>
+          <TabsTrigger value="auto" className="flex-shrink-0 snap-center min-w-[100px] md:min-w-0">
+            Auto ({autoOrdersCount})
+          </TabsTrigger>
+          <TabsTrigger value="manual" className="flex-shrink-0 snap-center min-w-[100px] md:min-w-0">
+            Manual ({manualOrdersCount})
+          </TabsTrigger>
+          <TabsTrigger value="order_confirmed" className="flex-shrink-0 snap-center min-w-[100px] md:min-w-0">
+            Confirmed
+          </TabsTrigger>
+          <TabsTrigger value="payment_received" className="flex-shrink-0 snap-center min-w-[100px] md:min-w-0">
+            Payment
+          </TabsTrigger>
+          <TabsTrigger value="processing" className="flex-shrink-0 snap-center min-w-[100px] md:min-w-0">
+            Processing
+          </TabsTrigger>
+          <TabsTrigger value="shipped" className="flex-shrink-0 snap-center min-w-[100px] md:min-w-0">
+            Shipped
+          </TabsTrigger>
+          <TabsTrigger value="delivered" className="flex-shrink-0 snap-center min-w-[100px] md:min-w-0">
+            Delivered
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value={selectedTab} className="space-y-4">
