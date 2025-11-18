@@ -77,8 +77,6 @@ const UnifiedQuoteManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [showQuoteUpload, setShowQuoteUpload] = useState(false);
   const [showQuoteWizard, setShowQuoteWizard] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedQuoteForUpload, setSelectedQuoteForUpload] = useState<Quote | null>(null);
@@ -168,7 +166,6 @@ const UnifiedQuoteManagement = () => {
         description: "Quote created successfully",
       });
 
-      setIsDialogOpen(false);
       form.reset();
       fetchQuotes();
     } catch (error: any) {
@@ -665,22 +662,6 @@ const UnifiedQuoteManagement = () => {
           <Plus className="mr-2 h-4 w-4" />
           Quote Wizard
         </Button>
-        <Button
-          onClick={() => setShowQuoteUpload(true)}
-          variant="outline"
-        >
-          <Upload className="mr-2 h-4 w-4" />
-          Upload Quote
-        </Button>
-        <Button 
-          onClick={() => {
-            form.reset();
-            setIsDialogOpen(true);
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          New Quote
-        </Button>
       </div>
 
       <div className="flex items-center space-x-4">
@@ -921,6 +902,12 @@ const UnifiedQuoteManagement = () => {
           onOrderCreated={fetchQuotes}
         />
       )}
+
+      <QuoteWizard
+        open={showQuoteWizard}
+        onOpenChange={setShowQuoteWizard}
+        onQuoteCreated={fetchQuotes}
+      />
 
       <QuoteDetailsDialog
         open={isDetailsDialogOpen}
