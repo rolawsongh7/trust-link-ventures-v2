@@ -92,7 +92,7 @@ export function CustomerMFASetup({ open, onOpenChange }: CustomerMFASetupProps) 
       const isValid = MFAService.verifyToken(secret, verificationCode);
       
       if (!isValid) {
-        toast.error('Invalid verification code. Please try again.');
+        toast.error('Invalid code. Check your device time is correct and try a new code (refreshes every 30 seconds)');
         return;
       }
 
