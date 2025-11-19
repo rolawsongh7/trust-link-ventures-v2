@@ -9,16 +9,19 @@ import {
   AlertTriangle, 
   CheckCircle, 
   Lock,
-  Eye,
   Users,
   TrendingUp,
   Clock,
-  Server
+  UserCheck,
+  ShieldAlert
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays } from 'date-fns';
 import { AuditLogger } from '@/lib/auditLogger';
+import { MetricCard } from '@/components/shared/MetricCard';
+import { TimeAgo } from '@/components/shared/TimeAgo';
+import { motion } from 'framer-motion';
 
 interface SecurityMetrics {
   systemHealth: number;

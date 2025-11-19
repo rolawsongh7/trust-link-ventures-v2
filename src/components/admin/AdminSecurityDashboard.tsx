@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Shield, Lock, AlertTriangle, CheckCircle, Clock, Ban } from 'lucide-react';
+import { Shield, Lock, AlertTriangle, CheckCircle, Clock, Ban, Activity, Users, XCircle, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { MetricCard } from '@/components/shared/MetricCard';
+import { TimeAgo } from '@/components/shared/TimeAgo';
+import { motion } from 'framer-motion';
 
 interface SecurityMetrics {
   mfaEnabled: boolean;

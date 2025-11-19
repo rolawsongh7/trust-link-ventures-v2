@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Shield, 
   Download, 
@@ -17,18 +18,22 @@ import {
   Info, 
   AlertCircle,
   Activity,
-  Eye,
-  Lock,
   TrendingUp,
   Users,
   FileText,
-  Clock
+  Clock,
+  X,
+  FileJson,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { AuditLogger, AuditSeverity } from '@/lib/auditLogger';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { TimeAgo } from '@/components/shared/TimeAgo';
+import { motion } from 'framer-motion';
 
 export const AuditLogViewer: React.FC = () => {
   const { user, hasAdminAccess } = useAuth();
@@ -37,6 +42,8 @@ export const AuditLogViewer: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState<AuditSeverity | 'all'>('all');
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
   const [summary, setSummary] = useState<any[]>([]);
   const [suspiciousActivity, setSuspiciousActivity] = useState<any[]>([]);
   const [securityAlerts, setSecurityAlerts] = useState<any[]>([]);
