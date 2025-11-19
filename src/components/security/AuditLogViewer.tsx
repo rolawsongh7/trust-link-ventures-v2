@@ -25,7 +25,9 @@ import {
   X,
   FileJson,
   CheckCircle,
-  XCircle
+  XCircle,
+  Eye,
+  Lock as LockIcon
 } from 'lucide-react';
 import { AuditLogger, AuditSeverity } from '@/lib/auditLogger';
 import { useAuth } from '@/contexts/AuthContext';
@@ -275,7 +277,7 @@ export const AuditLogViewer: React.FC = () => {
                 <p className="text-sm font-medium text-muted-foreground">Failed Logins</p>
                 <p className="text-2xl font-bold text-orange-500">{metrics.failedLogins}</p>
               </div>
-              <Lock className="h-8 w-8 text-orange-500" />
+              <LockIcon className="h-8 w-8 text-orange-500" />
             </div>
           </CardContent>
         </Card>
