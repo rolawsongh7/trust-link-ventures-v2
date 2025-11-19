@@ -19,6 +19,9 @@ import { NetworkSecurity } from '@/components/security/NetworkSecurity';
 import { AnomalyDetection } from '@/components/security/AnomalyDetection';
 import { AdminSecurityDashboard } from '@/components/admin/AdminSecurityDashboard';
 import { IPWhitelistManagement } from '@/components/admin/IPWhitelistManagement';
+import { GeneralSettingsTab } from '@/components/settings/GeneralSettingsTab';
+import { NotificationPreferencesTab } from '@/components/settings/NotificationPreferencesTab';
+import { UserManagementTab } from '@/components/settings/UserManagementTab';
 import { Settings as SettingsIcon, Database, Bell, Users, Shield, FileText, Network, Activity, ShieldAlert, Link2, Crown, Menu } from 'lucide-react';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 
@@ -400,41 +403,17 @@ const Settings = () => {
 
             {/* General Settings Tab */}
             <TabsContent value="general" className="space-y-6 animate-in fade-in-0 slide-in-from-right-5 duration-300">
-              <InteractiveCard variant="elevated" interactive={false}>
-                <CardHeader>
-                  <CardTitle>General Settings</CardTitle>
-                  <CardDescription>Configure general application preferences</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">General settings will be available here.</p>
-                </CardContent>
-              </InteractiveCard>
+              <GeneralSettingsTab />
             </TabsContent>
 
             {/* User Management Tab */}
             <TabsContent value="users" className="space-y-6 animate-in fade-in-0 slide-in-from-right-5 duration-300">
-              <InteractiveCard variant="elevated" interactive={false}>
-                <CardHeader>
-                  <CardTitle>User Management</CardTitle>
-                  <CardDescription>Manage user accounts, roles, and permissions</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">User management tools will be available here.</p>
-                </CardContent>
-              </InteractiveCard>
+              <UserManagementTab />
             </TabsContent>
 
             {/* Notifications Tab */}
             <TabsContent value="notifications" className="space-y-6 animate-in fade-in-0 slide-in-from-right-5 duration-300">
-              <InteractiveCard variant="elevated" interactive={false}>
-                <CardHeader>
-                  <CardTitle>Notification Preferences</CardTitle>
-                  <CardDescription>Configure how and when you receive notifications</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Notification settings will be available here.</p>
-                </CardContent>
-              </InteractiveCard>
+              <NotificationPreferencesTab />
             </TabsContent>
           </Tabs>
         </motion.div>

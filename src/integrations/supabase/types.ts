@@ -1250,6 +1250,57 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          digest_frequency: string
+          email_enabled: boolean
+          id: string
+          marketing: boolean
+          order_updates: boolean
+          push_enabled: boolean
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          quote_updates: boolean
+          security_alerts: boolean
+          sms_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          digest_frequency?: string
+          email_enabled?: boolean
+          id?: string
+          marketing?: boolean
+          order_updates?: boolean
+          push_enabled?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          quote_updates?: boolean
+          security_alerts?: boolean
+          sms_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          digest_frequency?: string
+          email_enabled?: boolean
+          id?: string
+          marketing?: boolean
+          order_updates?: boolean
+          push_enabled?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          quote_updates?: boolean
+          security_alerts?: boolean
+          sms_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string | null
@@ -2958,6 +3009,48 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          date_format: string
+          high_contrast: boolean
+          id: string
+          language: string
+          reduce_motion: boolean
+          theme: string
+          time_format: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date_format?: string
+          high_contrast?: boolean
+          id?: string
+          language?: string
+          reduce_motion?: boolean
+          theme?: string
+          time_format?: string
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date_format?: string
+          high_contrast?: boolean
+          id?: string
+          language?: string
+          reduce_motion?: boolean
+          theme?: string
+          time_format?: string
+          timezone?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
