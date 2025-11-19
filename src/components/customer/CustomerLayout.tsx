@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { CustomerNavigation } from '@/components/customer/CustomerNavigation';
-import { FloatingLoginButton } from '@/components/ui/FloatingLoginButton';
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { RealtimeIndicator } from '@/components/realtime/RealtimeIndicator';
 import { useBackgroundSync } from '@/hooks/useBackgroundSync';
@@ -24,7 +23,6 @@ export const CustomerLayout: React.FC = () => {
       <main className="container mx-auto px-2 sm:px-3 md:px-4 lg:px-6 py-4 sm:py-6 max-w-full">
         <Outlet />
       </main>
-      {mobileFeatures.showFloatingLogin && <FloatingLoginButton />}
       {mobileFeatures.showPWAInstallPrompt && <PWAInstallPrompt />}
     </div>
   );
