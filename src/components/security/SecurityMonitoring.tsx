@@ -8,12 +8,14 @@ import {
   Activity, 
   AlertTriangle, 
   CheckCircle, 
-  Lock,
+  Lock as LockIcon,
   Users,
   TrendingUp,
   Clock,
   UserCheck,
-  ShieldAlert
+  ShieldAlert,
+  Eye,
+  Server
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -228,7 +230,7 @@ export const SecurityMonitoring: React.FC = () => {
               <div className={`text-3xl font-bold ${getHealthColor(metrics.mfaAdoption)}`}>
                 {metrics.mfaAdoption}%
               </div>
-              <Lock className={`h-8 w-8 ${getHealthColor(metrics.mfaAdoption)}`} />
+              <LockIcon className={`h-8 w-8 ${getHealthColor(metrics.mfaAdoption)}`} />
             </div>
             <Progress value={metrics.mfaAdoption} className="h-2 mb-2" />
             <p className="text-xs text-muted-foreground">
