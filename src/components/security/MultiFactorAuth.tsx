@@ -89,7 +89,7 @@ export const MultiFactorAuth: React.FC = () => {
       if (!isValid) {
         toast({
           title: "Invalid Code",
-          description: "The code you entered is incorrect",
+          description: "Check your device time is correct and try a new code (refreshes every 30 seconds)",
           variant: "destructive"
         });
         return;

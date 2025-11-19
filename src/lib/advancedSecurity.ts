@@ -36,11 +36,19 @@ export class MFAService {
     }
   }
 
-  static verifyToken(secret: string, token: string): boolean {
+  static verifyToken(secret: string, token: string, window: number = 2): boolean {
     try {
-      // Use proper RFC 6238 TOTP verification with otplib
-      // This allows a 1-step window (30 seconds before/after) for time drift
-      return authenticator.verify({ token, secret });
+      // Configure authenticator with time window tolerance
+      // window=2 allows ±60 seconds tolerance (2 time steps of 30s each)
+      // This handles clock drift, network delays, and user input time
+      authenticator.options = { window };
+      
+      const isValid = authenticator.verify({ token, secret });
+      
+      // Reset to defaults after verification
+      authenticator.resetOptions();
+      
+      return isValid;
     } catch (error) {
       console.error('Error verifying token:', error);
       return false;

@@ -67,7 +67,7 @@ export const MFAVerificationModal: React.FC<MFAVerificationModalProps> = ({
 
         onVerified(trustDevice);
       } else {
-        setError('Invalid verification code. Please try again.');
+        setError('Invalid code. Check your device time is correct and try a new code (refreshes every 30 seconds).');
       }
     } catch (err) {
       console.error('MFA verification error:', err);
