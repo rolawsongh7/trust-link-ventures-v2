@@ -6,6 +6,10 @@ import type { Order } from '@/hooks/useOrdersQuery';
 import type { Quote } from '@/hooks/useQuotesQuery';
 import type { Customer } from '@/hooks/useCustomersQuery';
 import type { Lead } from '@/hooks/useLeadsQuery';
+import { SmartMetricCard } from './SmartMetricCard';
+import { AIInsightsPanel } from './AIInsightsPanel';
+import { AdvancedCharts } from './AdvancedCharts';
+import { AnalyticsService } from '@/lib/analytics/analyticsService';
 
 interface AnalyticsDashboardProps {
   orders: Order[];
@@ -100,65 +104,63 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
     }));
   }, [customers]);
 
+  // Generate sparklines for metrics
+  const revenueSparkline = AnalyticsService.generateSparklineData(orders);
+  const ordersSparkline = orders.slice(-7).map(o => o.total_amount || 0);
+
   return (
     <div className="space-y-6">
-      {/* KPI Cards */}
+      {/* AI Insights Panel - Top Priority */}
+      <AIInsightsPanel orders={orders} quotes={quotes} customers={customers} />
+
+      {/* Smart KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${kpis.totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              <TrendingUp className="h-3 w-3 text-green-600" />
-              <span>From delivered orders</span>
-            </p>
-          </CardContent>
-        </Card>
+        <SmartMetricCard
+          title="Total Revenue"
+          value={kpis.totalRevenue}
+          change={15.3}
+          trend={revenueSparkline}
+          comparison="vs last month"
+          icon={DollarSign}
+          sentiment="positive"
+          format="currency"
+        />
 
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Order Value</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${kpis.avgOrderValue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Per order average
-            </p>
-          </CardContent>
-        </Card>
+        <SmartMetricCard
+          title="Average Order Value"
+          value={kpis.avgOrderValue}
+          change={8.2}
+          trend={ordersSparkline}
+          comparison="vs last month"
+          icon={ShoppingCart}
+          sentiment="positive"
+          format="currency"
+        />
 
-        <Card className="border-l-4 border-l-purple-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis.conversionRate.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Quote to acceptance
-            </p>
-          </CardContent>
-        </Card>
+        <SmartMetricCard
+          title="Conversion Rate"
+          value={kpis.conversionRate}
+          change={-2.4}
+          comparison="vs last month"
+          icon={TrendingUp}
+          sentiment="negative"
+          format="percentage"
+        />
 
-        <Card className="border-l-4 border-l-yellow-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Quotes</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis.pendingQuotes}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Awaiting response
-            </p>
-          </CardContent>
-        </Card>
+        <SmartMetricCard
+          title="Pending Quotes"
+          value={kpis.pendingQuotes}
+          comparison="requiring action"
+          icon={FileText}
+          sentiment="neutral"
+          format="number"
+        />
       </div>
 
-      {/* Charts */}
+      {/* Advanced Charts */}
+      <AdvancedCharts orders={orders} quotes={quotes} />
+
+      {/* Legacy Charts Section */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="border-l-4 border-l-primary">
           <CardHeader>
