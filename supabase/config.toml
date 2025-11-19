@@ -1,5 +1,8 @@
 project_id = "ppyfrftmexvgnsxlhdbz"
 
+[functions.ai-analytics]
+verify_jwt = true
+
 [functions.get-customer-addresses]
 verify_jwt = true
 
