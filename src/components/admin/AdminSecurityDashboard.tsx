@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -10,6 +11,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MetricCard } from '@/components/shared/MetricCard';
 import { TimeAgo } from '@/components/shared/TimeAgo';
 import { motion } from 'framer-motion';
+import { NetworkSecurityService } from '@/lib/networkSecurity';
+import { useToast } from '@/hooks/use-toast';
 
 interface SecurityMetrics {
   mfaEnabled: boolean;
@@ -22,6 +25,8 @@ interface SecurityMetrics {
 
 export const AdminSecurityDashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [metrics, setMetrics] = useState<SecurityMetrics>({
     mfaEnabled: false,
     recentLogins: 0,
@@ -30,6 +35,8 @@ export const AdminSecurityDashboard: React.FC = () => {
     ipWhitelisted: false
   });
   const [loading, setLoading] = useState(true);
+  const [currentIP, setCurrentIP] = useState<string>('');
+  const [whitelistCount, setWhitelistCount] = useState<number>(0);
 
   useEffect(() => {
     loadSecurityMetrics();
@@ -41,41 +48,79 @@ export const AdminSecurityDashboard: React.FC = () => {
     try {
       setLoading(true);
 
-      // Check MFA status
-      const { data: mfaSettings } = await supabase
-        .from('user_mfa_settings')
-        .select('enabled')
-        .eq('user_id', user.id)
-        .single();
+      // Fetch all data in parallel
+      const [
+        mfaResult,
+        loginsResult,
+        failedLoginsResult,
+        securityEventsResult,
+        currentIpResult,
+        whitelistResult
+      ] = await Promise.all([
+        // Check MFA status
+        supabase
+          .from('user_mfa_settings')
+          .select('enabled')
+          .eq('user_id', user.id)
+          .single(),
+        
+        // Get recent login count (last 7 days)
+        (() => {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          return supabase
+            .from('user_login_history')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('success', true)
+            .gte('login_time', sevenDaysAgo.toISOString())
+            .order('login_time', { ascending: false });
+        })(),
+        
+        // Get failed attempts (last 24 hours)
+        (() => {
+          const oneDayAgo = new Date();
+          oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+          return supabase
+            .from('failed_login_attempts')
+            .select('*')
+            .eq('email', user.email)
+            .gte('attempt_time', oneDayAgo.toISOString());
+        })(),
+        
+        // Check for suspicious activity
+        (() => {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          return supabase
+            .from('security_events')
+            .select('*')
+            .eq('user_id', user.id)
+            .gte('created_at', sevenDaysAgo.toISOString());
+        })(),
+        
+        // Get current IP
+        NetworkSecurityService.getCurrentIP().catch(() => null),
+        
+        // Get whitelist
+        NetworkSecurityService.getIPWhitelist(user.id).catch(() => [])
+      ]);
 
-      // Get recent login count (last 7 days)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const { data: mfaSettings } = mfaResult;
+      const { data: logins } = loginsResult;
+      const { data: failedLogins } = failedLoginsResult;
+      const { data: securityEvents } = securityEventsResult;
+      const currentIp = currentIpResult;
+      const whitelist = whitelistResult;
 
-      const { data: logins } = await supabase
-        .from('user_login_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('success', true)
-        .gte('login_time', sevenDaysAgo.toISOString())
-        .order('login_time', { ascending: false });
+      // Check if current IP is whitelisted
+      let isWhitelisted = false;
+      if (currentIp) {
+        setCurrentIP(currentIp);
+        isWhitelisted = await NetworkSecurityService.isIPWhitelisted(user.id, currentIp).catch(() => false);
+      }
 
-      // Get failed attempts (last 24 hours)
-      const oneDayAgo = new Date();
-      oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-
-      const { data: failedLogins } = await supabase
-        .from('failed_login_attempts')
-        .select('*')
-        .eq('email', user.email)
-        .gte('attempt_time', oneDayAgo.toISOString());
-
-      // Check for suspicious activity
-      const { data: securityEvents } = await supabase
-        .from('security_events')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('created_at', sevenDaysAgo.toISOString());
+      setWhitelistCount(whitelist.length);
 
       setMetrics({
         mfaEnabled: mfaSettings?.enabled || false,
@@ -83,10 +128,15 @@ export const AdminSecurityDashboard: React.FC = () => {
         failedAttempts: failedLogins?.length || 0,
         suspiciousActivity: securityEvents?.length || 0,
         lastLogin: logins?.[0]?.login_time ? new Date(logins[0].login_time) : undefined,
-        ipWhitelisted: false // Will be implemented with IP whitelist feature
+        ipWhitelisted: isWhitelisted
       });
     } catch (error) {
       console.error('Error loading security metrics:', error);
+      toast({
+        title: 'Partial Load Warning',
+        description: 'Some security metrics could not be loaded',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
@@ -94,9 +144,10 @@ export const AdminSecurityDashboard: React.FC = () => {
 
   const getSecurityScore = (): number => {
     let score = 0;
-    if (metrics.mfaEnabled) score += 40;
-    if (metrics.failedAttempts === 0) score += 20;
-    if (metrics.suspiciousActivity === 0) score += 20;
+    if (metrics.mfaEnabled) score += 30;
+    if (metrics.ipWhitelisted) score += 20;
+    if (metrics.failedAttempts === 0) score += 15;
+    if (metrics.suspiciousActivity === 0) score += 15;
     if (metrics.recentLogins > 0 && metrics.recentLogins < 50) score += 20;
     return score;
   };
@@ -206,10 +257,60 @@ export const AdminSecurityDashboard: React.FC = () => {
                 {metrics.suspiciousActivity}
               </Badge>
             </div>
+
+            <div className="flex items-center gap-3 p-4 border rounded-lg">
+              {metrics.ipWhitelisted ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <Ban className="h-5 w-5 text-yellow-500" />
+              )}
+              <div className="flex-1">
+                <div className="font-medium">Current IP Whitelisted</div>
+                <div className="text-sm text-muted-foreground">
+                  {currentIP || 'Loading...'}
+                </div>
+              </div>
+              <Badge variant={metrics.ipWhitelisted ? 'default' : 'secondary'}>
+                {metrics.ipWhitelisted ? 'Whitelisted' : 'Not Listed'}
+              </Badge>
+            </div>
+
+            <div className="flex items-center gap-3 p-4 border rounded-lg">
+              <Shield className="h-5 w-5 text-blue-500" />
+              <div className="flex-1">
+                <div className="font-medium">IP Whitelist Entries</div>
+                <div className="text-sm text-muted-foreground">
+                  Active entries configured
+                </div>
+              </div>
+              <Badge variant="outline">{whitelistCount}</Badge>
+            </div>
+          </div>
+
+          {/* Network Security Quick Action */}
+          <div className="mt-6 p-4 bg-muted/50 rounded-lg border">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h4 className="font-medium mb-1">Network Security Management</h4>
+                <p className="text-sm text-muted-foreground">
+                  Configure IP whitelist and network access controls
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/admin/settings', { state: { tab: 'network' } })}
+              >
+                Manage IP Whitelist
+              </Button>
+            </div>
           </div>
 
           <div className="pt-4 border-t">
-            <h4 className="font-medium mb-2">Security Recommendations</h4>
+            <h4 className="font-medium mb-2 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              Security Recommendations
+            </h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               {!metrics.mfaEnabled && (
                 <li className="flex items-start gap-2">
@@ -221,6 +322,30 @@ export const AdminSecurityDashboard: React.FC = () => {
                 <li className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5" />
                   <span>Review failed login attempts for suspicious activity</span>
+                </li>
+              )}
+              {metrics.suspiciousActivity > 0 && (
+                <li className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5" />
+                  <span>Review security alerts in the Monitoring tab</span>
+                </li>
+              )}
+              {metrics.suspiciousActivity > 5 && (
+                <li className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />
+                  <span>High suspicious activity detected - review security events immediately</span>
+                </li>
+              )}
+              {!metrics.ipWhitelisted && currentIP && (
+                <li className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5" />
+                  <span>Add your current IP ({currentIP}) to the whitelist for enhanced security</span>
+                </li>
+              )}
+              {whitelistCount === 0 && (
+                <li className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5" />
+                  <span>Configure IP whitelist to restrict admin access to trusted locations</span>
                 </li>
               )}
               <li className="flex items-start gap-2">

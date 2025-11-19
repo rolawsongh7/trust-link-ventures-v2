@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,8 +28,23 @@ import { useRoleAuth } from '@/hooks/useRoleAuth';
 
 const Settings = () => {
   const { hasAdminAccess, loading: roleLoading } = useRoleAuth();
-  const [activeTab, setActiveTab] = useState(hasAdminAccess ? "admin-security" : "system-status");
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(() => {
+    // Check if navigation state contains a tab
+    if (location.state?.tab) {
+      return location.state.tab;
+    }
+    return hasAdminAccess ? "admin-security" : "system-status";
+  });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+      // Clear the state to prevent issues on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Tab configuration
   const adminTabs = [
