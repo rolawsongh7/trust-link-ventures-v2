@@ -5,8 +5,25 @@ import { authenticator } from 'otplib';
 // Simple MFA Service without complex OTPAuth dependencies
 export class MFAService {
   static generateSecret(): string {
-    // Use otplib's built-in secret generation
-    return authenticator.generateSecret();
+    // Generate a browser-compatible Base32 secret using Web Crypto API
+    // TOTP secrets should be 160 bits (20 bytes) minimum per RFC 4226
+    const buffer = new Uint8Array(20); // 20 bytes = 160 bits
+    crypto.getRandomValues(buffer); // Browser's crypto.getRandomValues
+    
+    // Convert to Base32 encoding (required for TOTP)
+    const base32Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    let secret = '';
+    
+    for (let i = 0; i < buffer.length; i++) {
+      secret += base32Chars[buffer[i] % 32];
+    }
+    
+    // Pad to 32 characters for standard TOTP compatibility
+    while (secret.length < 32) {
+      secret += base32Chars[Math.floor(Math.random() * 32)];
+    }
+    
+    return secret;
   }
 
   static generateQRCode(userEmail: string, secret: string, issuer: string = 'Trust Link Ventures'): string {
@@ -16,10 +33,13 @@ export class MFAService {
 
   static async generateQRCodeImage(otpUrl: string): Promise<string> {
     try {
-      return await QRCode.toDataURL(otpUrl);
+      console.log('Generating QR code for URL:', otpUrl.substring(0, 50) + '...');
+      const qrDataUrl = await QRCode.toDataURL(otpUrl);
+      console.log('QR code generated successfully');
+      return qrDataUrl;
     } catch (error) {
-      console.error('Error generating QR code:', error);
-      throw error;
+      console.error('Error generating QR code image:', error);
+      throw new Error('Failed to generate QR code image: ' + (error as Error).message);
     }
   }
 
