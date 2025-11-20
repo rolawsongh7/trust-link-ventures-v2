@@ -5,26 +5,13 @@ import { authenticator } from 'otplib';
 // Simple MFA Service without complex OTPAuth dependencies
 export class MFAService {
   static generateSecret(): string {
-    // Generate a random 32-character base32 secret
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-    let secret = '';
-    for (let i = 0; i < 32; i++) {
-      secret += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-    }
-    return secret;
+    // Use otplib's built-in secret generation
+    return authenticator.generateSecret();
   }
 
   static generateQRCode(userEmail: string, secret: string, issuer: string = 'Trust Link Ventures'): string {
-    // Create the otpauth URL manually
-    const params = new URLSearchParams({
-      secret,
-      issuer,
-      algorithm: 'SHA1',
-      digits: '6',
-      period: '30'
-    });
-    
-    return `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(userEmail)}?${params.toString()}`;
+    // Use otplib's built-in keyuri method for proper otpauth URL generation
+    return authenticator.keyuri(userEmail, issuer, secret);
   }
 
   static async generateQRCodeImage(otpUrl: string): Promise<string> {
