@@ -52,8 +52,8 @@ export const MFAVerificationModal: React.FC<MFAVerificationModalProps> = ({
         return;
       }
 
-      // Verify the TOTP code
-      const isValid = MFAService.verifyToken(mfaSettings.secret, totpCode);
+      // Verify the TOTP code using secure server-side verification
+      const isValid = await MFAService.verifyToken(userId, totpCode);
 
       // Log the attempt
       await MFAService.logMFAAttempt(userId, isValid);
