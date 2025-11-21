@@ -84,10 +84,10 @@ serve(async (req) => {
       );
     }
 
-    // Retrieve MFA secret from database
+    // Retrieve MFA secret from database (using correct column name: secret_key)
     const { data: mfaSettings, error: mfaError } = await supabaseClient
       .from('user_mfa_settings')
-      .select('secret, enabled')
+      .select('secret_key, enabled')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -96,7 +96,7 @@ serve(async (req) => {
       throw new Error('Failed to retrieve MFA settings');
     }
 
-    if (!mfaSettings || !mfaSettings.enabled) {
+    if (!mfaSettings || !mfaSettings.enabled || !mfaSettings.secret_key) {
       console.error('MFA not enabled for user:', userId);
       
       // Log failed attempt
@@ -115,7 +115,7 @@ serve(async (req) => {
     authenticator.options = { window: 2 }; // 2 time steps = ±60 seconds
     const isValid = authenticator.verify({ 
       token: mfaToken, 
-      secret: mfaSettings.secret 
+      secret: mfaSettings.secret_key 
     });
     authenticator.resetOptions();
 
