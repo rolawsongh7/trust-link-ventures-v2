@@ -89,7 +89,8 @@ export function CustomerMFASetup({ open, onOpenChange }: CustomerMFASetupProps) 
 
     setProcessing(true);
     try {
-      const isValid = MFAService.verifyToken(secret, verificationCode);
+      // Verify token using secure server-side edge function
+      const isValid = await MFAService.verifyToken(user.id, verificationCode);
       
       if (!isValid) {
         toast.error('Invalid code. Check your device time is correct and try a new code (refreshes every 30 seconds)');

@@ -33,19 +33,19 @@ export class MFAService {
     }
   }
 
-  static verifyToken(secret: string, token: string, window: number = 2): boolean {
+  static async verifyToken(userId: string, token: string): Promise<boolean> {
     try {
-      // Configure authenticator with time window tolerance
-      // window=2 allows ±60 seconds tolerance (2 time steps of 30s each)
-      // This handles clock drift, network delays, and user input time
-      authenticator.options = { window };
-      
-      const isValid = authenticator.verify({ token, secret });
-      
-      // Reset to defaults after verification
-      authenticator.resetOptions();
-      
-      return isValid;
+      // Call edge function for secure server-side verification
+      const { data, error } = await supabase.functions.invoke('verify-mfa-token', {
+        body: { userId, token }
+      });
+
+      if (error) {
+        console.error('Error verifying MFA token:', error);
+        return false;
+      }
+
+      return data?.success || false;
     } catch (error) {
       console.error('Error verifying token:', error);
       return false;

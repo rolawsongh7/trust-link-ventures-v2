@@ -94,3 +94,6 @@ verify_jwt = false
 
 [functions.quote-approval]
 verify_jwt = false
+
+[functions.verify-mfa-token]
+verify_jwt = true

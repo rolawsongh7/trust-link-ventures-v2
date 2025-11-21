@@ -83,8 +83,8 @@ export const MultiFactorAuth: React.FC = () => {
 
     setProcessing(true);
     try {
-      // Verify the code first
-      const isValid = MFAService.verifyToken(secret, verificationCode);
+      // Verify the code first using secure server-side verification
+      const isValid = await MFAService.verifyToken(user.id, verificationCode);
       
       if (!isValid) {
         toast({
