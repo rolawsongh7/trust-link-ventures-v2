@@ -11,6 +11,7 @@ const corsHeaders = {
 interface VerifyMFARequest {
   userId: string;
   token: string;
+  secret?: string; // Optional: for initial MFA setup verification
 }
 
 serve(async (req) => {
@@ -46,7 +47,7 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { userId, token: mfaToken } = await req.json() as VerifyMFARequest;
+    const { userId, token: mfaToken, secret: providedSecret } = await req.json() as VerifyMFARequest;
 
     // Verify the user is trying to verify their own MFA
     if (user.id !== userId) {
@@ -84,38 +85,52 @@ serve(async (req) => {
       );
     }
 
-    // Retrieve MFA secret from database (using correct column name: secret_key)
-    const { data: mfaSettings, error: mfaError } = await supabaseClient
-      .from('user_mfa_settings')
-      .select('secret_key, enabled')
-      .eq('user_id', userId)
-      .maybeSingle();
+    // Determine mode and get secret
+    let secretToVerify: string;
+    let isSetupMode = false;
 
-    if (mfaError) {
-      console.error('Error retrieving MFA settings:', mfaError);
-      throw new Error('Failed to retrieve MFA settings');
-    }
+    if (providedSecret) {
+      // SETUP MODE: Use provided secret (initial MFA setup)
+      secretToVerify = providedSecret;
+      isSetupMode = true;
+      console.log('Verifying in SETUP mode for user:', userId);
+    } else {
+      // LOGIN MODE: Retrieve secret from database
+      const { data: mfaSettings, error: mfaError } = await supabaseClient
+        .from('user_mfa_settings')
+        .select('secret_key, enabled')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-    if (!mfaSettings || !mfaSettings.enabled || !mfaSettings.secret_key) {
-      console.error('MFA not enabled for user:', userId);
-      
-      // Log failed attempt
-      await supabaseClient.from('mfa_login_attempts').insert({
-        user_id: userId,
-        success: false
-      });
+      if (mfaError) {
+        console.error('Error retrieving MFA settings:', mfaError);
+        throw new Error('Failed to retrieve MFA settings');
+      }
 
-      return new Response(
-        JSON.stringify({ success: false, error: 'MFA not enabled for this user' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (!mfaSettings || !mfaSettings.enabled || !mfaSettings.secret_key) {
+        console.error('MFA not enabled for user:', userId);
+        
+        // Log failed attempt
+        await supabaseClient.from('mfa_login_attempts').insert({
+          user_id: userId,
+          success: false
+        });
+
+        return new Response(
+          JSON.stringify({ success: false, error: 'MFA not enabled for this user' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      secretToVerify = mfaSettings.secret_key;
+      console.log('Verifying in LOGIN mode for user:', userId);
     }
 
     // Verify the TOTP token with time window tolerance (±60 seconds)
     authenticator.options = { window: 2 }; // 2 time steps = ±60 seconds
     const isValid = authenticator.verify({ 
       token: mfaToken, 
-      secret: mfaSettings.secret_key 
+      secret: secretToVerify 
     });
     authenticator.resetOptions();
 
@@ -126,24 +141,32 @@ serve(async (req) => {
     });
 
     if (isValid) {
-      console.log('MFA token verified successfully for user:', userId);
+      console.log(`MFA token verified successfully for user: ${userId} (${isSetupMode ? 'SETUP' : 'LOGIN'} mode)`);
       
-      // Log successful verification
+      // Log successful verification with mode information
+      const eventType = isSetupMode ? 'mfa_setup_verification_success' : 'mfa_verification_success';
       await supabaseClient.from('audit_logs').insert({
         user_id: userId,
-        event_type: 'mfa_verification_success',
+        event_type: eventType,
         severity: 'low',
-        event_data: { timestamp: new Date().toISOString() }
+        event_data: { 
+          timestamp: new Date().toISOString(),
+          mode: isSetupMode ? 'setup' : 'login'
+        }
       });
     } else {
-      console.warn('Invalid MFA token for user:', userId);
+      console.warn(`Invalid MFA token for user: ${userId} (${isSetupMode ? 'SETUP' : 'LOGIN'} mode)`);
       
-      // Log failed verification
+      // Log failed verification with mode information
+      const eventType = isSetupMode ? 'mfa_setup_verification_failed' : 'mfa_verification_failed';
       await supabaseClient.from('audit_logs').insert({
         user_id: userId,
-        event_type: 'mfa_verification_failed',
+        event_type: eventType,
         severity: 'medium',
-        event_data: { timestamp: new Date().toISOString() }
+        event_data: { 
+          timestamp: new Date().toISOString(),
+          mode: isSetupMode ? 'setup' : 'login'
+        }
       });
     }
 
