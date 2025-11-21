@@ -11,6 +11,7 @@ const corsHeaders = {
 interface VerifyMFARequest {
   userId: string;
   token: string;
+  secret?: string; // Optional: for initial setup before MFA is enabled
 }
 
 serve(async (req) => {
@@ -46,7 +47,7 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { userId, token: mfaToken } = await req.json() as VerifyMFARequest;
+    const { userId, token: mfaToken, secret: setupSecret } = await req.json() as VerifyMFARequest;
 
     // Verify the user is trying to verify their own MFA
     if (user.id !== userId) {
@@ -54,61 +55,76 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Rate limiting: Check failed attempts in last minute
-    const { data: recentAttempts, error: attemptError } = await supabaseClient
-      .from('mfa_login_attempts')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('success', false)
-      .gte('attempt_time', new Date(Date.now() - 60000).toISOString());
+    let secretToVerify: string;
+    let isSetupMode = false;
 
-    if (attemptError) {
-      console.error('Error checking rate limit:', attemptError);
-    } else if (recentAttempts && recentAttempts.length >= 5) {
-      console.warn('Rate limit exceeded for user:', userId);
+    // If secret is provided, this is initial setup verification
+    if (setupSecret) {
+      console.log('Setup mode: verifying with provided secret');
+      secretToVerify = setupSecret;
+      isSetupMode = true;
+    } else {
+      // Login mode: retrieve secret from database
+      console.log('Login mode: retrieving secret from database');
       
-      // Log rate limit event
-      await supabaseClient.from('audit_logs').insert({
-        user_id: userId,
-        event_type: 'mfa_rate_limit_exceeded',
-        severity: 'medium',
-        event_data: { attempts_count: recentAttempts.length }
-      });
+      // Rate limiting: Check failed attempts in last minute
+      const { data: recentAttempts, error: attemptError } = await supabaseClient
+        .from('mfa_login_attempts')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('success', false)
+        .gte('attempt_time', new Date(Date.now() - 60000).toISOString());
 
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Too many failed attempts. Please try again in 60 seconds.' 
-        }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+      if (attemptError) {
+        console.error('Error checking rate limit:', attemptError);
+      } else if (recentAttempts && recentAttempts.length >= 5) {
+        console.warn('Rate limit exceeded for user:', userId);
+        
+        // Log rate limit event
+        await supabaseClient.from('audit_logs').insert({
+          user_id: userId,
+          event_type: 'mfa_rate_limit_exceeded',
+          severity: 'medium',
+          event_data: { attempts_count: recentAttempts.length }
+        });
 
-    // Retrieve MFA secret from database (using correct column name: secret_key)
-    const { data: mfaSettings, error: mfaError } = await supabaseClient
-      .from('user_mfa_settings')
-      .select('secret_key, enabled')
-      .eq('user_id', userId)
-      .maybeSingle();
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Too many failed attempts. Please try again in 60 seconds.' 
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-    if (mfaError) {
-      console.error('Error retrieving MFA settings:', mfaError);
-      throw new Error('Failed to retrieve MFA settings');
-    }
+      // Retrieve MFA secret from database
+      const { data: mfaSettings, error: mfaError } = await supabaseClient
+        .from('user_mfa_settings')
+        .select('secret_key, enabled')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-    if (!mfaSettings || !mfaSettings.enabled || !mfaSettings.secret_key) {
-      console.error('MFA not enabled for user:', userId);
-      
-      // Log failed attempt
-      await supabaseClient.from('mfa_login_attempts').insert({
-        user_id: userId,
-        success: false
-      });
+      if (mfaError) {
+        console.error('Error retrieving MFA settings:', mfaError);
+        throw new Error('Failed to retrieve MFA settings');
+      }
 
-      return new Response(
-        JSON.stringify({ success: false, error: 'MFA not enabled for this user' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (!mfaSettings || !mfaSettings.enabled || !mfaSettings.secret_key) {
+        console.error('MFA not enabled for user:', userId);
+        
+        // Log failed attempt
+        await supabaseClient.from('mfa_login_attempts').insert({
+          user_id: userId,
+          success: false
+        });
+
+        return new Response(
+          JSON.stringify({ success: false, error: 'MFA not enabled for this user' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      secretToVerify = mfaSettings.secret_key;
     }
 
     // Verify the TOTP token with time window tolerance (±60 seconds)
