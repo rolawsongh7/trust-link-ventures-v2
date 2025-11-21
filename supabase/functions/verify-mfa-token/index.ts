@@ -131,25 +131,31 @@ serve(async (req) => {
     authenticator.options = { window: 2 }; // 2 time steps = ±60 seconds
     const isValid = authenticator.verify({ 
       token: mfaToken, 
-      secret: mfaSettings.secret_key 
+      secret: secretToVerify 
     });
     authenticator.resetOptions();
 
-    // Log the attempt
-    await supabaseClient.from('mfa_login_attempts').insert({
-      user_id: userId,
-      success: isValid
-    });
+    // Log the attempt (only for login mode, not setup)
+    if (!isSetupMode) {
+      await supabaseClient.from('mfa_login_attempts').insert({
+        user_id: userId,
+        success: isValid
+      });
+    }
 
     if (isValid) {
-      console.log('MFA token verified successfully for user:', userId);
+      const mode = isSetupMode ? 'setup' : 'login';
+      console.log(`MFA token verified successfully for user: ${userId} (${mode} mode)`);
       
       // Log successful verification
       await supabaseClient.from('audit_logs').insert({
         user_id: userId,
-        event_type: 'mfa_verification_success',
+        event_type: isSetupMode ? 'mfa_setup_verification_success' : 'mfa_verification_success',
         severity: 'low',
-        event_data: { timestamp: new Date().toISOString() }
+        event_data: { 
+          timestamp: new Date().toISOString(),
+          mode
+        }
       });
     } else {
       console.warn('Invalid MFA token for user:', userId);
@@ -157,9 +163,12 @@ serve(async (req) => {
       // Log failed verification
       await supabaseClient.from('audit_logs').insert({
         user_id: userId,
-        event_type: 'mfa_verification_failed',
+        event_type: isSetupMode ? 'mfa_setup_verification_failed' : 'mfa_verification_failed',
         severity: 'medium',
-        event_data: { timestamp: new Date().toISOString() }
+        event_data: { 
+          timestamp: new Date().toISOString(),
+          mode: isSetupMode ? 'setup' : 'login'
+        }
       });
     }
 

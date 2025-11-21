@@ -33,11 +33,12 @@ export class MFAService {
     }
   }
 
-  static async verifyToken(userId: string, token: string): Promise<boolean> {
+  static async verifyToken(userId: string, token: string, secret?: string): Promise<boolean> {
     try {
       // Call edge function for secure server-side verification
+      // Pass secret for initial setup, omit for login verification
       const { data, error } = await supabase.functions.invoke('verify-mfa-token', {
-        body: { userId, token }
+        body: { userId, token, secret }
       });
 
       if (error) {
