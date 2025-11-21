@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import QRCode from 'qrcode';
 import { authenticator } from 'otplib';
+import { encode } from 'hi-base32';
 
 // Simple MFA Service without complex OTPAuth dependencies
 export class MFAService {
@@ -10,20 +11,9 @@ export class MFAService {
     const buffer = new Uint8Array(20); // 20 bytes = 160 bits
     crypto.getRandomValues(buffer); // Browser's crypto.getRandomValues
     
-    // Convert to Base32 encoding (required for TOTP)
-    const base32Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-    let secret = '';
-    
-    for (let i = 0; i < buffer.length; i++) {
-      secret += base32Chars[buffer[i] % 32];
-    }
-    
-    // Pad to 32 characters for standard TOTP compatibility
-    while (secret.length < 32) {
-      secret += base32Chars[Math.floor(Math.random() * 32)];
-    }
-    
-    return secret;
+    // Use hi-base32 for proper RFC 4648 Base32 encoding
+    // false = no padding (standard for TOTP secrets)
+    return encode(buffer, false);
   }
 
   static generateQRCode(userEmail: string, secret: string, issuer: string = 'Trust Link Ventures'): string {
