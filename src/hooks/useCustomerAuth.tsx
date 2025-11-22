@@ -26,6 +26,10 @@ interface CustomerAuthContextType {
   updatePassword: (newPassword: string) => Promise<{ error: any }>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   resendConfirmationEmail: (email: string) => Promise<{ error: any }>;
+  requiresMFA: boolean;
+  mfaUserId: string | null;
+  verifyMFA: (trustDevice: boolean) => Promise<void>;
+  cancelMFA: () => void;
 }
 
 const CustomerAuthContext = createContext<CustomerAuthContextType | undefined>(undefined);
@@ -44,6 +48,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [requiresMFA, setRequiresMFA] = useState(false);
+  const [mfaUserId, setMfaUserId] = useState<string | null>(null);
 
   // Validate if a session is still valid (not expired)
   const isSessionValid = (session: Session | null): boolean => {
@@ -213,7 +219,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       };
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: sanitizedEmail,
       password,
     });
@@ -221,7 +227,22 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Record the attempt
     await recordAuthAttempt(sanitizedEmail, !error);
 
-    if (!error) {
+    if (!error && data.user) {
+      // Check if user has MFA enabled
+      const { data: mfaSettings } = await supabase
+        .from('user_mfa_settings')
+        .select('enabled')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+
+      if (mfaSettings?.enabled) {
+        // Sign out temporarily until MFA is verified
+        await supabase.auth.signOut();
+        setRequiresMFA(true);
+        setMfaUserId(data.user.id);
+        return { error: null };
+      }
+
       // Clear rate limit on success
       resetAuthRateLimit(sanitizedEmail);
       
@@ -229,7 +250,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         title: "Welcome back!",
         description: "You have successfully signed in to your account.",
       });
-    } else {
+    } else if (error) {
       // Show remaining attempts warning if applicable
       const updatedLimit = await checkAuthRateLimit(sanitizedEmail);
       const warningMessage = formatRateLimitMessage(updatedLimit);
@@ -477,6 +498,25 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
+  const verifyMFA = async (trustDevice: boolean) => {
+    if (!mfaUserId) return;
+
+    try {
+      // MFA verification already happened in the modal
+      // Now we can complete the sign-in
+      setRequiresMFA(false);
+      setMfaUserId(null);
+    } catch (error) {
+      console.error('MFA verification error:', error);
+      throw error;
+    }
+  };
+
+  const cancelMFA = () => {
+    setRequiresMFA(false);
+    setMfaUserId(null);
+  };
+
   const value = {
     user,
     session,
@@ -489,6 +529,10 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     updatePassword,
     resetPassword,
     resendConfirmationEmail,
+    requiresMFA,
+    mfaUserId,
+    verifyMFA,
+    cancelMFA,
   };
 
   return <CustomerAuthContext.Provider value={value}>{children}</CustomerAuthContext.Provider>;
