@@ -3,6 +3,7 @@ import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
+import { isNativeApp } from '@/utils/env';
 
 interface FloatingCartProps {
   onRequestQuote: () => void;
@@ -10,8 +11,10 @@ interface FloatingCartProps {
 
 export const FloatingCart: React.FC<FloatingCartProps> = ({ onRequestQuote }) => {
   const { totalItems } = useShoppingCart();
+  const native = isNativeApp();
 
-  if (totalItems === 0) return null;
+  // Hide in native apps - use bottom tab bar instead
+  if (native || totalItems === 0) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-50 pb-safe pr-safe">

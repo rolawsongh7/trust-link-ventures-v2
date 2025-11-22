@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { isNativeApp } from '@/utils/env';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +48,7 @@ export const CustomerNavigation: React.FC = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
+  const native = isNativeApp();
 
   const navigationItems: Array<{
     title: string;
@@ -214,9 +216,10 @@ export const CustomerNavigation: React.FC = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-            {/* Mobile Menu Button */}
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild className="md:hidden">
+            {/* Mobile Menu Button - Hidden in native apps */}
+            {!native && (
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild className="md:hidden">
                 <Button 
                   variant="ghost" 
                   size="icon"
@@ -264,6 +267,7 @@ export const CustomerNavigation: React.FC = () => {
                 </div>
               </SheetContent>
             </Sheet>
+            )}
 
             {/* User Menu */}
             <DropdownMenu>

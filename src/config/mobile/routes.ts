@@ -1,4 +1,4 @@
-import { LucideIcon, Home, Package, Info, UserCircle, ShoppingCart } from 'lucide-react';
+import { LucideIcon, Home, Package, Info, UserCircle, ShoppingCart, FileText, MoreHorizontal } from 'lucide-react';
 
 export interface MobileTab {
   label: string;
@@ -49,15 +49,21 @@ export const MOBILE_PORTAL_TABS: MobileTab[] = [
     requiresAuth: true
   },
   {
-    label: 'Orders',
-    path: '/portal/orders',
+    label: 'Cart',
+    path: '/portal/cart',
     icon: ShoppingCart,
     requiresAuth: true
   },
   {
-    label: 'Profile',
-    path: '/portal/profile',
-    icon: UserCircle,
+    label: 'Orders',
+    path: '/portal/orders',
+    icon: FileText,
+    requiresAuth: true
+  },
+  {
+    label: 'More',
+    path: '/portal/more',
+    icon: MoreHorizontal,
     requiresAuth: true
   }
 ];
