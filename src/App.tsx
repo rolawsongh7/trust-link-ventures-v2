@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import { PerformanceMonitor } from '@/components/debug/PerformanceMonitor';
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CustomerAuthProvider } from "@/hooks/useCustomerAuth";
@@ -71,7 +72,16 @@ import Unauthorized from "./pages/Unauthorized";
 import NotificationSettingsPage from "./pages/NotificationSettings";
 
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      gcTime: 1000 * 60 * 60 * 24, // 24 hours
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => {
   // Check if running as native app
@@ -137,6 +147,7 @@ const App = () => {
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <PerformanceMonitor />
               {nativeApp ? (
                 <HashRouter>
                   <ScrollToTop />
