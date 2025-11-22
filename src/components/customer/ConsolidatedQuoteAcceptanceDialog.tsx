@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useBiometric } from '@/hooks/useBiometric';
 
 interface Address {
   id: string;
@@ -65,6 +66,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
 }) => {
   const { toast } = useToast();
   const { profile } = useCustomerAuth();
+  const { authenticate: authenticateBiometric } = useBiometric();
   const [currentStep, setCurrentStep] = useState<Step>('address');
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>('');
@@ -184,6 +186,20 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
 
   const handlePaymentMethodSelection = async () => {
     if (!selectedPaymentMethod) return;
+
+    // Require biometric authentication before payment
+    const biometricResult = await authenticateBiometric(
+      `Authorize payment of ${quote?.currency} ${quote?.total_amount?.toFixed(2)}`
+    );
+
+    if (!biometricResult.authenticated) {
+      toast({
+        title: 'Payment Cancelled',
+        description: 'Payment authorization was cancelled',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setSubmitting(true);
     try {
