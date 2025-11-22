@@ -330,13 +330,6 @@ const Contact = () => {
                   <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 px-2">
                     Join thousands of satisfied customers who manage their supply chain on the go
                   </p>
-                  <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-6 text-xs sm:text-sm text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span>4.8/5 Rating</span>
-                    </div>
-                    <div>50K+ Downloads</div>
-                  </div>
                 </div>
               </div>
             </div>
