@@ -24,6 +24,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Address {
   id: string;
@@ -73,6 +74,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
   const [paymentOptions, setPaymentOptions] = useState<any>(null);
   const [loadingPaymentOptions, setLoadingPaymentOptions] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string>('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
 
   useEffect(() => {
@@ -318,6 +320,8 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
   const resetForm = () => {
     setCurrentStep('address');
     setSelectedAddressId('');
+    setTermsAccepted(false);
+    setSelectedPaymentMethod(null);
   };
 
   const handleAddNewAddress = () => {
@@ -423,6 +427,28 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
                   ))}
                 </RadioGroup>
 
+                <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg border border-border">
+                  <Checkbox 
+                    id="terms-accept" 
+                    checked={termsAccepted}
+                    onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                    className="mt-0.5"
+                  />
+                  <label htmlFor="terms-accept" className="text-sm text-foreground leading-relaxed cursor-pointer">
+                    I agree to the{' '}
+                    <a 
+                      href="/terms" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline font-medium"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Terms of Service
+                    </a>
+                    {' '}including the refund and cancellation policies
+                  </label>
+                </div>
+
                 <div className="flex justify-between items-center pt-4 border-t">
                   <Button variant="outline" onClick={handleAddNewAddress}>
                     <Plus className="w-4 h-4 mr-2" />
@@ -432,7 +458,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
                       Cancel
                     </Button>
-                    <Button onClick={handleProceedToPayment} disabled={!selectedAddressId}>
+                    <Button onClick={handleProceedToPayment} disabled={!selectedAddressId || !termsAccepted}>
                       Continue to Payment
                     </Button>
                   </div>
