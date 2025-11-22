@@ -77,7 +77,7 @@ const Home = () => {
     accent: "Global cold chain excellence"
   }, {
     title: <>
-          <span className="gradient-text">99.8%</span> On-Time Delivery{' '}
+          <span className="gradient-text">98%</span> On-Time Delivery{' '}
           <span className="gradient-text">Across</span> Multiple Countries
         </>,
     subtitle: "Our precision logistics network ensures your goods arrive exactly when promised, every single time, anywhere in the world.",
@@ -85,7 +85,7 @@ const Home = () => {
     accent: "Precision delivery guaranteed"
   }];
   const stats = [{
-    end: 99.8,
+    end: 98,
     suffix: '%',
     label: 'On-Time Delivery',
     icon: Target
