@@ -1,7 +1,7 @@
 {
   "name": "Trust Link Ventures",
   "short_name": "Trust Link",
-  "description": "Premium seafood and meat products supplier",
+  "description": "Premium supplier of high-quality frozen seafood and premium meat products. Browse our catalog, request quotes, place orders, track deliveries, and manage your account with secure payment options and real-time order updates.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
