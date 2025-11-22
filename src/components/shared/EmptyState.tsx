@@ -27,7 +27,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           <Icon className="h-10 w-10 text-tl-accent" />
         </div>
         <h3 className="text-xl font-semibold text-tl-primary mb-2">{title}</h3>
-        <p className="text-tl-muted mb-6">{description}</p>
+        <p className="text-sm text-tl-muted mb-6">{description}</p>
         {actionLabel && onAction && (
           <Button className="bg-tl-gradient text-white hover:opacity-95" onClick={onAction}>
             {actionLabel}

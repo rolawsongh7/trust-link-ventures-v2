@@ -25,10 +25,10 @@ export const SystemStatus: React.FC<SystemStatusProps> = ({ isExpanded, isSyncin
       </div>
       {isExpanded && (
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-emerald-300">
+          <p className="text-sm font-medium text-emerald-300">
             {isSyncing ? 'Syncing...' : 'All Systems Operational'}
           </p>
-          <p className="text-[10px] text-emerald-400/70">
+          <p className="text-xs text-emerald-400/70">
             Real-time updates active
           </p>
         </div>

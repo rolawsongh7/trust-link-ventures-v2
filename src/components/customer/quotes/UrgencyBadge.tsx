@@ -44,7 +44,7 @@ export const UrgencyBadge: React.FC<UrgencyBadgeProps> = ({
     <span 
       className={cn(
         'inline-flex items-center gap-1 justify-center rounded-full font-medium transition-all',
-        variant === 'compact' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-xs sm:text-sm',
+        variant === 'compact' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm',
         config.className,
         className
       )}
