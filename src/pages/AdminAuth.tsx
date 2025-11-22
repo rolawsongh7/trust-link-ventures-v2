@@ -14,6 +14,7 @@ import { RECAPTCHA_SITE_KEY } from '@/config/recaptcha';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { isAdminDomain, redirectToAdminDomain } from '@/utils/domainUtils';
+import { useBiometric } from '@/hooks/useBiometric';
 
 const AdminAuth = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const AdminAuth = () => {
   const { signIn, user } = useAuth();
   const { hasAdminAccess, loading: roleLoading } = useRoleAuth();
   const { toast } = useToast();
+  const { authenticate: authenticateBiometric } = useBiometric();
   const [loading, setLoading] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [showCaptcha, setShowCaptcha] = useState(false);
@@ -169,6 +171,23 @@ const AdminAuth = () => {
             description: 'You do not have permission to access the admin portal.',
             variant: 'destructive',
           });
+          return;
+        }
+
+        // Require biometric authentication for admin login
+        const biometricResult = await authenticateBiometric(
+          'Verify your identity to access the Admin Portal'
+        );
+
+        if (!biometricResult.authenticated) {
+          // User cancelled biometric or it failed
+          toast({
+            title: 'Authentication Cancelled',
+            description: biometricResult.error || 'Biometric authentication was cancelled',
+            variant: 'destructive',
+          });
+          // Sign out the user
+          await supabase.auth.signOut();
           return;
         }
 

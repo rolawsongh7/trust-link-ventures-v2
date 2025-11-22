@@ -11,6 +11,19 @@
       "customer.trustlinkcompany.com"
     ]
   },
+  "appUrlOpen": {
+    "enabled": true,
+    "allowedUrls": [
+      "https://trustlinkcompany.com/*",
+      "https://customer.trustlinkcompany.com/*"
+    ],
+    "excludedUrls": [
+      "**/admin/**",
+      "**/dashboard/**",
+      "**/crm/**",
+      "**/settings/**"
+    ]
+  },
   "plugins": {
     "Camera": {
       "permissions": [

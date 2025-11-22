@@ -22,6 +22,8 @@ import { changePasswordSchema, ChangePasswordFormData } from '@/lib/customerAuth
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { PasswordStrengthIndicator } from '@/components/security/PasswordStrengthIndicator';
 import { Eye, EyeOff } from 'lucide-react';
+import { useBiometric } from '@/hooks/useBiometric';
+import { useToast } from '@/hooks/use-toast';
 
 interface ChangePasswordDialogProps {
   open: boolean;
@@ -33,6 +35,8 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
   onOpenChange,
 }) => {
   const { updatePassword } = useCustomerAuth();
+  const { toast } = useToast();
+  const { authenticate: authenticateBiometric } = useBiometric();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -50,11 +54,29 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
   const newPassword = form.watch('newPassword');
 
   const onSubmit = async (data: ChangePasswordFormData) => {
+    // Require biometric before password change
+    const biometricResult = await authenticateBiometric(
+      'Verify your identity to change your password'
+    );
+
+    if (!biometricResult.authenticated) {
+      toast({
+        title: 'Verification Failed',
+        description: biometricResult.error || 'Biometric verification was cancelled',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { error } = await updatePassword(data.newPassword);
       
       if (!error) {
+        toast({
+          title: 'Password Changed',
+          description: 'Your password has been successfully updated',
+        });
         form.reset();
         onOpenChange(false);
       }
