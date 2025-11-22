@@ -4,6 +4,7 @@ import { ArrowLeft, Building2, Mail, Lock, User, Eye, EyeOff, Loader2, Shield, A
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { MFAVerificationModal } from '@/components/security/MFAVerificationModal';
 
 const CustomerAuth = () => {
   const [signInData, setSignInData] = useState({ email: '', password: '' });
@@ -19,7 +20,7 @@ const CustomerAuth = () => {
   const [activeTab, setActiveTab] = useState('signin');
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
-  const { signIn, signUp, user, resetPassword, resendConfirmationEmail } = useCustomerAuth();
+  const { signIn, signUp, user, resetPassword, resendConfirmationEmail, requiresMFA, mfaUserId, verifyMFA, cancelMFA } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -256,6 +257,30 @@ const CustomerAuth = () => {
     }
     
     setIsLoading(false);
+  };
+
+  const handleMFAVerified = async (trustDevice: boolean) => {
+    try {
+      await verifyMFA(trustDevice);
+      toast({
+        title: "MFA Verified",
+        description: "You have been successfully authenticated.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "MFA Verification Failed",
+        description: "Please try again.",
+      });
+    }
+  };
+
+  const handleMFACancel = () => {
+    cancelMFA();
+    toast({
+      title: "Login Cancelled",
+      description: "MFA verification was cancelled.",
+    });
   };
 
   return (
@@ -777,6 +802,17 @@ const CustomerAuth = () => {
           )}
         </div>
       </div>
+
+      {/* MFA Verification Modal */}
+      {requiresMFA && mfaUserId && (
+        <MFAVerificationModal
+          open={requiresMFA}
+          onOpenChange={(open) => !open && handleMFACancel()}
+          userId={mfaUserId}
+          onVerified={handleMFAVerified}
+          onCancel={handleMFACancel}
+        />
+      )}
     </div>
   );
 };
