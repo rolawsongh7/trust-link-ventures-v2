@@ -1,0 +1,155 @@
+/**
+ * iOS Performance Optimizations
+ * CSS optimizations for smooth iOS rendering
+ */
+
+/* Hardware acceleration for animations */
+.accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Smooth scrolling for iOS */
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Optimize scrolling containers */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+/* Prevent layout thrashing */
+.contain-layout {
+  contain: layout;
+}
+
+.contain-paint {
+  contain: paint;
+}
+
+.contain-strict {
+  contain: strict;
+}
+
+/* Optimize animations */
+.optimize-animation {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Prevent text size adjustment on iOS */
+.no-text-size-adjust {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Optimize touch targets for iOS */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  /* iOS requires minimum 44x44px touch targets */
+}
+
+/* Remove tap highlight on iOS */
+.no-tap-highlight {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Optimize list rendering */
+.optimized-list {
+  contain: layout style;
+  content-visibility: auto;
+}
+
+.optimized-list-item {
+  contain: layout style paint;
+  will-change: contents;
+}
+
+/* Optimize images for iOS */
+.optimized-image {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Safe area insets for iOS notch */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Optimize modal overlays */
+.modal-overlay {
+  will-change: opacity;
+  transform: translateZ(0);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* Optimize cards */
+.card-optimized {
+  contain: layout style paint;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Prevent momentum scrolling issues */
+.no-momentum-scroll {
+  -webkit-overflow-scrolling: auto;
+}
+
+/* Optimize table rendering */
+.optimized-table {
+  contain: layout style;
+  table-layout: fixed;
+}
+
+/* Better font rendering on iOS */
+.smooth-font {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: always;
+  text-rendering: optimizeLegibility;
+}
+
+/* Optimize CSS Grid on iOS */
+.grid-optimized {
+  contain: layout style;
+  content-visibility: auto;
+}
+
+/* Prevent rubber band effect */
+.no-overscroll {
+  overscroll-behavior: none;
+}
+
+/* Optimize shadows for performance */
+.shadow-optimized {
+  will-change: box-shadow;
+  transform: translateZ(0);
+}
+
+/* Better blur performance */
+.backdrop-blur-optimized {
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  will-change: backdrop-filter;
+}
