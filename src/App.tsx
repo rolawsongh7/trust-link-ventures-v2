@@ -147,7 +147,7 @@ const App = () => {
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <PerformanceMonitor />
+              {import.meta.env.DEV && <PerformanceMonitor />}
               {nativeApp ? (
                 <HashRouter>
                   <ScrollToTop />
