@@ -67,7 +67,7 @@ import UnifiedAuth from "./pages/UnifiedAuth";
 import AdminAuth from "./pages/AdminAuth";
 import CustomerAuth from "./pages/CustomerAuth";
 import Unauthorized from "./pages/Unauthorized";
-import NotificationDemo from "./pages/NotificationDemo";
+import NotificationSettingsPage from "./pages/NotificationSettings";
 
 
 const queryClient = new QueryClient();
@@ -182,7 +182,7 @@ const App = () => {
                         <Route path="/privacy" element={<Privacy />} />
                         <Route path="/terms" element={<Terms />} />
                         <Route path="/cookies" element={<Cookies />} />
-                        <Route path="/notifications" element={<NotificationDemo />} />
+                        <Route path="/notifications" element={<NotificationSettingsPage />} />
                         <Route path="/quote-view/:token" element={<QuoteView />} />
                       </Route>
                       
@@ -270,7 +270,7 @@ const App = () => {
                         <Route path="/privacy" element={<Privacy />} />
                         <Route path="/terms" element={<Terms />} />
                         <Route path="/cookies" element={<Cookies />} />
-                        <Route path="/notifications" element={<NotificationDemo />} />
+                        <Route path="/notifications" element={<NotificationSettingsPage />} />
                       </Route>
                       
                       {/* Portal routes (new primary path) */}
@@ -357,7 +357,7 @@ const App = () => {
                         <Route path="/privacy" element={<Privacy />} />
                         <Route path="/terms" element={<Terms />} />
                         <Route path="/cookies" element={<Cookies />} />
-                        <Route path="/notifications" element={<NotificationDemo />} />
+                        <Route path="/notifications" element={<NotificationSettingsPage />} />
                       </Route>
                       
                       {/* Customer Portal routes */}
@@ -433,7 +433,7 @@ const App = () => {
                         <Route path="/privacy" element={<Privacy />} />
                         <Route path="/terms" element={<Terms />} />
                         <Route path="/cookies" element={<Cookies />} />
-                        <Route path="/notifications" element={<NotificationDemo />} />
+                        <Route path="/notifications" element={<NotificationSettingsPage />} />
                       </Route>
                       
                       {/* Customer Portal routes */}

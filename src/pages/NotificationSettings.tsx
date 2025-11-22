@@ -6,10 +6,10 @@ import { NotificationSettings } from '@/components/notifications/NotificationSet
 import { ArrowLeft, Bell, MessageSquare, Package, TrendingUp } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
-const NotificationDemo = () => {
+const NotificationSettingsPage = () => {
   const { sendLocalNotification } = usePushNotifications();
 
-  const demoNotifications = [
+  const testNotifications = [
     {
       title: "Order Confirmed",
       body: "Your order #TLV-2024-001 has been confirmed and is being processed.",
@@ -36,7 +36,7 @@ const NotificationDemo = () => {
     }
   ];
 
-  const handleDemoNotification = async (notification: typeof demoNotifications[0]) => {
+  const handleTestNotification = async (notification: typeof testNotifications[0]) => {
     await sendLocalNotification(notification.title, notification.body);
   };
 
@@ -65,20 +65,20 @@ const NotificationDemo = () => {
             <NotificationSettings />
           </div>
 
-          {/* Demo Notifications */}
+          {/* Test Notifications */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Bell className="h-5 w-5" />
-                  Demo Notifications
+                  Test Notifications
                 </CardTitle>
                 <CardDescription>
                   Try different types of notifications you'll receive
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {demoNotifications.map((notification, index) => {
+                {testNotifications.map((notification, index) => {
                   const IconComponent = notification.icon;
                   return (
                     <div key={index} className="flex items-center gap-3">
@@ -94,7 +94,7 @@ const NotificationDemo = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleDemoNotification(notification)}
+                        onClick={() => handleTestNotification(notification)}
                       >
                         Send
                       </Button>
@@ -184,4 +184,4 @@ const NotificationDemo = () => {
   );
 };
 
-export default NotificationDemo;
+export default NotificationSettingsPage;
