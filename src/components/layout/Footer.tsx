@@ -207,7 +207,7 @@ const Footer = () => {
                   {isSubmitting ? 'Subscribing...' : 'Subscribe'}
                 </Button>
                 
-                <p className="text-blue-300 text-[10px] leading-tight">
+                <p className="text-blue-300 text-xs leading-tight">
                   Protected by reCAPTCHA. By subscribing, you agree to receive marketing emails.
                 </p>
               </form>
