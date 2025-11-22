@@ -24,11 +24,8 @@ export default defineConfig(({ mode }) => ({
       compress: {
         // Remove console.log in production
         drop_console: true,
-        drop_debugger: true,
         // Remove unused code
         dead_code: true,
-        // Additional production optimizations
-        passes: 3,
       },
       mangle: {
         // iOS Safari compatibility
@@ -41,11 +38,11 @@ export default defineConfig(({ mode }) => ({
     } : undefined,
     // Production security
     sourcemap: mode === 'production' ? false : true,
-    // Optimize chunk splitting
+    // Optimize chunk splitting - vendor packages only
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Vendor chunks
+          // Only split vendor packages, not routes
           if (id.includes('node_modules')) {
             // React core
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
@@ -55,42 +52,10 @@ export default defineConfig(({ mode }) => ({
             if (id.includes('@supabase')) {
               return 'vendor-supabase';
             }
-            // React Query
-            if (id.includes('@tanstack/react-query')) {
-              return 'vendor-query';
-            }
             // Radix UI components
             if (id.includes('@radix-ui')) {
               return 'vendor-ui';
             }
-            // Charts
-            if (id.includes('recharts')) {
-              return 'vendor-charts';
-            }
-            // Form libraries
-            if (id.includes('react-hook-form') || id.includes('zod')) {
-              return 'vendor-forms';
-            }
-            // Icons
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
-            }
-            // Other vendors
-            return 'vendor-misc';
-          }
-          
-          // Admin routes
-          if (id.includes('src/pages/Dashboard') || 
-              id.includes('src/pages/Analytics') ||
-              id.includes('src/pages/CRM') ||
-              id.includes('src/pages/Settings')) {
-            return 'route-admin';
-          }
-          
-          // Customer routes
-          if (id.includes('src/pages/CustomerPortal') ||
-              id.includes('src/components/customer/')) {
-            return 'route-customer';
           }
         },
       },
