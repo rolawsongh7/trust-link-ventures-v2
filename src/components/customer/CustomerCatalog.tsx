@@ -431,11 +431,11 @@ export const CustomerCatalog: React.FC = () => {
 
       {/* Cart Modal */}
       <CartModal 
-        open={showCartModal} 
+        open={showCartModal}
         onOpenChange={setShowCartModal} 
       />
 
-      {/* Floating Cart */}
+      {/* Floating Cart - Web only, native uses bottom tab */}
       <FloatingCart onRequestQuote={() => setShowCartModal(true)} />
     </div>
   );

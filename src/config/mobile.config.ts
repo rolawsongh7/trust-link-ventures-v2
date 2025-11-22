@@ -1,6 +1,19 @@
 /**
  * Mobile-specific feature flags and configuration
  * Controls behavior differences between web and native apps
+ * 
+ * Navigation Strategy:
+ * 
+ * WEB:
+ * - Public pages: PublicHeader (top) + FloatingLoginButton (bottom-right)
+ * - Customer portal: CustomerNavigation (top, responsive with hamburger) + FloatingCart (when cart has items)
+ * 
+ * NATIVE APP:
+ * - Public pages: PublicHeader (top) + MobileBottomNav (bottom, 4 tabs: Home, Products, About, Portal)
+ * - Customer portal: CustomerNavigation (top, no hamburger menu) + MobileBottomNav (bottom, 5 tabs: Home, Catalog, Cart, Orders, More)
+ * - NO floating buttons (iOS best practice: use tab bar for primary actions)
+ * - Cart badge shows item count, Orders badge shows pending address requests
+ * - "More" tab provides access to secondary features (Quotes, Invoices, Addresses, Messages, Profile, Settings)
  */
 
 import { isNativeApp } from '@/utils/env';

@@ -829,7 +829,7 @@ const Products = () => {
         </div>
       </section>
 
-      {/* Floating Cart */}
+      {/* Floating Cart - Web only, native uses bottom tab */}
       <FloatingCart onRequestQuote={() => setShowCartModal(true)} />
 
       {/* Cart Modal */}

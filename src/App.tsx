@@ -39,6 +39,7 @@ import { CustomerProfile } from "@/components/customer/CustomerProfile";
 import { CustomerCommunications } from "@/components/customer/CustomerCommunications";
 import { CustomerInvoices } from "@/components/customer/CustomerInvoices";
 import { CustomerAddresses } from "@/components/customer/CustomerAddresses";
+import { CustomerMore } from "@/pages/CustomerMore";
 import CustomerNotifications from "@/pages/CustomerNotifications";
 import CustomerAnalytics from "@/pages/CustomerAnalytics";
 import QuoteView from "@/pages/QuoteView";
@@ -379,6 +380,9 @@ const App = () => {
                         <Route path="addresses" element={<CustomerAddresses />} />
                         <Route path="profile" element={<CustomerProfile />} />
                         <Route path="notifications" element={<CustomerNotifications />} />
+                        <Route path="more" element={<CustomerMore />} />
+                        <Route path="analytics" element={<CustomerAnalytics />} />
+                        <Route path="settings" element={<CustomerProfile />} />
                       </Route>
                       
                       {/* Public tracking and payment pages */}
