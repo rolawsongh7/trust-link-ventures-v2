@@ -67,6 +67,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onRequestQuote }) =>
   };
 
   const getDefaultImage = () => {
+    // Fallback image from Unsplash - Photo by Caroline Attwood on Unsplash
+    // https://unsplash.com/photos/bpPTlXWTOvg
     return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&h=600';
   };
 
