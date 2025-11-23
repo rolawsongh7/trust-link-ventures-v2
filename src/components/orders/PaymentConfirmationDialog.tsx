@@ -155,17 +155,22 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
       if (!deliveryAddressId) {
         console.log('[PaymentConfirmation] No delivery address - requesting from customer');
         
-        // Request delivery address from customer
+        // Get customer details for the email
+        const { data: customerData } = await supabase
+          .from('customers')
+          .select('contact_name, company_name')
+          .eq('id', (await supabase.from('orders').select('customer_id').eq('id', orderId).single()).data?.customer_id)
+          .single();
+        
+        // Request delivery address from customer using the correct edge function
         try {
-          const { error: emailError } = await supabase.functions.invoke('send-email', {
+          const { error: emailError } = await supabase.functions.invoke('request-delivery-address', {
             body: {
-              to: customerEmail,
-              subject: `Delivery Address Required - Order ${orderNumber}`,
-              templateType: 'delivery_address_request',
-              templateData: {
-                orderNumber,
-                message: 'We have received your payment. Please provide your delivery address to complete your order.',
-              },
+              orderId,
+              orderNumber,
+              customerEmail,
+              customerName: customerData?.contact_name || 'Valued Customer',
+              companyName: customerData?.company_name || '',
             },
           });
 
@@ -174,7 +179,7 @@ export const PaymentConfirmationDialog: React.FC<PaymentConfirmationDialogProps>
             throw new Error(`Failed to send address request email: ${emailError.message}`);
           }
 
-          console.log('[PaymentConfirmation] Delivery address request sent');
+          console.log('[PaymentConfirmation] Delivery address request email sent successfully');
         } catch (emailError) {
           console.error('[PaymentConfirmation] Email sending failed:', emailError);
           toast.warning('Payment confirmed, but failed to send delivery address request email');
