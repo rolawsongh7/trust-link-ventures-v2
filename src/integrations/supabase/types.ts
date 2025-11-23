@@ -505,6 +505,9 @@ export type Database = {
           address: string | null
           annual_revenue: number | null
           assigned_to: string | null
+          biometric_device_id: string | null
+          biometric_enabled: boolean | null
+          biometric_enrolled_at: string | null
           city: string | null
           company_name: string
           contact_name: string | null
@@ -527,6 +530,9 @@ export type Database = {
           address?: string | null
           annual_revenue?: number | null
           assigned_to?: string | null
+          biometric_device_id?: string | null
+          biometric_enabled?: boolean | null
+          biometric_enrolled_at?: string | null
           city?: string | null
           company_name: string
           contact_name?: string | null
@@ -549,6 +555,9 @@ export type Database = {
           address?: string | null
           annual_revenue?: number | null
           assigned_to?: string | null
+          biometric_device_id?: string | null
+          biometric_enabled?: boolean | null
+          biometric_enrolled_at?: string | null
           city?: string | null
           company_name?: string
           contact_name?: string | null

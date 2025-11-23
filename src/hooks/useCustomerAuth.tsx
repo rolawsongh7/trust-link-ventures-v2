@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { checkAuthRateLimit, recordAuthAttempt, resetAuthRateLimit, formatRateLimitMessage } from '@/lib/authRateLimiter';
+import { useBiometric } from '@/hooks/useBiometric';
 
 interface CustomerProfile {
   id: string;
@@ -44,6 +45,7 @@ export const useCustomerAuth = () => {
 
 export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast();
+  const { authenticate } = useBiometric();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
@@ -228,6 +230,30 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     await recordAuthAttempt(sanitizedEmail, !error);
 
     if (!error && data.user) {
+      // Check if user has biometric enabled
+      const { data: customerData } = await supabase
+        .from('customers')
+        .select('biometric_enabled')
+        .eq('email', sanitizedEmail)
+        .maybeSingle();
+
+      if (customerData?.biometric_enabled) {
+        // Require biometric verification for this user
+        const biometricResult = await authenticate(
+          'Verify your identity to access your account'
+        );
+
+        if (!biometricResult.authenticated) {
+          // User cancelled or failed biometric - sign them out
+          await supabase.auth.signOut();
+          return {
+            error: {
+              message: biometricResult.error || 'Biometric authentication is required for your account',
+            },
+          };
+        }
+      }
+
       // Check if user has MFA enabled
       const { data: mfaSettings } = await supabase
         .from('user_mfa_settings')
