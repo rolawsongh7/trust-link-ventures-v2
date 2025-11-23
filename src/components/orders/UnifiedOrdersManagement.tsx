@@ -275,10 +275,7 @@ const UnifiedOrdersManagement = () => {
             Track and manage all orders from accepted quotes
           </p>
         </div>
-        <Button onClick={() => navigate('/quotes')} variant="default">
-          <Plus className="mr-2 h-4 w-4" />
-          Create New Quote
-        </Button>
+        {/* Removed "Create New Quote" button - orders are created from accepted quotes */}
       </div>
 
       {/* Warning Banner for Pending Addresses */}
