@@ -542,8 +542,203 @@ export default function InvoiceManagement() {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
-...
+                <TableHeader>
+                  <TableRow>
+                    <TableHead 
+                      className="cursor-pointer hover:text-primary"
+                      onClick={() => handleSort('invoice_number')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Invoice # <ArrowUpDown className="h-4 w-4" />
+                      </div>
+                    </TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:text-primary"
+                      onClick={() => handleSort('total_amount')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Amount <ArrowUpDown className="h-4 w-4" />
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:text-primary"
+                      onClick={() => handleSort('status')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Status <ArrowUpDown className="h-4 w-4" />
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:text-primary"
+                      onClick={() => handleSort('created_at')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Date <ArrowUpDown className="h-4 w-4" />
+                      </div>
+                    </TableHead>
+                    <TableHead>PDF</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedInvoices.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        No invoices found matching your filters
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedInvoices.map((invoice) => (
+                      <TableRow key={invoice.id} className="hover:bg-muted/50">
+                        <TableCell className="font-medium">
+                          {invoice.invoice_number}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {getInvoiceTypeDisplay(invoice.invoice_type)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="font-medium">{invoice.customers?.company_name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {invoice.customers?.email}
+                            </div>
+                            {invoice.orders && (
+                              <Badge variant="secondary" className="text-xs">
+                                <Package className="h-3 w-3 mr-1" />
+                                {invoice.orders.order_number}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">
+                              {invoice.total_amount.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {invoice.currency}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusColor(invoice.status)}>
+                            {invoice.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-sm">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            {format(new Date(invoice.created_at), 'MMM dd, yyyy')}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {invoice.file_url ? (
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                              <span className="text-xs text-muted-foreground">Available</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="h-4 w-4 text-amber-500" />
+                              <span className="text-xs text-muted-foreground">Missing</span>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedInvoiceForPreview(invoice);
+                                setPreviewDialogOpen(true);
+                              }}
+                              disabled={!invoice.file_url}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDownload(invoice)}
+                              disabled={!invoice.file_url}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRegenerate(invoice.id)}
+                              disabled={regeneratingId === invoice.id}
+                            >
+                              {regeneratingId === invoice.id ? (
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <RefreshCw className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleTestStorage(invoice)}
+                            >
+                              <Beaker className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
               </Table>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-4 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredInvoices.length)} of {filteredInvoices.length} invoices
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="min-w-[40px]"
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </InteractiveCard>
