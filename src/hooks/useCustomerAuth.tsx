@@ -349,7 +349,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           console.log('Creating new customer record');
           
           // Create new customer record
-          const { error: customerError } = await supabase
+          const { data: newCustomer, error: customerError } = await supabase
             .from('customers')
             .insert([
               {
@@ -359,12 +359,38 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 customer_status: 'active',
                 priority: 'medium'
               }
-            ]);
+            ])
+            .select()
+            .single();
 
           if (customerError) {
             console.error('Error creating customer record:', customerError);
           } else {
             console.log('✅ Created new customer record');
+            
+            // Create a default placeholder address for the new customer
+            if (newCustomer?.id) {
+              const { error: addressError } = await supabase
+                .from('customer_addresses')
+                .insert([
+                  {
+                    customer_id: newCustomer.id,
+                    receiver_name: sanitizedFullName,
+                    phone_number: '+233000000000', // Placeholder - customer will update
+                    ghana_digital_address: 'GA-000-0000', // Placeholder
+                    region: 'Greater Accra', // Default region
+                    city: 'Accra', // Default city
+                    street_address: 'Address to be provided',
+                    is_default: true
+                  }
+                ]);
+              
+              if (addressError) {
+                console.error('Error creating default address:', addressError);
+              } else {
+                console.log('✅ Created default placeholder address for customer');
+              }
+            }
           }
         }
 

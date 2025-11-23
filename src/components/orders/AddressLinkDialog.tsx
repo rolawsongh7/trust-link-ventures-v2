@@ -9,8 +9,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Check, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { MapPin, Check, Loader2, Mail } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Address {
   id: string;
@@ -45,7 +45,6 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [linking, setLinking] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     if (open && customerId) {
@@ -61,11 +60,7 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
     
     const timeout = setTimeout(() => {
       console.error('⏰ Timeout: fetchAddresses took longer than 10 seconds');
-      toast({
-        title: 'Request Timeout',
-        description: 'Loading addresses is taking too long. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('Loading addresses is taking too long. Please try again.');
       setLoading(false);
     }, 10000);
     
@@ -97,11 +92,7 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
         details: error
       });
       
-      toast({
-        title: 'Error Loading Addresses',
-        description: error.message || 'Failed to load customer addresses. Please check your permissions.',
-        variant: 'destructive',
-      });
+      toast.error(error.message || 'Failed to load customer addresses. Please check your permissions.');
     } finally {
       clearTimeout(timeout);
       setLoading(false);
@@ -201,10 +192,7 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
 
       console.log('✅ [AddressLinkDialog] Address linking complete');
 
-      toast({
-        title: 'Success',
-        description: `Address linked to order ${orderNumber}${customerData?.email ? '. Confirmation emails sent.' : '.'}`,
-      });
+      toast.success(`Address linked to order ${orderNumber}${customerData?.email ? '. Confirmation emails sent.' : '.'}`);
 
       // Close dialog BEFORE calling onSuccess to prevent re-render loop
       onOpenChange(false);
@@ -224,11 +212,7 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
         fullError: error
       });
       
-      toast({
-        title: 'Error Linking Address',
-        description: error.message || 'Failed to link address. Please check console for details.',
-        variant: 'destructive',
-      });
+      toast.error(error.message || 'Failed to link address. Please check console for details.');
     } finally {
       console.log('🏁 [AddressLinkDialog] handleLinkAddress finished');
       setLinking(false);
@@ -250,10 +234,64 @@ export const AddressLinkDialog: React.FC<AddressLinkDialogProps> = ({
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : addresses.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <MapPin className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No addresses found for this customer.</p>
-            <p className="text-sm mt-2">Customer needs to add an address first.</p>
+          <div className="text-center py-8 space-y-4">
+            <MapPin className="h-12 w-12 mx-auto text-muted-foreground/50" />
+            <div className="space-y-2">
+              <p className="font-medium text-foreground">No valid addresses found</p>
+              <p className="text-sm text-muted-foreground">
+                The customer has not provided a complete delivery address yet.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                You can request the delivery address from the customer using the button below.
+              </p>
+            </div>
+            <Button
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  
+                  // Get customer details
+                  const { data: customerData } = await supabase
+                    .from('customers')
+                    .select('contact_name, company_name, email')
+                    .eq('id', customerId)
+                    .single();
+                  
+                  if (!customerData?.email) {
+                    toast.error('Customer email not found');
+                    return;
+                  }
+                  
+                  // Call the request-delivery-address edge function
+                  const { error: emailError } = await supabase.functions.invoke('request-delivery-address', {
+                    body: {
+                      orderId,
+                      orderNumber,
+                      customerEmail: customerData.email,
+                      customerName: customerData.contact_name || 'Valued Customer',
+                      companyName: customerData.company_name || '',
+                    },
+                  });
+                  
+                  if (emailError) {
+                    console.error('Failed to send address request:', emailError);
+                    toast.error('Failed to send delivery address request');
+                  } else {
+                    toast.success('Delivery address request sent to customer');
+                    onOpenChange(false);
+                  }
+                } catch (error) {
+                  console.error('Error requesting address:', error);
+                  toast.error('Failed to send address request');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              variant="default"
+            >
+              <Mail className="mr-2 h-4 w-4" />
+              Request Address from Customer
+            </Button>
           </div>
         ) : (
           <div className="space-y-3">
