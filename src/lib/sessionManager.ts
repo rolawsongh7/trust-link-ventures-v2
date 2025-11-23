@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-const SESSION_TIMEOUT_MINUTES = 30; // 30 minutes of inactivity
+const SESSION_TIMEOUT_MINUTES = 10; // 10 minutes of inactivity
 const SESSION_CHECK_INTERVAL = 60000; // Check every minute
 
 export class SessionManager {
