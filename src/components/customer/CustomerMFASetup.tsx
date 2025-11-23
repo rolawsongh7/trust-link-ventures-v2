@@ -44,7 +44,21 @@ export function CustomerMFASetup({ open, onOpenChange }: CustomerMFASetupProps) 
     setLoading(true);
     try {
       const settings = await MFAService.getMFASettings(user.id);
-      setMfaEnabled(settings?.enabled || false);
+      const isEnabled = settings?.enabled || false;
+      
+      console.log('MFA Status Check:', {
+        userId: user.id,
+        settingsFound: !!settings,
+        enabled: isEnabled,
+        hasSecret: !!settings?.secret
+      });
+      
+      setMfaEnabled(isEnabled);
+      
+      if (isEnabled && !settings?.secret) {
+        toast.error('MFA configuration is incomplete. Please disable and re-enable MFA.');
+        console.error('MFA enabled but no secret key found');
+      }
     } catch (error) {
       console.error('Error checking MFA status:', error);
       toast.error('Failed to check MFA status');
@@ -89,25 +103,41 @@ export function CustomerMFASetup({ open, onOpenChange }: CustomerMFASetupProps) 
 
     setProcessing(true);
     try {
-      // Verify token using secure server-side edge function (pass secret for setup mode)
       const isValid = await MFAService.verifyToken(user.id, verificationCode, secret);
       
       if (!isValid) {
         toast.error('Invalid code. Check your device time is correct and try a new code (refreshes every 30 seconds)');
+        setProcessing(false);
         return;
       }
 
-      await MFAService.enableMFA(user.id, secret);
+      const enableResult = await MFAService.enableMFA(user.id, secret);
       
+      if (!enableResult) {
+        toast.error('Failed to save MFA settings. Please try again or contact support.');
+        console.error('enableMFA returned false - database update failed');
+        setProcessing(false);
+        return;
+      }
+
       const codes = MFAService.generateBackupCodes();
-      await MFAService.storeBackupCodes(user.id, codes);
+      const storeResult = await MFAService.storeBackupCodes(user.id, codes);
+      
+      if (!storeResult) {
+        toast.error('MFA enabled but backup codes failed to save. Please regenerate backup codes.');
+        console.error('Backup codes storage failed');
+        setMfaEnabled(true);
+        setProcessing(false);
+        return;
+      }
+
       setBackupCodes(codes);
       setMfaEnabled(true);
+      toast.success('Two-factor authentication enabled successfully! Save your backup codes.');
       
-      toast.success('Two-factor authentication enabled successfully!');
     } catch (error) {
       console.error('Error enabling MFA:', error);
-      toast.error('Failed to enable MFA. Please try again.');
+      toast.error('Failed to enable MFA: ' + (error as Error).message);
     } finally {
       setProcessing(false);
     }

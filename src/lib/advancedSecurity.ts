@@ -66,13 +66,18 @@ export class MFAService {
           enabled: true,
           secret_key: secret,
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id',
+          ignoreDuplicates: false
         });
 
-      if (!error) {
-        await MFAService.logMFAEvent(userId, 'mfa_enabled');
+      if (error) {
+        console.error('Error enabling MFA:', error);
+        return false;
       }
 
-      return !error;
+      await MFAService.logMFAEvent(userId, 'mfa_enabled');
+      return true;
     } catch (error) {
       console.error('Error enabling MFA:', error);
       return false;
