@@ -37,8 +37,8 @@ const AdvancedAnalytics = () => {
   const conversionRate = quotes?.length ? Math.round(((quotes?.filter(q => q.status === 'accepted').length || 0) / quotes.length) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-3 sm:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         <PortalPageHeader
           variant="admin"
           title="Advanced Analytics"
@@ -52,11 +52,17 @@ const AdvancedAnalytics = () => {
           ]}
         />
 
-        <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="analytics">Analytics Dashboard</TabsTrigger>
-            <TabsTrigger value="workflow">Workflow Automation</TabsTrigger>
-            <TabsTrigger value="activity">Activity Timeline</TabsTrigger>
+        <Tabs defaultValue="analytics" className="space-y-4 sm:space-y-6">
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
+            <TabsTrigger value="analytics" className="text-xs sm:text-sm whitespace-nowrap">
+              Analytics Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="workflow" className="text-xs sm:text-sm whitespace-nowrap">
+              Workflow Automation
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="text-xs sm:text-sm whitespace-nowrap">
+              Activity Timeline
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="analytics" className="space-y-6">
