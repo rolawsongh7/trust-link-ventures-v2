@@ -109,12 +109,12 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   const ordersSparkline = orders.slice(-7).map(o => o.total_amount || 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* AI Insights Panel - Top Priority */}
       <AIInsightsPanel orders={orders} quotes={quotes} customers={customers} />
 
       {/* Smart KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <SmartMetricCard
           title="Total Revenue"
           value={kpis.totalRevenue}
@@ -161,14 +161,14 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       <AdvancedCharts orders={orders} quotes={quotes} />
 
       {/* Legacy Charts Section */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
         <Card className="border-l-4 border-l-primary">
           <CardHeader>
             <CardTitle>Revenue Trend</CardTitle>
             <CardDescription>Monthly revenue from delivered orders</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <LineChart data={revenueByMonth}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
@@ -187,7 +187,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             <CardDescription>Distribution of order statuses</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <PieChart>
                 <Pie
                   data={ordersByStatus}
@@ -215,7 +215,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             <CardDescription>Leads by stage in the sales funnel</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <BarChart data={leadConversionFunnel}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="stage" />
@@ -234,7 +234,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             <CardDescription>Customers by status</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <PieChart>
                 <Pie
                   data={customerSegmentation}
