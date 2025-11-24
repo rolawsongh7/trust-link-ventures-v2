@@ -59,7 +59,22 @@ export class MFAService {
 
   static async enableMFA(userId: string, secret: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      // First, verify the user is authenticated
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error('No active session when enabling MFA:', sessionError);
+        throw new Error('Authentication session expired. Please log in again.');
+      }
+      
+      if (session.user.id !== userId) {
+        console.error('User ID mismatch:', { sessionUserId: session.user.id, requestedUserId: userId });
+        throw new Error('User ID mismatch - security violation');
+      }
+
+      console.log('Attempting to enable MFA:', { userId, hasSecret: !!secret });
+      
+      const { data, error } = await supabase
         .from('user_mfa_settings')
         .upsert({
           user_id: userId,
@@ -69,18 +84,26 @@ export class MFAService {
         }, {
           onConflict: 'user_id',
           ignoreDuplicates: false
-        });
+        })
+        .select();
 
       if (error) {
-        console.error('Error enabling MFA:', error);
-        return false;
+        console.error('Database error enabling MFA:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw new Error(`Database error: ${error.message}`);
       }
 
+      console.log('MFA enabled successfully in database:', data);
       await MFAService.logMFAEvent(userId, 'mfa_enabled');
       return true;
     } catch (error) {
       console.error('Error enabling MFA:', error);
-      return false;
+      throw error;
     }
   }
 
