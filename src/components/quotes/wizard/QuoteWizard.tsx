@@ -7,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronLeft, ChevronRight, Plus, Trash2, Edit2, Loader2 } from 'lucide-react';
@@ -32,6 +34,10 @@ export const QuoteWizard: React.FC<QuoteWizardProps> = ({
   const [customItemDialogOpen, setCustomItemDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sendViewOnlyLink, setSendViewOnlyLink] = useState(false);
+  const [applyTax, setApplyTax] = useState(false);
+  const [taxRate] = useState(21.0);
+  const [applyShipping, setApplyShipping] = useState(false);
+  const [shippingFee, setShippingFee] = useState(0);
   const { toast } = useToast();
 
   const form = useForm({
@@ -88,8 +94,20 @@ export const QuoteWizard: React.FC<QuoteWizardProps> = ({
     setSelectedItems(prev => prev.filter((_, i) => i !== index));
   };
 
-  const calculateTotal = () => {
+  const calculateSubtotal = () => {
     return selectedItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+  };
+
+  const calculateTax = () => {
+    if (!applyTax) return 0;
+    return (calculateSubtotal() * taxRate) / 100;
+  };
+
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    const tax = calculateTax();
+    const shipping = applyShipping ? shippingFee : 0;
+    return subtotal + tax + shipping;
   };
 
   const handleSubmit = async () => {
@@ -105,6 +123,8 @@ export const QuoteWizard: React.FC<QuoteWizardProps> = ({
     setIsSubmitting(true);
     try {
       const formData = form.getValues();
+      const subtotal = calculateSubtotal();
+      const taxAmount = calculateTax();
       const totalAmount = calculateTotal();
 
       // Generate quote number
@@ -126,6 +146,10 @@ export const QuoteWizard: React.FC<QuoteWizardProps> = ({
           notes: formData.notes,
           currency: formData.currency,
           valid_until: formData.valid_until || undefined,
+          subtotal: subtotal,
+          tax_rate: applyTax ? taxRate : 0,
+          tax_amount: taxAmount,
+          shipping_fee: applyShipping ? shippingFee : 0,
           total_amount: totalAmount,
           status: 'draft',
           origin_type: formData.origin_type
@@ -371,12 +395,64 @@ export const QuoteWizard: React.FC<QuoteWizardProps> = ({
             )}
 
             {step === 2 && (
-              <ProductCatalogSelector
-                selectedItems={selectedItems}
-                onItemsChange={setSelectedItems}
-                onAddCustomItem={() => setCustomItemDialogOpen(true)}
-                currency={currency}
-              />
+              <div className="space-y-6">
+                <ProductCatalogSelector
+                  selectedItems={selectedItems}
+                  onItemsChange={setSelectedItems}
+                  onAddCustomItem={() => setCustomItemDialogOpen(true)}
+                  currency={currency}
+                />
+
+                {/* Tax & Shipping Options */}
+                <div className="space-y-4 pt-6 border-t">
+                  <h3 className="font-semibold">Tax & Shipping Options</h3>
+                  
+                  {/* Tax Toggle */}
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <Label htmlFor="wizard-apply-tax" className="text-base font-semibold cursor-pointer">
+                        Apply Ghanaian Tax (21%)
+                      </Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        VAT, NHIL, GETFL, and COVID-19 Levy
+                      </p>
+                    </div>
+                    <Switch
+                      id="wizard-apply-tax"
+                      checked={applyTax}
+                      onCheckedChange={setApplyTax}
+                    />
+                  </div>
+
+                  {/* Shipping Toggle */}
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <Label htmlFor="wizard-apply-shipping" className="text-base font-semibold cursor-pointer">
+                        Add Shipping Fee
+                      </Label>
+                      <Switch
+                        id="wizard-apply-shipping"
+                        checked={applyShipping}
+                        onCheckedChange={setApplyShipping}
+                      />
+                    </div>
+                    {applyShipping && (
+                      <div className="flex items-center gap-2 mt-3">
+                        <span className="text-muted-foreground">{currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency}</span>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={shippingFee}
+                          onChange={(e) => setShippingFee(parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                          className="max-w-[200px]"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
 
             {step === 3 && (
@@ -441,8 +517,27 @@ export const QuoteWizard: React.FC<QuoteWizardProps> = ({
                       </div>
                     ))}
                   </div>
-                  <div className="p-4 border-t bg-muted/30">
-                    <div className="flex justify-between items-center text-lg font-bold">
+                  <div className="p-4 border-t bg-muted/30 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Subtotal:</span>
+                      <span className="font-medium">{currency} {calculateSubtotal().toFixed(2)}</span>
+                    </div>
+                    
+                    {applyTax && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Tax (21%):</span>
+                        <span className="font-medium">{currency} {calculateTax().toFixed(2)}</span>
+                      </div>
+                    )}
+                    
+                    {applyShipping && shippingFee > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Shipping Fee:</span>
+                        <span className="font-medium">{currency} {shippingFee.toFixed(2)}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between items-center text-lg font-bold pt-2 border-t">
                       <span>Total:</span>
                       <span>{currency} {calculateTotal().toFixed(2)}</span>
                     </div>

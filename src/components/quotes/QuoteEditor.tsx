@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
 import { Calculator, Save, DollarSign } from 'lucide-react';
 
 interface QuoteItem {
@@ -44,6 +45,10 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
   const [currency, setCurrency] = useState('USD');
   const [notes, setNotes] = useState('');
   const [terms, setTerms] = useState('Payment terms: Net 30 days\nDelivery: FOB destination\nValidity: 30 days from quote date');
+  const [applyTax, setApplyTax] = useState(false);
+  const [taxRate, setTaxRate] = useState(21.0);
+  const [applyShipping, setApplyShipping] = useState(false);
+  const [shippingFee, setShippingFee] = useState(0);
   
 
   useEffect(() => {
@@ -58,7 +63,7 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
       // Fetch quote details
       const { data: quote, error: quoteError } = await supabase
         .from('quotes')
-        .select('currency, notes, terms')
+        .select('currency, notes, terms, tax_rate, tax_amount, shipping_fee, subtotal')
         .eq('id', quoteId)
         .single();
 
@@ -68,6 +73,14 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
         setCurrency(quote.currency || 'USD');
         setNotes(quote.notes || '');
         setTerms(quote.terms || 'Payment terms: Net 30 days\nDelivery: FOB destination\nValidity: 30 days from quote date');
+        
+        // Set tax and shipping state
+        const hasTax = quote.tax_rate && quote.tax_rate > 0;
+        const hasShipping = quote.shipping_fee && quote.shipping_fee > 0;
+        setApplyTax(hasTax || false);
+        setTaxRate(quote.tax_rate || 21.0);
+        setApplyShipping(hasShipping || false);
+        setShippingFee(quote.shipping_fee || 0);
       }
 
       // Fetch quote items
@@ -105,8 +118,20 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
     );
   };
 
-  const calculateTotal = () => {
+  const calculateSubtotal = () => {
     return items.reduce((sum, item) => sum + item.total_price, 0);
+  };
+
+  const calculateTax = () => {
+    if (!applyTax) return 0;
+    return (calculateSubtotal() * taxRate) / 100;
+  };
+
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    const tax = calculateTax();
+    const shipping = applyShipping ? shippingFee : 0;
+    return subtotal + tax + shipping;
   };
 
   const handleSave = async (sendToCustomer: boolean = false) => {
@@ -127,8 +152,15 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
       await Promise.all(updatePromises);
 
       // Update quote total and other details
+      const subtotal = calculateSubtotal();
+      const taxAmount = calculateTax();
       const totalAmount = calculateTotal();
+      
       const updateData: any = {
+        subtotal: subtotal,
+        tax_rate: applyTax ? taxRate : 0,
+        tax_amount: taxAmount,
+        shipping_fee: applyShipping ? shippingFee : 0,
         total_amount: totalAmount,
         currency,
         notes,
@@ -245,6 +277,37 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
                       </TableRow>
                     ))}
                     <TableRow className="bg-muted/50">
+                      <TableCell colSpan={5} className="text-right font-semibold">
+                        Subtotal:
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {currencySymbol}{calculateSubtotal().toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                    
+                    {applyTax && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-right text-muted-foreground">
+                          Tax (21%):
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {currencySymbol}{calculateTax().toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    
+                    {applyShipping && shippingFee > 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-right text-muted-foreground">
+                          Shipping Fee:
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {currencySymbol}{shippingFee.toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    
+                    <TableRow className="bg-primary/10">
                       <TableCell colSpan={5} className="text-right font-bold">
                         Total Amount:
                       </TableCell>
@@ -254,6 +317,61 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
                     </TableRow>
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+
+            {/* Tax & Shipping Options */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Tax & Shipping</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Ghanaian Tax Toggle */}
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="apply-tax" className="text-base font-semibold cursor-pointer">
+                        Apply Ghanaian Tax (21%)
+                      </Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Includes VAT (15%), NHIL (2.5%), GETFL (2.5%), and COVID-19 Levy (1%)
+                    </p>
+                  </div>
+                  <Switch
+                    id="apply-tax"
+                    checked={applyTax}
+                    onCheckedChange={setApplyTax}
+                  />
+                </div>
+
+                {/* Shipping Fee Toggle */}
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <Label htmlFor="apply-shipping" className="text-base font-semibold cursor-pointer">
+                      Add Shipping Fee
+                    </Label>
+                    <Switch
+                      id="apply-shipping"
+                      checked={applyShipping}
+                      onCheckedChange={setApplyShipping}
+                    />
+                  </div>
+                  {applyShipping && (
+                    <div className="flex items-center gap-2 mt-3">
+                      <span className="text-muted-foreground">{currencySymbol}</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={shippingFee}
+                        onChange={(e) => setShippingFee(parseFloat(e.target.value) || 0)}
+                        placeholder="0.00"
+                        className="max-w-[200px]"
+                      />
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 

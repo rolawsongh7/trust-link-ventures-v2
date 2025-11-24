@@ -2395,8 +2395,13 @@ export type Database = {
           origin_type: string | null
           quote_number: string
           sent_at: string | null
+          shipping_fee: number | null
           status: string | null
+          subtotal: number | null
           supplier_quote_uploaded_at: string | null
+          tax_amount: number | null
+          tax_inclusive: boolean | null
+          tax_rate: number | null
           terms: string | null
           title: string | null
           total_amount: number | null
@@ -2426,8 +2431,13 @@ export type Database = {
           origin_type?: string | null
           quote_number: string
           sent_at?: string | null
+          shipping_fee?: number | null
           status?: string | null
+          subtotal?: number | null
           supplier_quote_uploaded_at?: string | null
+          tax_amount?: number | null
+          tax_inclusive?: boolean | null
+          tax_rate?: number | null
           terms?: string | null
           title?: string | null
           total_amount?: number | null
@@ -2457,8 +2467,13 @@ export type Database = {
           origin_type?: string | null
           quote_number?: string
           sent_at?: string | null
+          shipping_fee?: number | null
           status?: string | null
+          subtotal?: number | null
           supplier_quote_uploaded_at?: string | null
+          tax_amount?: number | null
+          tax_inclusive?: boolean | null
+          tax_rate?: number | null
           terms?: string | null
           title?: string | null
           total_amount?: number | null
