@@ -5,7 +5,7 @@ import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -689,6 +689,19 @@ export const CustomerAddresses = () => {
         />
       </Card>
 
+      {/* Add Address Button - Desktop */}
+      {!isMobile && (
+        <div className="flex justify-end mb-4">
+          <Button 
+            onClick={() => setDialogOpen(true)}
+            className="bg-white/20 border border-white/30 text-white hover:bg-white/10 h-11 sm:h-10 touch-manipulation"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Address
+          </Button>
+        </div>
+      )}
+
       {/* Add Address Dialog */}
       <Dialog
         open={dialogOpen}
@@ -700,17 +713,6 @@ export const CustomerAddresses = () => {
           }
         }}
       >
-        {/* Desktop Button */}
-        {!isMobile && (
-          <div className="flex justify-end mb-4">
-            <DialogTrigger asChild>
-              <Button className="bg-white/20 border border-white/30 text-white hover:bg-white/10 h-11 sm:h-10 touch-manipulation">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Address
-              </Button>
-            </DialogTrigger>
-          </div>
-        )}
         
         <DialogContent className="bg-tl-surface max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
           <DialogHeader>
@@ -1040,14 +1042,13 @@ export const CustomerAddresses = () => {
       
       {/* Mobile FAB */}
       {isMobile && (
-        <DialogTrigger asChild>
-          <Button
-            className="fixed bottom-20 right-4 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 z-40"
-            size="icon"
-          >
-            <Plus className="h-6 w-6" />
-          </Button>
-        </DialogTrigger>
+        <Button
+          onClick={() => setDialogOpen(true)}
+          className="fixed bottom-20 right-4 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 z-40"
+          size="icon"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
       )}
     </div>
   );
