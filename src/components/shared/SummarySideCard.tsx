@@ -6,6 +6,7 @@ interface SummarySideCardProps {
   subtotal?: number;
   tax?: number;
   discount?: number;
+  shipping?: number;
   total: number;
   currency: string;
   actions?: React.ReactNode;
@@ -17,6 +18,7 @@ export const SummarySideCard: React.FC<SummarySideCardProps> = ({
   subtotal,
   tax,
   discount,
+  shipping,
   total,
   currency,
   actions,
@@ -29,7 +31,7 @@ export const SummarySideCard: React.FC<SummarySideCardProps> = ({
       </CardHeader>
       <CardContent className="p-6 space-y-4">
         {/* Line items */}
-        {(subtotal !== undefined || tax !== undefined || discount !== undefined) && (
+        {(subtotal !== undefined || tax !== undefined || discount !== undefined || shipping !== undefined) && (
           <div className="space-y-2 text-sm">
             {subtotal !== undefined && (
               <div className="flex justify-between text-tl-muted">
@@ -52,6 +54,14 @@ export const SummarySideCard: React.FC<SummarySideCardProps> = ({
                 <span>Discount</span>
                 <span className="font-medium">
                   -{currency} {discount.toLocaleString()}
+                </span>
+              </div>
+            )}
+            {shipping !== undefined && shipping > 0 && (
+              <div className="flex justify-between text-tl-muted">
+                <span>Shipping</span>
+                <span className="font-medium text-tl-text">
+                  {currency} {shipping.toLocaleString()}
                 </span>
               </div>
             )}
