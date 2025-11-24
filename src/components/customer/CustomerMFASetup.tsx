@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { supabase } from '@/integrations/supabase/client';
 
 interface CustomerMFASetupProps {
   open: boolean;
@@ -43,6 +44,18 @@ export function CustomerMFASetup({ open, onOpenChange }: CustomerMFASetupProps) 
     
     setLoading(true);
     try {
+      // Validate session first
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error('No valid session:', sessionError);
+        toast.error('Your session has expired. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Session validated:', { userId: session.user.id });
+      
       const settings = await MFAService.getMFASettings(user.id);
       const isEnabled = settings?.enabled || false;
       
@@ -103,6 +116,7 @@ export function CustomerMFASetup({ open, onOpenChange }: CustomerMFASetupProps) 
 
     setProcessing(true);
     try {
+      console.log('Step 1: Verifying token...');
       const isValid = await MFAService.verifyToken(user.id, verificationCode, secret);
       
       if (!isValid) {
@@ -111,11 +125,22 @@ export function CustomerMFASetup({ open, onOpenChange }: CustomerMFASetupProps) 
         return;
       }
 
-      const enableResult = await MFAService.enableMFA(user.id, secret);
+      console.log('Step 2: Token verified successfully, enabling MFA...');
       
-      if (!enableResult) {
-        toast.error('Failed to save MFA settings. Please try again or contact support.');
-        console.error('enableMFA returned false - database update failed');
+      try {
+        const enableResult = await MFAService.enableMFA(user.id, secret);
+        
+        if (!enableResult) {
+          toast.error('Failed to save MFA settings. Please try again or contact support.');
+          console.error('enableMFA returned false - database update failed');
+          setProcessing(false);
+          return;
+        }
+        
+        console.log('Step 3: MFA enabled, generating backup codes...');
+      } catch (enableError) {
+        console.error('enableMFA threw error:', enableError);
+        toast.error(`Failed to enable MFA: ${enableError instanceof Error ? enableError.message : 'Unknown error'}`);
         setProcessing(false);
         return;
       }
@@ -131,6 +156,7 @@ export function CustomerMFASetup({ open, onOpenChange }: CustomerMFASetupProps) 
         return;
       }
 
+      console.log('Step 4: Backup codes stored successfully');
       setBackupCodes(codes);
       setMfaEnabled(true);
       toast.success('Two-factor authentication enabled successfully! Save your backup codes.');
