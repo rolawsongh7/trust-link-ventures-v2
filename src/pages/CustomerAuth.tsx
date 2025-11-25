@@ -20,6 +20,11 @@ const CustomerAuth = () => {
   const [activeTab, setActiveTab] = useState('signin');
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [showSetNewPassword, setShowSetNewPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { signIn, signUp, user, resetPassword, resendConfirmationEmail, requiresMFA, mfaUserId, verifyMFA, cancelMFA } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -81,6 +86,8 @@ const CustomerAuth = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+    const isReset = params.get('reset') === 'true';
+    
     if (params.get('confirmed') === 'true') {
       toast({
         title: "Email Confirmed! ✅",
@@ -88,10 +95,22 @@ const CustomerAuth = () => {
       });
       setActiveTab('signin');
     }
-    if (params.get('reset') === 'true') {
-      toast({
-        title: "Check your email",
-        description: "We've sent you a password reset link. Please check your inbox.",
+    
+    // Check if user came from password reset email
+    if (isReset) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          // User clicked reset link and has a valid session - show set password form
+          setShowSetNewPassword(true);
+          setActiveTab('signin');
+        } else {
+          // User came to page with reset=true but no session - expired link
+          toast({
+            variant: "destructive",
+            title: "Reset link expired",
+            description: "Please request a new password reset link.",
+          });
+        }
       });
     }
   }, [location.search, toast]);
@@ -283,6 +302,58 @@ const CustomerAuth = () => {
     });
   };
 
+  const handleSetNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate passwords match
+    if (newPassword !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Passwords don't match",
+        description: "Please make sure both passwords are identical.",
+      });
+      return;
+    }
+    
+    // Validate password length
+    if (newPassword.length < 8) {
+      toast({
+        variant: "destructive",
+        title: "Password too short",
+        description: "Password must be at least 8 characters long.",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Failed to update password",
+        description: error.message,
+      });
+      setIsLoading(false);
+    } else {
+      toast({
+        title: "Password updated successfully! ✅",
+        description: "You can now use your new password to sign in.",
+      });
+      
+      // Clear form and reset state
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowSetNewPassword(false);
+      
+      // Clear URL parameters and redirect to customer portal
+      navigate('/customer', { replace: true });
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 
                     bg-gradient-to-br from-[hsl(var(--portal-bg-gradient-start))] 
@@ -416,7 +487,143 @@ const CustomerAuth = () => {
           {/* Sign In Form */}
           {activeTab === 'signin' && (
             <div className="space-y-4 mt-6">
-              {!showForgotPassword ? (
+              {showSetNewPassword ? (
+                <form onSubmit={handleSetNewPassword} className="space-y-4">
+                  {/* Header */}
+                  <div className="text-center mb-4">
+                    <h2 className="text-xl font-semibold text-tl-text mb-2">
+                      Set Your New Password
+                    </h2>
+                    <p className="text-sm text-tl-muted">
+                      Choose a strong password to secure your account
+                    </p>
+                  </div>
+
+                  {/* New Password Input */}
+                  <div className="relative mb-4 md:mb-5">
+                    <label 
+                      htmlFor="new-password"
+                      className="absolute left-3 top-2 text-xs 
+                                text-tl-muted 
+                                font-medium pointer-events-none z-10">
+                      New Password
+                    </label>
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
+                                    text-tl-accent z-10" />
+                    <input
+                      id="new-password"
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      aria-label="New password"
+                      aria-required="true"
+                      className="w-full rounded-lg 
+                                border border-tl-border 
+                                bg-tl-surface 
+                                pl-10 pr-12 pt-7 pb-3
+                                text-sm 
+                                text-tl-text 
+                                placeholder-transparent
+                                focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
+                                transition-colors
+                                min-h-[58px]
+                                touch-manipulation"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 mt-3 
+                                text-tl-muted hover:text-tl-accent transition-colors
+                                min-h-[44px] min-w-[44px] flex items-center justify-center
+                                focus-visible:outline-none focus-visible:ring-2 
+                                focus-visible:ring-tl-accent rounded"
+                      aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+
+                  {/* Confirm Password Input */}
+                  <div className="relative mb-4 md:mb-5">
+                    <label 
+                      htmlFor="confirm-password"
+                      className="absolute left-3 top-2 text-xs 
+                                text-tl-muted 
+                                font-medium pointer-events-none z-10">
+                      Confirm Password
+                    </label>
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
+                                    text-tl-accent z-10" />
+                    <input
+                      id="confirm-password"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      aria-label="Confirm password"
+                      aria-required="true"
+                      className="w-full rounded-lg 
+                                border border-tl-border 
+                                bg-tl-surface 
+                                pl-10 pr-12 pt-7 pb-3
+                                text-sm 
+                                text-tl-text 
+                                placeholder-transparent
+                                focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
+                                transition-colors
+                                min-h-[58px]
+                                touch-manipulation"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 mt-3 
+                                text-tl-muted hover:text-tl-accent transition-colors
+                                min-h-[44px] min-w-[44px] flex items-center justify-center
+                                focus-visible:outline-none focus-visible:ring-2 
+                                focus-visible:ring-tl-accent rounded"
+                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+
+                  {/* Password Requirements */}
+                  <div className="bg-tl-bg-subtle rounded-lg p-3 mb-4">
+                    <p className="text-xs text-tl-muted">
+                      Password must be at least 8 characters long
+                    </p>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    aria-busy={isLoading}
+                    className="w-full py-3 rounded-lg 
+                              tl-gradient 
+                              text-white font-semibold text-base
+                              shadow-md hover:opacity-95 
+                              disabled:opacity-50 disabled:cursor-not-allowed
+                              transition-all duration-200 
+                              min-h-[50px]
+                              touch-manipulation
+                              focus-visible:outline-none focus-visible:ring-2 
+                              focus-visible:ring-tl-accent focus-visible:ring-offset-2">
+                    {isLoading ? (
+                      <span className="flex items-center justify-center">
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        Updating Password...
+                      </span>
+                    ) : (
+                      'Update Password'
+                    )}
+                  </button>
+                </form>
+              ) : !showForgotPassword ? (
                 <form onSubmit={handleSignIn} className="space-y-4">
                   {/* Email Input */}
                   <div className="relative mb-4 md:mb-5">
