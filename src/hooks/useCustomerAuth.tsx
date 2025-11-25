@@ -299,7 +299,20 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const sanitizedCompanyName = companyName.trim();
     const sanitizedFullName = fullName.trim();
     
-    const redirectUrl = `${window.location.origin}/customer-auth?confirmed=true`;
+    // Check rate limit BEFORE attempting signup
+    const rateLimitCheck = await checkAuthRateLimit(sanitizedEmail);
+    if (!rateLimitCheck.allowed) {
+      const message = formatRateLimitMessage(rateLimitCheck);
+      return {
+        error: {
+          message,
+          status: 429,
+          name: 'RateLimitError'
+        }
+      };
+    }
+    
+    const redirectUrl = `${window.location.origin}/portal-auth?confirmed=true`;
     
     const { data, error } = await supabase.auth.signUp({
       email: sanitizedEmail,
@@ -312,6 +325,21 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
       }
     });
+
+    // Detect duplicate email (user already registered)
+    if (!error && data.user && data.user.identities && data.user.identities.length === 0) {
+      // Add artificial delay to prevent timing attacks
+      await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+      
+      // Record enumeration attempt for security monitoring
+      await recordAuthAttempt(sanitizedEmail, false, 'email_enumeration');
+      
+      return { 
+        error: { 
+          message: 'This email is already registered. Please sign in or use the "Forgot Password" option to recover your account.' 
+        } 
+      };
+    }
 
     // Create or update customer record if signup was successful
     if (!error && data.user) {
@@ -394,6 +422,9 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           }
         }
 
+        // Add artificial delay for successful signups (consistent timing with duplicate check)
+        await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+        
         toast({
           title: "Account created!",
           description: "Please check your email to confirm your account. You may need to check your spam folder.",
