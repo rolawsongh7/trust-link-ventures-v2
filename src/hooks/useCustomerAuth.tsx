@@ -557,7 +557,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/customer-auth?reset=true`,
+      redirectTo: `${window.location.origin}/portal-auth?reset=true`,
     });
     return { error };
   };
