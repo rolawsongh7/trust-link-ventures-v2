@@ -2899,6 +2899,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          metadata: Json | null
+          source_id: string | null
+          source_type: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          metadata?: Json | null
+          source_id?: string | null
+          source_type: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          metadata?: Json | null
+          source_id?: string | null
+          source_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
       user_locations: {
         Row: {
           city: string | null
@@ -3287,6 +3326,7 @@ export type Database = {
         Args: { p_ip_address: unknown }
         Returns: boolean
       }
+      check_user_invitation_status: { Args: { p_email: string }; Returns: Json }
       check_user_role: {
         Args: { check_user_id: string; required_role: string }
         Returns: boolean

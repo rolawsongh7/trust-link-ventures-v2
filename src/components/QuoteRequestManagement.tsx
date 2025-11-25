@@ -10,10 +10,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download, Building, Package, Calendar, MessageSquare, Filter, CircleDot, RefreshCw } from 'lucide-react';
+import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download, Building, Package, Calendar, MessageSquare, Filter, CircleDot, RefreshCw, Mail } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { InviteUserDialog } from '@/components/admin/InviteUserDialog';
 
 interface QuoteRequest {
   id: string;
@@ -68,6 +69,8 @@ const QuoteRequestManagement = () => {
   const [adminNotes, setAdminNotes] = useState('');
   const [newStatus, setNewStatus] = useState<string>('');
   const [activeTab, setActiveTab] = useState('all');
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteTargetRequest, setInviteTargetRequest] = useState<QuoteRequest | null>(null);
 
   useEffect(() => {
     fetchQuoteRequests();
@@ -639,6 +642,21 @@ const QuoteRequestManagement = () => {
                                   <FileText className="h-4 w-4" />
                                 </Button>
                               )}
+
+                              {request.lead_email && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setInviteTargetRequest(request);
+                                    setShowInviteDialog(true);
+                                  }}
+                                  className="h-9 w-9 p-0 hover:bg-[#EFF6FF] hover:text-[#3B82F6] rounded-lg transition-all"
+                                  title="Invite to Portal"
+                                >
+                                  <Mail className="h-4 w-4" />
+                                </Button>
+                              )}
                               
                               <Button
                                 variant="ghost"
@@ -947,6 +965,19 @@ const QuoteRequestManagement = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Invite User Dialog */}
+      <InviteUserDialog
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
+        defaultEmail={inviteTargetRequest?.lead_email || ''}
+        defaultName={inviteTargetRequest?.lead_contact_name || ''}
+        sourceType="quote_request"
+        sourceId={inviteTargetRequest?.id}
+        onSuccess={() => {
+          fetchQuoteRequests();
+        }}
+      />
     </div>
   );
 };
