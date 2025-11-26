@@ -285,8 +285,8 @@ export const CustomerInvoices = () => {
       // Total amount
       totalAmountByCurrency[currency] = (totalAmountByCurrency[currency] || 0) + amount;
 
-      // Unpaid balance (sent or draft status)
-      if (inv.status === 'sent' || inv.status === 'draft') {
+      // Unpaid balance (sent or draft status, commercial invoices only)
+      if ((inv.status === 'sent' || inv.status === 'draft') && inv.invoice_type === 'commercial') {
         unpaidByCurrency[currency] = (unpaidByCurrency[currency] || 0) + amount;
       }
     });

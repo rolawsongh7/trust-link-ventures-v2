@@ -105,16 +105,26 @@ serve(async (req) => {
       tracking: order.tracking_number || 'Pending' 
     });
 
-    // Fetch quote number if order has a quote_id
+    // Fetch quote number and tax/shipping info if order has a quote_id
     let quoteNumber = null;
+    let taxAmount = 0;
+    let shippingFee = 0;
     if (order.quote_id) {
       const { data: quote } = await supabase
         .from('quotes')
-        .select('quote_number')
+        .select('quote_number, tax_amount, tax_rate, shipping_fee')
         .eq('id', order.quote_id)
         .single();
+      
       quoteNumber = quote?.quote_number || null;
-      console.log('[Commercial Invoice] Quote number fetched:', quoteNumber);
+      taxAmount = Number(quote?.tax_amount || 0);
+      shippingFee = Number(quote?.shipping_fee || 0);
+      
+      console.log('[Commercial Invoice] Quote data fetched:', { 
+        quoteNumber, 
+        taxAmount, 
+        shippingFee 
+      });
     }
 
     // Fetch delivery address details
@@ -143,8 +153,8 @@ serve(async (req) => {
       const subtotal = order.order_items.reduce((sum: number, item: any) => 
         sum + (Number(item.total_price) || 0), 0
       );
-      const taxAmount = 0; // Configure tax calculation as needed
-      const totalAmount = subtotal + taxAmount;
+      // Use tax and shipping from quote if available
+      const totalAmount = subtotal + taxAmount + shippingFee;
 
       // Create commercial invoice
       const { data: newInvoice, error: invoiceError } = await supabase

@@ -205,7 +205,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send admin email
     const adminEmail = await resend.emails.send({
-      from: "Trust Link Ventures <orders@trustlinkcompany.com>",
+      from: "Trust Link Ventures <info@trustlinkcompany.com>",
       to: ["info@trustlinkcompany.com"],
       subject: `[PAYMENT CONFIRMED] Order #${orderNumber} - ${customerName}`,
       html: adminEmailHtml,
@@ -215,7 +215,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send customer email
     const customerEmailResponse = await resend.emails.send({
-      from: "Trust Link Ventures <orders@trustlinkcompany.com>",
+      from: "Trust Link Ventures <info@trustlinkcompany.com>",
       to: [customerEmail],
       subject: `Payment Confirmed - Order #${orderNumber}`,
       html: customerEmailHtml,

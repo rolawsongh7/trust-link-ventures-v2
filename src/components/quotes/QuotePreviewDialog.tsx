@@ -92,6 +92,26 @@ export const QuotePreviewDialog: React.FC<QuotePreviewDialogProps> = ({
 
       if (updateError) throw updateError;
 
+      // Generate proforma invoice
+      toast({
+        title: 'Generating proforma invoice...',
+        description: 'Creating proforma invoice for the quote.'
+      });
+
+      const { error: proformaError } = await supabase.functions.invoke('generate-proforma-invoice', {
+        body: { quoteId: quote.id }
+      });
+
+      if (proformaError) {
+        console.error('Proforma invoice generation error:', proformaError);
+        // Don't fail the entire process if proforma generation fails
+        toast({
+          title: 'Warning',
+          description: 'Quote sent successfully, but proforma invoice generation failed. You can regenerate it later.',
+          variant: 'default'
+        });
+      }
+
       // Send emails to customer and admin
       toast({
         title: 'Sending emails...',
