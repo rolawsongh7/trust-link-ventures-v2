@@ -36,42 +36,52 @@ export const MFAVerificationModal: React.FC<MFAVerificationModalProps> = ({
     setLoading(true);
 
     try {
+      console.log('🔐 Verifying TOTP code for user:', userId);
+      
       // Check rate limit
       const isRateLimited = await MFAService.checkRateLimit(userId);
       if (isRateLimited) {
+        console.warn('⚠️ MFA rate limit exceeded for user:', userId);
         setError('Too many failed attempts. Please try again in 15 minutes.');
         setLoading(false);
         return;
       }
 
       // Get user's MFA settings
+      console.log('📋 Fetching MFA settings...');
       const mfaSettings = await MFAService.getMFASettings(userId);
       if (!mfaSettings?.secret) {
-        setError('MFA not properly configured');
+        console.error('❌ MFA not properly configured for user:', userId);
+        setError('MFA not properly configured. Please contact support.');
         setLoading(false);
         return;
       }
 
       // Verify the TOTP code using secure server-side verification
+      console.log('🔍 Verifying TOTP code...');
       const isValid = await MFAService.verifyToken(userId, totpCode);
 
       // Log the attempt
       await MFAService.logMFAAttempt(userId, isValid);
 
       if (isValid) {
+        console.log('✅ TOTP verification successful');
+        
         // Generate device fingerprint if trusting device
         if (trustDevice) {
+          console.log('🔒 Trusting device - generating fingerprint');
           const fingerprint = await DeviceFingerprintService.generateFingerprint();
           await DeviceFingerprintService.logDeviceFingerprint(userId);
         }
 
         onVerified(trustDevice);
       } else {
+        console.warn('❌ Invalid TOTP code provided');
         setError('Invalid code. Check your device time is correct and try a new code (refreshes every 30 seconds).');
       }
     } catch (err) {
-      console.error('MFA verification error:', err);
-      setError('Verification failed. Please try again.');
+      console.error('💥 MFA verification error:', err);
+      setError('Verification failed. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -82,24 +92,29 @@ export const MFAVerificationModal: React.FC<MFAVerificationModalProps> = ({
     setLoading(true);
 
     try {
+      console.log('🔑 Verifying backup code for user:', userId);
+      
       const isValid = await MFAService.verifyBackupCode(userId, backupCode.toUpperCase());
 
       await MFAService.logMFAAttempt(userId, isValid);
 
       if (isValid) {
+        console.log('✅ Backup code verification successful');
         onVerified(false); // Don't trust device with backup code
       } else {
-        setError('Invalid backup code. Please try again.');
+        console.warn('❌ Invalid backup code provided');
+        setError('Invalid backup code. Each code can only be used once.');
       }
     } catch (err) {
-      console.error('Backup code verification error:', err);
-      setError('Verification failed. Please try again.');
+      console.error('💥 Backup code verification error:', err);
+      setError('Verification failed. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
+    console.log('🚫 MFA verification cancelled by user');
     setTotpCode('');
     setBackupCode('');
     setError('');
