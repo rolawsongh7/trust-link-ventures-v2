@@ -34,12 +34,13 @@ const StatCard: React.FC<StatCardProps> = ({ icon, label, value, trend }) => (
 );
 
 export const AccountStats: React.FC = () => {
-  const { profile } = useCustomerAuth();
+  const { user, profile } = useCustomerAuth();
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalQuotes: 0,
     totalSpent: 0,
     memberSince: '',
+    accountStatus: '',
   });
 
   const ordersCount = useCounterAnimation({ end: stats.totalOrders, duration: 1500 });
@@ -48,16 +49,16 @@ export const AccountStats: React.FC = () => {
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (!profile?.id) return;
+      if (!user?.id) return;
 
-      // First, get the customer_id from customer_users table
+      // First, get the customer_id from customer_users table using auth user ID
       const { data: customerMapping } = await supabase
         .from('customer_users')
         .select('customer_id')
-        .eq('user_id', profile.id)
+        .eq('user_id', user.id)
         .single();
 
-      const customerId = customerMapping?.customer_id || profile.id;
+      const customerId = customerMapping?.customer_id || profile?.id;
 
       // Fetch orders count and total
       const { data: orders } = await supabase
@@ -72,10 +73,10 @@ export const AccountStats: React.FC = () => {
         .select('id')
         .eq('customer_id', customerId);
 
-      // Get customer created date
+      // Get customer created date and status
       const { data: customer } = await supabase
         .from('customers')
-        .select('created_at')
+        .select('created_at, customer_status')
         .eq('id', customerId)
         .single();
 
@@ -84,11 +85,12 @@ export const AccountStats: React.FC = () => {
         totalQuotes: quotes?.length || 0,
         totalSpent: orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0,
         memberSince: customer?.created_at || '',
+        accountStatus: customer?.customer_status || 'active',
       });
     };
 
     fetchStats();
-  }, [profile?.id]);
+  }, [user?.id, profile?.id]);
 
   const memberSinceDate = stats.memberSince ? new Date(stats.memberSince) : null;
   const memberDuration = memberSinceDate ? formatDistanceToNow(memberSinceDate, { addSuffix: false }) : '';
@@ -141,17 +143,10 @@ export const AccountStats: React.FC = () => {
               <Award className="h-4 w-4" />
               Account Status
             </span>
-            <span className="font-medium flex items-center gap-1">
-              ⭐ Verified Customer
+            <span className="font-medium flex items-center gap-1 capitalize">
+              {stats.accountStatus === 'active' && '✓ '}
+              {stats.accountStatus}
             </span>
-          </div>
-
-          <div className="flex items-center justify-between text-sm">
-            <span className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              Avg. Response Time
-            </span>
-            <span className="font-medium text-emerald-600">{'< 2 hours'}</span>
           </div>
         </div>
       </CardContent>
