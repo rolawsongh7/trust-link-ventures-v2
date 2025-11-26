@@ -286,22 +286,22 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
                     </TableRow>
                     
                     {applyTax && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-right text-muted-foreground">
+                      <TableRow key="tax-row" className="border-t border-dashed">
+                        <TableCell colSpan={5} className="text-right text-muted-foreground font-medium py-3">
                           Tax ({taxRate}%):
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-medium py-3">
                           {currencySymbol}{calculateTax().toFixed(2)}
                         </TableCell>
                       </TableRow>
                     )}
                     
                     {applyShipping && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-right text-muted-foreground">
+                      <TableRow key="shipping-row" className="border-t border-dashed">
+                        <TableCell colSpan={5} className="text-right text-muted-foreground font-medium py-3">
                           Shipping Fee:
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-medium py-3">
                           {currencySymbol}{shippingFee.toFixed(2)}
                         </TableCell>
                       </TableRow>
