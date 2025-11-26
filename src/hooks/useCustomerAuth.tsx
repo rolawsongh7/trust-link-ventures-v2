@@ -13,6 +13,7 @@ interface CustomerProfile {
   phone?: string;
   country?: string;
   industry?: string;
+  last_password_changed?: string | null;
 }
 
 interface CustomerAuthContextType {
@@ -171,6 +172,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           phone: existingCustomer.phone,
           country: existingCustomer.country,
           industry: existingCustomer.industry,
+          last_password_changed: existingCustomer.last_password_changed,
         });
       } else {
         console.warn('⚠️ No customer record found, using fallback profile');
@@ -556,6 +558,26 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           description: error.message || "Failed to update password. Please try again.",
         });
         return { error };
+      }
+
+      // Update last_password_changed timestamp in customers table
+      if (profile?.id) {
+        const { error: updateError } = await supabase
+          .from('customers')
+          .update({ last_password_changed: new Date().toISOString() })
+          .eq('id', profile.id);
+
+        if (updateError) {
+          console.error('Error updating last_password_changed:', updateError);
+        }
+
+        // Log password change event to audit_logs
+        await supabase.from('audit_logs').insert({
+          user_id: user?.id,
+          event_type: 'password_change',
+          event_data: { method: 'manual_change' },
+          severity: 'medium'
+        });
       }
 
       toast({

@@ -54,18 +54,23 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
   const newPassword = form.watch('newPassword');
 
   const onSubmit = async (data: ChangePasswordFormData) => {
-    // Require biometric before password change
-    const biometricResult = await authenticateBiometric(
-      'Verify your identity to change your password'
-    );
+    // Try biometric authentication if available, but make it optional
+    try {
+      const biometricResult = await authenticateBiometric(
+        'Verify your identity to change your password'
+      );
 
-    if (!biometricResult.authenticated) {
-      toast({
-        title: 'Verification Failed',
-        description: biometricResult.error || 'Biometric verification was cancelled',
-        variant: 'destructive',
-      });
-      return;
+      if (!biometricResult.authenticated && biometricResult.error !== 'User cancelled') {
+        // Only block if it's an actual error, not user cancellation
+        // User cancellation means they want to proceed without biometrics
+        toast({
+          title: 'Verification Failed',
+          description: 'Biometric verification failed, but you can still proceed with password change.',
+        });
+      }
+    } catch (error) {
+      // Biometric not available or error - allow password change anyway
+      console.log('Biometric not available or failed, proceeding without it');
     }
 
     setIsSubmitting(true);

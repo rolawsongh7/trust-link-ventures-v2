@@ -340,6 +340,32 @@ const CustomerAuth = () => {
       });
       setIsLoading(false);
     } else {
+      // Update last_password_changed in customers table
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      if (currentUser?.email) {
+        const { data: customer } = await supabase
+          .from('customers')
+          .select('id')
+          .ilike('email', currentUser.email)
+          .maybeSingle();
+
+        if (customer?.id) {
+          await supabase
+            .from('customers')
+            .update({ last_password_changed: new Date().toISOString() })
+            .eq('id', customer.id);
+
+          // Log password reset event
+          await supabase.from('audit_logs').insert({
+            user_id: currentUser.id,
+            event_type: 'password_change',
+            event_data: { method: 'email_reset' },
+            severity: 'medium'
+          });
+        }
+      }
+
       toast({
         title: "Password updated successfully! ✅",
         description: "You can now use your new password to sign in.",

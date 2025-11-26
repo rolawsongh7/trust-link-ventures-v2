@@ -519,6 +519,7 @@ export type Database = {
           id: string
           industry: string | null
           last_contact_date: string | null
+          last_password_changed: string | null
           notes: string | null
           phone: string | null
           priority: string | null
@@ -544,6 +545,7 @@ export type Database = {
           id?: string
           industry?: string | null
           last_contact_date?: string | null
+          last_password_changed?: string | null
           notes?: string | null
           phone?: string | null
           priority?: string | null
@@ -569,6 +571,7 @@ export type Database = {
           id?: string
           industry?: string | null
           last_contact_date?: string | null
+          last_password_changed?: string | null
           notes?: string | null
           phone?: string | null
           priority?: string | null
