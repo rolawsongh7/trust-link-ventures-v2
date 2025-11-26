@@ -437,9 +437,9 @@ export default function InvoiceManagement() {
         totalIcon={FileText}
         totalCount={invoices?.length || 0}
         stats={[
-          { label: 'Pending', count: invoices?.filter(i => i.status === 'pending').length || 0, icon: Clock },
+          { label: 'Awaiting Payment', count: invoices?.filter(i => i.status === 'sent' || i.status === 'draft').length || 0, icon: Clock },
           { label: 'Paid', count: invoices?.filter(i => i.status === 'paid').length || 0, icon: CheckCircle2 },
-          { label: 'Overdue', count: invoices?.filter(i => i.status === 'overdue').length || 0, icon: XCircle },
+          { label: 'Cancelled', count: invoices?.filter(i => i.status === 'cancelled').length || 0, icon: XCircle },
         ]}
       />
       
