@@ -26,7 +26,7 @@ export const InvoiceFilterPanel = ({
     onFilterChange({
       searchTerm: '',
       status: [],
-      invoiceType: [],
+      invoiceType: ['commercial'], // Reset to commercial default
       dateRange: null,
       timePeriod: 'all',
       amountRange: null,
@@ -51,7 +51,8 @@ export const InvoiceFilterPanel = ({
   const hasActiveFilters = 
     filters.searchTerm || 
     filters.status.length > 0 || 
-    filters.invoiceType.length > 0 || 
+    (filters.invoiceType.length > 0 && 
+     !(filters.invoiceType.length === 1 && filters.invoiceType[0] === 'commercial')) || 
     filters.timePeriod !== 'all';
 
   const getTypeLabel = (type: string) => {
