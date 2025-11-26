@@ -56,6 +56,7 @@ interface SecurityScoreProps {
   onSetupMFA: () => void;
   onViewSessions?: () => void;
   onManageAlerts?: () => void;
+  lastPasswordChanged?: string | null;
 }
 
 export const SecurityScore: React.FC<SecurityScoreProps> = ({
@@ -63,8 +64,34 @@ export const SecurityScore: React.FC<SecurityScoreProps> = ({
   onSetupMFA,
   onViewSessions,
   onManageAlerts,
+  lastPasswordChanged,
 }) => {
   const securityScore = 7;
+
+  // Calculate days since password change
+  const getDaysSincePasswordChange = () => {
+    if (!lastPasswordChanged) return null;
+    const days = Math.floor((Date.now() - new Date(lastPasswordChanged).getTime()) / (1000 * 60 * 60 * 24));
+    return days;
+  };
+
+  // Get password description based on last change
+  const getPasswordDescription = () => {
+    const days = getDaysSincePasswordChange();
+    if (days === null) {
+      return "Password set • Strength: Strong";
+    }
+    return `Last changed: ${days} days ago • Strength: Strong`;
+  };
+
+  // Get password status (only warn after 180 days / 6 months)
+  const getPasswordStatus = () => {
+    const days = getDaysSincePasswordChange();
+    if (days === null || days <= 180) {
+      return 'active' as const;
+    }
+    return 'warning' as const;
+  };
 
   return (
     <Card className="border-l-4 border-l-emerald-500 shadow-lg hover:shadow-xl transition-all">
@@ -93,8 +120,8 @@ export const SecurityScore: React.FC<SecurityScoreProps> = ({
           <SecurityItem
             icon={<Lock className="h-5 w-5" />}
             title="Password"
-            description="Last changed: 45 days ago • Strength: Strong"
-            status="warning"
+            description={getPasswordDescription()}
+            status={getPasswordStatus()}
             actionLabel="Change Password"
             onAction={onChangePassword}
           />

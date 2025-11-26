@@ -356,6 +356,7 @@ export const CustomerProfile: React.FC = () => {
             onSetupMFA={() => setShowMFASetup(true)}
             onViewSessions={() => setShowActiveSessions(true)}
             onManageAlerts={() => setShowSecurityAlerts(true)}
+            lastPasswordChanged={profile?.last_password_changed}
           />
 
           {/* Quick Sign Out */}
