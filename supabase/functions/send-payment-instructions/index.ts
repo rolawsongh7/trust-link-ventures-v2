@@ -237,7 +237,7 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
 
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://ppyfrftmexvgnsxlhdbz.supabase.co/functions/v1/customer/quotes" 
+            <a href="https://trustlinkcompany.com/portal/orders" 
                style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
               View Order Status
             </a>

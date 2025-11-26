@@ -26,6 +26,7 @@ import { QuoteWizard } from './wizard/QuoteWizard';
 import { QuoteToOrderConverter } from './QuoteToOrderConverter';
 import QuoteAuditTrail from './QuoteAuditTrail';
 import { QuoteDetailsDialog } from './QuoteDetailsDialog';
+import { InviteUserDialog } from '@/components/admin/InviteUserDialog';
 import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
@@ -90,6 +91,8 @@ const UnifiedQuoteManagement = () => {
   const [convertingQuote, setConvertingQuote] = useState<Quote | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedQuoteForDetails, setSelectedQuoteForDetails] = useState<string | null>(null);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteTargetQuote, setInviteTargetQuote] = useState<Quote | null>(null);
   const { toast } = useToast();
 
   const form = useForm({
@@ -833,6 +836,19 @@ const UnifiedQuoteManagement = () => {
                     Download Quote PDF
                   </DropdownMenuItem>
                 )}
+
+                {quote.customer_email && !quote.customer_id && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInviteTargetQuote(quote);
+                      setShowInviteDialog(true);
+                    }}
+                  >
+                    <Mail className="mr-2 h-4 w-4" />
+                    Invite to Portal
+                  </DropdownMenuItem>
+                )}
                 
                 <DropdownMenuItem
                   onClick={(e) => {
@@ -913,6 +929,19 @@ const UnifiedQuoteManagement = () => {
         open={isDetailsDialogOpen}
         onOpenChange={setIsDetailsDialogOpen}
         quoteId={selectedQuoteForDetails}
+      />
+
+      <InviteUserDialog
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
+        defaultEmail={inviteTargetQuote?.customer_email || ''}
+        defaultName={inviteTargetQuote?.customers?.contact_name || ''}
+        sourceType="lead"
+        sourceId={inviteTargetQuote?.id}
+        onSuccess={() => {
+          fetchQuotes();
+          setShowInviteDialog(false);
+        }}
       />
     </div>
   );

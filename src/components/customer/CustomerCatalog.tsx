@@ -213,23 +213,6 @@ export const CustomerCatalog: React.FC = () => {
           totalCount={filteredProducts.length}
           totalIcon={Package}
           patternId="catalog-grid"
-          stats={[
-            {
-              label: "Categories",
-              count: categories.length,
-              icon: Grid3X3
-            },
-            {
-              label: "Suppliers",
-              count: suppliers.length,
-              icon: Building2
-            },
-            {
-              label: "In Stock",
-              count: products.length,
-              icon: CheckCircle
-            }
-          ]}
         />
       </Card>
 

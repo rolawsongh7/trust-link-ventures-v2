@@ -288,7 +288,7 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
                     {applyTax && (
                       <TableRow>
                         <TableCell colSpan={5} className="text-right text-muted-foreground">
-                          Tax (21%):
+                          Tax ({taxRate}%):
                         </TableCell>
                         <TableCell className="text-right">
                           {currencySymbol}{calculateTax().toFixed(2)}
@@ -296,7 +296,7 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
                       </TableRow>
                     )}
                     
-                    {applyShipping && shippingFee > 0 && (
+                    {applyShipping && (
                       <TableRow>
                         <TableCell colSpan={5} className="text-right text-muted-foreground">
                           Shipping Fee:
@@ -307,7 +307,7 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
                       </TableRow>
                     )}
                     
-                    <TableRow className="bg-primary/10">
+                    <TableRow className="bg-primary/10" key={`total-${applyTax}-${applyShipping}-${shippingFee}`}>
                       <TableCell colSpan={5} className="text-right font-bold">
                         Total Amount:
                       </TableCell>
