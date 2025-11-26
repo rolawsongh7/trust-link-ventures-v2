@@ -49,7 +49,7 @@ const getDefaultFeatures = (): MobileFeatures => {
     // UI Features - hide floating buttons in native (use bottom nav instead)
     showFloatingLogin: !native,
     showFloatingNotifications: !native,
-    showPWAInstallPrompt: !native,
+    showPWAInstallPrompt: false,
     
     // Performance - always optimize for mobile
     compressHeroOnMobile: true,
