@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Package, Plus, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import { useRealtimeOrders } from '@/hooks/useRealtimeOrders';
 import { useOrdersQuery } from '@/hooks/useOrdersQuery';
 import { OrdersDataTable } from './OrdersDataTable';
 import { DeliveryManagementDialog } from './DeliveryManagementDialog';
@@ -67,23 +66,59 @@ const UnifiedOrdersManagement = () => {
   const [viewQuoteDialogOpen, setViewQuoteDialogOpen] = useState(false);
   const [verifyPaymentDialogOpen, setVerifyPaymentDialogOpen] = useState(false);
 
-  // Set up real-time subscription for notifications only
+  // Set up real-time subscription for notifications and auto-generation
   useEffect(() => {
     const subscription = supabase
       .channel('orders-notifications')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'orders' },
-        (payload) => {
-          // Just show toast notifications, let React Query handle the refetch
+        async (payload) => {
           if (payload.eventType === 'INSERT') {
             toast.success(`New order ${payload.new.order_number} created`);
             refetch();
           } else if (payload.eventType === 'UPDATE') {
             const oldStatus = payload.old?.status;
             const newStatus = payload.new?.status;
+            const orderId = payload.new?.id;
+            const orderNumber = payload.new?.order_number;
+            
             if (oldStatus !== newStatus) {
-              toast.info(`Order ${payload.new.order_number} status: ${newStatus}`);
+              toast.info(`Order ${orderNumber} status updated to ${newStatus}`);
               refetch();
+              
+              // Auto-generate packing list when ready_to_ship
+              if (newStatus === 'ready_to_ship' && oldStatus !== 'ready_to_ship') {
+                console.log('[Admin] Auto-generating packing list for', orderNumber);
+                toast.info('📄 Generating Packing List...');
+                
+                const { data, error } = await supabase.functions.invoke('generate-packing-list', {
+                  body: { orderId }
+                });
+                
+                if (error) {
+                  console.error('[Admin] Packing list error:', error);
+                  toast.error(`Failed to generate packing list: ${error.message}`);
+                } else if (data?.success) {
+                  toast.success(`✅ Packing List ${data.invoiceNumber} generated`);
+                }
+              }
+              
+              // Auto-generate commercial invoice when shipped
+              if (newStatus === 'shipped' && oldStatus !== 'shipped') {
+                console.log('[Admin] Auto-generating commercial invoice for', orderNumber);
+                toast.info('📄 Generating Commercial Invoice...');
+                
+                const { data, error } = await supabase.functions.invoke('generate-commercial-invoice', {
+                  body: { orderId }
+                });
+                
+                if (error) {
+                  console.error('[Admin] Commercial invoice error:', error);
+                  toast.error(`Failed to generate invoice: ${error.message}`);
+                } else if (data?.success) {
+                  toast.success(`✅ Commercial Invoice ${data.invoiceNumber} generated`);
+                }
+              }
             }
           }
         }
