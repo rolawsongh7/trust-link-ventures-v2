@@ -52,6 +52,10 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [loading, setLoading] = useState(true);
   const [requiresMFA, setRequiresMFA] = useState(false);
   const [mfaUserId, setMfaUserId] = useState<string | null>(null);
+  // Store credentials temporarily for MFA re-authentication
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [pendingPassword, setPendingPassword] = useState<string | null>(null);
+  const [credentialsTimeout, setCredentialsTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Validate if a session is still valid (not expired)
   const isSessionValid = (session: Session | null): boolean => {
@@ -262,7 +266,29 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .maybeSingle();
 
       if (mfaSettings?.enabled) {
-        // Sign out temporarily until MFA is verified
+        console.log('🔐 MFA required for user:', data.user.id);
+        
+        // Store credentials temporarily for re-authentication after MFA
+        setPendingEmail(sanitizedEmail);
+        setPendingPassword(password);
+        
+        // Set up auto-clear timeout (5 minutes)
+        if (credentialsTimeout) clearTimeout(credentialsTimeout);
+        const timeout = setTimeout(() => {
+          console.log('⏰ MFA credentials timeout - clearing stored credentials');
+          setPendingEmail(null);
+          setPendingPassword(null);
+          setRequiresMFA(false);
+          setMfaUserId(null);
+          toast({
+            title: "Session expired",
+            description: "Please sign in again.",
+            variant: "destructive",
+          });
+        }, 5 * 60 * 1000); // 5 minutes
+        setCredentialsTimeout(timeout);
+        
+        // Sign out the current session but keep credentials stored
         await supabase.auth.signOut();
         setRequiresMFA(true);
         setMfaUserId(data.user.id);
@@ -582,20 +608,75 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const verifyMFA = async (trustDevice: boolean) => {
-    if (!mfaUserId) return;
+    if (!mfaUserId || !pendingEmail || !pendingPassword) {
+      console.error('❌ MFA verification failed: Missing credentials or user ID');
+      throw new Error('Missing authentication credentials');
+    }
+
+    console.log('🔐 Completing MFA verification for:', pendingEmail);
 
     try {
-      // MFA verification already happened in the modal
-      // Now we can complete the sign-in
+      // Clear the credentials timeout
+      if (credentialsTimeout) {
+        clearTimeout(credentialsTimeout);
+        setCredentialsTimeout(null);
+      }
+
+      // Re-authenticate with stored credentials (MFA token already verified in modal)
+      console.log('🔄 Re-authenticating user after MFA verification...');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: pendingEmail,
+        password: pendingPassword,
+      });
+
+      // Clear stored credentials immediately after use
+      setPendingEmail(null);
+      setPendingPassword(null);
       setRequiresMFA(false);
       setMfaUserId(null);
+
+      if (error) {
+        console.error('❌ Re-authentication failed after MFA:', error);
+        toast({
+          title: "Authentication failed",
+          description: "Please sign in again.",
+          variant: "destructive",
+        });
+        throw error;
+      }
+
+      console.log('✅ MFA verification complete, user signed in');
+      
+      // Clear rate limit on successful MFA login
+      resetAuthRateLimit(pendingEmail);
+      
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully signed in with MFA.",
+      });
     } catch (error) {
-      console.error('MFA verification error:', error);
+      console.error('💥 MFA verification error:', error);
+      // Clear credentials on error
+      setPendingEmail(null);
+      setPendingPassword(null);
+      setRequiresMFA(false);
+      setMfaUserId(null);
       throw error;
     }
   };
 
   const cancelMFA = () => {
+    console.log('🚫 MFA verification cancelled by user');
+    
+    // Clear credentials timeout
+    if (credentialsTimeout) {
+      clearTimeout(credentialsTimeout);
+      setCredentialsTimeout(null);
+    }
+    
+    // Clear all MFA-related state and stored credentials
+    setPendingEmail(null);
+    setPendingPassword(null);
     setRequiresMFA(false);
     setMfaUserId(null);
   };

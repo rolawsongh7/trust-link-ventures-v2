@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
+import { MFAVerificationModal } from '@/components/security/MFAVerificationModal';
 
 const CustomerPortal = () => {
   const [email, setEmail] = useState('');
@@ -14,7 +15,7 @@ const CustomerPortal = () => {
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useCustomerAuth();
+  const { signIn, signUp, user, requiresMFA, mfaUserId, verifyMFA, cancelMFA } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -236,6 +237,17 @@ const CustomerPortal = () => {
         </div>
       </div>
       </div>
+
+      {/* MFA Verification Modal */}
+      {requiresMFA && mfaUserId && (
+        <MFAVerificationModal
+          open={requiresMFA}
+          onOpenChange={(open) => !open && cancelMFA()}
+          userId={mfaUserId}
+          onVerified={verifyMFA}
+          onCancel={cancelMFA}
+        />
+      )}
     </div>
   );
 };
