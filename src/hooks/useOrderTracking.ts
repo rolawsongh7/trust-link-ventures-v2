@@ -110,6 +110,24 @@ export const useOrderTracking = () => {
               orderId,
               customerEmail
             );
+            
+            // Send delivered email notification
+            try {
+              await supabase.functions.invoke('send-email', {
+                body: {
+                  to: customerEmail,
+                  subject: `Your Order #${orderNumber} Has Been Delivered`,
+                  type: 'order_delivered',
+                  data: {
+                    orderNumber,
+                    customerName: customerName || companyName || 'Valued Customer',
+                    orderId
+                  }
+                }
+              });
+            } catch (emailError) {
+              console.error('Failed to send delivered email:', emailError);
+            }
             break;
         }
       }
