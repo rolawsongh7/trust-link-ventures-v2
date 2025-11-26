@@ -190,13 +190,12 @@ export const CustomerOrders: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'quote_pending': return 'bg-tl-muted/20 text-tl-muted border-tl-border';
-      case 'quote_sent': return 'bg-tl-accent/10 text-tl-accent border-tl-accent/30';
+      case 'pending_payment': return 'bg-amber-500/10 text-amber-600 border-amber-500/30';
       case 'order_confirmed': return 'bg-tl-info/10 text-tl-info border-tl-info/30';
       case 'payment_received': return 'bg-tl-success/10 text-tl-success border-tl-success/30';
-      case 'processing': return 'bg-tl-warning/10 text-tl-warning border-tl-warning/30';
+      case 'processing': return 'bg-purple-500/10 text-purple-600 border-purple-500/30';
       case 'ready_to_ship': return 'bg-tl-primary/10 text-tl-primary border-tl-primary/30';
-      case 'shipped': return 'bg-tl-warning/10 text-tl-warning border-tl-warning/30';
+      case 'shipped': return 'bg-orange-500/10 text-orange-600 border-orange-500/30';
       case 'delivered': return 'bg-tl-success/10 text-tl-success border-tl-success/30';
       case 'cancelled': return 'bg-destructive/10 text-destructive border-destructive/30';
       case 'delivery_failed': return 'bg-destructive/10 text-destructive border-destructive/30';
@@ -226,18 +225,33 @@ export const CustomerOrders: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'quote_pending':
-      case 'quote_sent':
+      case 'shipped':
+        return Truck;
+      case 'pending_payment':
       case 'order_confirmed':
       case 'payment_received':
       case 'processing':
       case 'ready_to_ship':
       case 'delivered':
-        return Package;
-      case 'shipped':
-        return Truck;
+      case 'cancelled':
+      case 'delivery_failed':
       default:
         return Package;
+    }
+  };
+
+  const getStatusBorderColor = (status: string) => {
+    switch (status) {
+      case 'pending_payment': return 'border-l-amber-500';
+      case 'order_confirmed': return 'border-l-blue-500';
+      case 'payment_received': return 'border-l-emerald-500';
+      case 'processing': return 'border-l-purple-500';
+      case 'ready_to_ship': return 'border-l-indigo-500';
+      case 'shipped': return 'border-l-orange-500';
+      case 'delivered': return 'border-l-green-600';
+      case 'cancelled': return 'border-l-red-500';
+      case 'delivery_failed': return 'border-l-red-600';
+      default: return 'border-l-gray-400';
     }
   };
 
@@ -506,12 +520,12 @@ export const CustomerOrders: React.FC = () => {
           stats={[
             {
               label: "Pending",
-              count: orders.filter(o => ['pending', 'awaiting_payment'].includes(o.status)).length,
+              count: orders.filter(o => ['pending_payment', 'order_confirmed'].includes(o.status)).length,
               icon: Clock
             },
             {
               label: "In Transit",
-              count: orders.filter(o => ['in_transit', 'shipped'].includes(o.status)).length,
+              count: orders.filter(o => o.status === 'shipped').length,
               icon: Truck
             },
             {
@@ -543,8 +557,7 @@ export const CustomerOrders: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="quote_pending">Quote Pending</SelectItem>
-                <SelectItem value="quote_sent">Quote Sent</SelectItem>
+                <SelectItem value="pending_payment">Pending Payment</SelectItem>
                 <SelectItem value="order_confirmed">Order Confirmed</SelectItem>
                 <SelectItem value="payment_received">Payment Received</SelectItem>
                 <SelectItem value="processing">Processing</SelectItem>
@@ -621,10 +634,10 @@ export const CustomerOrders: React.FC = () => {
         <div className="space-y-4">
           {filteredOrders.map((order) => {
             const StatusIcon = getStatusIcon(order.status);
-            const showTimeline = ['quote_sent', 'order_confirmed', 'payment_received', 'ready_to_ship', 'shipped', 'in_transit', 'delivered'].includes(order.status);
+            const showTimeline = ['order_confirmed', 'payment_received', 'processing', 'ready_to_ship', 'shipped', 'delivered'].includes(order.status);
             
             return (
-              <Card key={order.id} className="bg-tl-surface border-tl-border border-l-4 border-l-maritime-500 hover:shadow-lg hover:border-tl-accent/30 transition-all duration-300">
+              <Card key={order.id} className={`bg-tl-surface border-tl-border border-l-4 ${getStatusBorderColor(order.status)} hover:shadow-lg hover:border-tl-accent/30 transition-all duration-300`}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
