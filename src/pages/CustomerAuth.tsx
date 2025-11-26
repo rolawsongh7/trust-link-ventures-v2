@@ -46,7 +46,8 @@ const CustomerAuth = () => {
 
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (user) {
+      // Only proceed with navigation if user is authenticated AND MFA is not pending
+      if (user && !requiresMFA) {
         try {
           // Check if user is in admin whitelist
           const { data: isAllowed, error } = await supabase.rpc('is_allowed_admin_email', {
@@ -82,7 +83,7 @@ const CustomerAuth = () => {
     };
     
     checkAdminStatus();
-  }, [user, navigate, from]);
+  }, [user, requiresMFA, navigate, from]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);

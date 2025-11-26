@@ -20,10 +20,11 @@ const CustomerPortal = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
+    // Only redirect if user is authenticated AND MFA is not pending
+    if (user && !requiresMFA) {
       navigate('/customer');
     }
-  }, [user, navigate]);
+  }, [user, requiresMFA, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
