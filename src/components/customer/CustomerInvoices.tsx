@@ -312,13 +312,13 @@ export const CustomerInvoices = () => {
               icon: CheckCircle
             },
             {
-              label: "Pending",
-              count: invoices.filter(i => i.status === 'pending').length,
+              label: "Awaiting Payment",
+              count: invoices.filter(i => i.status === 'sent' || i.status === 'draft').length,
               icon: Clock
             },
             {
-              label: "Unpaid",
-              count: invoices.filter(i => i.status === 'unpaid').length,
+              label: "Cancelled",
+              count: invoices.filter(i => i.status === 'cancelled').length,
               icon: AlertCircle
             }
           ]}

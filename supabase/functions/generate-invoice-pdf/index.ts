@@ -476,11 +476,11 @@ function generateInvoiceHTML(data: any): string {
         <div class="billing-section">
           <h3>Invoice Details:</h3>
           <p><strong>Type:</strong> ${invoiceTypeTitle}</p>
-          ${invoice.invoice_type === 'commercial' ? `
-            <p><strong>Status:</strong> <span style="color: #059669; font-weight: 600;">Paid</span></p>
-          ` : `
-            <p><strong>Status:</strong> ${invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}</p>
-          `}
+          <p><strong>Status:</strong> <span style="color: ${
+            invoice.status === 'paid' ? '#059669' : 
+            invoice.status === 'sent' ? '#f59e0b' : 
+            '#6b7280'
+          }; font-weight: 600;">${invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}</span></p>
           <p><strong>Currency:</strong> ${invoice.currency}</p>
           
           ${invoice.invoice_type === 'commercial' && order ? `
