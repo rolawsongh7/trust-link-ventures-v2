@@ -11,7 +11,7 @@ interface PortalPageHeaderProps {
   subtitle: string;
   totalCount: number;
   totalIcon: React.ComponentType<{ className?: string }>;
-  stats: StatPillData[];
+  stats?: StatPillData[];
   patternId?: string;
   variant?: 'customer' | 'admin';
 }
@@ -74,7 +74,7 @@ export const PortalPageHeader: React.FC<PortalPageHeaderProps> = ({
         </div>
         
         {/* Quick stats */}
-        {stats.length > 0 && (
+        {stats && stats.length > 0 && (
           <div className="grid gap-3 mt-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {stats.map((stat, index) => (
               <StatPill key={index} {...stat} />

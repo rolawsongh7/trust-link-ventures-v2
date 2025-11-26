@@ -642,21 +642,6 @@ const QuoteRequestManagement = () => {
                                   <FileText className="h-4 w-4" />
                                 </Button>
                               )}
-
-                              {request.lead_email && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setInviteTargetRequest(request);
-                                    setShowInviteDialog(true);
-                                  }}
-                                  className="h-9 w-9 p-0 hover:bg-[#EFF6FF] hover:text-[#3B82F6] rounded-lg transition-all"
-                                  title="Invite to Portal"
-                                >
-                                  <Mail className="h-4 w-4" />
-                                </Button>
-                              )}
                               
                               <Button
                                 variant="ghost"
