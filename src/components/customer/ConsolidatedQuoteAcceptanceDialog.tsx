@@ -158,6 +158,15 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
         })
         .eq('id', order.id);
 
+      // Generate proforma invoice (non-blocking)
+      supabase.functions.invoke('generate-proforma-invoice', {
+        body: { quoteId: quote?.id }
+      }).then(() => {
+        console.log('Proforma invoice generated successfully');
+      }).catch((proformaError) => {
+        console.error('Proforma generation error (non-blocking):', proformaError);
+      });
+
       // Fetch payment options
       setLoadingPaymentOptions(true);
       const { data: options, error: optionsError } = await supabase.functions.invoke(
@@ -294,6 +303,15 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
         .eq('id', orders.id);
 
       if (orderUpdateError) throw orderUpdateError;
+
+      // Generate proforma invoice (non-blocking)
+      supabase.functions.invoke('generate-proforma-invoice', {
+        body: { quoteId: quote?.id }
+      }).then(() => {
+        console.log('Proforma invoice generated successfully');
+      }).catch((proformaError) => {
+        console.error('Proforma generation error (non-blocking):', proformaError);
+      });
 
       // Send payment instructions email (non-blocking)
       try {
