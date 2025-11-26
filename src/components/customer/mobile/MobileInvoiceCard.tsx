@@ -64,8 +64,17 @@ export const MobileInvoiceCard = ({ invoice, onDownload, downloading }: MobileIn
     return colors[type] || 'bg-gray-50 text-gray-700 border-gray-200';
   };
 
+  const getInvoiceTypeBorderColor = (type: string) => {
+    const colors: Record<string, string> = {
+      commercial: 'border-l-green-500',
+      packing_list: 'border-l-purple-500',
+      proforma: 'border-l-blue-500',
+    };
+    return colors[type] || 'border-l-gray-300';
+  };
+
   return (
-    <InteractiveCard variant="elevated" className="p-4 space-y-3" onClick={() => onDownload(invoice)}>
+    <InteractiveCard variant="elevated" className={`p-4 space-y-3 border-l-4 ${getInvoiceTypeBorderColor(invoice.invoice_type)}`} onClick={() => onDownload(invoice)}>
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-1 min-w-0">

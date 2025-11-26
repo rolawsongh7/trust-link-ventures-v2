@@ -42,7 +42,7 @@ export const CustomerInvoices = () => {
   const [filters, setFilters] = useState<InvoiceSearchFilters>({
     searchTerm: '',
     status: [],
-    invoiceType: [],
+    invoiceType: ['commercial'], // Default to commercial invoices
     dateRange: null,
     timePeriod: 'all',
     amountRange: null,
@@ -204,6 +204,15 @@ export const CustomerInvoices = () => {
       packing_list: 'bg-purple-100 text-purple-800',
     };
     return colors[type] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getInvoiceTypeBorderColor = (type: string) => {
+    const colors: Record<string, string> = {
+      commercial: 'border-l-green-500',
+      packing_list: 'border-l-purple-500',
+      proforma: 'border-l-blue-500',
+    };
+    return colors[type] || 'border-l-gray-300';
   };
 
   // Filter invoices based on current filters
@@ -387,7 +396,23 @@ export const CustomerInvoices = () => {
         </div>
       ) : (
         <div className="space-y-4">
-      <Card className="bg-tl-surface border border-tl-border border-l-4 border-l-maritime-500 rounded-lg shadow-sm overflow-hidden">
+          {/* Color Legend */}
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-green-500"></div>
+              <span>Commercial</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-purple-500"></div>
+              <span>Packing List</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-blue-500"></div>
+              <span>Proforma</span>
+            </div>
+          </div>
+
+      <Card className="bg-tl-surface border border-tl-border rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-tl-primary/5 sticky top-0">
@@ -414,7 +439,7 @@ export const CustomerInvoices = () => {
                   {filteredInvoices.map((invoice) => (
                     <tr
                       key={invoice.id}
-                      className="hover:bg-tl-bg transition-all duration-200 hover:shadow-sm"
+                      className={`hover:bg-tl-bg transition-all duration-200 hover:shadow-sm border-l-4 ${getInvoiceTypeBorderColor(invoice.invoice_type)}`}
                     >
                       <td className="px-4 py-3">
                         <span className="text-tl-accent font-medium">{invoice.invoice_number}</span>
