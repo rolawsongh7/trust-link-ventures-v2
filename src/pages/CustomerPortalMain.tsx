@@ -11,8 +11,7 @@ import {
   Clock,
   ArrowRight,
   Building2,
-  DollarSign,
-  TrendingUp
+  DollarSign
 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
@@ -52,18 +51,36 @@ const CustomerPortalMain = () => {
   }, [profile]);
 
   const fetchDashboardData = async () => {
-    if (!profile?.email) return;
+    if (!profile?.id) return;
     
     try {
-      // Fetch quote requests
+      // Get customer_id from customer_users mapping
+      const { data: customerMapping } = await supabase
+        .from('customer_users')
+        .select('customer_id')
+        .eq('user_id', profile.id)
+        .single();
+
+      const customerId = customerMapping?.customer_id || profile.id;
+
+      // Fetch quote requests using customer_id
       const { data: quotes } = await supabase
         .from('quote_requests')
         .select('*')
-        .eq('lead_email', profile.email)
+        .eq('customer_id', customerId)
         .order('created_at', { ascending: false });
 
       const totalQuotes = quotes?.length || 0;
       const pendingQuotes = quotes?.filter(q => q.status === 'pending').length || 0;
+
+      // Fetch actual orders
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('id, status')
+        .eq('customer_id', customerId)
+        .not('status', 'eq', 'cancelled');
+
+      const totalOrders = orders?.length || 0;
 
       // Fetch recent activity (last 5 quotes)
       const recentActivity = quotes?.slice(0, 5) || [];
@@ -71,7 +88,7 @@ const CustomerPortalMain = () => {
       setStats({
         totalQuotes,
         pendingQuotes,
-        totalOrders: 0, // Placeholder for orders
+        totalOrders,
         recentActivity
       });
     } catch (error) {
@@ -347,12 +364,6 @@ const CustomerPortalMain = () => {
                                            text-tl-accent" />
                     </div>
                   </div>
-                  <div className="mt-3">
-                    <span className="text-xs bg-[#E8F5E9] text-[#2E7D32] px-2 py-1 rounded-full inline-flex items-center">
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      +12%
-                    </span>
-                  </div>
                 </div>
 
                 {/* Total Orders Card */}
@@ -382,12 +393,6 @@ const CustomerPortalMain = () => {
                       <Package className="h-6 w-6 sm:h-7 sm:w-7 
                                          text-tl-gold" />
                     </div>
-                  </div>
-                  <div className="mt-3">
-                    <span className="text-xs bg-[#E8F5E9] text-[#2E7D32] px-2 py-1 rounded-full inline-flex items-center">
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      +8%
-                    </span>
                   </div>
                 </div>
 
