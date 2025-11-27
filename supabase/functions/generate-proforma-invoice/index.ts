@@ -99,44 +99,15 @@ serve(async (req) => {
       }
     }
 
-    // Generate PDF
-    const pdfResponse = await fetch(`${supabaseUrl}/functions/v1/generate-invoice-pdf`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseKey}`,
-      },
-      body: JSON.stringify({ invoiceId: invoice.id }),
+    // Generate PDF using the generate-invoice-pdf function
+    const { error: pdfError } = await supabase.functions.invoke('generate-invoice-pdf', {
+      body: { invoiceId: invoice.id }
     });
 
-    if (!pdfResponse.ok) {
-      console.error('[Proforma Invoice] PDF generation failed');
+    if (pdfError) {
+      console.error('[Proforma Invoice] PDF generation failed:', pdfError);
     } else {
-      const pdfBuffer = await pdfResponse.arrayBuffer();
-      const filePath = `proforma/${invoice.invoice_number}.pdf`;
-
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from('invoices')
-        .upload(filePath, pdfBuffer, {
-          contentType: 'application/pdf',
-          upsert: false,
-        });
-
-      if (uploadError) {
-        console.error('[Proforma Invoice] Upload error:', uploadError);
-      } else {
-        const { data: { publicUrl } } = supabase.storage
-          .from('invoices')
-          .getPublicUrl(filePath);
-
-        await supabase
-          .from('invoices')
-          .update({ file_url: publicUrl })
-          .eq('id', invoice.id);
-
-        console.log('[Proforma Invoice] PDF uploaded:', filePath);
-      }
+      console.log('[Proforma Invoice] PDF generated successfully');
     }
 
     return new Response(

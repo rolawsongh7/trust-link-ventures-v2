@@ -195,7 +195,11 @@ serve(async (req) => {
     }
 
     // Upload to storage
-    const folderName = invoiceType === 'packing_list' ? 'packing_list' : 'commercial_invoice';
+    const folderName = invoice.invoice_type === 'packing_list' 
+      ? 'packing_list' 
+      : invoice.invoice_type === 'proforma'
+      ? 'proforma'
+      : 'commercial_invoice';
     const filePath = `${folderName}/${invoice.invoice_number}.pdf`;
     
     console.log('[PDF Generation] Step: Uploading to storage:', filePath);

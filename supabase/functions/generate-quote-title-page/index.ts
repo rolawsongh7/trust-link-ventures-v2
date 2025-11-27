@@ -685,20 +685,43 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
     yPosition -= 15
 
     // Sales Tax (if applicable) - right-aligned
-    const taxRate = 0 // Assuming no tax for now
-    const tax = subtotal * taxRate
-    if (tax > 0) {
-      page.drawText(`Sales Tax (${(taxRate * 100).toFixed(0)}%)`, {
+    const taxRate = quote.tax_rate ? Number(quote.tax_rate) / 100 : 0;
+    const taxAmount = quote.tax_amount ? Number(quote.tax_amount) : 0;
+    const shippingFee = quote.shipping_fee ? Number(quote.shipping_fee) : 0;
+
+    if (taxAmount > 0) {
+      page.drawText(`Tax (${(taxRate * 100).toFixed(0)}%)`, {
         x: col3X - 60,
         y: yPosition,
         size: 10,
         font: regularFont,
         color: black,
       })
-      const taxText = `${currencySymbol}${tax.toFixed(2)}`
+      const taxText = `${currencySymbol}${taxAmount.toFixed(2)}`
       const taxWidth = regularFont.widthOfTextAtSize(taxText, 10)
       page.drawText(taxText, {
         x: tableRight - taxWidth - 10,
+        y: yPosition,
+        size: 10,
+        font: regularFont,
+        color: black,
+      })
+      yPosition -= 15
+    }
+
+    // Shipping Fee (if applicable) - right-aligned
+    if (shippingFee > 0) {
+      page.drawText('Shipping Fee', {
+        x: col3X - 60,
+        y: yPosition,
+        size: 10,
+        font: regularFont,
+        color: black,
+      })
+      const shippingText = `${currencySymbol}${shippingFee.toFixed(2)}`
+      const shippingWidth = regularFont.widthOfTextAtSize(shippingText, 10)
+      page.drawText(shippingText, {
+        x: tableRight - shippingWidth - 10,
         y: yPosition,
         size: 10,
         font: regularFont,
@@ -728,7 +751,7 @@ async function generateQuotePDF(quote: any, items: any[], deliveryAddress: any):
       opacity: 0.1,
     })
 
-    const total = quote.total_amount || (subtotal + tax)
+    const total = quote.total_amount || (subtotal + taxAmount + shippingFee)
     const currency = quote.currency || 'USD'
     page.drawText(`Total (${currency})`, {
       x: col3X - 60,
