@@ -31,7 +31,8 @@ import {
   ChevronDown,
   MapPin,
   Menu,
-  Bell
+  Bell,
+  HelpCircle
 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
@@ -264,6 +265,20 @@ export const CustomerNavigation: React.FC = () => {
                       </Link>
                     );
                   })}
+                  
+                  {/* Help & Support Link */}
+                  <Link 
+                    to="/portal/help"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Button
+                      variant={location.pathname === '/portal/help' ? "secondary" : "ghost"}
+                      className="w-full justify-start h-12 text-base touch-safe"
+                    >
+                      <HelpCircle className="h-5 w-5 mr-3 flex-shrink-0" />
+                      <span className="flex-1 text-left">Help & Support</span>
+                    </Button>
+                  </Link>
                 </div>
               </SheetContent>
             </Sheet>
@@ -329,6 +344,13 @@ export const CustomerNavigation: React.FC = () => {
                   <Link to="/portal/profile" className="flex items-center w-full touch-safe">
                     <User className="h-4 w-4 mr-2 text-[#0077B6]" />
                     Profile Settings
+                  </Link>
+                </DropdownMenuItem>
+                
+                <DropdownMenuItem asChild>
+                  <Link to="/portal/help" className="flex items-center w-full touch-safe">
+                    <HelpCircle className="h-4 w-4 mr-2 text-[#0077B6]" />
+                    Help & Support
                   </Link>
                 </DropdownMenuItem>
                 

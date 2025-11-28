@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { CustomerNavigation } from '@/components/customer/CustomerNavigation';
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { RealtimeIndicator } from '@/components/realtime/RealtimeIndicator';
+import { HelpButton } from '@/components/customer/help/HelpButton';
 import { useBackgroundSync } from '@/hooks/useBackgroundSync';
 import { mobileFeatures } from '@/config/mobile.config';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -24,6 +25,7 @@ export const CustomerLayout: React.FC = () => {
         <Outlet />
       </main>
       {mobileFeatures.showPWAInstallPrompt && <PWAInstallPrompt />}
+      <HelpButton />
     </div>
   );
 };

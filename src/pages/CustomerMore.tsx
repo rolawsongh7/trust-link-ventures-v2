@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Receipt,
   MoreHorizontal,
-  Grid3X3
+  Grid3X3,
+  HelpCircle
 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
@@ -93,6 +94,18 @@ export const CustomerMore: React.FC = () => {
           href: '/portal/settings',
           icon: Settings,
           iconColor: 'text-gray-500'
+        }
+      ]
+    },
+    {
+      title: 'Support',
+      items: [
+        {
+          title: 'Help & FAQs',
+          description: 'Get answers to common questions',
+          href: '/portal/help',
+          icon: HelpCircle,
+          iconColor: 'text-cyan-500'
         }
       ]
     }

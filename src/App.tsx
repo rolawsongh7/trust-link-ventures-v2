@@ -43,6 +43,7 @@ import { CustomerAddresses } from "@/components/customer/CustomerAddresses";
 import { CustomerMore } from "@/pages/CustomerMore";
 import CustomerNotifications from "@/pages/CustomerNotifications";
 import CustomerAnalytics from "@/pages/CustomerAnalytics";
+import CustomerHelp from "@/pages/CustomerHelp";
 import QuoteView from "@/pages/QuoteView";
 import ManualQuoteAnalytics from "@/components/analytics/ManualQuoteAnalytics";
 import CurrencyAnalytics from "@/components/analytics/CurrencyAnalytics";
@@ -219,6 +220,7 @@ const App = () => {
                         <Route path="notifications" element={<CustomerNotifications />} />
                         <Route path="profile" element={<CustomerProfile />} />
                         <Route path="analytics" element={<CustomerAnalytics />} />
+                        <Route path="help" element={<CustomerHelp />} />
                         <Route path="payment-callback" element={<PaymentCallback />} />
                       </Route>
                       
@@ -305,7 +307,7 @@ const App = () => {
                         <Route path="addresses" element={<CustomerAddresses />} />
                         <Route path="notifications" element={<CustomerNotifications />} />
                         <Route path="analytics" element={<CustomerAnalytics />} />
-                        
+                        <Route path="help" element={<CustomerHelp />} />
                         <Route path="profile" element={<CustomerProfile />} />
                         <Route path="payment-callback" element={<PaymentCallback />} />
                       </Route>
