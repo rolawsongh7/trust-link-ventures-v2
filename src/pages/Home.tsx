@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Globe, TrendingUp, Users, Zap, Package, Leaf, Star, Ship, Truck, Target, Search, Shield, Factory, MapPin, CheckCircle, Clock, Thermometer, LogIn, Bell } from 'lucide-react';
+import SEO from '@/components/SEO';
+import { PAGE_SEO, SEO_CONFIG } from '@/config/seo.config';
 import { useCounterAnimation } from '@/hooks/useCounterAnimation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -66,6 +68,39 @@ const StatsCard = ({
     </div>;
 };
 const Home = () => {
+  // Home page SEO structured data
+  const homeStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": PAGE_SEO.home.title,
+    "description": PAGE_SEO.home.description,
+    "mainEntity": {
+      "@type": "LocalBusiness",
+      "name": SEO_CONFIG.companyInfo.name,
+      "image": SEO_CONFIG.defaultImage,
+      "telephone": SEO_CONFIG.companyInfo.telephone,
+      "email": SEO_CONFIG.companyInfo.email,
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": SEO_CONFIG.companyInfo.address.streetAddress,
+        "addressLocality": SEO_CONFIG.companyInfo.address.addressLocality,
+        "addressRegion": SEO_CONFIG.companyInfo.address.addressRegion,
+        "addressCountry": SEO_CONFIG.companyInfo.address.addressCountry
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": SEO_CONFIG.companyInfo.geo.latitude,
+        "longitude": SEO_CONFIG.companyInfo.geo.longitude
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "opens": "08:00",
+        "closes": "17:00"
+      },
+      "priceRange": "$$"
+    }
+  };
   const [currentSlide, setCurrentSlide] = useState(0);
   const heroStories = [{
     title: <>
@@ -188,6 +223,13 @@ const Home = () => {
     return () => clearInterval(processTimer);
   }, [processSteps.length]);
   return <div className="min-h-screen">
+      <SEO 
+        title={PAGE_SEO.home.title}
+        description={PAGE_SEO.home.description}
+        keywords={PAGE_SEO.home.keywords}
+        canonical="https://trustlinkcompany.com"
+        structuredData={homeStructuredData}
+      />
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0" style={{

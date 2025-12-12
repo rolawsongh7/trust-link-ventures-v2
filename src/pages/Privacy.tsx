@@ -1,8 +1,16 @@
 import React from 'react';
+import SEO from '@/components/SEO';
+import { PAGE_SEO } from '@/config/seo.config';
 
 const Privacy = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title={PAGE_SEO.privacy.title}
+        description={PAGE_SEO.privacy.description}
+        keywords={PAGE_SEO.privacy.keywords}
+        canonical="https://trustlinkcompany.com/privacy"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="prose prose-lg max-w-none">
           <h1 className="text-3xl font-poppins font-bold text-foreground mb-8">

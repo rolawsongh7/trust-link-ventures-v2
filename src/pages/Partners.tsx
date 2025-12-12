@@ -7,7 +7,8 @@ import PartnerGrid from '@/components/partners/PartnerGrid';
 import portFleetAerial from '@/assets/port-fleet-aerial.jpg';
 import partnershipsHeroBg from '@/assets/partnerships-hero-bg.jpg';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { Helmet } from 'react-helmet-async';
+import SEO from '@/components/SEO';
+import { PAGE_SEO, SEO_CONFIG } from '@/config/seo.config';
 import { getStorageUrl } from '@/config/supabase';
 
 const Partners = () => {
@@ -88,35 +89,35 @@ const Partners = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Global Partners | Trust Link Ventures - Premium Frozen Food Suppliers</title>
-        <meta name="description" content="Meet our trusted global partners providing premium frozen seafood and meat products. Strategic partnerships across 6 continents ensuring quality supply chains." />
-        <meta name="keywords" content="global partners, frozen food suppliers, seafood partners, meat suppliers, international food trade, supply chain partners" />
-        <link rel="canonical" href="https://trustlinkventures.com/partners" />
-        <meta property="og:title" content="Global Partners | Trust Link Ventures" />
-        <meta property="og:description" content="Our network of trusted global suppliers ensuring premium quality frozen products worldwide." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://trustlinkventures.com/partners" />
-        
-        {/* Structured Data */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            "name": "Trust Link Ventures",
-            "url": "https://trustlinkventures.com",
-            "partner": globalPartners.map(partner => ({
-              "@type": "Organization",
-              "name": partner.name,
-              "url": partner.website,
-              "location": {
-                "@type": "Place",
-                "name": partner.location
+      <SEO 
+        title={PAGE_SEO.partners.title}
+        description={PAGE_SEO.partners.description}
+        keywords={PAGE_SEO.partners.keywords}
+        canonical="https://trustlinkcompany.com/partners"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": "Global Partners & Suppliers",
+          "description": PAGE_SEO.partners.description,
+          "mainEntity": {
+            "@type": "ItemList",
+            "name": "Trust Link Ventures Global Partners",
+            "itemListElement": globalPartners.map((partner, index) => ({
+              "@type": "ListItem",
+              "position": index + 1,
+              "item": {
+                "@type": "Organization",
+                "name": partner.name,
+                "url": partner.website,
+                "address": {
+                  "@type": "PostalAddress",
+                  "addressCountry": partner.location
+                }
               }
             }))
-          })}
-        </script>
-      </Helmet>
+          }
+        }}
+      />
       
       <div className="min-h-screen bg-background">
         {/* Hero Section */}
