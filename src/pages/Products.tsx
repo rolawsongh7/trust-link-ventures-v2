@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Fish, Beef, Package, Globe, Send, X, Filter } from 'lucide-react';
+import SEO from '@/components/SEO';
+import { PAGE_SEO, SEO_CONFIG } from '@/config/seo.config';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -389,6 +391,37 @@ const Products = () => {
 
   return (
     <div className="min-h-screen">
+      <SEO 
+        title={PAGE_SEO.products.title}
+        description={PAGE_SEO.products.description}
+        keywords={PAGE_SEO.products.keywords}
+        canonical="https://trustlinkcompany.com/products"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "name": "Premium Frozen Food Products Catalog",
+          "description": PAGE_SEO.products.description,
+          "mainEntity": {
+            "@type": "ItemList",
+            "name": "Trust Link Ventures Product Catalog",
+            "numberOfItems": products.length,
+            "itemListElement": products.slice(0, 10).map((product, index) => ({
+              "@type": "ListItem",
+              "position": index + 1,
+              "item": {
+                "@type": "Product",
+                "name": product.name,
+                "description": product.description,
+                "category": product.category,
+                "brand": {
+                  "@type": "Brand",
+                  "name": product.brand || product.supplier
+                }
+              }
+            }))
+          }
+        }}
+      />
       {/* Hero Section */}
       <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
         <div 

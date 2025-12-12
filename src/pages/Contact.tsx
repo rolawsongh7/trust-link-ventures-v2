@@ -12,6 +12,8 @@ import ContactFAQ from '@/components/contact/ContactFAQ';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 import appleStoreBadge from '@/assets/app-store-badge.svg';
 import googlePlayBadge from '@/assets/google-play-badge.png';
+import SEO from '@/components/SEO';
+import { PAGE_SEO, SEO_CONFIG } from '@/config/seo.config';
 
 const Contact = () => {
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
@@ -106,6 +108,30 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title={PAGE_SEO.contact.title}
+        description={PAGE_SEO.contact.description}
+        keywords={PAGE_SEO.contact.keywords}
+        canonical="https://trustlinkcompany.com/contact"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "ContactPage",
+          "name": "Contact Trust Link Ventures",
+          "description": PAGE_SEO.contact.description,
+          "mainEntity": {
+            "@type": "LocalBusiness",
+            "name": SEO_CONFIG.companyInfo.name,
+            "telephone": SEO_CONFIG.companyInfo.telephone,
+            "email": SEO_CONFIG.companyInfo.email,
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": SEO_CONFIG.companyInfo.address.streetAddress,
+              "addressLocality": SEO_CONFIG.companyInfo.address.addressLocality,
+              "addressCountry": SEO_CONFIG.companyInfo.address.addressCountry
+            }
+          }
+        }}
+      />
       {/* Hero Section */}
       <section 
         className="relative min-h-[60vh] sm:min-h-[70vh] md:min-h-[80vh] flex items-center justify-center overflow-hidden"

@@ -16,6 +16,8 @@ import globalPartnerships2020 from '@/assets/timeline/2020-global-partnerships.j
 import tonnes2024 from '@/assets/timeline/2024-1200-tonnes.jpg';
 import { useCounterAnimation } from '@/hooks/useCounterAnimation';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
+import SEO from '@/components/SEO';
+import { PAGE_SEO, SEO_CONFIG } from '@/config/seo.config';
 
 const About = () => {
   const impactRef = useRef<HTMLDivElement>(null);
@@ -236,6 +238,24 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title={PAGE_SEO.about.title}
+        description={PAGE_SEO.about.description}
+        keywords={PAGE_SEO.about.keywords}
+        canonical="https://trustlinkcompany.com/about"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          "name": "About Trust Link Ventures",
+          "description": PAGE_SEO.about.description,
+          "mainEntity": {
+            "@type": "Organization",
+            "name": SEO_CONFIG.companyInfo.name,
+            "foundingDate": SEO_CONFIG.companyInfo.foundingDate,
+            "description": "Ghana's leading cold chain logistics partner since 2006."
+          }
+        }}
+      />
       {/* Hero Section */}
       <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
         {/* Background Image */}

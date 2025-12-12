@@ -1,8 +1,16 @@
 import React from 'react';
+import SEO from '@/components/SEO';
+import { PAGE_SEO } from '@/config/seo.config';
 
 const Terms = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title={PAGE_SEO.terms.title}
+        description={PAGE_SEO.terms.description}
+        keywords={PAGE_SEO.terms.keywords}
+        canonical="https://trustlinkcompany.com/terms"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="prose prose-lg max-w-none">
           <h1 className="text-3xl font-poppins font-bold text-foreground mb-8">

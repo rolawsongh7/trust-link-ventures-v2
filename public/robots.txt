@@ -1,14 +1,33 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# Trust Link Ventures - robots.txt
+# https://trustlinkcompany.com
 
 User-agent: *
 Allow: /
+
+# Public pages
+Allow: /products
+Allow: /about
+Allow: /partners
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+Allow: /cookies
+
+# Block private/admin pages
+Disallow: /admin/*
+Disallow: /portal/*
+Disallow: /portal-auth
+Disallow: /admin-auth
+Disallow: /api/*
+Disallow: /supplier/*
+
+# Block internal/utility pages
+Disallow: /track/*
+Disallow: /quote/*
+Disallow: /order/*
+
+# Crawl delay (be polite to our server)
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://trustlinkcompany.com/sitemap.xml
