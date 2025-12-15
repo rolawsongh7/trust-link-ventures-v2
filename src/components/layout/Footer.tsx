@@ -5,7 +5,7 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
-import { TermsDialog, PrivacyDialog, CookiesDialog } from '@/components/legal/LegalDialogs';
+import { TermsDialog, CookiesDialog } from '@/components/legal/LegalDialogs';
 import { validateEmail } from '@/lib/disposableEmailDomains';
 import { checkNewsletterRateLimit } from '@/lib/newsletterRateLimit';
 import { RECAPTCHA_SITE_KEY } from '@/config/recaptcha';
@@ -228,13 +228,9 @@ const Footer = () => {
                   </button>
                 }
               />
-              <PrivacyDialog 
-                trigger={
-                  <button className="text-blue-200 hover:text-blue-100 text-sm transition-colors">
-                    Privacy Policy
-                  </button>
-                }
-              />
+              <Link to="/privacy" className="text-blue-200 hover:text-blue-100 text-sm transition-colors">
+                Privacy Policy
+              </Link>
               <CookiesDialog 
                 trigger={
                   <button className="text-blue-200 hover:text-blue-100 text-sm transition-colors">

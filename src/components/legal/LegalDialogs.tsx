@@ -89,7 +89,7 @@ export const PrivacyDialog = ({ trigger }: { trigger: React.ReactNode }) => (
       
       <section>
         <h3 className="font-semibold mb-2">1. Introduction</h3>
-        <p>Trust Link Ventures Ltd. ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your personal information when you visit our website or interact with our services.</p>
+        <p>Trust Link Company Ltd. ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your personal information when you visit our website or interact with our services.</p>
       </section>
 
       <section>
@@ -124,7 +124,7 @@ export const PrivacyDialog = ({ trigger }: { trigger: React.ReactNode }) => (
 
       <section>
         <h3 className="font-semibold mb-2">8. Contact Us</h3>
-        <p>If you have questions about this Privacy Policy, please contact us at: <a href="mailto:info@trustlinkventures.com" className="text-primary hover:underline">info@trustlinkventures.com</a></p>
+        <p>If you have questions about this Privacy Policy, please contact us at: <a href="mailto:info@trustlinkcompany.com" className="text-primary hover:underline">info@trustlinkcompany.com</a></p>
       </section>
     </div>
   </LegalDialog>
