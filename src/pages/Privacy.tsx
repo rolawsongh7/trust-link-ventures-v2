@@ -121,10 +121,9 @@ const Privacy = () => {
               <h2 className="text-xl font-poppins font-semibold text-foreground mb-3">
                 4. Sharing of Information
               </h2>
-              <ul className="list-disc pl-6 space-y-2 text-foreground">
-                <li>We do not sell, trade, or rent your personal data.</li>
-                <li>Data may be shared with CRM or analytics platforms solely for service improvement.</li>
-              </ul>
+              <p className="text-foreground">
+                We do not sell, trade, or rent your personal data.
+              </p>
             </section>
 
             <section>
