@@ -53,9 +53,9 @@ export const PAGE_SEO = {
     keywords: 'seafood suppliers, meat suppliers, global food network, certified suppliers, j marr seafoods'
   },
   privacy: {
-    title: 'Privacy Policy | Trust Link Ventures',
-    description: 'Learn how Trust Link Ventures collects, uses, and protects your personal information. Our commitment to data privacy and security.',
-    keywords: 'privacy policy, data protection, trust link ventures privacy'
+    title: 'Privacy Policy | Trust Link Company',
+    description: 'Learn how Trust Link Company collects, uses, and protects your personal information. Our commitment to data privacy and security.',
+    keywords: 'privacy policy, data protection, trust link company privacy'
   },
   terms: {
     title: 'Terms of Service | Trust Link Ventures',

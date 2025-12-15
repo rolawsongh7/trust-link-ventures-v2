@@ -22,7 +22,7 @@ const Privacy = () => {
           </p>
           
           <p className="text-foreground mb-6">
-            Trust Link Ventures Ltd. ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your personal information when you visit our website or interact with our services.
+            Trust Link Company Ltd. ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your personal information when you visit our website or interact with our services.
           </p>
 
           <div className="space-y-6">
@@ -78,7 +78,7 @@ const Privacy = () => {
                     <strong>Retention:</strong> Payment proof images are retained for accounting and audit purposes for up to 7 years in compliance with financial record-keeping regulations.
                   </p>
                   <p className="text-foreground mt-2">
-                    <strong>Control:</strong> You can revoke camera/photo access at any time through your device Settings → Privacy → Photos/Camera → Trust Link Ventures.
+                    <strong>Control:</strong> You can revoke camera/photo access at any time through your device Settings → Privacy → Photos/Camera → Trust Link Company.
                   </p>
                 </div>
 
@@ -94,7 +94,7 @@ const Privacy = () => {
                     <strong>Sharing:</strong> Location data is shared only with our logistics partners for delivery purposes and is never sold to advertisers.
                   </p>
                   <p className="text-foreground mt-2">
-                    <strong>Control:</strong> You can deny location access or change settings at any time through your device Settings → Privacy → Location Services → Trust Link Ventures.
+                    <strong>Control:</strong> You can deny location access or change settings at any time through your device Settings → Privacy → Location Services → Trust Link Company.
                   </p>
                 </div>
 
@@ -107,7 +107,7 @@ const Privacy = () => {
                     <strong>Data Usage:</strong> Your device token is stored to send notifications. We do not use push notifications for advertising or promotional content without your consent.
                   </p>
                   <p className="text-foreground mt-2">
-                    <strong>Control:</strong> Disable push notifications at any time through your device Settings → Notifications → Trust Link Ventures.
+                    <strong>Control:</strong> Disable push notifications at any time through your device Settings → Notifications → Trust Link Company.
                   </p>
                 </div>
               </div>
@@ -154,8 +154,8 @@ const Privacy = () => {
               </h2>
               <p className="text-foreground">
                 For privacy concerns, email us at:{' '}
-                <a href="mailto:privacy@trustlinkventures.com" className="text-primary hover:underline">
-                  privacy@trustlinkventures.com
+                <a href="mailto:privacy@trustlinkcompany.com" className="text-primary hover:underline">
+                  privacy@trustlinkcompany.com
                 </a>
               </p>
             </section>
