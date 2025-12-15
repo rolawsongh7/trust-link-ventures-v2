@@ -60,16 +60,16 @@ export const AccountStats: React.FC = () => {
 
       const customerId = customerMapping?.customer_id || profile?.id;
 
-      // Fetch orders count and total
+      // Fetch orders count and total - only include orders with confirmed payment
       const { data: orders } = await supabase
         .from('orders')
         .select('total_amount')
         .eq('customer_id', customerId)
-        .not('status', 'eq', 'cancelled');
+        .in('status', ['payment_received', 'processing', 'ready_to_ship', 'shipped', 'delivered']);
 
-      // Fetch quotes count
+      // Fetch formal quotes count (not quote requests)
       const { data: quotes } = await supabase
-        .from('quote_requests')
+        .from('quotes')
         .select('id')
         .eq('customer_id', customerId);
 
