@@ -140,6 +140,7 @@ const Footer = () => {
                   <MapPin className="h-4 w-4 text-blue-300 mt-0.5" />
                   <div className="text-blue-200">
                     <div className="font-medium">Trust Link Ventures Limited</div>
+                    <div>Akasanoma Road behind Mankoadze Fisheries</div>
                     <div>P. O. Box 709</div>
                     <div>Adabraka</div>
                     <div>Accra, Ghana</div>
