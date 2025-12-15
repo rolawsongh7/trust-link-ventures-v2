@@ -39,6 +39,21 @@ Navigate to `ios/App/App/Info.plist` and add the following entries:
 <dict>
     <key>NSAllowsArbitraryLoads</key>
     <false/>
+    <key>NSExceptionDomains</key>
+    <dict>
+        <!-- Allow Supabase API connections -->
+        <key>supabase.co</key>
+        <dict>
+            <key>NSIncludesSubdomains</key>
+            <true/>
+            <key>NSExceptionAllowsInsecureHTTPLoads</key>
+            <false/>
+            <key>NSExceptionRequiresForwardSecrecy</key>
+            <true/>
+            <key>NSExceptionMinimumTLSVersion</key>
+            <string>TLSv1.2</string>
+        </dict>
+    </dict>
 </dict>
 ```
 

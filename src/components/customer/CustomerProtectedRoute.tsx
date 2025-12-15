@@ -11,7 +11,16 @@ export const CustomerProtectedRoute: React.FC<CustomerProtectedRouteProps> = ({ 
   const { user, loading } = useCustomerAuth();
   const location = useLocation();
 
+  // Debug logging for iOS issues
+  console.log('[CustomerProtectedRoute] Auth state:', { 
+    hasUser: !!user, 
+    userId: user?.id?.slice(0, 8) ?? 'none',
+    loading, 
+    path: location.pathname 
+  });
+
   if (loading) {
+    console.log('[CustomerProtectedRoute] Still loading auth state...');
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted/20 p-6">
         <div className="max-w-7xl mx-auto space-y-6">

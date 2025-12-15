@@ -66,15 +66,23 @@ export const CustomerCatalog: React.FC = () => {
   }, []);
 
   const fetchProducts = async () => {
+    console.log('[CustomerCatalog] Starting product fetch...');
     try {
       // Fetch real products from the database
+      console.log('[CustomerCatalog] Querying Supabase for products...');
       const { data: products, error } = await supabase
         .from('supplier_products')
         .select('*')
         .eq('is_active', true)
         .order('name');
 
+      console.log('[CustomerCatalog] Supabase response:', { 
+        productCount: products?.length ?? 0, 
+        error: error?.message ?? null 
+      });
+
       if (error) {
+        console.error('[CustomerCatalog] Supabase error:', error);
         throw error;
       }
 
