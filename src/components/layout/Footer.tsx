@@ -229,9 +229,14 @@ const Footer = () => {
                   </button>
                 }
               />
-              <Link to="/privacy" className="text-blue-200 hover:text-blue-100 text-sm transition-colors">
+              <a 
+                href="https://www.trustlinkcompany.com/privacy" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-200 hover:text-blue-100 text-sm transition-colors"
+              >
                 Privacy Policy
-              </Link>
+              </a>
               <CookiesDialog 
                 trigger={
                   <button className="text-blue-200 hover:text-blue-100 text-sm transition-colors">
