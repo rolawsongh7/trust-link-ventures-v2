@@ -71,6 +71,7 @@ import AdminAuth from "./pages/AdminAuth";
 import CustomerAuth from "./pages/CustomerAuth";
 import Unauthorized from "./pages/Unauthorized";
 import NotificationSettingsPage from "./pages/NotificationSettings";
+import MobileHub from "./pages/MobileHub";
 
 
 const queryClient = new QueryClient({
@@ -184,6 +185,9 @@ const App = () => {
                         <Route path="settings" element={<Settings />} />
                       </Route>
                       
+                      {/* Mobile Hub - standalone page outside PublicLayout */}
+                      <Route path="/hub" element={<MobileHub />} />
+                      
                       {/* Public routes */}
                       <Route element={<PublicLayout />}>
                         <Route path="/" element={<Home />} />
@@ -273,6 +277,9 @@ const App = () => {
                   {/* PUBLIC/CUSTOMER DOMAIN ONLY (Production) */}
                   {showOnlyPublicRoutes && (
                     <>
+                      {/* Mobile Hub - standalone page outside PublicLayout */}
+                      <Route path="/hub" element={<MobileHub />} />
+                      
                       {/* Public routes */}
                       <Route element={<PublicLayout />}>
                         <Route path="/" element={<Home />} />
@@ -360,6 +367,9 @@ const App = () => {
                         <Route path="settings" element={<Settings />} />
                       </Route>
                       
+                      {/* Mobile Hub - standalone page outside PublicLayout */}
+                      <Route path="/hub" element={<MobileHub />} />
+                      
                       {/* Public routes */}
                       <Route element={<PublicLayout />}>
                         <Route path="/" element={<Home />} />
@@ -439,6 +449,9 @@ const App = () => {
                   
                   {showOnlyPublicRoutes && (
                     <>
+                      {/* Mobile Hub - standalone page outside PublicLayout */}
+                      <Route path="/hub" element={<MobileHub />} />
+                      
                       {/* Public routes */}
                       <Route element={<PublicLayout />}>
                         <Route path="/" element={<Home />} />
