@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { categorySlides } from '@/data/categorySlides';
-import trustLinkLogo from '@/assets/trust-link-logo.svg';
+import trustLinkLogo from '@/assets/trust-link-logo.png';
 
 const MobileHub: React.FC = () => {
   const navigate = useNavigate();
