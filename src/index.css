@@ -46,6 +46,16 @@ html {
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
+/* Shimmer animation for buttons */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* Stagger animation for dashboard cards */
 @keyframes fadeInUp {
   from {
