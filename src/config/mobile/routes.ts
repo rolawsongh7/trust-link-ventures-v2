@@ -1,4 +1,4 @@
-import { LucideIcon, Home, Package, Info, UserCircle, ShoppingCart, FileText, MoreHorizontal } from 'lucide-react';
+import { LucideIcon, Home, Package, Info, UserCircle, ShoppingCart, FileText, MoreHorizontal, LogIn } from 'lucide-react';
 
 export interface MobileTab {
   label: string;
@@ -6,6 +6,7 @@ export interface MobileTab {
   icon: LucideIcon;
   badge?: () => number;
   requiresAuth?: boolean;
+  hideWhenAuth?: boolean;
 }
 
 export const MOBILE_TABS: MobileTab[] = [
@@ -26,6 +27,13 @@ export const MOBILE_TABS: MobileTab[] = [
     path: '/about',
     icon: Info,
     requiresAuth: false
+  },
+  {
+    label: 'Sign In',
+    path: '/portal-auth',
+    icon: LogIn,
+    requiresAuth: false,
+    hideWhenAuth: true
   },
   {
     label: 'Portal',
