@@ -1,18 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRoleAuth } from '@/hooks/useRoleAuth';
-import { LogIn, Menu, X, Shield } from 'lucide-react';
+import { LogIn, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import trustLinkLogo from '@/assets/trust-link-logo.png';
-import { NotificationCenter } from '@/components/notifications/NotificationCenter';
-import { navigateToAdminPortal } from '@/utils/domainUtils';
 import { isNativeApp } from '@/utils/env';
 
 export const PublicHeader = () => {
-  const { user } = useAuth();
-  const { hasAdminAccess } = useRoleAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Component refreshed to fix caching issue
