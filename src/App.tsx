@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PerformanceMonitor } from '@/components/debug/PerformanceMonitor';
 import { HelmetProvider } from "react-helmet-async";
+import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CustomerAuthProvider } from "@/hooks/useCustomerAuth";
 import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedRoute";
@@ -72,6 +73,7 @@ import CustomerAuth from "./pages/CustomerAuth";
 import Unauthorized from "./pages/Unauthorized";
 import NotificationSettingsPage from "./pages/NotificationSettings";
 import MobileHub from "./pages/MobileHub";
+import CustomerSettings from "./pages/CustomerSettings";
 
 
 const queryClient = new QueryClient({
@@ -144,12 +146,13 @@ const App = () => {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <CustomerAuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              {import.meta.env.DEV && <PerformanceMonitor />}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <AuthProvider>
+            <CustomerAuthProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                {import.meta.env.DEV && <PerformanceMonitor />}
               {nativeApp ? (
                 <HashRouter>
                   <ScrollToTop />
@@ -223,6 +226,7 @@ const App = () => {
                         <Route path="addresses" element={<CustomerAddresses />} />
                         <Route path="notifications" element={<CustomerNotifications />} />
                         <Route path="profile" element={<CustomerProfile />} />
+                        <Route path="settings" element={<CustomerSettings />} />
                         <Route path="analytics" element={<CustomerAnalytics />} />
                         <Route path="help" element={<CustomerHelp />} />
                         <Route path="payment-callback" element={<PaymentCallback />} />
@@ -316,6 +320,7 @@ const App = () => {
                         <Route path="analytics" element={<CustomerAnalytics />} />
                         <Route path="help" element={<CustomerHelp />} />
                         <Route path="profile" element={<CustomerProfile />} />
+                        <Route path="settings" element={<CustomerSettings />} />
                         <Route path="payment-callback" element={<PaymentCallback />} />
                       </Route>
                       
@@ -501,8 +506,9 @@ const App = () => {
             </TooltipProvider>
           </CustomerAuthProvider>
         </AuthProvider>
-      </QueryClientProvider>
-    </HelmetProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
   );
 };
 
