@@ -120,19 +120,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onRequestQuote }) =>
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 bg-background border border-border touch-manipulation">
+    <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 bg-background border border-border touch-manipulation">
       {/* Product Image */}
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-t-lg">
         <img
           src={product.image_public_url || getDefaultImage()}
           alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          style={{ 
+            transform: 'translateZ(0)',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden'
+          }}
           onError={(e) => {
             e.currentTarget.src = getDefaultImage();
           }}
         />
         {/* Badge */}
-        <div className="absolute top-2 md:top-4 left-2 md:left-4">
+        <div className="absolute top-2 md:top-4 left-2 md:left-4 z-10">
           <Badge className="bg-primary text-primary-foreground font-medium px-2 md:px-3 py-1 text-xs md:text-sm">
             {getBadgeText()}
           </Badge>
