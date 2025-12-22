@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Package, ShoppingCart, MessageSquare, HelpCircle, ArrowRight, Snowflake, Shield, Truck, LogIn, LayoutDashboard } from 'lucide-react';
+import { Package, ShoppingCart, MessageSquare, HelpCircle, ArrowRight, Snowflake, Shield, Truck, LogIn, LayoutDashboard, Loader2 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
@@ -17,11 +17,24 @@ const MobileHub: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile } = useCustomerAuth();
   const { totalItems } = useShoppingCart();
+  const [isNavigating, setIsNavigating] = useState(false);
   
   // Carousel state for auto-play and indicators
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slideCount, setSlideCount] = useState(0);
+
+  const handleNavigateToDashboard = () => {
+    if (isNavigating) return;
+    setIsNavigating(true);
+    navigate('/portal');
+  };
+
+  const handleNavigateToAuth = () => {
+    if (isNavigating) return;
+    setIsNavigating(true);
+    navigate('/portal-auth');
+  };
 
   // Scroll animations for sections
   const { elementRef: promotionsRef, isVisible: promotionsVisible } = useScrollAnimation({ threshold: 0.2 });
@@ -176,15 +189,21 @@ const MobileHub: React.FC = () => {
               whileTap="tap"
             >
               <Button
-                onClick={() => navigate('/portal')}
+                onClick={handleNavigateToDashboard}
+                disabled={isNavigating}
                 variant="outline"
-                className="w-full justify-between h-14 text-base"
+                className="w-full justify-between h-14 text-base touch-manipulation"
+                style={{ touchAction: 'manipulation' }}
               >
                 <span className="flex items-center gap-2">
-                  <LayoutDashboard className="h-5 w-5" />
-                  Go to My Dashboard
+                  {isNavigating ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <LayoutDashboard className="h-5 w-5" />
+                  )}
+                  {isNavigating ? 'Loading...' : 'Go to My Dashboard'}
                 </span>
-                <ArrowRight className="h-5 w-5" />
+                {!isNavigating && <ArrowRight className="h-5 w-5" />}
               </Button>
             </motion.div>
           ) : (
@@ -196,13 +215,21 @@ const MobileHub: React.FC = () => {
               className="relative overflow-hidden rounded-md"
             >
               <Button
-                onClick={() => navigate('/portal-auth')}
-                className="w-full h-14 text-base gap-2 relative overflow-hidden"
+                onClick={handleNavigateToAuth}
+                disabled={isNavigating}
+                className="w-full h-14 text-base gap-2 relative overflow-hidden touch-manipulation"
+                style={{ touchAction: 'manipulation' }}
               >
-                <LogIn className="h-5 w-5" />
-                Sign In to Get Started
+                {isNavigating ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <LogIn className="h-5 w-5" />
+                )}
+                {isNavigating ? 'Loading...' : 'Sign In to Get Started'}
                 {/* Shimmer effect */}
-                <span className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                {!isNavigating && (
+                  <span className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                )}
               </Button>
             </motion.div>
           )}

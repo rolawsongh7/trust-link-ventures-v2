@@ -17,6 +17,16 @@ export const CartModal: React.FC<CartModalProps> = ({ open, onOpenChange }) => {
   const { user } = useCustomerAuth();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = React.useState(false);
+  const [updatingItemId, setUpdatingItemId] = React.useState<string | null>(null);
+
+  const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
+    setUpdatingItemId(itemId);
+    try {
+      await updateQuantity(itemId, newQuantity);
+    } finally {
+      setUpdatingItemId(null);
+    }
+  };
 
   const handleSignInToQuote = () => {
     if (user) {
@@ -114,19 +124,23 @@ export const CartModal: React.FC<CartModalProps> = ({ open, onOpenChange }) => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                        className="h-10 w-10 p-0 hover:bg-tl-border/20 min-h-[44px] min-w-[44px]"
+                        onClick={() => handleUpdateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                        disabled={updatingItemId === item.id}
+                        className="h-10 w-10 p-0 hover:bg-tl-border/20 min-h-[44px] min-w-[44px] touch-manipulation active:scale-95 transition-transform"
+                        style={{ touchAction: 'manipulation' }}
                       >
                         <Minus className="h-4 w-4" />
                       </Button>
                       <span className="min-w-[60px] text-center font-medium text-lg text-tl-text">
-                        {item.quantity}
+                        {updatingItemId === item.id ? '...' : item.quantity}
                       </span>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="h-10 w-10 p-0 hover:bg-tl-border/20 min-h-[44px] min-w-[44px]"
+                        onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                        disabled={updatingItemId === item.id}
+                        className="h-10 w-10 p-0 hover:bg-tl-border/20 min-h-[44px] min-w-[44px] touch-manipulation active:scale-95 transition-transform"
+                        style={{ touchAction: 'manipulation' }}
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
