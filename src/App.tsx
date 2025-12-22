@@ -401,7 +401,8 @@ const App = () => {
                         <Route index element={<CustomerPortalMain />} />
                         <Route path="catalog" element={<CustomerCatalog />} />
                         <Route path="cart" element={<CustomerCart />} />
-                        <Route path="quotes" element={<CustomerQuotes />} />
+                    <Route path="quotes" element={<CustomerQuotes />} />
+                    <Route path="quotes/:quoteId" element={<CustomerQuotes />} />
                         <Route path="orders" element={<CustomerOrders />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="communications" element={<CustomerCommunications />} />
@@ -483,7 +484,8 @@ const App = () => {
                         <Route index element={<CustomerPortalMain />} />
                         <Route path="catalog" element={<CustomerCatalog />} />
                         <Route path="cart" element={<CustomerCart />} />
-                        <Route path="quotes" element={<CustomerQuotes />} />
+                  <Route path="quotes" element={<CustomerQuotes />} />
+                  <Route path="quotes/:quoteId" element={<CustomerQuotes />} />
                         <Route path="orders" element={<CustomerOrders />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="communications" element={<CustomerCommunications />} />
