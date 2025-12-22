@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { ensureSignedUrl } from '@/lib/storageHelpers';
 import { CustomerQuotePDFDialog } from './CustomerQuotePDFDialog';
@@ -53,6 +53,7 @@ interface Quote {
 
 export const CustomerQuotes: React.FC = () => {
   const navigate = useNavigate();
+  const { quoteId } = useParams<{ quoteId?: string }>();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,10 +63,36 @@ export const CustomerQuotes: React.FC = () => {
   const [quoteToAccept, setQuoteToAccept] = useState<any>(null);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [selectedQuoteForPDF, setSelectedQuoteForPDF] = useState<Quote | null>(null);
+  const [hasAutoOpened, setHasAutoOpened] = useState(false);
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const { isMobile: isMobileDetection } = useMobileDetection();
+
+  // Auto-open quote PDF when navigating with quoteId in URL
+  useEffect(() => {
+    if (quoteId && quotes.length > 0 && !loading && !hasAutoOpened) {
+      const matchingQuote = quotes.find(q => q.id === quoteId || q.final_quote?.id === quoteId);
+      if (matchingQuote && matchingQuote.final_quote?.final_file_url) {
+        setSelectedQuoteForPDF(matchingQuote);
+        setPdfDialogOpen(true);
+        setHasAutoOpened(true);
+      } else if (matchingQuote && !matchingQuote.final_quote?.final_file_url) {
+        toast({
+          title: "Quote pending",
+          description: "This quote request is still being processed.",
+        });
+        setHasAutoOpened(true);
+      } else if (!matchingQuote) {
+        toast({
+          variant: "destructive",
+          title: "Quote not found",
+          description: "The requested quote could not be found.",
+        });
+        setHasAutoOpened(true);
+      }
+    }
+  }, [quoteId, quotes, loading, hasAutoOpened, toast]);
 
   // Force card view on mobile
   useEffect(() => {
