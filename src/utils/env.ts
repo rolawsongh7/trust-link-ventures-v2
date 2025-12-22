@@ -6,12 +6,39 @@
 import { Capacitor } from '@capacitor/core';
 
 /**
- * Detect if app is running as a native Capacitor app (iOS/Android)
- * Returns true for native platforms, false for web
+ * Detect if app is running as a native Capacitor app (iOS/Android) or in a WebView wrapper
+ * Returns true for native platforms and WebView wrappers (like buildnatively.com), false for regular web
  */
 export const isNativeApp = (): boolean => {
   if (typeof window === 'undefined') return false;
-  return Capacitor.isNativePlatform();
+  
+  // Check Capacitor native platform first
+  if (Capacitor.isNativePlatform()) return true;
+  
+  // Check for buildnatively.com WebView wrapper
+  const userAgent = navigator.userAgent || '';
+  
+  // buildnatively adds 'Natively' to user agent
+  if (userAgent.includes('Natively')) return true;
+  
+  // Check for is_native URL parameter
+  if (window.location.search.includes('is_native=true')) return true;
+  
+  // Generic WebView detection for iOS (WKWebView)
+  if ((window as any).webkit?.messageHandlers) return true;
+  
+  // Generic Android WebView detection (contains "; wv)" in user agent)
+  if (/; wv\)/.test(userAgent) && /Android/.test(userAgent)) return true;
+  
+  return false;
+};
+
+/**
+ * Get the appropriate home URL based on platform
+ * Returns /hub for native apps, / for web
+ */
+export const getNativeHomeUrl = (): string => {
+  return isNativeApp() ? '/hub' : '/';
 };
 
 /**

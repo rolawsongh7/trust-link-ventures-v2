@@ -7,7 +7,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Search, User, LogOut, MessageSquare, Shield, Package } from 'lucide-react';
 import trustLinkLogo from '@/assets/trust-link-logo.png';
 import { getMainUrl } from '@/utils/domainUtils';
-import { isNativeApp } from '@/utils/env';
+import { isNativeApp, getNativeHomeUrl } from '@/utils/env';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,7 +31,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenCommandPalette }) =>
 
   const handleSignOut = async () => {
     await signOut();
-    window.location.href = getMainUrl('/');
+    // Redirect to /hub for native apps, / for web
+    window.location.href = isNativeApp() ? getNativeHomeUrl() : getMainUrl('/');
   };
 
   const getInitials = (name?: string) => {

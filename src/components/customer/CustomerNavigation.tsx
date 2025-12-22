@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { isNativeApp } from '@/utils/env';
+import { isNativeApp, getNativeHomeUrl } from '@/utils/env';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -106,12 +106,14 @@ export const CustomerNavigation: React.FC = () => {
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
     console.log('🔄 Navigation sign out triggered');
+    const redirectUrl = getNativeHomeUrl();
     try {
       await signOut();
+      window.location.href = redirectUrl;
     } catch (error) {
       console.error('Sign out error in navigation:', error);
       // Force redirect as fallback
-      window.location.href = '/';
+      window.location.href = redirectUrl;
     }
   };
 
