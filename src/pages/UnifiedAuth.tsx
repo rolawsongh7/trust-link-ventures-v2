@@ -12,6 +12,7 @@ import { Loader2, ArrowLeft, Eye, EyeOff, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel';
 import trustLinkLogo from '@/assets/trust-link-logo.png';
+import { isNativeApp } from '@/utils/env';
 
 const UnifiedAuth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -170,18 +171,20 @@ const UnifiedAuth = () => {
         </div>
         
         <div className="w-full max-w-md space-y-6 animate-fade-in relative z-10">
-          {/* Back to Home - Mobile */}
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="mb-4 lg:absolute lg:top-8 lg:left-8"
-          >
-            <Link to="/">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
-            </Link>
-          </Button>
+          {/* Back to Home - Web only, hidden in native app */}
+          {!isNativeApp() && (
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="mb-4 lg:absolute lg:top-8 lg:left-8"
+            >
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Home
+              </Link>
+            </Button>
+          )}
 
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-6 p-6 rounded-2xl bg-gradient-to-r from-[hsl(var(--tl-navy-500))]/10 via-[hsl(var(--tl-maritime-500))]/10 to-[hsl(var(--tl-gold-500))]/10 border border-[hsl(var(--tl-maritime-500))]/20 animate-fade-in">
