@@ -31,6 +31,9 @@ export const MobileBottomNav: React.FC = () => {
 
           // Hide auth-required tabs if not logged in
           if (tab.requiresAuth && !user) return null;
+          
+          // Hide "Sign In" tab if user IS logged in
+          if (tab.hideWhenAuth && user) return null;
 
           // Calculate dynamic badge count
           const getBadgeCount = () => {
