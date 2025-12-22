@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
 import { categorySlides } from '@/data/categorySlides';
-import { staggerContainer, staggerItem, cardHover, badgePulse } from '@/lib/animations';
+import { cardHover } from '@/lib/animations';
 import trustLinkLogo from '@/assets/trust-link-logo.png';
 import heroBackground from '@/assets/cold-storage-hero.jpg';
 
@@ -123,48 +123,25 @@ const MobileHub: React.FC = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-background" />
         
-        {/* Hero Content */}
-        <motion.div 
-          className="relative h-full flex flex-col items-center justify-center px-4 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-        >
-          <motion.img 
+        {/* Hero Content - No initial hidden state to prevent flicker */}
+        <div className="relative h-full flex flex-col items-center justify-center px-4 text-center">
+          <img 
             src={trustLinkLogo} 
             alt="Trust Link" 
             className="h-16 w-16 mb-3 drop-shadow-lg"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.4, type: 'spring', stiffness: 200 }}
           />
-          <motion.h1 
-            className="text-2xl font-poppins font-bold text-white drop-shadow-md"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-          >
+          <h1 className="text-2xl font-poppins font-bold text-white drop-shadow-md">
             Trust Link Hub
-          </motion.h1>
-          <motion.p 
-            className="text-white/80 text-sm mt-1"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.4 }}
-          >
+          </h1>
+          <p className="text-white/80 text-sm mt-1">
             Premium Frozen Foods
-          </motion.p>
-        </motion.div>
+          </p>
+        </div>
       </div>
 
-      <motion.main 
-        className="px-4 py-6 space-y-8"
-        variants={staggerContainer}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Welcome Section */}
-        <motion.section variants={staggerItem} className="space-y-2">
+      <main className="px-4 py-6 space-y-8">
+        {/* Welcome Section - No animation to prevent flicker */}
+        <section className="space-y-2">
           <h2 className="text-2xl font-poppins font-bold text-foreground">
             {getGreeting()}!
           </h2>
@@ -177,47 +154,34 @@ const MobileHub: React.FC = () => {
               Explore our premium selection of frozen foods
             </p>
           )}
-        </motion.section>
+        </section>
 
-        {/* Primary CTA with Shimmer */}
-        <motion.section variants={staggerItem}>
+        {/* Primary CTA with Shimmer - No stagger animation */}
+        <section>
           {user ? (
-            <motion.div
-              variants={cardHover}
-              initial="initial"
-              whileHover="hover"
-              whileTap="tap"
+            <Button
+              onClick={handleNavigateToDashboard}
+              disabled={isNavigating}
+              variant="outline"
+              className="w-full justify-between h-14 text-base touch-manipulation active:scale-[0.98] transition-transform"
+              style={{ touchAction: 'manipulation' }}
             >
-              <Button
-                onClick={handleNavigateToDashboard}
-                disabled={isNavigating}
-                variant="outline"
-                className="w-full justify-between h-14 text-base touch-manipulation"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <span className="flex items-center gap-2">
-                  {isNavigating ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <LayoutDashboard className="h-5 w-5" />
-                  )}
-                  {isNavigating ? 'Loading...' : 'Go to My Dashboard'}
-                </span>
-                {!isNavigating && <ArrowRight className="h-5 w-5" />}
-              </Button>
-            </motion.div>
+              <span className="flex items-center gap-2">
+                {isNavigating ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <LayoutDashboard className="h-5 w-5" />
+                )}
+                {isNavigating ? 'Loading...' : 'Go to My Dashboard'}
+              </span>
+              {!isNavigating && <ArrowRight className="h-5 w-5" />}
+            </Button>
           ) : (
-            <motion.div
-              variants={cardHover}
-              initial="initial"
-              whileHover="hover"
-              whileTap="tap"
-              className="relative overflow-hidden rounded-md"
-            >
+            <div className="relative overflow-hidden rounded-md">
               <Button
                 onClick={handleNavigateToAuth}
                 disabled={isNavigating}
-                className="w-full h-14 text-base gap-2 relative overflow-hidden touch-manipulation"
+                className="w-full h-14 text-base gap-2 relative overflow-hidden touch-manipulation active:scale-[0.98] transition-transform"
                 style={{ touchAction: 'manipulation' }}
               >
                 {isNavigating ? (
@@ -231,12 +195,12 @@ const MobileHub: React.FC = () => {
                   <span className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                 )}
               </Button>
-            </motion.div>
+            </div>
           )}
-        </motion.section>
+        </section>
 
-        {/* Featured Products Carousel with Indicators */}
-        <motion.section variants={staggerItem} className="space-y-4">
+        {/* Featured Products Carousel with Indicators - No stagger animation */}
+        <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-poppins font-semibold text-foreground">Featured Products</h3>
             <Button 
@@ -257,32 +221,25 @@ const MobileHub: React.FC = () => {
             <CarouselContent className="-ml-2">
               {categorySlides.map((category, index) => (
                 <CarouselItem key={index} className="pl-2 basis-[75%]">
-                  <motion.div
-                    variants={cardHover}
-                    initial="initial"
-                    whileHover="hover"
-                    whileTap="tap"
+                  <Card 
+                    className="overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
+                    onClick={() => navigate('/portal/catalog')}
                   >
-                    <Card 
-                      className="overflow-hidden cursor-pointer"
-                      onClick={() => navigate('/portal/catalog')}
-                    >
-                      <CardContent className="p-0">
-                        <div className="relative h-40">
-                          <img 
-                            src={category.image} 
-                            alt={category.title}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                          <div className="absolute bottom-0 left-0 right-0 p-4">
-                            <h4 className="text-white font-poppins font-semibold">{category.title}</h4>
-                            <p className="text-white/80 text-sm line-clamp-1">{category.description}</p>
-                          </div>
+                    <CardContent className="p-0">
+                      <div className="relative h-40">
+                        <img 
+                          src={category.image} 
+                          alt={category.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-4">
+                          <h4 className="text-white font-poppins font-semibold">{category.title}</h4>
+                          <p className="text-white/80 text-sm line-clamp-1">{category.description}</p>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </CarouselItem>
               ))}
             </CarouselContent>
@@ -303,44 +260,34 @@ const MobileHub: React.FC = () => {
               />
             ))}
           </div>
-        </motion.section>
+        </section>
 
-        {/* Quick Actions Grid with Hover Effects */}
-        <motion.section variants={staggerItem} className="space-y-4">
+        {/* Quick Actions Grid - No stagger animation */}
+        <section className="space-y-4">
           <h3 className="text-lg font-poppins font-semibold text-foreground">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-3">
-            {quickActions.map((action, index) => {
+            {quickActions.map((action) => {
               const Icon = action.icon;
               return (
-                <motion.button
+                <button
                   key={action.path}
                   onClick={() => navigate(action.path)}
-                  className="relative flex flex-col items-center justify-center p-5 rounded-2xl bg-card border border-border touch-manipulation"
-                  variants={cardHover}
-                  initial="initial"
-                  whileHover="hover"
-                  whileTap="tap"
-                  custom={index}
+                  className="relative flex flex-col items-center justify-center p-5 rounded-2xl bg-card border border-border touch-manipulation active:scale-[0.97] transition-transform"
                 >
                   <div className={`p-3 rounded-xl bg-gradient-to-br ${action.color} mb-3`}>
                     <Icon className={`h-6 w-6 ${action.iconColor}`} />
                   </div>
                   <span className="text-sm font-medium text-foreground">{action.label}</span>
                   {action.badge && action.badge > 0 && (
-                    <motion.span 
-                      className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-xs rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center font-semibold"
-                      variants={badgePulse}
-                      initial="initial"
-                      animate="animate"
-                    >
+                    <span className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-xs rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center font-semibold animate-pulse">
                       {action.badge}
-                    </motion.span>
+                    </span>
                   )}
-                </motion.button>
+                </button>
               );
             })}
           </div>
-        </motion.section>
+        </section>
 
         {/* Promotions Section with Scroll Reveal */}
         <motion.section 
@@ -426,7 +373,7 @@ const MobileHub: React.FC = () => {
             })}
           </div>
         </motion.section>
-      </motion.main>
+      </main>
     </div>
   );
 };
