@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { NotificationSettings } from '@/components/notifications/NotificationSettings';
 import { ArrowLeft, Bell, MessageSquare, Package, TrendingUp } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { getNativeHomeUrl } from '@/utils/env';
 
 const NotificationSettingsPage = () => {
   const { sendLocalNotification } = usePushNotifications();
@@ -46,7 +47,7 @@ const NotificationSettingsPage = () => {
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button asChild variant="ghost" size="sm">
-            <Link to="/">
+            <Link to={getNativeHomeUrl()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Home
             </Link>

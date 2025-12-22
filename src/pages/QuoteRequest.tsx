@@ -1,16 +1,18 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MultiItemQuoteRequest } from '@/components/products/MultiItemQuoteRequest';
+import { getNativeHomeUrl } from '@/utils/env';
 
 const QuoteRequest = () => {
   const navigate = useNavigate();
+  const homeUrl = getNativeHomeUrl();
 
   const handleSuccess = () => {
-    navigate('/');
+    navigate(homeUrl);
   };
 
   const handleCancel = () => {
-    navigate('/');
+    navigate(homeUrl);
   };
 
   return (

@@ -8,6 +8,7 @@ import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { MFAVerificationModal } from '@/components/security/MFAVerificationModal';
+import { getNativeHomeUrl } from '@/utils/env';
 
 const CustomerPortal = () => {
   const [email, setEmail] = useState('');
@@ -73,7 +74,7 @@ const CustomerPortal = () => {
       {/* Back to Home Button - Top of page */}
       <div className="absolute top-4 left-4 z-10">
         <Link 
-          to="/" 
+          to={getNativeHomeUrl()} 
           className="flex items-center text-white lg:text-slate-600 hover:text-white/80 lg:hover:text-slate-800 transition-colors bg-black/20 lg:bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -125,7 +126,7 @@ const CustomerPortal = () => {
         <div className="w-full max-w-md">
           {/* Back to Home Button - Only on mobile */}
           <Link 
-            to="/" 
+            to={getNativeHomeUrl()} 
             className="lg:hidden flex items-center text-slate-600 hover:text-slate-800 mb-8 transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
