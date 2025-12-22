@@ -32,7 +32,7 @@ export const useCustomerNotifications = () => {
     const fetchNotifications = async () => {
       try {
         const { data, error } = await supabase
-          .from('user_notifications')
+          .from('notifications')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
@@ -44,6 +44,9 @@ export const useCustomerNotifications = () => {
         setUnreadCount(data?.filter((n) => !n.read).length || 0);
       } catch (error) {
         console.error('Error fetching notifications:', error);
+        // Set empty arrays on error to prevent blank screen
+        setNotifications([]);
+        setUnreadCount(0);
       } finally {
         setLoading(false);
       }
@@ -59,7 +62,7 @@ export const useCustomerNotifications = () => {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'user_notifications',
+          table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
@@ -81,7 +84,7 @@ export const useCustomerNotifications = () => {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'user_notifications',
+          table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
@@ -112,7 +115,7 @@ export const useCustomerNotifications = () => {
   const markAsRead = async (notificationId: string) => {
     try {
       const { error } = await supabase
-        .from('user_notifications')
+        .from('notifications')
         .update({ read: true })
         .eq('id', notificationId);
 
@@ -127,7 +130,7 @@ export const useCustomerNotifications = () => {
 
     try {
       const { error } = await supabase
-        .from('user_notifications')
+        .from('notifications')
         .update({ read: true })
         .eq('user_id', user.id)
         .eq('read', false);

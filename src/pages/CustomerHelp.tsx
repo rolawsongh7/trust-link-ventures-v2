@@ -159,13 +159,13 @@ export const CustomerHelp: React.FC = () => {
               
               <div className="grid sm:grid-cols-2 gap-4">
                 <a 
-                  href="mailto:info@trustlinkventures.com"
+                  href="mailto:info@trustlinkcompany.com"
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-background transition-colors"
                 >
                   <Mail className="h-5 w-5 text-primary flex-shrink-0" />
                   <div>
                     <p className="font-medium text-sm">Email Us</p>
-                    <p className="text-sm text-muted-foreground">info@trustlinkventures.com</p>
+                    <p className="text-sm text-muted-foreground">info@trustlinkcompany.com</p>
                   </div>
                 </a>
                 

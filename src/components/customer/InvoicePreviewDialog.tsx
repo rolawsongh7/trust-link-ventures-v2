@@ -59,7 +59,10 @@ export const InvoicePreviewDialog = ({
         if (plError) throw plError;
 
         if (!packingLists || packingLists.length === 0) {
-          throw new Error('No invoices found for this order. Invoice will be generated when order is processed.');
+          // This is an expected case for pending orders - set error message but don't toast
+          setError('No invoices found for this order. Invoice will be generated when order is processed.');
+          setLoading(false);
+          return;
         }
 
         // Use packing list
@@ -72,12 +75,20 @@ export const InvoicePreviewDialog = ({
       
     } catch (err) {
       console.error('Error fetching invoice:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load invoice');
-      toast({
-        title: "Error",
-        description: "Failed to load invoice preview",
-        variant: "destructive",
-      });
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load invoice';
+      setError(errorMessage);
+      
+      // Only show toast for actual errors, not for "no invoice found" cases
+      const isNoInvoiceError = errorMessage.toLowerCase().includes('no invoice') || 
+                               errorMessage.toLowerCase().includes('not yet generated');
+      
+      if (!isNoInvoiceError) {
+        toast({
+          title: "Error",
+          description: "Failed to load invoice preview",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
