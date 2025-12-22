@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Building2, Mail, Lock, User, Eye, EyeOff, Loader2, Shield, ArrowRight } from 'lucide-react';
+import { getNativeHomeUrl } from '@/utils/env';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -398,7 +399,7 @@ const CustomerAuth = () => {
       {/* Content */}
       <div className="relative z-10 w-full max-w-md portal-animate-in">
         <Link
-          to="/"
+          to={getNativeHomeUrl()}
           className="inline-flex items-center gap-2 
                      text-[hsl(var(--portal-subtext))] 
                      hover:text-[hsl(var(--portal-primary-500))]

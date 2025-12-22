@@ -17,12 +17,12 @@ export const BlockAdmin: React.FC = () => {
     if (!isNativeApp()) return;
 
     // Define all admin-related route patterns
+    // Note: /products is the PUBLIC catalog, not admin - it should be accessible
     const adminPatterns = [
       '/admin',
       '/dashboard',
       '/crm',
       '/quotes',
-      '/products',
       '/inventory',
       '/reports',
       '/settings',
