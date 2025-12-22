@@ -2,13 +2,13 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
+import { useCustomerNotifications } from '@/hooks/useCustomerNotifications';
 import { Bell, CheckCircle, Info, AlertCircle, XCircle, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
 export default function CustomerNotifications() {
-  const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useRealtimeNotifications();
+  const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useCustomerNotifications();
   const navigate = useNavigate();
 
   const getNotificationIcon = (type: string) => {
