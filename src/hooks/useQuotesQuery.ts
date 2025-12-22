@@ -15,6 +15,8 @@ export interface Quote {
   description?: string;
   valid_until?: string;
   created_at?: string;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
   customers?: {
     id: string;
     company_name: string;
@@ -22,12 +24,12 @@ export interface Quote {
   };
 }
 
-export const useQuotesQuery = (customerId?: string) => {
+export const useQuotesQuery = (customerId?: string, includeDeleted: boolean = false) => {
   const queryClient = useQueryClient();
 
   // Fetch quotes with optional customer filter
   const quotesQuery = useQuery({
-    queryKey: ['quotes', customerId],
+    queryKey: ['quotes', customerId, includeDeleted],
     queryFn: async () => {
       let query = supabase
         .from('quotes')
@@ -43,6 +45,13 @@ export const useQuotesQuery = (customerId?: string) => {
 
       if (customerId) {
         query = query.eq('customer_id', customerId);
+      }
+
+      // Filter by deleted status
+      if (includeDeleted) {
+        query = query.not('deleted_at', 'is', null);
+      } else {
+        query = query.is('deleted_at', null);
       }
 
       const { data, error } = await query;
@@ -114,33 +123,83 @@ export const useQuotesQuery = (customerId?: string) => {
     },
   });
 
-  // Delete quote mutation
+  // Soft delete quote mutation
   const deleteQuoteMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, userId }: { id: string; userId?: string }) => {
       return ErrorRecovery.withRetry(async () => {
-        const { error } = await supabase.from('quotes').delete().eq('id', id);
+        const { error } = await supabase
+          .from('quotes')
+          .update({ 
+            deleted_at: new Date().toISOString(),
+            deleted_by: userId || null
+          })
+          .eq('id', id);
         if (error) throw error;
       });
     },
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['quotes', customerId] });
-      const previousQuotes = queryClient.getQueryData<Quote[]>(['quotes', customerId]);
+    onMutate: async ({ id }) => {
+      await queryClient.cancelQueries({ queryKey: ['quotes', customerId, false] });
+      const previousQuotes = queryClient.getQueryData<Quote[]>(['quotes', customerId, false]);
 
-      queryClient.setQueryData<Quote[]>(['quotes', customerId], (old) =>
+      queryClient.setQueryData<Quote[]>(['quotes', customerId, false], (old) =>
         old?.filter((quote) => quote.id !== id)
       );
 
       return { previousQuotes };
     },
     onError: (err, variables, context) => {
-      queryClient.setQueryData(['quotes', customerId], context?.previousQuotes);
+      queryClient.setQueryData(['quotes', customerId, false], context?.previousQuotes);
       toast.error('Failed to delete quote');
     },
     onSuccess: () => {
-      toast.success('Quote deleted successfully');
+      toast.success('Quote moved to trash');
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['quotes', customerId] });
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+    },
+  });
+
+  // Restore quote mutation
+  const restoreQuoteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return ErrorRecovery.withRetry(async () => {
+        const { error } = await supabase
+          .from('quotes')
+          .update({ 
+            deleted_at: null,
+            deleted_by: null
+          })
+          .eq('id', id);
+        if (error) throw error;
+      });
+    },
+    onSuccess: () => {
+      toast.success('Quote restored successfully');
+    },
+    onError: () => {
+      toast.error('Failed to restore quote');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+    },
+  });
+
+  // Permanent delete mutation
+  const permanentDeleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return ErrorRecovery.withRetry(async () => {
+        const { error } = await supabase.from('quotes').delete().eq('id', id);
+        if (error) throw error;
+      });
+    },
+    onSuccess: () => {
+      toast.success('Quote permanently deleted');
+    },
+    onError: () => {
+      toast.error('Failed to permanently delete quote');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
     },
   });
 
@@ -168,9 +227,13 @@ export const useQuotesQuery = (customerId?: string) => {
     updateQuote: updateQuoteMutation.mutate,
     createQuote: createQuoteMutation.mutate,
     deleteQuote: deleteQuoteMutation.mutate,
+    restoreQuote: restoreQuoteMutation.mutate,
+    permanentDeleteQuote: permanentDeleteMutation.mutate,
     isUpdating: updateQuoteMutation.isPending,
     isCreating: createQuoteMutation.isPending,
     isDeleting: deleteQuoteMutation.isPending,
+    isRestoring: restoreQuoteMutation.isPending,
+    isPermanentDeleting: permanentDeleteMutation.isPending,
     prefetchQuoteDetails,
   };
 };

@@ -2388,6 +2388,8 @@ export type Database = {
           currency: string
           customer_email: string | null
           customer_id: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           file_url: string | null
           final_file_url: string | null
@@ -2424,6 +2426,8 @@ export type Database = {
           currency?: string
           customer_email?: string | null
           customer_id?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           file_url?: string | null
           final_file_url?: string | null
@@ -2460,6 +2464,8 @@ export type Database = {
           currency?: string
           customer_email?: string | null
           customer_id?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           file_url?: string | null
           final_file_url?: string | null

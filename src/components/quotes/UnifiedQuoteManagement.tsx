@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PortalPageHeader } from '@/components/customer/PortalPageHeader';
-import { Search, Plus, Eye, Edit, CheckCircle, XCircle, Clock, FileText, FileImage, Upload, Download, ThumbsUp, FileCheck, Mail, Trash2, HelpCircle, Package, Send, CircleDot, AlertCircle } from 'lucide-react';
+import { Search, Plus, Eye, Edit, CheckCircle, XCircle, Clock, FileText, FileImage, Upload, Download, ThumbsUp, FileCheck, Mail, Trash2, HelpCircle, Package, Send, CircleDot, AlertCircle, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +27,16 @@ import { QuoteToOrderConverter } from './QuoteToOrderConverter';
 import QuoteAuditTrail from './QuoteAuditTrail';
 import { QuoteDetailsDialog } from './QuoteDetailsDialog';
 import { InviteUserDialog } from '@/components/admin/InviteUserDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
@@ -51,6 +61,8 @@ interface Quote {
   approved_by?: string;
   approved_at?: string;
   sent_at?: string;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
   customers?: {
     company_name: string;
     contact_name?: string;
@@ -74,6 +86,7 @@ interface Quote {
 const UnifiedQuoteManagement = () => {
   const { user } = useAuth();
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [deletedQuotes, setDeletedQuotes] = useState<Quote[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -93,6 +106,10 @@ const UnifiedQuoteManagement = () => {
   const [selectedQuoteForDetails, setSelectedQuoteForDetails] = useState<string | null>(null);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteTargetQuote, setInviteTargetQuote] = useState<Quote | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [quoteToDelete, setQuoteToDelete] = useState<Quote | null>(null);
+  const [permanentDeleteDialogOpen, setPermanentDeleteDialogOpen] = useState(false);
+  const [quoteToPermanentDelete, setQuoteToPermanentDelete] = useState<Quote | null>(null);
   const { toast } = useToast();
 
   const form = useForm({
@@ -183,7 +200,8 @@ const UnifiedQuoteManagement = () => {
 
   const fetchQuotes = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch active quotes
+      const { data: activeData, error: activeError } = await supabase
         .from('quotes')
         .select(`
           *,
@@ -192,18 +210,36 @@ const UnifiedQuoteManagement = () => {
           rfqs(id, status, deadline),
           orders!quote_id(id, order_number, status)
         `)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
-      if (error) {
+      if (activeError) {
         console.error('Quote fetch error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
+          message: activeError.message,
+          details: activeError.details,
+          hint: activeError.hint,
+          code: activeError.code
         });
-        throw error;
+        throw activeError;
       }
-      setQuotes(data || []);
+      setQuotes(activeData || []);
+
+      // Fetch deleted quotes for trash
+      const { data: deletedData, error: deletedError } = await supabase
+        .from('quotes')
+        .select(`
+          *,
+          customers(company_name, contact_name),
+          leads(title)
+        `)
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false });
+
+      if (deletedError) {
+        console.error('Deleted quotes fetch error:', deletedError);
+      } else {
+        setDeletedQuotes(deletedData || []);
+      }
     } catch (error: any) {
       console.error('Full error object:', error);
       toast({
@@ -444,9 +480,65 @@ const UnifiedQuoteManagement = () => {
     }
   };
 
-  const handleDelete = async (quoteId: string) => {
-    if (!confirm('Are you sure you want to delete this quote?')) return;
-    
+  const handleSoftDelete = async (quote: Quote) => {
+    try {
+      const { error } = await supabase
+        .from('quotes')
+        .update({ 
+          deleted_at: new Date().toISOString(),
+          deleted_by: user?.id || null
+        })
+        .eq('id', quote.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Quote moved to trash',
+        description: 'You can restore it from the Trash tab'
+      });
+      
+      setDeleteDialogOpen(false);
+      setQuoteToDelete(null);
+      fetchQuotes();
+    } catch (error: any) {
+      console.error('Error deleting quote:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete quote',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleRestore = async (quoteId: string) => {
+    try {
+      const { error } = await supabase
+        .from('quotes')
+        .update({ 
+          deleted_at: null,
+          deleted_by: null
+        })
+        .eq('id', quoteId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Quote restored',
+        description: 'The quote has been restored successfully'
+      });
+      
+      fetchQuotes();
+    } catch (error: any) {
+      console.error('Error restoring quote:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to restore quote',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handlePermanentDelete = async (quoteId: string) => {
     try {
       const { error } = await supabase
         .from('quotes')
@@ -456,16 +548,18 @@ const UnifiedQuoteManagement = () => {
       if (error) throw error;
 
       toast({
-        title: 'Quote deleted',
-        description: 'The quote has been deleted successfully'
+        title: 'Quote permanently deleted',
+        description: 'This action cannot be undone'
       });
       
+      setPermanentDeleteDialogOpen(false);
+      setQuoteToPermanentDelete(null);
       fetchQuotes();
     } catch (error: any) {
-      console.error('Error deleting quote:', error);
+      console.error('Error permanently deleting quote:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete quote',
+        description: error.message || 'Failed to delete quote permanently',
         variant: 'destructive'
       });
     }
@@ -620,6 +714,9 @@ const UnifiedQuoteManagement = () => {
   ];
 
   const filteredQuotes = quotes.filter(quote => {
+    // Don't show quotes in trash tab filter (trash has its own view)
+    if (selectedTab === 'trash') return false;
+    
     const matchesSearch = quote.quote_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          quote.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          quote.customers?.company_name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -680,7 +777,7 @@ const UnifiedQuoteManagement = () => {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="all">All ({quotes.length})</TabsTrigger>
           <TabsTrigger value="draft">Draft ({quotes.filter(q => q.status === 'draft').length})</TabsTrigger>
           <TabsTrigger value="pending_review">Pending Review ({quotes.filter(q => q.status === 'pending_review').length})</TabsTrigger>
@@ -688,6 +785,10 @@ const UnifiedQuoteManagement = () => {
           <TabsTrigger value="sent">Sent ({quotes.filter(q => q.status === 'sent').length})</TabsTrigger>
           <TabsTrigger value="accepted">Accepted ({quotes.filter(q => q.status === 'accepted').length})</TabsTrigger>
           <TabsTrigger value="rejected">Rejected ({quotes.filter(q => q.status === 'rejected').length})</TabsTrigger>
+          <TabsTrigger value="trash" className="text-destructive data-[state=active]:text-destructive">
+            <Trash2 className="mr-1 h-3 w-3" />
+            Trash ({deletedQuotes.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value={selectedTab} className="mt-6">
@@ -853,16 +954,90 @@ const UnifiedQuoteManagement = () => {
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDelete(quote.id);
+                    setQuoteToDelete(quote);
+                    setDeleteDialogOpen(true);
                   }}
                   className="text-destructive"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
+                  Move to Trash
                 </DropdownMenuItem>
               </>
             )}
           />
+        </TabsContent>
+
+        {/* Trash Tab Content */}
+        <TabsContent value="trash" className="mt-6">
+          {deletedQuotes.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Trash2 className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Trash is empty</h3>
+                <p className="text-muted-foreground text-center">
+                  Deleted quotes will appear here and can be restored.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Trash2 className="h-5 w-5" />
+                  Deleted Quotes ({deletedQuotes.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {deletedQuotes.map((quote) => (
+                    <div
+                      key={quote.id}
+                      className="flex items-center justify-between p-4 border rounded-lg bg-muted/30"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono font-semibold">{quote.quote_number}</span>
+                          <Badge variant="secondary">{quote.status}</Badge>
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {quote.customers?.company_name || quote.leads?.title || 'N/A'}
+                          {quote.deleted_at && (
+                            <span className="ml-2">
+                              • Deleted {new Date(quote.deleted_at).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm font-medium mt-1">
+                          {quote.currency} {Number(quote.total_amount).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRestore(quote.id)}
+                        >
+                          <RotateCcw className="mr-1 h-3 w-3" />
+                          Restore
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            setQuoteToPermanentDelete(quote);
+                            setPermanentDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="mr-1 h-3 w-3" />
+                          Delete Forever
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
 
@@ -943,6 +1118,50 @@ const UnifiedQuoteManagement = () => {
           setShowInviteDialog(false);
         }}
       />
+
+      {/* Soft Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Move quote to trash?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will move quote <span className="font-semibold">{quoteToDelete?.quote_number}</span> to the trash.
+              You can restore it later from the Trash tab.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => quoteToDelete && handleSoftDelete(quoteToDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Move to Trash
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Permanent Delete Confirmation Dialog */}
+      <AlertDialog open={permanentDeleteDialogOpen} onOpenChange={setPermanentDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently delete quote?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete quote <span className="font-semibold">{quoteToPermanentDelete?.quote_number}</span>.
+              <span className="block mt-2 font-semibold text-destructive">This action cannot be undone.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => quoteToPermanentDelete && handlePermanentDelete(quoteToPermanentDelete.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Forever
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
