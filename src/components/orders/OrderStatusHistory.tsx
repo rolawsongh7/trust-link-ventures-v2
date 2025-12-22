@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { Clock, User, ArrowRight, Download } from "lucide-react";
 import { openSecureStorageUrl } from "@/lib/storageHelpers";
@@ -33,7 +38,9 @@ interface CurrencyChangeEntry {
 }
 
 interface OrderStatusHistoryProps {
-  orderId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  orderId?: string;
   order?: {
     payment_reference?: string;
     payment_proof_url?: string;
@@ -41,17 +48,20 @@ interface OrderStatusHistoryProps {
   };
 }
 
-const OrderStatusHistory = ({ orderId, order }: OrderStatusHistoryProps) => {
+const OrderStatusHistory = ({ open, onOpenChange, orderId, order }: OrderStatusHistoryProps) => {
   const [history, setHistory] = useState<StatusHistoryEntry[]>([]);
   const [currencyChanges, setCurrencyChanges] = useState<CurrencyChangeEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchHistory();
-    fetchCurrencyChanges();
-  }, [orderId]);
+    if (open && orderId) {
+      fetchHistory();
+      fetchCurrencyChanges();
+    }
+  }, [orderId, open]);
 
   const fetchHistory = async () => {
+    if (!orderId) return;
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -70,6 +80,7 @@ const OrderStatusHistory = ({ orderId, order }: OrderStatusHistoryProps) => {
   };
 
   const fetchCurrencyChanges = async () => {
+    if (!orderId) return;
     try {
       const { data, error } = await supabase
         .from('audit_logs')
@@ -79,7 +90,6 @@ const OrderStatusHistory = ({ orderId, order }: OrderStatusHistoryProps) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      // Type assertion - we know the event_data structure from our database
       setCurrencyChanges((data || []) as unknown as CurrencyChangeEntry[]);
     } catch (error) {
       console.error('Error fetching currency changes:', error);
@@ -101,13 +111,10 @@ const OrderStatusHistory = ({ orderId, order }: OrderStatusHistoryProps) => {
     return colors[status] || 'bg-gray-500';
   };
 
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Status History</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-4">
               <Skeleton className="h-12 w-12 rounded-full" />
@@ -117,30 +124,18 @@ const OrderStatusHistory = ({ orderId, order }: OrderStatusHistoryProps) => {
               </div>
             </div>
           ))}
-        </CardContent>
-      </Card>
-    );
-  }
+        </div>
+      );
+    }
 
-  if (history.length === 0) {
+    if (history.length === 0) {
+      return (
+        <p className="text-sm text-muted-foreground">No status changes recorded yet.</p>
+      );
+    }
+
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Status History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">No status changes recorded yet.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Order Audit Trail</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+      <div className="space-y-6">
         {/* Currency Changes Section */}
         {currencyChanges.length > 0 && (
           <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
@@ -176,7 +171,7 @@ const OrderStatusHistory = ({ orderId, order }: OrderStatusHistoryProps) => {
 
         {/* Payment Info Section */}
         {order?.payment_reference && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-start justify-between">
               <div>
                 <h4 className="font-semibold text-green-900 mb-2">
@@ -264,8 +259,19 @@ const OrderStatusHistory = ({ orderId, order }: OrderStatusHistoryProps) => {
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Order Audit Trail</DialogTitle>
+        </DialogHeader>
+        {renderContent()}
+      </DialogContent>
+    </Dialog>
   );
 };
 
