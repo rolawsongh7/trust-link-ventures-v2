@@ -9,7 +9,6 @@ import { User, Building2, Mail, Phone, MapPin, Save, LogOut, X } from 'lucide-re
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
-import { CustomerMFASetup } from './CustomerMFASetup';
 import { ProfileAvatar } from './ProfileAvatar';
 import { ProfileCompletion } from './ProfileCompletion';
 import { SecurityScore } from './SecurityScore';
@@ -24,7 +23,6 @@ export const CustomerProfile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [showMFASetup, setShowMFASetup] = useState(false);
   const [showActiveSessions, setShowActiveSessions] = useState(false);
   const [showSecurityAlerts, setShowSecurityAlerts] = useState(false);
   const [formData, setFormData] = useState({
@@ -353,7 +351,6 @@ export const CustomerProfile: React.FC = () => {
           {/* Enhanced Security Section */}
           <SecurityScore 
             onChangePassword={() => setShowChangePassword(true)}
-            onSetupMFA={() => setShowMFASetup(true)}
             onViewSessions={() => setShowActiveSessions(true)}
             onManageAlerts={() => setShowSecurityAlerts(true)}
             lastPasswordChanged={profile?.last_password_changed}
@@ -378,11 +375,6 @@ export const CustomerProfile: React.FC = () => {
       <ChangePasswordDialog 
         open={showChangePassword} 
         onOpenChange={setShowChangePassword}
-      />
-
-      <CustomerMFASetup
-        open={showMFASetup}
-        onOpenChange={setShowMFASetup}
       />
 
       <ActiveSessionsDialog

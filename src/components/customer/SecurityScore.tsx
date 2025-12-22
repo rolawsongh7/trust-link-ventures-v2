@@ -53,7 +53,7 @@ const SecurityItem: React.FC<SecurityItemProps> = ({
 
 interface SecurityScoreProps {
   onChangePassword: () => void;
-  onSetupMFA: () => void;
+  onSetupMFA?: () => void; // Made optional since we're removing MFA
   onViewSessions?: () => void;
   onManageAlerts?: () => void;
   lastPasswordChanged?: string | null;
@@ -61,7 +61,6 @@ interface SecurityScoreProps {
 
 export const SecurityScore: React.FC<SecurityScoreProps> = ({
   onChangePassword,
-  onSetupMFA,
   onViewSessions,
   onManageAlerts,
   lastPasswordChanged,
@@ -126,14 +125,7 @@ export const SecurityScore: React.FC<SecurityScoreProps> = ({
             onAction={onChangePassword}
           />
 
-          <SecurityItem
-            icon={<Shield className="h-5 w-5" />}
-            title="Two-Factor Authentication"
-            description="Security boost: +30% • Recommended for all accounts"
-            status="inactive"
-            actionLabel="Enable Now"
-            onAction={onSetupMFA}
-          />
+          {/* MFA removed - not currently functional */}
 
           <SecurityItem
             icon={<Smartphone className="h-5 w-5" />}

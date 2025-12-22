@@ -143,6 +143,13 @@ const App = () => {
     };
   }, [nativeApp]);
 
+  // Native app: redirect to /hub on initial load if on root path
+  useEffect(() => {
+    if (nativeApp && window.location.hash === '' || window.location.hash === '#/') {
+      window.location.hash = '#/hub';
+    }
+  }, [nativeApp]);
+
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
