@@ -16,13 +16,13 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
-import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
+import { useCustomerNotifications } from '@/hooks/useCustomerNotifications';
 import { Badge } from '@/components/ui/badge';
 import { PortalPageHeader } from '@/components/customer/PortalPageHeader';
 
 export const CustomerMore: React.FC = () => {
   const { profile } = useCustomerAuth();
-  const { unreadCount } = useRealtimeNotifications();
+  const { unreadCount } = useCustomerNotifications();
 
   const menuSections = [
     {

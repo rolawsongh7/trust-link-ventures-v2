@@ -37,7 +37,7 @@ import {
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { usePendingAddressRequests } from '@/hooks/usePendingAddressRequests';
-import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
+import { useCustomerNotifications } from '@/hooks/useCustomerNotifications';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -45,7 +45,7 @@ export const CustomerNavigation: React.FC = () => {
   const { profile, signOut } = useCustomerAuth();
   const { totalItems } = useShoppingCart();
   const { pendingCount } = usePendingAddressRequests();
-  const { unreadCount } = useRealtimeNotifications();
+  const { unreadCount } = useCustomerNotifications();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
