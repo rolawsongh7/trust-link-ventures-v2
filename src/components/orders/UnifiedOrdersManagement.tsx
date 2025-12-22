@@ -391,9 +391,14 @@ const UnifiedOrdersManagement = () => {
         onSuccess={refetch}
       />
 
-      {selectedOrder && (
-        <OrderStatusHistory orderId={selectedOrder.id} />
-      )}
+      <OrderStatusHistory
+        open={historyDialogOpen}
+        onOpenChange={setHistoryDialogOpen}
+        orderId={selectedOrder?.id}
+        order={selectedOrder ? {
+          payment_reference: selectedOrder.payment_reference,
+        } : undefined}
+      />
 
       {selectedOrder && (
         <PaymentConfirmationDialog

@@ -916,17 +916,14 @@ const OrdersManagement = () => {
             onSuccess={fetchOrders}
           />
           
-          <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
-            <DialogContent className="max-w-3xl">
-              <DialogHeader>
-                <DialogTitle>Order Status History</DialogTitle>
-                <DialogDescription>
-                  Complete audit trail for order {selectedOrder.order_number}
-                </DialogDescription>
-              </DialogHeader>
-              <OrderStatusHistory orderId={selectedOrder.id} />
-            </DialogContent>
-          </Dialog>
+          <OrderStatusHistory
+            open={historyDialogOpen}
+            onOpenChange={setHistoryDialogOpen}
+            orderId={selectedOrder.id}
+            order={{
+              payment_reference: selectedOrder.payment_reference,
+            }}
+          />
         </>
       )}
 
