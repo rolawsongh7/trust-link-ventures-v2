@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Package, ShoppingCart, MessageSquare, HelpCircle, ArrowRight, Snowflake, Shield, Truck, LogIn, LayoutDashboard, Loader2 } from 'lucide-react';
+import { Package, ShoppingCart, MessageSquare, HelpCircle, ArrowRight, Snowflake, Shield, Truck, LogIn, LayoutDashboard, Loader2, Users, Clock, Star, Zap, Fish } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
@@ -103,10 +103,58 @@ const MobileHub: React.FC = () => {
     }
   ];
 
-  const valueProps = [
-    { icon: Snowflake, label: 'Cold Chain', description: 'Temperature controlled' },
-    { icon: Shield, label: 'Quality', description: 'Premium products' },
-    { icon: Truck, label: 'Fast Delivery', description: 'Nationwide shipping' }
+  const promotions = [
+    {
+      id: 1,
+      title: 'Bulk Order Discounts',
+      description: 'Save up to 20% on large orders',
+      badge: 'HOT',
+      badgeColor: 'from-red-500 to-orange-500',
+      icon: Package,
+      gradient: 'from-amber-500 to-orange-500'
+    },
+    {
+      id: 2,
+      title: 'New Seafood Arrivals',
+      description: 'Fresh premium catches available',
+      badge: 'NEW',
+      badgeColor: 'from-emerald-500 to-green-500',
+      icon: Fish,
+      gradient: 'from-blue-500 to-cyan-500'
+    },
+    {
+      id: 3,
+      title: 'Express Delivery',
+      description: 'Same-day delivery in Accra',
+      badge: null,
+      badgeColor: null,
+      icon: Zap,
+      gradient: 'from-purple-500 to-violet-500'
+    }
+  ];
+
+  const impactStats = [
+    { 
+      icon: Users, 
+      value: '500+', 
+      label: 'Partners', 
+      description: 'Trusted nationwide',
+      gradient: 'from-blue-500 to-blue-600'
+    },
+    { 
+      icon: Package, 
+      value: '10K+', 
+      label: 'Deliveries', 
+      description: 'Monthly orders',
+      gradient: 'from-emerald-500 to-green-600'
+    },
+    { 
+      icon: Clock, 
+      value: '24/7', 
+      label: 'Support', 
+      description: 'Always available',
+      gradient: 'from-purple-500 to-violet-600'
+    }
   ];
 
   const scrollToSlide = useCallback((index: number) => {
@@ -266,34 +314,45 @@ const MobileHub: React.FC = () => {
           </div>
         </section>
 
-        {/* Quick Actions Grid - No stagger animation */}
+        {/* Quick Actions Grid - Glassmorphism Premium */}
         <section className="space-y-4">
           <h3 className="text-lg font-poppins font-semibold text-foreground">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-3">
             {quickActions.map((action) => {
               const Icon = action.icon;
               return (
-                <button
+                <motion.button
                   key={action.path}
                   onClick={() => navigate(action.path)}
-                  className="relative flex flex-col items-center justify-center p-5 rounded-2xl bg-card border border-border touch-manipulation active:scale-[0.97] transition-transform"
+                  className="group relative flex flex-col items-center justify-center p-5 rounded-2xl 
+                    bg-white/90 dark:bg-slate-900/90 backdrop-blur-md
+                    border border-white/30 dark:border-white/10
+                    shadow-[0_4px_20px_rgba(0,0,0,0.08)]
+                    touch-manipulation transition-all duration-300"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                 >
-                  <div className={`p-3 rounded-xl bg-gradient-to-br ${action.color} mb-3`}>
+                  <motion.div 
+                    className={`h-14 w-14 rounded-full bg-gradient-to-br ${action.color} 
+                      flex items-center justify-center shadow-lg mb-3`}
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ type: 'spring', stiffness: 400 }}
+                  >
                     <Icon className={`h-6 w-6 ${action.iconColor}`} />
-                  </div>
-                  <span className="text-sm font-medium text-foreground">{action.label}</span>
+                  </motion.div>
+                  <span className="text-sm font-semibold text-foreground">{action.label}</span>
                   {action.badge && action.badge > 0 && (
-                    <span className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-xs rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center font-semibold animate-pulse">
+                    <span className="absolute top-2 right-2 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs rounded-full min-w-[22px] h-[22px] px-1.5 flex items-center justify-center font-bold shadow-lg animate-pulse">
                       {action.badge}
                     </span>
                   )}
-                </button>
+                </motion.button>
               );
             })}
           </div>
         </section>
 
-        {/* Promotions Section with Scroll Reveal */}
+        {/* Promotions Section - Premium Carousel */}
         <motion.section 
           ref={promotionsRef as React.RefObject<HTMLElement>}
           className="space-y-4"
@@ -302,47 +361,61 @@ const MobileHub: React.FC = () => {
           transition={{ duration: 0.5, ease: 'easeOut' }}
         >
           <h3 className="text-lg font-poppins font-semibold text-foreground">What's New</h3>
-          <motion.div
-            variants={cardHover}
-            initial="initial"
-            whileHover="hover"
-          >
-            <Card className="overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-              <CardContent className="p-5">
-                <div className="flex items-start gap-4">
-                  <motion.div 
-                    className="p-3 rounded-xl bg-primary/20"
-                    animate={{ 
-                      scale: [1, 1.05, 1],
-                    }}
-                    transition={{ 
-                      duration: 2, 
-                      repeat: Infinity, 
-                      ease: 'easeInOut' 
-                    }}
+          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
+            {promotions.map((promo, index) => {
+              const Icon = promo.icon;
+              return (
+                <motion.div
+                  key={promo.id}
+                  className="flex-shrink-0 w-[280px] snap-start"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={promotionsVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                >
+                  <div 
+                    className="relative p-5 rounded-2xl 
+                      bg-white/90 dark:bg-slate-900/90 backdrop-blur-md
+                      border border-white/30 dark:border-white/10
+                      shadow-[0_4px_20px_rgba(0,0,0,0.08)]
+                      hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]
+                      transition-all duration-300 h-full"
                   >
-                    <Package className="h-6 w-6 text-primary" />
-                  </motion.div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-foreground mb-1">Bulk Order Discounts</h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Get special pricing on large orders. Contact us for custom quotes.
-                    </p>
+                    {/* Badge */}
+                    {promo.badge && (
+                      <span className={`absolute top-3 right-3 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide
+                        bg-gradient-to-r ${promo.badgeColor} text-white rounded-full shadow-lg`}>
+                        {promo.badge}
+                      </span>
+                    )}
+                    
+                    <motion.div 
+                      className={`h-12 w-12 rounded-full bg-gradient-to-br ${promo.gradient} 
+                        flex items-center justify-center shadow-lg mb-4`}
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                      <Icon className="h-6 w-6 text-white" />
+                    </motion.div>
+                    
+                    <h4 className="font-semibold text-foreground mb-1">{promo.title}</h4>
+                    <p className="text-sm text-muted-foreground mb-4">{promo.description}</p>
+                    
                     <Button 
                       size="sm" 
-                      variant="secondary"
+                      variant="ghost"
+                      className="px-0 text-primary hover:text-primary/80"
                       onClick={() => navigate('/contact')}
                     >
-                      Learn More
+                      Learn More <ArrowRight className="h-4 w-4 ml-1" />
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                </motion.div>
+              );
+            })}
+          </div>
         </motion.section>
 
-        {/* Value Proposition with Scroll Reveal */}
+        {/* Impact Statistics with Scroll Reveal */}
         <motion.section 
           ref={valuePropsRef as React.RefObject<HTMLElement>}
           className="space-y-4"
@@ -352,26 +425,36 @@ const MobileHub: React.FC = () => {
         >
           <h3 className="text-lg font-poppins font-semibold text-foreground">Why Trust Link?</h3>
           <div className="grid grid-cols-3 gap-3">
-            {valueProps.map((prop, index) => {
-              const Icon = prop.icon;
+            {impactStats.map((stat, index) => {
+              const Icon = stat.icon;
               return (
                 <motion.div 
                   key={index}
-                  className="flex flex-col items-center text-center p-4 rounded-xl bg-card border border-border"
+                  className="group flex flex-col items-center text-center p-4 rounded-2xl 
+                    bg-white/90 dark:bg-slate-900/90 backdrop-blur-md
+                    border border-white/30 dark:border-white/10
+                    shadow-[0_4px_20px_rgba(0,0,0,0.08)]
+                    hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]
+                    transition-all duration-300"
                   initial={{ opacity: 0, y: 20 }}
                   animate={valuePropsVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                   transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
-                  whileHover={{ y: -2, transition: { duration: 0.2 } }}
+                  whileHover={{ y: -4, scale: 1.02 }}
                 >
                   <motion.div 
-                    className="p-2 rounded-lg bg-primary/10 mb-2"
-                    whileHover={{ scale: 1.1 }}
+                    className={`h-12 w-12 rounded-full bg-gradient-to-br ${stat.gradient} 
+                      flex items-center justify-center shadow-lg mb-3`}
+                    whileHover={{ scale: 1.1, rotate: 5 }}
                     transition={{ type: 'spring', stiffness: 400 }}
                   >
-                    <Icon className="h-5 w-5 text-primary" />
+                    <Icon className="h-5 w-5 text-white" />
                   </motion.div>
-                  <span className="text-xs font-semibold text-foreground">{prop.label}</span>
-                  <span className="text-[10px] text-muted-foreground mt-0.5">{prop.description}</span>
+                  <span className={`text-xl font-bold bg-gradient-to-r ${stat.gradient} 
+                    bg-clip-text text-transparent`}>
+                    {stat.value}
+                  </span>
+                  <span className="text-xs font-semibold text-foreground mt-1">{stat.label}</span>
+                  <span className="text-[10px] text-muted-foreground mt-0.5">{stat.description}</span>
                 </motion.div>
               );
             })}
