@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Building2, Mail, Lock, User, Eye, EyeOff, Loader2, Shield, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Building2, Mail, Lock, User, Eye, EyeOff, Loader2, Shield, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { getNativeHomeUrl } from '@/utils/env';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { MFAVerificationModal } from '@/components/security/MFAVerificationModal';
+import trustLinkLogo from '@/assets/trust-link-logo.png';
+import authBackground from '@/assets/auth-background.jpg';
 
 const CustomerAuth = () => {
   const [signInData, setSignInData] = useState({ email: '', password: '' });
@@ -383,89 +385,99 @@ const CustomerAuth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 
-                    bg-gradient-to-br from-[hsl(var(--portal-bg-gradient-start))] 
-                    to-[hsl(var(--portal-bg-gradient-end))]
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 
                     relative overflow-hidden">
       
-      {/* Subtle background pattern */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-           style={{
-             backgroundImage: `radial-gradient(circle at 2px 2px, hsl(var(--portal-primary-500)) 1px, transparent 0)`,
-             backgroundSize: '32px 32px'
-           }}
+      {/* Premium Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${authBackground})` }}
       />
+      
+      {/* Dark Gradient Overlay for Readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-900/70 to-slate-900/90" />
+      
+      {/* Animated Glow Effects */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
       
       {/* Content */}
       <div className="relative z-10 w-full max-w-md portal-animate-in">
         <Link
           to={getNativeHomeUrl()}
           className="inline-flex items-center gap-2 
-                     text-[hsl(var(--portal-subtext))] 
-                     hover:text-[hsl(var(--portal-primary-500))]
-                     mb-8 transition-all duration-200
+                     text-white/70
+                     hover:text-amber-400
+                     mb-6 transition-all duration-200
                      text-sm font-medium
                      group
                      focus-visible:outline-none 
                      focus-visible:ring-2 
-                     focus-visible:ring-[hsl(var(--portal-primary-500))] 
+                     focus-visible:ring-amber-400 
                      focus-visible:ring-offset-2 
-                     focus-visible:ring-offset-[hsl(var(--portal-bg))]
-                     rounded-lg px-3 py-2 -ml-3"
+                     focus-visible:ring-offset-transparent
+                     rounded-lg px-3 py-2 -ml-3
+                     backdrop-blur-sm"
         >
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           <span>Back to Home</span>
         </Link>
 
+        {/* Glassmorphism Card */}
         <div className="rounded-3xl 
-                        bg-[hsl(var(--portal-surface))] 
-                        shadow-[var(--portal-shadow-xl)]
-                        border border-[hsl(var(--portal-border))]
+                        bg-white/95 dark:bg-slate-900/95
+                        backdrop-blur-xl
+                        shadow-[0_25px_60px_rgba(0,0,0,0.3),0_10px_20px_rgba(0,0,0,0.2)]
+                        border border-white/20
                         p-8 md:p-10
-                        transition-all duration-300
-                        hover:shadow-[0_25px_50px_rgba(8,132,255,0.15),0_10px_20px_rgba(0,0,0,0.1)]
-                        space-y-8
-                        portal-card-scale">
+                        transition-all duration-500
+                        hover:shadow-[0_30px_70px_rgba(0,0,0,0.35),0_0_40px_rgba(245,158,11,0.1)]
+                        space-y-6">
           
           {/* Header Section */}
-          <div className="text-center space-y-6">
-            {/* Enterprise Icon with Glow Effect */}
-            <div className="mx-auto w-16 h-16 rounded-2xl 
-                            bg-gradient-to-br from-[hsl(var(--portal-primary-500))] 
-                            to-[hsl(var(--portal-teal-500))]
-                            shadow-[0_8px_32px_rgba(8,132,255,0.3)]
-                            flex items-center justify-center
-                            relative
-                            portal-icon-glow
-                            transition-shadow duration-300">
-              {/* Glow ring effect */}
-              <div className="absolute inset-0 rounded-2xl 
-                              bg-gradient-to-br from-[hsl(var(--portal-primary-500))] 
-                              to-[hsl(var(--portal-teal-500))]
-                              opacity-30 blur-xl animate-pulse" />
+          <div className="text-center space-y-5">
+            {/* Trust Link Logo with Gold Glow */}
+            <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
+              {/* Gold glow effect */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-400/30 to-amber-600/20 blur-2xl animate-pulse" />
+              <div className="absolute inset-2 rounded-full bg-gradient-to-br from-amber-400/20 to-transparent blur-xl" />
               
-              {/* Icon */}
-              <Shield className="w-8 h-8 text-white relative z-10" />
+              {/* Logo Container */}
+              <div className="relative w-20 h-20 rounded-2xl 
+                              bg-gradient-to-br from-slate-800 to-slate-900
+                              shadow-[0_8px_32px_rgba(245,158,11,0.25),inset_0_1px_0_rgba(255,255,255,0.1)]
+                              flex items-center justify-center
+                              border border-amber-500/20
+                              overflow-hidden">
+                <img 
+                  src={trustLinkLogo} 
+                  alt="Trust Link Ventures" 
+                  className="w-14 h-14 object-contain"
+                />
+              </div>
             </div>
 
             {/* Welcome Text */}
             <div className="space-y-2">
-              <h1 className="portal-title">
+              <h1 className="text-2xl md:text-3xl font-bold 
+                             bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 
+                             dark:from-white dark:via-amber-100 dark:to-white
+                             bg-clip-text text-transparent">
                 {activeTab === 'signin' ? 'Welcome Back' : 'Create Your Account'}
               </h1>
-              <p className="portal-subtitle max-w-sm mx-auto">
+              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
                 {activeTab === 'signin' 
                   ? 'Sign in to manage your orders, quotes, and deliveries' 
-                  : 'Get started with Trust Link Ventures today'}
+                  : 'Join Ghana\'s trusted frozen food distribution network'}
               </p>
             </div>
           </div>
 
-          {/* Tab Switcher */}
-          {!showForgotPassword && (
-            <div className="relative bg-[hsl(var(--portal-bg-subtle))] 
+          {/* Tab Switcher - Premium Style */}
+          {!showForgotPassword && !showSetNewPassword && (
+            <div className="relative bg-slate-100 dark:bg-slate-800/50
                             p-1.5 rounded-2xl 
-                            border border-[hsl(var(--portal-border))]
+                            border border-slate-200/50 dark:border-slate-700/50
                             shadow-inner">
               <div className="flex gap-1.5 relative z-10">
                 <button
@@ -478,11 +490,11 @@ const CustomerAuth = () => {
                     touch-manipulation min-h-[50px]
                     focus-visible:outline-none 
                     focus-visible:ring-2 
-                    focus-visible:ring-[hsl(var(--portal-primary-500))] 
+                    focus-visible:ring-amber-500 
                     focus-visible:ring-offset-2
                     ${activeTab === 'signin'
-                      ? 'bg-gradient-to-r from-[hsl(var(--portal-primary-500))] to-[hsl(var(--portal-primary-600))] text-white shadow-lg shadow-[hsl(var(--portal-primary-500))]/30 scale-[1.02]'
-                      : 'text-[hsl(var(--portal-subtext))] hover:bg-white/60 hover:text-[hsl(var(--portal-text))]'
+                      ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/30 scale-[1.02]'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-white/80 dark:hover:bg-slate-700/50 hover:text-slate-700 dark:hover:text-white'
                     }
                   `}
                 >
@@ -498,11 +510,11 @@ const CustomerAuth = () => {
                     touch-manipulation min-h-[50px]
                     focus-visible:outline-none 
                     focus-visible:ring-2 
-                    focus-visible:ring-[hsl(var(--portal-primary-500))] 
+                    focus-visible:ring-amber-500 
                     focus-visible:ring-offset-2
                     ${activeTab === 'signup'
-                      ? 'bg-gradient-to-r from-[hsl(var(--portal-primary-500))] to-[hsl(var(--portal-primary-600))] text-white shadow-lg shadow-[hsl(var(--portal-primary-500))]/30 scale-[1.02]'
-                      : 'text-[hsl(var(--portal-subtext))] hover:bg-white/60 hover:text-[hsl(var(--portal-text))]'
+                      ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/30 scale-[1.02]'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-white/80 dark:hover:bg-slate-700/50 hover:text-slate-700 dark:hover:text-white'
                     }
                   `}
                 >
@@ -654,16 +666,16 @@ const CustomerAuth = () => {
               ) : !showForgotPassword ? (
                 <form onSubmit={handleSignIn} className="space-y-4">
                   {/* Email Input */}
-                  <div className="relative mb-4 md:mb-5">
+                  <div className="relative mb-4 md:mb-5 group">
                     <label 
                       htmlFor="signin-email"
                       className="absolute left-3 top-2 text-xs 
-                                text-tl-muted 
+                                text-slate-500 dark:text-slate-400
                                 font-medium pointer-events-none z-10">
                       Email Address
                     </label>
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
-                                    text-tl-accent z-10" />
+                                    text-amber-500 z-10 transition-colors group-focus-within:text-amber-600" />
                     <input
                       id="signin-email"
                       type="email"
@@ -672,31 +684,33 @@ const CustomerAuth = () => {
                       required
                       aria-label="Email address"
                       aria-required="true"
-                      className="w-full rounded-lg 
-                                border border-tl-border 
-                                bg-tl-surface 
+                      className="w-full rounded-xl 
+                                border border-slate-200 dark:border-slate-700
+                                bg-slate-50 dark:bg-slate-800/50
                                 pl-10 pr-3 pt-7 pb-3
                                 text-sm 
-                                text-tl-text 
+                                text-slate-800 dark:text-white
                                 placeholder-transparent
-                                focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
-                                transition-colors
+                                focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20
+                                focus:bg-white dark:focus:bg-slate-800
+                                transition-all duration-200
                                 min-h-[58px]
-                                touch-manipulation"
+                                touch-manipulation
+                                shadow-sm"
                     />
                   </div>
 
                   {/* Password Input */}
-                  <div className="relative mb-4 md:mb-5">
+                  <div className="relative mb-4 md:mb-5 group">
                     <label 
                       htmlFor="signin-password"
                       className="absolute left-3 top-2 text-xs 
-                                text-tl-muted 
+                                text-slate-500 dark:text-slate-400
                                 font-medium pointer-events-none z-10">
                       Password
                     </label>
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
-                                    text-tl-accent z-10" />
+                                    text-amber-500 z-10 transition-colors group-focus-within:text-amber-600" />
                     <input
                       id="signin-password"
                       type={showSignInPassword ? 'text' : 'password'}
@@ -705,26 +719,28 @@ const CustomerAuth = () => {
                       required
                       aria-label="Password"
                       aria-required="true"
-                      className="w-full rounded-lg 
-                                border border-tl-border 
-                                bg-tl-surface 
+                      className="w-full rounded-xl 
+                                border border-slate-200 dark:border-slate-700
+                                bg-slate-50 dark:bg-slate-800/50
                                 pl-10 pr-12 pt-7 pb-3
                                 text-sm 
-                                text-tl-text 
+                                text-slate-800 dark:text-white
                                 placeholder-transparent
-                                focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
-                                transition-colors
+                                focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20
+                                focus:bg-white dark:focus:bg-slate-800
+                                transition-all duration-200
                                 min-h-[58px]
-                                touch-manipulation"
+                                touch-manipulation
+                                shadow-sm"
                     />
                     <button
                       type="button"
                       onClick={() => setShowSignInPassword(!showSignInPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 mt-3 
-                                text-tl-muted hover:text-tl-accent transition-colors
+                                text-slate-400 hover:text-amber-500 transition-colors
                                 min-h-[44px] min-w-[44px] flex items-center justify-center
                                 focus-visible:outline-none focus-visible:ring-2 
-                                focus-visible:ring-tl-accent rounded"
+                                focus-visible:ring-amber-500 rounded"
                       aria-label={showSignInPassword ? 'Hide password' : 'Show password'}
                     >
                       {showSignInPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -737,39 +753,46 @@ const CustomerAuth = () => {
                       type="button"
                       onClick={() => setShowForgotPassword(true)}
                       className="text-sm 
-                                text-tl-accent 
-                                hover:text-tl-accent-hover hover:underline
+                                text-amber-600 dark:text-amber-400
+                                hover:text-amber-700 dark:hover:text-amber-300 hover:underline
                                 min-h-[44px] px-2
                                 touch-manipulation
                                 focus-visible:outline-none focus-visible:ring-2 
-                                focus-visible:ring-tl-accent 
+                                focus-visible:ring-amber-500 
                                 rounded">
                       Forgot password?
                     </button>
                   </div>
 
-                  {/* Submit Button */}
+                  {/* Submit Button - Premium Gold Gradient */}
                   <button
                     type="submit"
                     disabled={isLoading}
                     aria-busy={isLoading}
-                    className="w-full py-3 rounded-lg 
-                              tl-gradient 
+                    className="w-full py-3.5 rounded-xl 
+                              bg-gradient-to-r from-amber-500 via-amber-500 to-amber-600
                               text-white font-semibold text-base
-                              shadow-md hover:opacity-95 
+                              shadow-lg shadow-amber-500/30
+                              hover:shadow-xl hover:shadow-amber-500/40
+                              hover:from-amber-600 hover:to-amber-700
                               disabled:opacity-50 disabled:cursor-not-allowed
-                              transition-all duration-200 
-                              min-h-[50px]
+                              transition-all duration-300 
+                              min-h-[52px]
                               touch-manipulation
                               focus-visible:outline-none focus-visible:ring-2 
-                              focus-visible:ring-tl-accent focus-visible:ring-offset-2">
+                              focus-visible:ring-amber-500 focus-visible:ring-offset-2
+                              active:scale-[0.98]
+                              relative overflow-hidden
+                              group">
+                    {/* Shine effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     {isLoading ? (
-                      <span className="flex items-center justify-center">
+                      <span className="flex items-center justify-center relative z-10">
                         <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                         Signing in...
                       </span>
                     ) : (
-                      'Sign In'
+                      <span className="relative z-10">Sign In</span>
                     )}
                   </button>
                 </form>
@@ -865,16 +888,16 @@ const CustomerAuth = () => {
             <div className="space-y-4 mt-6">
               <form onSubmit={handleSignUp} className="space-y-4">
                 {/* Full Name Input */}
-                <div className="relative mb-4 md:mb-5">
+                <div className="relative mb-4 md:mb-5 group">
                   <label 
                     htmlFor="signup-name"
                     className="absolute left-3 top-2 text-xs 
-                              text-tl-muted 
+                              text-slate-500 dark:text-slate-400
                               font-medium pointer-events-none z-10">
                     Full Name
                   </label>
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
-                                  text-tl-accent z-10" />
+                                  text-amber-500 z-10 transition-colors group-focus-within:text-amber-600" />
                   <input
                     id="signup-name"
                     type="text"
@@ -883,31 +906,33 @@ const CustomerAuth = () => {
                     required
                     aria-label="Full name"
                     aria-required="true"
-                    className="w-full rounded-lg 
-                              border border-tl-border 
-                              bg-tl-surface 
+                    className="w-full rounded-xl 
+                              border border-slate-200 dark:border-slate-700
+                              bg-slate-50 dark:bg-slate-800/50
                               pl-10 pr-3 pt-7 pb-3
                               text-sm 
-                              text-tl-text 
+                              text-slate-800 dark:text-white
                               placeholder-transparent
-                              focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
-                              transition-colors
+                              focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20
+                              focus:bg-white dark:focus:bg-slate-800
+                              transition-all duration-200
                               min-h-[58px]
-                              touch-manipulation"
+                              touch-manipulation
+                              shadow-sm"
                   />
                 </div>
 
                 {/* Company Name Input */}
-                <div className="relative mb-4 md:mb-5">
+                <div className="relative mb-4 md:mb-5 group">
                   <label 
                     htmlFor="signup-company"
                     className="absolute left-3 top-2 text-xs 
-                              text-tl-muted 
+                              text-slate-500 dark:text-slate-400
                               font-medium pointer-events-none z-10">
                     Company Name
                   </label>
                   <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
-                                        text-tl-accent z-10" />
+                                        text-amber-500 z-10 transition-colors group-focus-within:text-amber-600" />
                   <input
                     id="signup-company"
                     type="text"
@@ -916,31 +941,33 @@ const CustomerAuth = () => {
                     required
                     aria-label="Company name"
                     aria-required="true"
-                    className="w-full rounded-lg 
-                              border border-tl-border 
-                              bg-tl-surface 
+                    className="w-full rounded-xl 
+                              border border-slate-200 dark:border-slate-700
+                              bg-slate-50 dark:bg-slate-800/50
                               pl-10 pr-3 pt-7 pb-3
                               text-sm 
-                              text-tl-text 
+                              text-slate-800 dark:text-white
                               placeholder-transparent
-                              focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
-                              transition-colors
+                              focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20
+                              focus:bg-white dark:focus:bg-slate-800
+                              transition-all duration-200
                               min-h-[58px]
-                              touch-manipulation"
+                              touch-manipulation
+                              shadow-sm"
                   />
                 </div>
 
                 {/* Email Input */}
-                <div className="relative mb-4 md:mb-5">
+                <div className="relative mb-4 md:mb-5 group">
                   <label 
                     htmlFor="signup-email"
                     className="absolute left-3 top-2 text-xs 
-                              text-tl-muted 
+                              text-slate-500 dark:text-slate-400
                               font-medium pointer-events-none z-10">
                     Email Address
                   </label>
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
-                                  text-tl-accent z-10" />
+                                  text-amber-500 z-10 transition-colors group-focus-within:text-amber-600" />
                   <input
                     id="signup-email"
                     type="email"
@@ -949,31 +976,33 @@ const CustomerAuth = () => {
                     required
                     aria-label="Email address"
                     aria-required="true"
-                    className="w-full rounded-lg 
-                              border border-tl-border 
-                              bg-tl-surface 
+                    className="w-full rounded-xl 
+                              border border-slate-200 dark:border-slate-700
+                              bg-slate-50 dark:bg-slate-800/50
                               pl-10 pr-3 pt-7 pb-3
                               text-sm 
-                              text-tl-text 
+                              text-slate-800 dark:text-white
                               placeholder-transparent
-                              focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
-                              transition-colors
+                              focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20
+                              focus:bg-white dark:focus:bg-slate-800
+                              transition-all duration-200
                               min-h-[58px]
-                              touch-manipulation"
+                              touch-manipulation
+                              shadow-sm"
                   />
                 </div>
 
                 {/* Password Input */}
-                <div className="relative mb-4 md:mb-5">
+                <div className="relative mb-4 md:mb-5 group">
                   <label 
                     htmlFor="signup-password"
                     className="absolute left-3 top-2 text-xs 
-                              text-tl-muted 
+                              text-slate-500 dark:text-slate-400
                               font-medium pointer-events-none z-10">
                     Password
                   </label>
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 mt-3 h-4 w-4 
-                                  text-tl-accent z-10" />
+                                  text-amber-500 z-10 transition-colors group-focus-within:text-amber-600" />
                   <input
                     id="signup-password"
                     type={showSignUpPassword ? 'text' : 'password'}
@@ -982,59 +1011,99 @@ const CustomerAuth = () => {
                     required
                     aria-label="Password"
                     aria-required="true"
-                    className="w-full rounded-lg 
-                              border border-tl-border 
-                              bg-tl-surface 
+                    className="w-full rounded-xl 
+                              border border-slate-200 dark:border-slate-700
+                              bg-slate-50 dark:bg-slate-800/50
                               pl-10 pr-12 pt-7 pb-3
                               text-sm 
-                              text-tl-text 
+                              text-slate-800 dark:text-white
                               placeholder-transparent
-                              focus:border-tl-accent focus:ring-2 focus:ring-tl-accent/30 
-                              transition-colors
+                              focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20
+                              focus:bg-white dark:focus:bg-slate-800
+                              transition-all duration-200
                               min-h-[58px]
-                              touch-manipulation"
+                              touch-manipulation
+                              shadow-sm"
                   />
                   <button
                     type="button"
                     onClick={() => setShowSignUpPassword(!showSignUpPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 mt-3 
-                              text-tl-muted hover:text-tl-accent transition-colors
+                              text-slate-400 hover:text-amber-500 transition-colors
                               min-h-[44px] min-w-[44px] flex items-center justify-center
                               focus-visible:outline-none focus-visible:ring-2 
-                              focus-visible:ring-tl-accent rounded"
+                              focus-visible:ring-amber-500 rounded"
                     aria-label={showSignUpPassword ? 'Hide password' : 'Show password'}
                   >
                     {showSignUpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
 
-                {/* Submit Button */}
+                {/* Submit Button - Premium Gold Gradient */}
                 <button
                   type="submit"
                   disabled={isLoading}
                   aria-busy={isLoading}
-                  className="w-full py-3 rounded-lg 
-                            tl-gradient 
+                  className="w-full py-3.5 rounded-xl 
+                            bg-gradient-to-r from-amber-500 via-amber-500 to-amber-600
                             text-white font-semibold text-base
-                            shadow-md hover:opacity-95 
+                            shadow-lg shadow-amber-500/30
+                            hover:shadow-xl hover:shadow-amber-500/40
+                            hover:from-amber-600 hover:to-amber-700
                             disabled:opacity-50 disabled:cursor-not-allowed
-                            transition-all duration-200 
-                            min-h-[50px]
+                            transition-all duration-300 
+                            min-h-[52px]
                             touch-manipulation
                             focus-visible:outline-none focus-visible:ring-2 
-                            focus-visible:ring-tl-accent focus-visible:ring-offset-2">
+                            focus-visible:ring-amber-500 focus-visible:ring-offset-2
+                            active:scale-[0.98]
+                            relative overflow-hidden
+                            group">
+                  {/* Shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   {isLoading ? (
-                    <span className="flex items-center justify-center">
+                    <span className="flex items-center justify-center relative z-10">
                       <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                       Creating Account...
                     </span>
                   ) : (
-                    'Create Account'
+                    <span className="relative z-10">Create Account</span>
                   )}
                 </button>
               </form>
             </div>
           )}
+
+          {/* Trust Badges - Enterprise Security Indicators */}
+          <div className="mt-6 pt-6 border-t border-slate-200/50 dark:border-slate-700/30">
+            <div className="flex items-center justify-center gap-6 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-amber-500" />
+                <span>Bank-Level Security</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Lock className="w-4 h-4 text-amber-500" />
+                <span>SSL Encrypted</span>
+              </div>
+            </div>
+            
+            {/* Trusted Partners Badge */}
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <div className="flex -space-x-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div 
+                    key={i}
+                    className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-600 dark:to-slate-700 border-2 border-white dark:border-slate-800 flex items-center justify-center"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
+                  </div>
+                ))}
+              </div>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Trusted by <span className="font-semibold text-slate-700 dark:text-white">500+</span> businesses
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
