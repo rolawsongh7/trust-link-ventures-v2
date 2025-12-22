@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
 import { categorySlides } from '@/data/categorySlides';
 import { cardHover } from '@/lib/animations';
+import { ProcessCarousel } from '@/components/mobile/ProcessCarousel';
 import trustLinkLogo from '@/assets/trust-link-logo.png';
 import heroBackground from '@/assets/cold-storage-hero.jpg';
 
@@ -198,6 +199,9 @@ const MobileHub: React.FC = () => {
             </div>
           )}
         </section>
+
+        {/* Process Flow Carousel */}
+        <ProcessCarousel className="py-2" />
 
         {/* Featured Products Carousel with Indicators - No stagger animation */}
         <section className="space-y-4">
