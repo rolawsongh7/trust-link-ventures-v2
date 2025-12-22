@@ -11,7 +11,7 @@ export interface MobileTab {
 export const MOBILE_TABS: MobileTab[] = [
   {
     label: 'Home',
-    path: '/',
+    path: '/hub',
     icon: Home,
     requiresAuth: false
   },
