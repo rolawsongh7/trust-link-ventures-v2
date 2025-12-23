@@ -128,6 +128,27 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
       return;
     }
 
+    // Check if an order already exists for this quote
+    const { data: existingOrder, error: existingOrderError } = await supabase
+      .from('orders')
+      .select('id, order_number')
+      .or(`quote_id.eq.${quote?.id},source_quote_id.eq.${quote?.id}`)
+      .maybeSingle();
+
+    if (existingOrderError) {
+      console.error('Error checking existing order:', existingOrderError);
+    }
+
+    if (existingOrder) {
+      toast({
+        title: 'Order Already Created',
+        description: `This quote has already been converted to order ${existingOrder.order_number}. Check your Orders page.`,
+      });
+      onSuccess();
+      onOpenChange(false);
+      return;
+    }
+
     setSubmitting(true);
     try {
       // Accept quote and create order

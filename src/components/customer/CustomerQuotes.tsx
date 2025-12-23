@@ -240,6 +240,7 @@ export const CustomerQuotes: React.FC = () => {
             (finalQuote.status === 'sent' ? 'quoted' : 
              finalQuote.status === 'accepted' ? 'approved' : 
              finalQuote.status === 'rejected' ? 'rejected' :
+             finalQuote.status === 'converted' ? 'converted' :
              request.status) : 
             request.status
         };

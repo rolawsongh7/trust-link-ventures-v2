@@ -144,10 +144,10 @@ export const QuoteTableView: React.FC<QuoteTableViewProps> = ({
                       )}
                     </>
                   )}
-                  {quote.final_quote?.status === 'accepted' && (
+                  {(quote.final_quote?.status === 'accepted' || quote.final_quote?.status === 'converted') && (
                     <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-[hsl(var(--tl-success-bg))] text-[hsl(var(--tl-success-text))]">
                       <CheckCircle className="h-3 w-3" />
-                      Accepted
+                      {quote.final_quote?.status === 'converted' ? 'Order Created' : 'Accepted'}
                     </span>
                   )}
                   <Button

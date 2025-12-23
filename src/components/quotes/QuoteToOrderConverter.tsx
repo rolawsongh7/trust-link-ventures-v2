@@ -43,6 +43,27 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
 
+      // Check if an order already exists for this quote
+      const { data: existingOrder, error: existingOrderError } = await supabase
+        .from('orders')
+        .select('id, order_number')
+        .or(`quote_id.eq.${quote.id},source_quote_id.eq.${quote.id}`)
+        .maybeSingle();
+
+      if (existingOrderError) {
+        console.error('Error checking existing order:', existingOrderError);
+      }
+
+      if (existingOrder) {
+        toast({
+          title: 'Order Already Exists',
+          description: `Order ${existingOrder.order_number} already exists for this quote.`,
+          variant: 'destructive'
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       // Fetch quote items
       const { data: quoteItems, error: itemsError } = await supabase
         .from('quote_items')
@@ -106,6 +127,20 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
         .eq('id', quote.id);
 
       if (quoteUpdateError) throw quoteUpdateError;
+
+      // Update linked quote_request status to 'converted' as well
+      const { data: quoteData } = await supabase
+        .from('quotes')
+        .select('linked_quote_request_id')
+        .eq('id', quote.id)
+        .single();
+
+      if (quoteData?.linked_quote_request_id) {
+        await supabase
+          .from('quote_requests')
+          .update({ status: 'converted' })
+          .eq('id', quoteData.linked_quote_request_id);
+      }
 
       // Log audit event
       await supabase.from('audit_logs').insert({

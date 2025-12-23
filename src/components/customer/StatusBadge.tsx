@@ -3,7 +3,7 @@ import { Clock, FileCheck, CheckCircle, XCircle, Package, Truck, CheckCircle2, B
 
 type StatusType = 
   // Quote-specific statuses
-  | 'pending' | 'processing' | 'quoted' | 'approved' | 'rejected' | 'completed' | 'quote'
+  | 'pending' | 'processing' | 'quoted' | 'approved' | 'rejected' | 'completed' | 'quote' | 'converted'
   // Order statuses
   | 'order_processing' | 'shipped' | 'delivered' | 'canceled'
   // General
@@ -49,6 +49,11 @@ const statusConfig: Record<StatusType, {
     label: 'Completed',
     className: 'bg-[hsl(var(--tl-success-bg))] text-[hsl(var(--tl-success-text))] border border-[hsl(var(--tl-success))]',
     icon: CheckCircle2
+  },
+  converted: {
+    label: 'Order Created',
+    className: 'bg-[hsl(var(--tl-success-bg))] text-[hsl(var(--tl-success-text))] border border-[hsl(var(--tl-success))]',
+    icon: Package
   },
   quote: {
     label: 'Quote',
