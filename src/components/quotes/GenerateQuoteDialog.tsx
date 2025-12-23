@@ -94,7 +94,6 @@ export const GenerateQuoteDialog: React.FC<GenerateQuoteDialogProps> = ({
             <h4 className="font-semibold text-sm">The quote will include:</h4>
             <ul className="text-sm space-y-1 text-muted-foreground ml-4 list-disc">
               <li>Trust Link Ventures company information and logo</li>
-              <li>New Gen Link company information and logo</li>
               <li>Quote number and dates</li>
               <li>Customer billing information</li>
               <li>Delivery information (if available)</li>
