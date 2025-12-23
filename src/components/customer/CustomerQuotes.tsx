@@ -239,6 +239,7 @@ export const CustomerQuotes: React.FC = () => {
           status: finalQuote ? 
             (finalQuote.status === 'sent' ? 'quoted' : 
              finalQuote.status === 'accepted' ? 'approved' : 
+             finalQuote.status === 'rejected' ? 'rejected' :
              request.status) : 
             request.status
         };
