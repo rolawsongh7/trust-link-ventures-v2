@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-export type UserRole = 'admin' | 'sales_rep' | 'user';
+export type UserRole = 'super_admin' | 'admin' | 'sales_rep' | 'user';
 
 interface UseRoleAuthReturn {
   role: UserRole | null;
   loading: boolean;
+  hasSuperAdminAccess: boolean;
   hasAdminAccess: boolean;
   hasSalesAccess: boolean;
   checkRole: (requiredRole: UserRole) => boolean;
@@ -28,23 +29,33 @@ export const useRoleAuth = (): UseRoleAuthReturn => {
     try {
       setLoading(true);
       
-      // Use the check_user_role function to verify user role
-      const { data: isAdmin } = await supabase.rpc('check_user_role', {
+      // Check for super_admin first
+      const { data: isSuperAdmin } = await supabase.rpc('check_user_role', {
         check_user_id: user.id,
-        required_role: 'admin'
+        required_role: 'super_admin'
       });
 
-      const { data: isSalesRep } = await supabase.rpc('check_user_role', {
-        check_user_id: user.id,
-        required_role: 'sales_rep'
-      });
-
-      if (isAdmin) {
-        setRole('admin');
-      } else if (isSalesRep) {
-        setRole('sales_rep');
+      if (isSuperAdmin) {
+        setRole('super_admin');
       } else {
-        setRole('user');
+        // Use the check_user_role function to verify user role
+        const { data: isAdmin } = await supabase.rpc('check_user_role', {
+          check_user_id: user.id,
+          required_role: 'admin'
+        });
+
+        const { data: isSalesRep } = await supabase.rpc('check_user_role', {
+          check_user_id: user.id,
+          required_role: 'sales_rep'
+        });
+
+        if (isAdmin) {
+          setRole('admin');
+        } else if (isSalesRep) {
+          setRole('sales_rep');
+        } else {
+          setRole('user');
+        }
       }
     } catch (error) {
       console.error('Error fetching user role:', error);
@@ -58,14 +69,18 @@ export const useRoleAuth = (): UseRoleAuthReturn => {
     fetchUserRole();
   }, [user]);
 
-  const hasAdminAccess = role === 'admin';
-  const hasSalesAccess = role === 'admin' || role === 'sales_rep';
+  const hasSuperAdminAccess = role === 'super_admin';
+  const hasAdminAccess = role === 'super_admin' || role === 'admin';
+  const hasSalesAccess = role === 'super_admin' || role === 'admin' || role === 'sales_rep';
 
   const checkRole = (requiredRole: UserRole): boolean => {
     if (!role) return false;
     
-    // Admin can access everything
-    if (role === 'admin') return true;
+    // Super admin can access everything
+    if (role === 'super_admin') return true;
+    
+    // Admin can access everything except super_admin
+    if (role === 'admin' && requiredRole !== 'super_admin') return true;
     
     // Sales rep can access sales-related features
     if (role === 'sales_rep' && (requiredRole === 'sales_rep' || requiredRole === 'user')) {
@@ -83,6 +98,7 @@ export const useRoleAuth = (): UseRoleAuthReturn => {
   return {
     role,
     loading,
+    hasSuperAdminAccess,
     hasAdminAccess,
     hasSalesAccess,
     checkRole,

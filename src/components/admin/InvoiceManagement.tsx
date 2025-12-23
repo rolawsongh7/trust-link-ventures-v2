@@ -36,6 +36,7 @@ import { ensureSignedUrl } from '@/lib/storageHelpers';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { MobileInvoiceCard } from './mobile/MobileInvoiceCard';
 import { MobileInvoiceDetailDialog } from './mobile/MobileInvoiceDetailDialog';
+import { useRoleAuth } from '@/hooks/useRoleAuth';
 import {
   Select,
   SelectContent,
@@ -83,6 +84,7 @@ type SortDirection = 'asc' | 'desc';
 export default function InvoiceManagement() {
   const { toast } = useToast();
   const { isMobile } = useMobileDetection();
+  const { hasSuperAdminAccess } = useRoleAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -443,18 +445,20 @@ export default function InvoiceManagement() {
         ]}
       />
       
-      <div className="flex justify-end">
-        <Button
-          onClick={handleRegenerateMissingPDFs}
-          disabled={regeneratingAll}
-          variant="outline"
-          className="gap-2"
-        >
-          {regeneratingAll && <RefreshCw className="h-4 w-4 animate-spin" />}
-          <Beaker className="h-4 w-4" />
-          Regenerate Missing PDFs
-        </Button>
-      </div>
+      {hasSuperAdminAccess && (
+        <div className="flex justify-end">
+          <Button
+            onClick={handleRegenerateMissingPDFs}
+            disabled={regeneratingAll}
+            variant="outline"
+            className="gap-2"
+          >
+            {regeneratingAll && <RefreshCw className="h-4 w-4 animate-spin" />}
+            <Beaker className="h-4 w-4" />
+            Regenerate Missing PDFs
+          </Button>
+        </div>
+      )}
 
       <InteractiveCard variant="glass" className="border-primary/10">
         <CardHeader>
@@ -673,25 +677,29 @@ export default function InvoiceManagement() {
                             >
                               <Download className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRegenerate(invoice.id)}
-                              disabled={regeneratingId === invoice.id}
-                            >
-                              {regeneratingId === invoice.id ? (
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <RefreshCw className="h-4 w-4" />
-                              )}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleTestStorage(invoice)}
-                            >
-                              <Beaker className="h-4 w-4" />
-                            </Button>
+                            {hasSuperAdminAccess && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRegenerate(invoice.id)}
+                                  disabled={regeneratingId === invoice.id}
+                                >
+                                  {regeneratingId === invoice.id ? (
+                                    <RefreshCw className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="h-4 w-4" />
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleTestStorage(invoice)}
+                                >
+                                  <Beaker className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
