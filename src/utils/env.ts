@@ -18,17 +18,14 @@ export const isNativeApp = (): boolean => {
   // Check for buildnatively.com WebView wrapper
   const userAgent = navigator.userAgent || '';
   
-  // buildnatively adds 'Natively' to user agent
+  // buildnatively adds 'Natively' to user agent - this is the reliable check
   if (userAgent.includes('Natively')) return true;
   
-  // Check for is_native URL parameter
+  // Allow explicit override via URL parameter (for testing)
   if (window.location.search.includes('is_native=true')) return true;
   
-  // Generic WebView detection for iOS (WKWebView)
-  if ((window as any).webkit?.messageHandlers) return true;
-  
-  // Generic Android WebView detection (contains "; wv)" in user agent)
-  if (/; wv\)/.test(userAgent) && /Android/.test(userAgent)) return true;
+  // REMOVED: Generic WebView detection (webkit.messageHandlers, Android wv)
+  // These caused false positives on regular mobile browsers like Chrome/Safari/Firefox
   
   return false;
 };
