@@ -123,10 +123,10 @@ export const QuoteCardView: React.FC<QuoteCardViewProps> = ({
                   </Button>
                 )}
               </>
-            ) : quote.final_quote?.status === 'accepted' ? (
+            ) : (quote.final_quote?.status === 'accepted' || quote.final_quote?.status === 'converted') ? (
               <div className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[hsl(var(--tl-success-bg))] text-[hsl(var(--tl-success-text))] text-sm font-medium">
                 <CheckCircle className="h-4 w-4" />
-                Accepted
+                {quote.final_quote?.status === 'converted' ? 'Order Created' : 'Accepted'}
               </div>
             ) : (
               <Button
