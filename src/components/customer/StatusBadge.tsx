@@ -3,9 +3,9 @@ import { Clock, FileCheck, CheckCircle, XCircle, Package, Truck, CheckCircle2, B
 
 type StatusType = 
   // Quote-specific statuses
-  | 'pending' | 'quoted' | 'approved' | 'rejected' | 'completed' | 'quote'
+  | 'pending' | 'processing' | 'quoted' | 'approved' | 'rejected' | 'completed' | 'quote'
   // Order statuses
-  | 'processing' | 'shipped' | 'delivered' | 'canceled'
+  | 'order_processing' | 'shipped' | 'delivered' | 'canceled'
   // General
   | 'draft';
 
@@ -23,6 +23,11 @@ const statusConfig: Record<StatusType, {
   pending: {
     label: 'Pending Review',
     className: 'bg-[hsl(var(--tl-warning-bg))] text-[hsl(var(--tl-warning-text))] border border-[hsl(var(--tl-warning))]',
+    icon: Clock
+  },
+  processing: {
+    label: 'Quote in Progress',
+    className: 'bg-[hsl(var(--tl-info-bg))] text-[hsl(var(--tl-info-text))] border border-[hsl(var(--tl-maritime-300))]',
     icon: Clock
   },
   quoted: {
@@ -50,7 +55,7 @@ const statusConfig: Record<StatusType, {
     className: 'bg-[hsl(var(--tl-info-bg))] text-[hsl(var(--tl-info-text))] border border-[hsl(var(--tl-maritime-400))]',
     icon: FileText
   },
-  processing: {
+  order_processing: {
     label: 'Processing',
     className: 'bg-[hsl(var(--tl-info-bg))] text-[hsl(var(--tl-info-text))] border border-[hsl(var(--tl-maritime-400))]',
     icon: Package

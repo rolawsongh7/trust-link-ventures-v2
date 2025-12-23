@@ -153,6 +153,20 @@ export const QuotePreviewDialog: React.FC<QuotePreviewDialogProps> = ({
         throw new Error(`Failed to send emails: ${emailError.message}`);
       }
 
+      // Update linked quote_request status to 'quoted' now that email is sent
+      const { data: quoteData } = await supabase
+        .from('quotes')
+        .select('linked_quote_request_id')
+        .eq('id', quote.id)
+        .single();
+
+      if (quoteData?.linked_quote_request_id) {
+        await supabase
+          .from('quote_requests')
+          .update({ status: 'quoted' })
+          .eq('id', quoteData.linked_quote_request_id);
+      }
+
       toast({
         title: 'Quote sent successfully',
         description: `Quote sent to ${customerEmail} with PDF attachment. Copy sent to admin.`

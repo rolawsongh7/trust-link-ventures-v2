@@ -323,9 +323,9 @@ const QuoteRequestManagement = () => {
       }
 
       // 3. Update request status
-      await updateRequestStatus(request.id, 'quoted');
+      await updateRequestStatus(request.id, 'processing');
 
-      toast.success('Quote created and linked to request! Add prices to complete it.');
+      toast.success('Quote created! Add prices, generate PDF, and send to customer.');
       fetchQuoteRequests();
       
     } catch (error) {
