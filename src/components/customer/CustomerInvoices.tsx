@@ -42,7 +42,7 @@ export const CustomerInvoices = () => {
   const [filters, setFilters] = useState<InvoiceSearchFilters>({
     searchTerm: '',
     status: [],
-    invoiceType: ['commercial'], // Default to commercial invoices
+    invoiceType: ['commercial', 'proforma'], // Show both commercial and proforma by default
     dateRange: null,
     timePeriod: 'all',
     amountRange: null,
