@@ -98,17 +98,38 @@ export const QuotePreviewDialog: React.FC<QuotePreviewDialogProps> = ({
         description: 'Creating proforma invoice for the quote.'
       });
 
-      const { error: proformaError } = await supabase.functions.invoke('generate-proforma-invoice', {
-        body: { quoteId: quote.id }
-      });
+      try {
+        const { data: proformaData, error: proformaError } = await supabase.functions.invoke('generate-proforma-invoice', {
+          body: { quoteId: quote.id }
+        });
 
-      if (proformaError) {
-        console.error('Proforma invoice generation error:', proformaError);
-        // Don't fail the entire process if proforma generation fails
+        if (proformaError) {
+          console.error('[Proforma] Edge function error:', proformaError);
+          toast({
+            title: 'Proforma Invoice Warning',
+            description: `Quote sent, but proforma generation failed: ${proformaError.message}. Contact admin to regenerate.`,
+            variant: 'destructive'
+          });
+        } else if (proformaData?.error) {
+          console.error('[Proforma] Function returned error:', proformaData.error);
+          toast({
+            title: 'Proforma Invoice Warning',
+            description: `Quote sent, but proforma generation failed: ${proformaData.error}. Contact admin to regenerate.`,
+            variant: 'destructive'
+          });
+        } else {
+          console.log('[Proforma] Successfully generated:', proformaData);
+          toast({
+            title: 'Proforma invoice created',
+            description: `Proforma invoice ${proformaData?.invoiceNumber || ''} generated successfully.`
+          });
+        }
+      } catch (proformaErr: any) {
+        console.error('[Proforma] Unexpected error:', proformaErr);
         toast({
-          title: 'Warning',
-          description: 'Quote sent successfully, but proforma invoice generation failed. You can regenerate it later.',
-          variant: 'default'
+          title: 'Proforma Invoice Warning',
+          description: 'Quote sent, but proforma generation encountered an error. Contact admin.',
+          variant: 'destructive'
         });
       }
 
