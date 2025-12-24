@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MapPin, X, Clock } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ interface PendingOrder {
 }
 
 export const AddressBanner: React.FC<AddressBannerProps> = ({ onAddAddressClick }) => {
+  const navigate = useNavigate();
   const { profile } = useCustomerAuth();
   const [hasAddress, setHasAddress] = useState<boolean | null>(null);
   const [pendingOrders, setPendingOrders] = useState<PendingOrder[]>([]);
@@ -139,7 +141,7 @@ export const AddressBanner: React.FC<AddressBannerProps> = ({ onAddAddressClick 
             )}
           </div>
           <Button
-            onClick={onAddAddressClick}
+            onClick={() => navigate(`/portal/orders?addressNeeded=${mostRecentRequest.id}`)}
             className="bg-orange-600 hover:bg-orange-700 text-white whitespace-nowrap shadow-lg"
             size="sm"
           >
