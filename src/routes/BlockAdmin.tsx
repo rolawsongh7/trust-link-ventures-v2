@@ -30,9 +30,9 @@ export const BlockAdmin: React.FC = () => {
       '/analytics'
     ];
 
-    // Check if current path matches any admin pattern
+    // Check if current path matches any admin pattern (use startsWith to avoid blocking /portal/quotes)
     const isAdminRoute = adminPatterns.some(pattern => 
-      pathname.toLowerCase().includes(pattern.toLowerCase())
+      pathname.toLowerCase().startsWith(pattern.toLowerCase())
     );
 
     // Also check query parameters for admin indicators
