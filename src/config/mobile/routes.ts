@@ -67,11 +67,5 @@ export const MOBILE_PORTAL_TABS: MobileTab[] = [
     path: '/portal/orders',
     icon: FileText,
     requiresAuth: true
-  },
-  {
-    label: 'More',
-    path: '/portal/more',
-    icon: MoreHorizontal,
-    requiresAuth: true
   }
 ];
