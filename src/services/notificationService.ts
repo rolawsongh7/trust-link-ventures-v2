@@ -47,7 +47,7 @@ export class NotificationService {
       title: 'Quote Ready',
       message: `Your quote ${quoteNumber} is ready for review`,
       type: 'quote_ready',
-      link: `/customer-portal/quotes`,
+      link: `/portal/quotes`,
       metadata: { quoteId, quoteNumber }
     });
 
@@ -60,7 +60,7 @@ export class NotificationService {
         data: {
           quoteNumber,
           quoteId,
-          customerPortalLink: `${window.location.origin}/customer-portal/quotes`
+          customerPortalLink: `${window.location.origin}/portal/quotes`
         }
       }
     });
@@ -96,7 +96,7 @@ export class NotificationService {
       title: 'Order Confirmed',
       message: `Your order ${orderNumber} has been confirmed`,
       type: 'order_confirmed',
-      link: `/customer-portal/orders`,
+      link: `/portal/orders`,
       metadata: { orderId, orderNumber }
     });
 
@@ -109,7 +109,7 @@ export class NotificationService {
         data: {
           orderNumber,
           orderId,
-          trackingLink: `${window.location.origin}/customer-portal/orders`
+          trackingLink: `${window.location.origin}/portal/orders`
         }
       }
     });
@@ -128,7 +128,7 @@ export class NotificationService {
       title: 'Order Shipped',
       message: `Your order ${orderNumber} has been shipped${trackingNumber ? ` - Tracking: ${trackingNumber}` : ''}`,
       type: 'order_shipped',
-      link: `/customer-portal/orders`,
+      link: `/portal/orders`,
       metadata: { orderId, orderNumber, trackingNumber }
     });
 
@@ -148,7 +148,7 @@ export class NotificationService {
       title: 'Order Ready to Ship',
       message: `Your order ${orderNumber} is packed and ready for shipment`,
       type: 'order_shipped',
-      link: `/customer-portal/orders`,
+      link: `/portal/orders`,
       metadata: { orderId, orderNumber }
     });
 
@@ -168,7 +168,7 @@ export class NotificationService {
       title: 'Order Delivered',
       message: `Your order ${orderNumber} has been delivered`,
       type: 'order_delivered',
-      link: `/customer-portal/orders`,
+      link: `/portal/orders`,
       metadata: { orderId, orderNumber }
     });
 

@@ -66,6 +66,21 @@ function generateSuccessPage(title: string, message: string, isApproval: boolean
           font-size: 16px;
           margin-bottom: 30px;
         }
+        .portal-btn {
+          display: inline-block;
+          background: #3b82f6;
+          color: white;
+          padding: 14px 28px;
+          border-radius: 8px;
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 16px;
+          margin-bottom: 30px;
+          transition: background 0.2s;
+        }
+        .portal-btn:hover {
+          background: #2563eb;
+        }
         .footer {
           border-top: 1px solid #e5e7eb;
           padding-top: 20px;
@@ -79,8 +94,11 @@ function generateSuccessPage(title: string, message: string, isApproval: boolean
         <div class="icon">${icon}</div>
         <h1>${title}</h1>
         <p>${message}</p>
+        <a href="https://trustlinkcompany.com/portal/orders" class="portal-btn">
+          Continue to Customer Portal →
+        </a>
         <div class="footer">
-          <strong>SeaPro SAS</strong><br>
+          <strong>TrustLink Ventures</strong><br>
           Thank you for your business
         </div>
       </div>

@@ -297,12 +297,15 @@ function generateTrackingPage(order: any, token: string): string {
             <button onclick="location.reload()" class="refresh-btn">
               🔄 Refresh Status
             </button>
+            <a href="https://trustlinkcompany.com/portal/orders" class="refresh-btn" style="margin-left: 10px; text-decoration: none;">
+              📱 Open Customer Portal
+            </a>
           </div>
         </div>
 
         <div class="footer">
-          <strong>SeaPro SAS</strong><br>
-          For questions about your order, contact us at orders@seapro.com or +233 123 456 789
+          <strong>TrustLink Ventures</strong><br>
+          For questions about your order, contact us at info@trustlinkcompany.com or +233 123 456 789
         </div>
       </div>
 
