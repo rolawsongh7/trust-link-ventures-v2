@@ -20,6 +20,8 @@ import { MobileOrderCard } from './mobile/MobileOrderCard';
 import { MobileOrderDetailDialog } from './mobile/MobileOrderDetailDialog';
 import { InvoicePreviewDialog } from './InvoicePreviewDialog';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
+import { OrderStatusBadge } from './OrderStatusBadge';
+import { getOrderStatusConfig, orderStatusFilterOptions } from '@/utils/orderStatusConfig';
 
 
 // Order interface matching database schema
@@ -188,19 +190,10 @@ export const CustomerOrders: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending_payment': return 'bg-amber-500/10 text-amber-600 border-amber-500/30';
-      case 'order_confirmed': return 'bg-tl-info/10 text-tl-info border-tl-info/30';
-      case 'payment_received': return 'bg-tl-success/10 text-tl-success border-tl-success/30';
-      case 'processing': return 'bg-purple-500/10 text-purple-600 border-purple-500/30';
-      case 'ready_to_ship': return 'bg-tl-primary/10 text-tl-primary border-tl-primary/30';
-      case 'shipped': return 'bg-orange-500/10 text-orange-600 border-orange-500/30';
-      case 'delivered': return 'bg-tl-success/10 text-tl-success border-tl-success/30';
-      case 'cancelled': return 'bg-destructive/10 text-destructive border-destructive/30';
-      case 'delivery_failed': return 'bg-destructive/10 text-destructive border-destructive/30';
-      default: return 'bg-tl-muted/20 text-tl-muted border-tl-border';
-    }
+  // Get status border color using centralized config
+  const getStatusBorderColor = (status: string) => {
+    const config = getOrderStatusConfig(status);
+    return config.borderClass;
   };
 
   const getCurrencySymbol = (currency: string) => {
@@ -224,35 +217,7 @@ export const CustomerOrders: React.FC = () => {
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'shipped':
-        return Truck;
-      case 'pending_payment':
-      case 'order_confirmed':
-      case 'payment_received':
-      case 'processing':
-      case 'ready_to_ship':
-      case 'delivered':
-      case 'cancelled':
-      case 'delivery_failed':
-      default:
-        return Package;
-    }
-  };
-
-  const getStatusBorderColor = (status: string) => {
-    switch (status) {
-      case 'pending_payment': return 'border-l-amber-500';
-      case 'order_confirmed': return 'border-l-blue-500';
-      case 'payment_received': return 'border-l-emerald-500';
-      case 'processing': return 'border-l-purple-500';
-      case 'ready_to_ship': return 'border-l-indigo-500';
-      case 'shipped': return 'border-l-orange-500';
-      case 'delivered': return 'border-l-green-600';
-      case 'cancelled': return 'border-l-red-500';
-      case 'delivery_failed': return 'border-l-red-600';
-      default: return 'border-l-gray-400';
-    }
+    return getOrderStatusConfig(status).icon;
   };
 
   const handleReorder = async (order: Order) => {
@@ -556,16 +521,11 @@ export const CustomerOrders: React.FC = () => {
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending_payment">Pending Payment</SelectItem>
-                <SelectItem value="order_confirmed">Order Confirmed</SelectItem>
-                <SelectItem value="payment_received">Payment Received</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="ready_to_ship">Ready to Ship</SelectItem>
-                <SelectItem value="shipped">Shipped</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-                <SelectItem value="delivery_failed">Delivery Failed</SelectItem>
+                {orderStatusFilterOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -672,9 +632,7 @@ export const CustomerOrders: React.FC = () => {
                           </Badge>
                         </div>
                       </div>
-                      <Badge className={getStatusColor(order.status)}>
-                        {order.status}
-                      </Badge>
+                      <OrderStatusBadge status={order.status} />
                     </div>
                   </div>
                 </CardHeader>
