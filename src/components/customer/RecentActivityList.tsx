@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Package, FileText, ShoppingCart, Clock } from 'lucide-react';
-import { StatusBadge } from './StatusBadge';
+import { OrderStatusBadge } from './OrderStatusBadge';
+import { QuoteStatusBadge } from './QuoteStatusBadge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -9,7 +10,7 @@ interface Activity {
   id: string;
   type: 'order' | 'quote' | 'cart';
   title: string;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'canceled' | 'draft' | 'approved' | 'quote';
+  status: string;
   timestamp: string;
   link?: string;
 }
@@ -133,7 +134,11 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
               </div>
               
               <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={activity.status} variant="compact" />
+                {activity.type === 'order' ? (
+                  <OrderStatusBadge status={activity.status} variant="compact" />
+                ) : (
+                  <QuoteStatusBadge status={activity.status} variant="compact" showTooltip={false} />
+                )}
                 <span className="text-xs text-slate-500 dark:text-slate-400">
                   {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
                 </span>

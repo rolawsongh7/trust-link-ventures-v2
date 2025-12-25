@@ -2,7 +2,7 @@ import React from 'react';
 import { FileText, Download, Eye, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { StatusBadge } from '../StatusBadge';
+import { QuoteStatusBadge } from '../QuoteStatusBadge';
 import { UrgencyBadge } from './UrgencyBadge';
 import { cn } from '@/lib/utils';
 
@@ -94,7 +94,7 @@ export const QuoteTableView: React.FC<QuoteTableViewProps> = ({
               </td>
               <td className="px-4 py-4 text-center">
                 <div className="flex justify-center">
-                  <StatusBadge status={quote.status as any} variant="compact" />
+                  <QuoteStatusBadge status={quote.status} variant="compact" />
                 </div>
               </td>
               <td className="px-4 py-4 text-center">

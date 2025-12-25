@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { quoteStatusFilterOptions } from '@/utils/quoteStatusConfig';
 
 interface QuoteFiltersProps {
   searchTerm: string;
@@ -45,11 +46,11 @@ export const QuoteFilters: React.FC<QuoteFiltersProps> = ({
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="quoted">Quoted</SelectItem>
-            <SelectItem value="approved">Accepted</SelectItem>
-            <SelectItem value="rejected">Declined</SelectItem>
+            {quoteStatusFilterOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         

@@ -2,7 +2,7 @@ import React from 'react';
 import { FileText, Download, Eye, Calendar, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { StatusBadge } from '../StatusBadge';
+import { QuoteStatusBadge } from '../QuoteStatusBadge';
 import { UrgencyBadge } from './UrgencyBadge';
 
 interface Quote {
@@ -61,7 +61,7 @@ export const QuoteCardView: React.FC<QuoteCardViewProps> = ({
                   </p>
                 </div>
               </div>
-              <StatusBadge status={quote.status as any} variant="compact" />
+              <QuoteStatusBadge status={quote.status} variant="compact" />
             </div>
           </div>
           

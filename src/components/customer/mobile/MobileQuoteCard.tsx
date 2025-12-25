@@ -3,6 +3,8 @@ import { InteractiveCard } from '@/components/ui/interactive-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Calendar, Clock, Package, ChevronDown, ChevronUp, Download, Eye, Check, X, AlertCircle } from 'lucide-react';
+import { QuoteStatusBadge } from '../QuoteStatusBadge';
+import { UrgencyBadge } from '../quotes/UrgencyBadge';
 
 interface QuoteItem {
   id: string;
@@ -55,31 +57,7 @@ export const MobileQuoteCard = ({
 }: MobileQuoteCardProps) => {
   const [showItems, setShowItems] = useState(false);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'quoted': return 'bg-blue-100 text-blue-800';
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      case 'completed': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getUrgencyColor = (urgency: string) => {
-    switch (urgency) {
-      case 'high': return 'bg-red-50 text-red-700 border-red-200';
-      case 'medium': return 'bg-orange-50 text-orange-700 border-orange-200';
-      case 'low': return 'bg-green-50 text-green-700 border-green-200';
-      default: return 'bg-gray-50 text-gray-700 border-gray-200';
-    }
-  };
-
-  const formatStatus = (status: string) => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
-  };
-
-  const hasFinalQuote = quote.final_quote && 
+  const hasFinalQuote = quote.final_quote &&
     quote.final_quote.status === 'sent' && 
     quote.final_quote.total_amount > 0 &&
     quote.final_quote.final_file_url;
@@ -121,12 +99,8 @@ export const MobileQuoteCard = ({
       {/* Status and Date */}
       <div className="flex items-center justify-between text-xs flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <Badge className={`${getStatusColor(quote.status)} text-xs px-2.5 py-1 font-semibold`}>
-            {formatStatus(quote.status)}
-          </Badge>
-          <Badge className={`${getUrgencyColor(quote.urgency)} text-xs px-2.5 py-1 border`}>
-            {quote.urgency}
-          </Badge>
+          <QuoteStatusBadge status={quote.status} variant="compact" showTooltip={false} />
+          <UrgencyBadge urgency={quote.urgency} variant="compact" />
         </div>
         <div className="text-muted-foreground">
           {new Date(quote.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
