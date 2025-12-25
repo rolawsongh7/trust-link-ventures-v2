@@ -89,11 +89,14 @@ export const OnboardingWizard: React.FC = () => {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        handleSkip();
+      }
+    }}>
       <DialogContent 
         className="sm:max-w-md p-0 gap-0 max-h-[90vh] overflow-y-auto"
         onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
       >
         {/* Progress indicator */}
         <OnboardingProgress currentStep={step} totalSteps={TOTAL_STEPS} />
