@@ -1,47 +1,85 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Circle, TrendingUp } from 'lucide-react';
+import { CheckCircle2, Circle, TrendingUp, Clock } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CompletionItem {
   label: string;
   completed: boolean;
   action?: () => void;
   actionLabel?: string;
+  comingSoon?: boolean;
 }
 
 export const ProfileCompletion: React.FC = () => {
-  const { profile } = useCustomerAuth();
+  const { profile, user } = useCustomerAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleResendVerification = async () => {
+    if (!user?.email) return;
+    
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: user.email,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Verification Email Sent",
+        description: "Please check your inbox and click the verification link.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Failed to Send",
+        description: "Could not send verification email. Please try again later.",
+      });
+    }
+  };
+
+  const isEmailVerified = !!user?.email_confirmed_at;
 
   const items: CompletionItem[] = [
     {
       label: 'Basic Information',
       completed: !!(profile?.full_name && profile?.company_name),
+      action: () => navigate('/portal/profile'),
+      actionLabel: 'Add Info',
     },
     {
       label: 'Contact Details',
       completed: !!(profile?.email && profile?.phone),
-    },
-    {
-      label: 'Add Profile Picture',
-      completed: false,
-      actionLabel: 'Upload Now',
+      action: () => navigate('/portal/profile#contact'),
+      actionLabel: 'Add Contact',
     },
     {
       label: 'Enable Two-Factor Auth',
       completed: false,
-      actionLabel: 'Set Up',
+      comingSoon: true,
+      action: () => toast({
+        title: "Coming Soon",
+        description: "Two-factor authentication will be available soon.",
+      }),
+      actionLabel: 'Coming Soon',
     },
     {
       label: 'Verify Email',
-      completed: !!profile?.email,
+      completed: isEmailVerified,
+      action: handleResendVerification,
+      actionLabel: 'Resend',
     },
     {
       label: 'Complete Profile Details',
       completed: !!(profile?.country && profile?.industry),
+      action: () => navigate('/portal/profile#details'),
       actionLabel: 'Add Details',
     },
   ];
@@ -72,6 +110,8 @@ export const ProfileCompletion: React.FC = () => {
               <div className="flex items-center gap-3">
                 {item.completed ? (
                   <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                ) : item.comingSoon ? (
+                  <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                 ) : (
                   <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                 )}
@@ -82,7 +122,16 @@ export const ProfileCompletion: React.FC = () => {
                 </span>
               </div>
               {!item.completed && item.actionLabel && (
-                <Button size="sm" variant="ghost" className="text-maritime-600 hover:text-maritime-700">
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={item.action}
+                  className={item.comingSoon 
+                    ? "text-muted-foreground cursor-default" 
+                    : "text-maritime-600 hover:text-maritime-700"
+                  }
+                  disabled={item.comingSoon}
+                >
                   {item.actionLabel}
                 </Button>
               )}
@@ -93,7 +142,7 @@ export const ProfileCompletion: React.FC = () => {
         {percentage < 100 && (
           <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
             <p className="text-sm text-purple-900 dark:text-purple-100">
-              🎉 Complete your profile to unlock premium features and better recommendations!
+              Complete your profile to unlock premium features and better recommendations!
             </p>
           </div>
         )}

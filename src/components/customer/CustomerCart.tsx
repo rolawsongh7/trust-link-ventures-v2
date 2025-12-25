@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ShoppingCart, Plus, Minus, Trash2, Package, MessageSquare, Grid3X3, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, Package, MessageSquare, Grid3X3, CheckCircle, AlertTriangle } from 'lucide-react';
 import { PortalPageHeader } from './PortalPageHeader';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
@@ -16,8 +17,11 @@ export const CustomerCart: React.FC = () => {
   const { items, totalItems, updateQuantity, removeItem, clearCart, loading } = useShoppingCart();
   const { user, profile } = useCustomerAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
+  
+  const isProfileComplete = !!(profile?.company_name && profile?.full_name);
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     if (newQuantity > 0) {
@@ -355,6 +359,30 @@ export const CustomerCart: React.FC = () => {
         </div>
 
         <div className="space-y-6">
+          {/* Profile Incomplete Warning */}
+          {!isProfileComplete && (
+            <Card className="border-l-4 border-l-amber-500 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium text-amber-900 dark:text-amber-100">Complete your profile</p>
+                    <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                      We need your company name and contact details to process quote requests.
+                    </p>
+                    <Button 
+                      size="sm" 
+                      className="mt-3 bg-amber-600 hover:bg-amber-700 text-white"
+                      onClick={() => navigate('/portal/profile')}
+                    >
+                      Complete Profile
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="bg-tl-surface border-tl-border border-l-4 border-l-maritime-500 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-tl-text">
@@ -379,8 +407,9 @@ export const CustomerCart: React.FC = () => {
               <div className="pt-4 border-t border-tl-border">
                 <Button
                   onClick={handleSubmitQuote}
-                  disabled={isSubmitting}
-                  className="w-full py-3 rounded-lg shadow-md bg-tl-gradient hover:opacity-95 font-semibold text-white min-h-[44px]"
+                  disabled={isSubmitting || !isProfileComplete}
+                  title={!isProfileComplete ? "Complete your profile first" : undefined}
+                  className="w-full py-3 rounded-lg shadow-md bg-tl-gradient hover:opacity-95 font-semibold text-white min-h-[44px] disabled:opacity-50"
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Quote Request'}
                 </Button>

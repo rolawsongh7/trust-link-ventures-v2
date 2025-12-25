@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ import { SecurityAlertsDialog } from './SecurityAlertsDialog';
 export const CustomerProfile: React.FC = () => {
   const { profile, updateProfile, signOut } = useCustomerAuth();
   const { toast } = useToast();
+  const location = useLocation();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -33,6 +35,18 @@ export const CustomerProfile: React.FC = () => {
     country: profile?.country || '',
     industry: profile?.industry || ''
   });
+
+  // Scroll to section based on URL hash
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.querySelector(location.hash);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    }
+  }, [location.hash]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -249,7 +263,7 @@ export const CustomerProfile: React.FC = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div id="contact" className="grid grid-cols-1 md:grid-cols-2 gap-4 scroll-mt-24">
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="text-tl-text">Phone Number</Label>
                   <div className="relative">
@@ -289,7 +303,7 @@ export const CustomerProfile: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div id="details" className="space-y-2 scroll-mt-24">
                 <Label htmlFor="industry" className="text-tl-text">Industry</Label>
                 <Select 
                   value={formData.industry} 
@@ -357,7 +371,7 @@ export const CustomerProfile: React.FC = () => {
           />
 
           {/* Quick Sign Out */}
-          <Card className="border-l-4 border-l-red-500 shadow-lg hover:shadow-xl transition-all">
+          <Card id="security" className="border-l-4 border-l-red-500 shadow-lg hover:shadow-xl transition-all scroll-mt-24">
             <CardContent className="pt-6">
               <Button
                 variant="destructive"
