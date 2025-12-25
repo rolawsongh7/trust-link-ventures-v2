@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { CustomerNavigation } from '@/components/customer/CustomerNavigation';
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { HelpButton } from '@/components/customer/help/HelpButton';
+import { OnboardingWizard } from '@/components/customer/onboarding';
 import { mobileFeatures } from '@/config/mobile.config';
 
 export const CustomerLayout: React.FC = () => {
@@ -17,6 +18,9 @@ export const CustomerLayout: React.FC = () => {
       </main>
       {mobileFeatures.showPWAInstallPrompt && <PWAInstallPrompt />}
       <HelpButton />
+      
+      {/* Onboarding Wizard - shows for new/incomplete users */}
+      <OnboardingWizard />
     </div>
   );
 };

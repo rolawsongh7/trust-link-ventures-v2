@@ -521,6 +521,9 @@ export type Database = {
           last_contact_date: string | null
           last_password_changed: string | null
           notes: string | null
+          onboarding_completed_at: string | null
+          onboarding_skipped_at: string | null
+          onboarding_step: number | null
           phone: string | null
           priority: string | null
           tags: string[] | null
@@ -547,6 +550,9 @@ export type Database = {
           last_contact_date?: string | null
           last_password_changed?: string | null
           notes?: string | null
+          onboarding_completed_at?: string | null
+          onboarding_skipped_at?: string | null
+          onboarding_step?: number | null
           phone?: string | null
           priority?: string | null
           tags?: string[] | null
@@ -573,6 +579,9 @@ export type Database = {
           last_contact_date?: string | null
           last_password_changed?: string | null
           notes?: string | null
+          onboarding_completed_at?: string | null
+          onboarding_skipped_at?: string | null
+          onboarding_step?: number | null
           phone?: string | null
           priority?: string | null
           tags?: string[] | null
