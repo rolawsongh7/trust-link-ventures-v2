@@ -91,7 +91,7 @@ export const OnboardingWizard: React.FC = () => {
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent 
-        className="sm:max-w-md p-0 gap-0 overflow-hidden"
+        className="sm:max-w-md p-0 gap-0 max-h-[90vh] overflow-y-auto"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
@@ -99,7 +99,7 @@ export const OnboardingWizard: React.FC = () => {
         <OnboardingProgress currentStep={step} totalSteps={TOTAL_STEPS} />
         
         {/* Step content */}
-        <div className="min-h-[400px]">
+        <div className="min-h-[350px] pb-6">
           <AnimatePresence mode="wait">
             {step === 0 && (
               <WelcomeStep
