@@ -14,6 +14,10 @@ interface CustomerProfile {
   country?: string;
   industry?: string;
   last_password_changed?: string | null;
+  // Onboarding fields
+  onboarding_completed_at?: string | null;
+  onboarding_skipped_at?: string | null;
+  onboarding_step?: number;
 }
 
 interface CustomerAuthContextType {
@@ -173,6 +177,10 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           country: existingCustomer.country,
           industry: existingCustomer.industry,
           last_password_changed: existingCustomer.last_password_changed,
+          // Onboarding fields
+          onboarding_completed_at: existingCustomer.onboarding_completed_at,
+          onboarding_skipped_at: existingCustomer.onboarding_skipped_at,
+          onboarding_step: existingCustomer.onboarding_step,
         });
       } else {
         console.warn('⚠️ No customer record found, using fallback profile');
