@@ -121,8 +121,8 @@ export const useOnboarding = () => {
     }
   }, [profile?.id]);
 
-  // Skip onboarding
-  const skipOnboarding = useCallback(async () => {
+  // Skip onboarding (permanent = true means "Don't show again")
+  const skipOnboarding = useCallback(async (permanent: boolean = false) => {
     if (!profile?.id) return;
     
     setIsLoading(true);
@@ -135,11 +135,18 @@ export const useOnboarding = () => {
 
       const customerId = customerMapping?.customer_id || profile.id;
       
+      const updateData = permanent 
+        ? {
+            onboarding_skipped_at: new Date().toISOString(),
+            onboarding_completed_at: new Date().toISOString(),
+          }
+        : {
+            onboarding_skipped_at: new Date().toISOString(),
+          };
+      
       const { error } = await supabase
         .from('customers')
-        .update({
-          onboarding_skipped_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', customerId);
 
       if (error) throw error;

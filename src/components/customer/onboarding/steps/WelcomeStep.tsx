@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Package, FileText, Truck, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface WelcomeStepProps {
   userName?: string;
   onNext: () => void;
-  onSkip: () => void;
+  onSkip: (permanent: boolean) => void;
 }
 
 export const WelcomeStep: React.FC<WelcomeStepProps> = ({ userName, onNext, onSkip }) => {
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+  
   const features = [
     { icon: Package, text: 'Browse premium products and request quotes' },
     { icon: FileText, text: 'Receive personalized pricing quickly' },
@@ -84,12 +87,29 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ userName, onNext, onSk
         >
           Get Started
         </Button>
-        <button
-          onClick={onSkip}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Skip for now
-        </button>
+        
+        <div className="flex flex-col items-center gap-2">
+          <button
+            onClick={() => onSkip(dontShowAgain)}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Skip for now
+          </button>
+          
+          <div className="flex items-center gap-2">
+            <Checkbox 
+              id="dont-show-again" 
+              checked={dontShowAgain}
+              onCheckedChange={(checked) => setDontShowAgain(checked === true)}
+            />
+            <label 
+              htmlFor="dont-show-again" 
+              className="text-xs text-muted-foreground cursor-pointer"
+            >
+              Don't show this again
+            </label>
+          </div>
+        </div>
       </div>
     </motion.div>
   );

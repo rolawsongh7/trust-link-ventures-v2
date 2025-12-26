@@ -69,8 +69,8 @@ export const OnboardingWizard: React.FC = () => {
     updateOnboardingStep(prevStep);
   };
 
-  const handleSkip = async () => {
-    await skipOnboarding();
+  const handleSkip = async (permanent: boolean = false) => {
+    await skipOnboarding(permanent);
     setIsOpen(false);
   };
 
