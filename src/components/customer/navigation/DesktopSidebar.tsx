@@ -29,11 +29,11 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ cartItemsCount =
 
   return (
     <aside 
-      className="hidden lg:flex lg:flex-col 
-                 lg:sticky lg:top-[80px] 
-                 lg:h-[calc(100vh-80px)]
-                 lg:w-64 
-                 lg:pr-6
+      className="hidden xl:flex xl:flex-col 
+                 xl:sticky xl:top-[80px] 
+                 xl:h-[calc(100vh-80px)]
+                 xl:w-64 
+                 xl:pr-6
                  flex-shrink-0"
       role="navigation"
       aria-label="Desktop sidebar navigation"
