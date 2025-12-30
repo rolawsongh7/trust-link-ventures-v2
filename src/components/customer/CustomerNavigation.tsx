@@ -149,7 +149,7 @@ export const CustomerNavigation: React.FC = () => {
               </Link>
             </div>
 
-          {/* Tablet Navigation - Icon Only with Tooltips (768px-1024px) */}
+          {/* Tablet Navigation - Icon Only with Tooltips (768px-1023px) */}
           <div className="hidden md:flex lg:hidden items-center gap-1 overflow-x-auto no-scrollbar">
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.href;
@@ -186,8 +186,8 @@ export const CustomerNavigation: React.FC = () => {
             })}
           </div>
 
-          {/* Desktop Navigation - Full Text (1024px+) */}
-          <div className="hidden lg:flex items-center gap-1 xl:gap-2 overflow-x-auto no-scrollbar">
+          {/* Large Tablet Navigation - Compact with Labels (1024px-1279px) */}
+          <div className="hidden lg:flex xl:hidden items-center gap-1 overflow-x-auto no-scrollbar">
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.href;
               const Icon = item.icon;
@@ -197,10 +197,41 @@ export const CustomerNavigation: React.FC = () => {
                   <Button
                     variant={isActive ? "secondary" : "ghost"}
                     size="sm"
-                    className="relative h-10 touch-manipulation whitespace-nowrap px-2 xl:px-3 flex-shrink-0"
+                    className="relative h-10 touch-manipulation whitespace-nowrap px-2.5 flex-shrink-0 min-h-[44px]"
                   >
-                    <Icon className="h-4 w-4 mr-1 xl:mr-2" />
-                    <span className="text-xs xl:text-sm">{item.title}</span>
+                    <Icon className="h-4 w-4 mr-1.5" />
+                    <span className="text-xs">{item.title}</span>
+                    {item.badge && (
+                      <Badge 
+                        variant={item.badgeVariant || "destructive"}
+                        className={`absolute top-0 right-0 h-5 w-5 p-0 text-xs flex items-center justify-center transform translate-x-1/2 -translate-y-1/2 ${
+                          item.badgeVariant === 'destructive' ? 'bg-orange-500 hover:bg-orange-600' : ''
+                        }`}
+                      >
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Desktop Navigation - Full Text (1280px+) */}
+          <div className="hidden xl:flex items-center gap-1 2xl:gap-2 overflow-x-auto no-scrollbar">
+            {navigationItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              const Icon = item.icon;
+              
+              return (
+                <Link key={item.href} to={item.href}>
+                  <Button
+                    variant={isActive ? "secondary" : "ghost"}
+                    size="sm"
+                    className="relative h-10 touch-manipulation whitespace-nowrap px-2 2xl:px-3 flex-shrink-0"
+                  >
+                    <Icon className="h-4 w-4 mr-1 2xl:mr-2" />
+                    <span className="text-xs 2xl:text-sm">{item.title}</span>
                     {item.badge && (
                       <Badge 
                         variant={item.badgeVariant || "destructive"}
@@ -298,7 +329,7 @@ export const CustomerNavigation: React.FC = () => {
                       {getInitials(profile?.full_name)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="hidden lg:block text-left min-w-0 max-w-[120px] xl:max-w-[160px]">
+                  <div className="hidden xl:block text-left min-w-0 max-w-[120px] 2xl:max-w-[160px]">
                     <div className="text-sm font-medium truncate">{profile?.full_name}</div>
                     <div className="text-xs text-muted-foreground truncate">
                       {profile?.email}

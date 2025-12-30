@@ -179,12 +179,13 @@ export const designTokens = {
   },
 
   // Breakpoints (in pixels)
+  // Updated: lg (1024-1279) for large-tablet/iPad Pro 13", xl (1280+) for desktop
   breakpoints: {
-    sm: 640,
-    md: 768,
-    lg: 1024,
-    xl: 1280,
-    '2xl': 1536,
+    sm: 640,      // Small mobile
+    md: 768,      // Tablet
+    lg: 1024,     // Large tablet (iPad Pro 13" portrait)
+    xl: 1280,     // Desktop
+    '2xl': 1536,  // Large desktop
   },
 } as const;
 
