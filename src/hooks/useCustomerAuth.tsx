@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +32,7 @@ interface CustomerAuthContextType {
   updatePassword: (newPassword: string) => Promise<{ error: any }>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   resendConfirmationEmail: (email: string) => Promise<{ error: any }>;
+  refreshProfile: () => Promise<void>;
   requiresMFA: boolean;
   mfaUserId: string | null;
   verifyMFA: (trustDevice: boolean) => Promise<void>;
@@ -678,6 +679,14 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     await supabase.auth.signOut();
   };
 
+  // Refresh profile from database (useful after onboarding updates)
+  const refreshProfile = useCallback(async () => {
+    if (user?.email) {
+      console.log('🔄 Refreshing profile for:', user.email);
+      await fetchProfile(user.id, user.email);
+    }
+  }, [user]);
+
   const value = {
     user,
     session,
@@ -690,6 +699,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     updatePassword,
     resetPassword,
     resendConfirmationEmail,
+    refreshProfile,
     requiresMFA,
     mfaUserId,
     verifyMFA,
