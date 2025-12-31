@@ -155,6 +155,52 @@ export const DeliveryManagementDialog = ({
         notes: formData.delivery_notes,
       });
 
+      // Send notifications if status changed
+      if (formData.status !== order.status) {
+        try {
+          const { data: orderData } = await supabase
+            .from('orders')
+            .select('customer_id, order_number, tracking_number, customers(email, company_name, contact_name)')
+            .eq('id', order.id)
+            .single();
+
+          if (orderData?.customer_id && orderData?.customers?.email) {
+            const { NotificationService } = await import('@/services/notificationService');
+            
+            switch (formData.status) {
+              case 'ready_to_ship':
+                await NotificationService.sendOrderReadyToShipNotification(
+                  orderData.customer_id,
+                  orderData.order_number,
+                  order.id,
+                  orderData.customers.email
+                );
+                break;
+              case 'shipped':
+                await NotificationService.sendOrderShippedNotification(
+                  orderData.customer_id,
+                  orderData.order_number,
+                  order.id,
+                  orderData.customers.email,
+                  formData.tracking_number || undefined
+                );
+                break;
+              case 'delivered':
+                await NotificationService.sendOrderDeliveredNotification(
+                  orderData.customer_id,
+                  orderData.order_number,
+                  order.id,
+                  orderData.customers.email
+                );
+                break;
+            }
+          }
+        } catch (notifError) {
+          console.error('Failed to send notification:', notifError);
+          // Don't block the success flow for notification errors
+        }
+      }
+
       toast.success('Delivery information updated');
       onSuccess();
       onOpenChange(false);

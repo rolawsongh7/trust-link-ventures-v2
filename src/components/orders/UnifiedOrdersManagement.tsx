@@ -230,6 +230,42 @@ const UnifiedOrdersManagement = () => {
         return;
       }
 
+      // Send notification to customer
+      if (order.customers?.email && order.customer_id) {
+        try {
+          const { NotificationService } = await import('@/services/notificationService');
+          
+          switch (newStatus) {
+            case 'processing':
+              await NotificationService.sendOrderConfirmedNotification(
+                order.customer_id,
+                order.order_number,
+                order.id,
+                order.customers.email
+              );
+              break;
+            case 'ready_to_ship':
+              await NotificationService.sendOrderReadyToShipNotification(
+                order.customer_id,
+                order.order_number,
+                order.id,
+                order.customers.email
+              );
+              break;
+            case 'delivered':
+              await NotificationService.sendOrderDeliveredNotification(
+                order.customer_id,
+                order.order_number,
+                order.id,
+                order.customers.email
+              );
+              break;
+          }
+        } catch (notifError) {
+          console.error('Failed to send notification:', notifError);
+        }
+      }
+
       toast.success(`Order marked as ${newStatus.replace(/_/g, ' ')}`);
       refetch();
     } catch (error) {
