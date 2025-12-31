@@ -158,12 +158,27 @@ export const CustomerQuotes: React.FC = () => {
               unit_price,
               total_price,
               specifications
-            )
+            ),
+            orders_by_quote_id:orders!quote_id(id, order_number, status),
+            orders_by_source:orders!source_quote_id(id, order_number, status)
           `)
           .or(`customer_email.eq.${profile.email},linked_quote_request_id.in.(${quoteRequests.map(q => q.id).join(',')})`);
 
         if (quotesError) throw quotesError;
-        finalQuotes = data || [];
+        
+        // Process quotes to add linked_order field
+        finalQuotes = (data || []).map(quote => {
+          const allOrders = [
+            ...(quote.orders_by_quote_id || []),
+            ...(quote.orders_by_source || [])
+          ].filter((order, index, self) => 
+            index === self.findIndex(o => o.id === order.id)
+          );
+          return {
+            ...quote,
+            linked_order: allOrders.length > 0 ? allOrders[0] : null
+          };
+        });
       } else {
         const { data, error: quotesError } = await supabase
           .from('quotes')
@@ -187,12 +202,27 @@ export const CustomerQuotes: React.FC = () => {
               unit_price,
               total_price,
               specifications
-            )
+            ),
+            orders_by_quote_id:orders!quote_id(id, order_number, status),
+            orders_by_source:orders!source_quote_id(id, order_number, status)
           `)
           .eq('customer_email', profile.email);
 
         if (quotesError) throw quotesError;
-        finalQuotes = data || [];
+        
+        // Process quotes to add linked_order field
+        finalQuotes = (data || []).map(quote => {
+          const allOrders = [
+            ...(quote.orders_by_quote_id || []),
+            ...(quote.orders_by_source || [])
+          ].filter((order, index, self) => 
+            index === self.findIndex(o => o.id === order.id)
+          );
+          return {
+            ...quote,
+            linked_order: allOrders.length > 0 ? allOrders[0] : null
+          };
+        });
       }
 
       // Merge quote requests with their final quotes
@@ -236,6 +266,7 @@ export const CustomerQuotes: React.FC = () => {
         return {
           ...request,
           final_quote: finalQuote || undefined,
+          linked_order: finalQuote?.linked_order || null,
           status: finalQuote ? 
             (finalQuote.status === 'sent' ? 'quoted' : 
              finalQuote.status === 'accepted' ? 'approved' : 

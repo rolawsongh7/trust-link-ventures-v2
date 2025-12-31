@@ -32,7 +32,8 @@ export const QUOTE_STATUSES = [
   'draft',
   'sent',
   'accepted',
-  'rejected'
+  'rejected',
+  'converted'
 ] as const;
 
 export interface InvoiceSearchFilters {

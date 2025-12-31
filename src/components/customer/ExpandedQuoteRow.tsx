@@ -40,6 +40,12 @@ interface FinalQuote {
   file_url?: string;
 }
 
+interface LinkedOrder {
+  id: string;
+  order_number: string;
+  status: string;
+}
+
 interface Quote {
   id: string;
   title: string;
@@ -50,6 +56,7 @@ interface Quote {
   updated_at: string;
   quote_request_items?: QuoteItem[];
   final_quote?: FinalQuote;
+  linked_order?: LinkedOrder | null;
 }
 
 interface ExpandedQuoteRowProps {
@@ -212,7 +219,17 @@ export function ExpandedQuoteRow({ quote, onApprove, onReject, onDownload }: Exp
                 </Button>
               </>
             )}
-            {quote.final_quote.status === 'sent' && (
+            
+            {/* Show order info if already linked */}
+            {quote.linked_order && (
+              <Badge variant="secondary" className="bg-green-100 text-green-800 px-3 py-1">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Order: {quote.linked_order.order_number}
+              </Badge>
+            )}
+            
+            {/* Only show approve/reject if no linked order and quote is sent */}
+            {!quote.linked_order && quote.final_quote.status === 'sent' && (
               <>
                 <Button
                   variant="default"

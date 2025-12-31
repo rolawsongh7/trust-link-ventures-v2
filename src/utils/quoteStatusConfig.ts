@@ -145,5 +145,6 @@ export const quoteStatusFilterOptions = [
   { value: 'pending', label: 'Under Review' },
   { value: 'quoted', label: 'Quote Ready' },
   { value: 'approved', label: 'Accepted' },
+  { value: 'converted', label: 'Order Created' },
   { value: 'rejected', label: 'Declined' },
 ];

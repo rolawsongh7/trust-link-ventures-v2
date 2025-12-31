@@ -44,6 +44,12 @@ interface FinalQuote {
   final_file_url?: string;
 }
 
+interface LinkedOrder {
+  id: string;
+  order_number: string;
+  status: string;
+}
+
 interface Quote {
   id: string;
   title: string;
@@ -54,6 +60,7 @@ interface Quote {
   updated_at: string;
   quote_request_items?: QuoteItem[];
   final_quote?: FinalQuote;
+  linked_order?: LinkedOrder | null;
 }
 
 interface CustomerQuotesTableProps {
@@ -184,7 +191,17 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
                     )}
                   </TableCell>
                   <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                    {quote.final_quote && 
+                    {/* Show linked order info when order exists */}
+                    {quote.linked_order && (
+                      <div className="flex items-center justify-center gap-2">
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                          Order: {quote.linked_order.order_number}
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {/* Show Accept/Reject buttons only if no linked order and quote is ready */}
+                    {!quote.linked_order && quote.final_quote && 
                      quote.final_quote.status === 'sent' && 
                      quote.final_quote.total_amount > 0 &&
                      quote.final_quote.final_file_url && (
@@ -243,17 +260,17 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
                         )}
                       </div>
                     )}
-                    {quote.final_quote && quote.status === 'approved' && (
+                    {!quote.linked_order && quote.final_quote && quote.status === 'approved' && (
                       <Badge variant="secondary" className="bg-green-100 text-green-800">
                         ✓ Accepted
                       </Badge>
                     )}
-                    {quote.final_quote && quote.status === 'rejected' && (
+                    {!quote.linked_order && quote.final_quote && quote.status === 'rejected' && (
                       <Badge variant="secondary" className="bg-red-100 text-red-800">
                         ✗ Rejected
                       </Badge>
                     )}
-                    {!quote.final_quote && (
+                    {!quote.linked_order && !quote.final_quote && (
                       <span className="text-xs text-muted-foreground">Awaiting quote</span>
                     )}
                   </TableCell>
