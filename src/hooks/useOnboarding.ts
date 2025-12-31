@@ -15,7 +15,7 @@ export interface OnboardingState {
 }
 
 export const useOnboarding = () => {
-  const { profile } = useCustomerAuth();
+  const { profile, refreshProfile } = useCustomerAuth();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [addressesLoaded, setAddressesLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -114,12 +114,15 @@ export const useOnboarding = () => {
         .eq('id', customerId);
 
       if (error) throw error;
+      
+      // Refresh profile to update local state
+      await refreshProfile();
     } catch (error) {
       console.error('Error completing onboarding:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [profile?.id]);
+  }, [profile?.id, refreshProfile]);
 
   // Skip onboarding (permanent = true means "Don't show again")
   const skipOnboarding = useCallback(async (permanent: boolean = false) => {
@@ -150,12 +153,15 @@ export const useOnboarding = () => {
         .eq('id', customerId);
 
       if (error) throw error;
+      
+      // Refresh profile to update local state
+      await refreshProfile();
     } catch (error) {
       console.error('Error skipping onboarding:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [profile?.id]);
+  }, [profile?.id, refreshProfile]);
 
   // Update current step
   const updateOnboardingStep = useCallback(async (step: number) => {

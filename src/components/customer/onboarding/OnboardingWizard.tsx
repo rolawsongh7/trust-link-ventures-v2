@@ -27,6 +27,7 @@ export const OnboardingWizard: React.FC = () => {
 
   const [step, setStep] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [hasSkipped, setHasSkipped] = useState(false);
 
   // Fetch addresses when wizard opens
   useEffect(() => {
@@ -70,8 +71,9 @@ export const OnboardingWizard: React.FC = () => {
   };
 
   const handleSkip = async (permanent: boolean = false) => {
-    await skipOnboarding(permanent);
+    setHasSkipped(true); // Immediately prevent re-showing
     setIsOpen(false);
+    await skipOnboarding(permanent);
   };
 
   const handleComplete = async () => {
@@ -83,8 +85,8 @@ export const OnboardingWizard: React.FC = () => {
     refreshAddresses();
   };
 
-  // Don't render if not ready
-  if (!addressesLoaded || !profile) {
+  // Don't render if not ready or if user skipped this session
+  if (!addressesLoaded || !profile || hasSkipped) {
     return null;
   }
 
@@ -95,7 +97,7 @@ export const OnboardingWizard: React.FC = () => {
       }
     }}>
       <DialogContent 
-        className="sm:max-w-md p-0 gap-0 max-h-[90vh] overflow-y-auto"
+        className="sm:max-w-md p-0 gap-0 max-h-[80vh] md:max-h-[75vh] overflow-y-auto"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         {/* Progress indicator */}
