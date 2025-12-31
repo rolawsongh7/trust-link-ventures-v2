@@ -944,6 +944,7 @@ export type Database = {
           payment_terms: string | null
           quote_id: string | null
           sent_at: string | null
+          shipping_fee: number | null
           status: string
           subtotal: number
           tax_amount: number
@@ -967,6 +968,7 @@ export type Database = {
           payment_terms?: string | null
           quote_id?: string | null
           sent_at?: string | null
+          shipping_fee?: number | null
           status?: string
           subtotal?: number
           tax_amount?: number
@@ -990,6 +992,7 @@ export type Database = {
           payment_terms?: string | null
           quote_id?: string | null
           sent_at?: string | null
+          shipping_fee?: number | null
           status?: string
           subtotal?: number
           tax_amount?: number

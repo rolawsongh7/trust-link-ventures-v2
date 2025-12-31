@@ -527,7 +527,13 @@ function generateInvoiceHTML(data: any): string {
             <span>Subtotal:</span>
             <span>${invoice.currency} ${Number(invoice.subtotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>
-          ${invoice.tax_amount > 0 ? `
+          ${invoice.shipping_fee && Number(invoice.shipping_fee) > 0 ? `
+            <div class="totals-row">
+              <span>Shipping:</span>
+              <span>${invoice.currency} ${Number(invoice.shipping_fee).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+          ` : ''}
+          ${invoice.tax_amount && Number(invoice.tax_amount) > 0 ? `
             <div class="totals-row">
               <span>Tax:</span>
               <span>${invoice.currency} ${Number(invoice.tax_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>

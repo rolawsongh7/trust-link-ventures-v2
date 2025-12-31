@@ -165,6 +165,7 @@ serve(async (req) => {
           customer_id: order.customer_id,
           subtotal: subtotal,
           tax_amount: taxAmount,
+          shipping_fee: shippingFee,
           total_amount: totalAmount,
           currency: order.currency || 'USD',
           status: 'sent',
