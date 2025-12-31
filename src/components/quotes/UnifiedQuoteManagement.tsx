@@ -200,15 +200,16 @@ const UnifiedQuoteManagement = () => {
 
   const fetchQuotes = async () => {
     try {
-      // Fetch active quotes
+      // Fetch active quotes with orders linked via both quote_id and source_quote_id
       const { data: activeData, error: activeError } = await supabase
         .from('quotes')
         .select(`
           *,
-          customers(company_name, contact_name),
+          customers(company_name, contact_name, email),
           leads(title),
           rfqs(id, status, deadline),
-          orders!quote_id(id, order_number, status)
+          orders_by_quote_id:orders!quote_id(id, order_number, status),
+          orders_by_source:orders!source_quote_id(id, order_number, status)
         `)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
@@ -222,7 +223,20 @@ const UnifiedQuoteManagement = () => {
         });
         throw activeError;
       }
-      setQuotes(activeData || []);
+      
+      // Merge the two orders arrays into a single 'orders' field for each quote
+      const processedData = (activeData || []).map(quote => ({
+        ...quote,
+        orders: [
+          ...(quote.orders_by_quote_id || []),
+          ...(quote.orders_by_source || [])
+        ].filter((order, index, self) => 
+          // Remove duplicates by id
+          index === self.findIndex(o => o.id === order.id)
+        )
+      }));
+      
+      setQuotes(processedData);
 
       // Fetch deleted quotes for trash
       const { data: deletedData, error: deletedError } = await supabase
@@ -904,6 +918,16 @@ const UnifiedQuoteManagement = () => {
                   >
                     <Package className="mr-2 h-4 w-4" />
                     Convert to Order
+                  </DropdownMenuItem>
+                )}
+
+                {/* Show linked order info when order exists */}
+                {quote.orders && quote.orders.length > 0 && (
+                  <DropdownMenuItem disabled>
+                    <Package className="mr-2 h-4 w-4 text-green-600" />
+                    <span className="text-green-600">
+                      Order: {quote.orders[0].order_number}
+                    </span>
                   </DropdownMenuItem>
                 )}
 

@@ -26,6 +26,8 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
   onOrderCreated
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingOrderInfo, setExistingOrderInfo] = useState<{ id: string; order_number: string } | null>(null);
+  const [checkingOrder, setCheckingOrder] = useState(false);
   const { toast } = useToast();
 
   const form = useForm({
@@ -36,6 +38,31 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
       orderStatus: 'pending_payment'
     }
   });
+
+  // Pre-flight check when dialog opens
+  React.useEffect(() => {
+    const checkExistingOrder = async () => {
+      if (open && quote?.id) {
+        setCheckingOrder(true);
+        try {
+          const { data: existingOrder } = await supabase
+            .from('orders')
+            .select('id, order_number')
+            .or(`quote_id.eq.${quote.id},source_quote_id.eq.${quote.id}`)
+            .maybeSingle();
+          
+          setExistingOrderInfo(existingOrder);
+        } catch (error) {
+          console.error('Error checking existing order:', error);
+        } finally {
+          setCheckingOrder(false);
+        }
+      } else {
+        setExistingOrderInfo(null);
+      }
+    };
+    checkExistingOrder();
+  }, [open, quote?.id]);
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
@@ -193,13 +220,30 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
 
         <ScrollArea className="max-h-[calc(90vh-8rem)] pr-4">
           <div className="space-y-4">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                This will create an order without customer acceptance. Use this for phone confirmations,
-                WhatsApp messages, or in-person agreements.
-              </AlertDescription>
-            </Alert>
+            {checkingOrder ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground">Checking for existing orders...</span>
+              </div>
+            ) : existingOrderInfo ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Order already exists for this quote.</strong>
+                  <br />
+                  Order <span className="font-mono font-bold">{existingOrderInfo.order_number}</span> has already been created from this quote.
+                  You cannot create another order.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  This will create an order without customer acceptance. Use this for phone confirmations,
+                  WhatsApp messages, or in-person agreements.
+                </AlertDescription>
+              </Alert>
+            )}
 
             <div className="border rounded-lg p-4 bg-muted/30 space-y-2">
               <div className="grid grid-cols-2 gap-2 text-sm">
@@ -342,7 +386,11 @@ export const QuoteToOrderConverter: React.FC<QuoteToOrderConverterProps> = ({
         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting} onClick={form.handleSubmit(onSubmit)}>
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || checkingOrder || !!existingOrderInfo} 
+          onClick={form.handleSubmit(onSubmit)}
+        >
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Create Order
         </Button>
