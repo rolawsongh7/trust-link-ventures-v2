@@ -37,6 +37,11 @@ export class InvoiceService {
         return existing.id;
       }
 
+      // Calculate proper subtotal (total minus tax and shipping)
+      const taxAmount = quote.tax_amount || 0;
+      const shippingFee = quote.shipping_fee || 0;
+      const subtotal = quote.total_amount - taxAmount - shippingFee;
+
       // Create proforma invoice
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
@@ -45,8 +50,9 @@ export class InvoiceService {
           invoice_type: 'proforma' as any,
           quote_id: quoteId,
           customer_id: quote.customer_id,
-          subtotal: quote.total_amount,
-          tax_amount: 0,
+          subtotal: subtotal,
+          tax_amount: taxAmount,
+          shipping_fee: shippingFee,
           total_amount: quote.total_amount,
           currency: quote.currency, // No fallback - validated above
           status: 'draft' as any,
@@ -106,10 +112,10 @@ export class InvoiceService {
         return existing.id;
       }
 
-      // Get order data
+      // Get order data with related quote for tax/shipping
       const { data: order, error: orderError } = await supabase
         .from('orders')
-        .select('*, order_items(*)')
+        .select('*, order_items(*), quotes!quote_id(tax_amount, shipping_fee)')
         .eq('id', orderId)
         .single();
 
@@ -124,6 +130,12 @@ export class InvoiceService {
         throw new Error('Cannot generate commercial invoice: Order has no currency set');
       }
 
+      // Get tax and shipping from related quote
+      const quote = order.quotes as { tax_amount: number | null; shipping_fee: number | null } | null;
+      const taxAmount = quote?.tax_amount || 0;
+      const shippingFee = quote?.shipping_fee || 0;
+      const subtotal = order.total_amount - taxAmount - shippingFee;
+
       // Create commercial invoice
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
@@ -133,8 +145,9 @@ export class InvoiceService {
           order_id: orderId,
           quote_id: order.quote_id,
           customer_id: order.customer_id,
-          subtotal: order.total_amount,
-          tax_amount: 0,
+          subtotal: subtotal,
+          tax_amount: taxAmount,
+          shipping_fee: shippingFee,
           total_amount: order.total_amount,
           currency: order.currency, // No fallback - validated above
           status: 'sent' as any,

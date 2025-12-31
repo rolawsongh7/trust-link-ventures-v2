@@ -56,14 +56,22 @@ serve(async (req) => {
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 30);
 
+    // Calculate proper subtotal (total minus tax and shipping)
+    const taxAmount = quote.tax_amount || 0;
+    const shippingFee = quote.shipping_fee || 0;
+    const subtotal = quote.total_amount - taxAmount - shippingFee;
+
+    console.log('[Proforma Invoice] Amounts - Subtotal:', subtotal, 'Tax:', taxAmount, 'Shipping:', shippingFee, 'Total:', quote.total_amount);
+
     const { data: invoice, error: invoiceError } = await supabase
       .from('invoices')
       .insert({
         invoice_type: 'proforma',
         quote_id: quoteId,
         customer_id: quote.customer_id,
-        subtotal: quote.total_amount,
-        tax_amount: 0,
+        subtotal: subtotal,
+        tax_amount: taxAmount,
+        shipping_fee: shippingFee,
         total_amount: quote.total_amount,
         currency: quote.currency || 'USD',
         status: 'draft',
