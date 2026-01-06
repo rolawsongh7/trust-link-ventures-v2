@@ -397,8 +397,8 @@ const App = () => {
                       </Route>
                       
                       {/* Customer Portal routes */}
-                      <Route path="/portal-auth" element={<UnifiedAuth />} />
-                      <Route path="/login" element={<UnifiedAuth />} />
+                      <Route path="/portal-auth" element={<CustomerAuth />} />
+                      <Route path="/login" element={<CustomerAuth />} />
                       
                       <Route path="/portal" element={
                         <CustomerProtectedRoute>
@@ -480,8 +480,8 @@ const App = () => {
                       </Route>
                       
                       {/* Customer Portal routes */}
-                      <Route path="/portal-auth" element={<UnifiedAuth />} />
-                      <Route path="/login" element={<UnifiedAuth />} />
+                      <Route path="/portal-auth" element={<CustomerAuth />} />
+                      <Route path="/login" element={<CustomerAuth />} />
                       
                       <Route path="/portal" element={
                         <CustomerProtectedRoute>
