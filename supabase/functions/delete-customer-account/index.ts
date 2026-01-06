@@ -237,6 +237,39 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .is('completed_at', null);
 
+    // Send account deletion confirmation email BEFORE deleting auth user
+    try {
+      const emailPayload = {
+        to: user.email,
+        subject: 'Account Deletion Confirmed - Trust Link Ventures',
+        type: 'account_deleted',
+        data: {
+          name: customerId ? 'Valued Customer' : 'User',
+          deletedAt: new Date().toISOString(),
+          reason: reason || 'Not specified'
+        }
+      };
+
+      const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`
+        },
+        body: JSON.stringify(emailPayload)
+      });
+
+      if (emailResponse.ok) {
+        console.log('Account deletion confirmation email sent successfully');
+      } else {
+        const emailError = await emailResponse.text();
+        console.error('Failed to send deletion confirmation email:', emailError);
+      }
+    } catch (emailError) {
+      // Don't fail the deletion if email fails
+      console.error('Error sending deletion confirmation email:', emailError);
+    }
+
     // Finally, delete the auth user
     const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
     if (deleteUserError) {
