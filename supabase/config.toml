@@ -103,3 +103,6 @@ verify_jwt = true
 
 [functions.generate-proforma-invoice]
 verify_jwt = false
+
+[functions.delete-customer-account]
+verify_jwt = false
