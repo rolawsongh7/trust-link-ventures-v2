@@ -344,7 +344,9 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       };
     }
     
-    const redirectUrl = `${window.location.origin}/portal-auth?confirmed=true`;
+    // Ensure no double slashes by trimming trailing slash from origin
+    const origin = window.location.origin.replace(/\/$/, '');
+    const redirectUrl = `${origin}/portal-auth?confirmed=true`;
     
     const { data, error } = await supabase.auth.signUp({
       email: sanitizedEmail,
