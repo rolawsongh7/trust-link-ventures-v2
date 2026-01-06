@@ -3,13 +3,15 @@ import { BiometricSettings } from "@/components/customer/BiometricSettings";
 import { CustomerMFASetup } from "@/components/customer/CustomerMFASetup";
 import { SecurityScore } from "@/components/customer/SecurityScore";
 import { ChangePasswordDialog } from "@/components/customer/ChangePasswordDialog";
+import { DeleteAccountDialog } from "@/components/customer/DeleteAccountDialog";
 import { MobileThemeSelector } from "@/components/customer/settings/MobileThemeSelector";
-import { Shield, Key, Fingerprint, Bell, Palette, ChevronRight, HelpCircle, FileText, Info } from "lucide-react";
+import { Shield, Key, Fingerprint, Bell, Palette, ChevronRight, HelpCircle, FileText, Info, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-
+import { useCustomerAuth } from "@/hooks/useCustomerAuth";
 const settingsLinks = [
   {
     label: "Help & Support",
@@ -35,9 +37,10 @@ const settingsLinks = [
 ];
 
 export default function CustomerSettings() {
+  const { profile } = useCustomerAuth();
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [mfaSetupOpen, setMfaSetupOpen] = useState(false);
-
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
       <div className="container mx-auto py-8 px-4 max-w-5xl">
@@ -135,6 +138,30 @@ export default function CustomerSettings() {
                 open={changePasswordOpen}
                 onOpenChange={setChangePasswordOpen}
               />
+            </Card>
+
+            {/* Danger Zone - Delete Account */}
+            <Card className="p-6 border-destructive/30 bg-destructive/5">
+              <h2 className="text-xl font-semibold text-destructive mb-2">Danger Zone</h2>
+              <p className="text-muted-foreground mb-4">
+                Once you delete your account, there is no going back. Please be certain.
+              </p>
+              <Button
+                variant="outline"
+                className="border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => setDeleteAccountOpen(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Account
+              </Button>
+              
+              {profile?.email && (
+                <DeleteAccountDialog
+                  open={deleteAccountOpen}
+                  onOpenChange={setDeleteAccountOpen}
+                  userEmail={profile.email}
+                />
+              )}
             </Card>
           </TabsContent>
 

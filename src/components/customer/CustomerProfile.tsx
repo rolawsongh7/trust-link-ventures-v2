@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { User, Building2, Mail, Phone, MapPin, Save, LogOut, X } from 'lucide-react';
+import { User, Building2, Mail, Phone, MapPin, Save, LogOut, X, Trash2 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
@@ -16,7 +16,7 @@ import { SecurityScore } from './SecurityScore';
 import { AccountStats } from './AccountStats';
 import { ActiveSessionsDialog } from './ActiveSessionsDialog';
 import { SecurityAlertsDialog } from './SecurityAlertsDialog';
-
+import { DeleteAccountDialog } from './DeleteAccountDialog';
 
 export const CustomerProfile: React.FC = () => {
   const { profile, updateProfile, signOut } = useCustomerAuth();
@@ -27,6 +27,7 @@ export const CustomerProfile: React.FC = () => {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showActiveSessions, setShowActiveSessions] = useState(false);
   const [showSecurityAlerts, setShowSecurityAlerts] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     company_name: profile?.company_name || '',
@@ -383,6 +384,28 @@ export const CustomerProfile: React.FC = () => {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Delete Account */}
+          <Card className="border-l-4 border-l-destructive/50 shadow-lg hover:shadow-xl transition-all">
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <div>
+                  <h3 className="font-medium text-destructive">Delete Account</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Permanently delete your account and all associated data
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => setShowDeleteAccount(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Account
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -400,6 +423,14 @@ export const CustomerProfile: React.FC = () => {
         open={showSecurityAlerts}
         onOpenChange={setShowSecurityAlerts}
       />
+
+      {profile?.email && (
+        <DeleteAccountDialog
+          open={showDeleteAccount}
+          onOpenChange={setShowDeleteAccount}
+          userEmail={profile.email}
+        />
+      )}
     </div>
   );
 };

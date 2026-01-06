@@ -33,6 +33,7 @@ interface CustomerAuthContextType {
   resetPassword: (email: string) => Promise<{ error: any }>;
   resendConfirmationEmail: (email: string) => Promise<{ error: any }>;
   refreshProfile: () => Promise<void>;
+  deleteAccount: (reason?: string) => Promise<{ error: any }>;
   requiresMFA: boolean;
   mfaUserId: string | null;
   verifyMFA: (trustDevice: boolean) => Promise<void>;
@@ -687,6 +688,38 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [user]);
 
+  // Delete account permanently
+  const deleteAccount = async (reason?: string): Promise<{ error: any }> => {
+    try {
+      console.log('🗑️ Starting account deletion...');
+      
+      const { data, error } = await supabase.functions.invoke('delete-customer-account', {
+        body: { reason }
+      });
+
+      if (error) {
+        console.error('❌ Account deletion failed:', error);
+        return { error };
+      }
+
+      console.log('✅ Account deleted successfully');
+      
+      // Clear local state
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      
+      // Clear any stored auth data
+      localStorage.removeItem('biometric_enabled');
+      localStorage.removeItem('biometric_device_id');
+      
+      return { error: null };
+    } catch (error) {
+      console.error('❌ Account deletion error:', error);
+      return { error };
+    }
+  };
+
   const value = {
     user,
     session,
@@ -700,6 +733,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     resetPassword,
     resendConfirmationEmail,
     refreshProfile,
+    deleteAccount,
     requiresMFA,
     mfaUserId,
     verifyMFA,
