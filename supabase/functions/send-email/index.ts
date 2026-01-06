@@ -11,7 +11,7 @@ const corsHeaders = {
 interface EmailRequest {
   to: string;
   subject: string;
-  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification' | 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered' | 'new_quote_request_admin';
+  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification' | 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered' | 'new_quote_request_admin' | 'account_deleted';
   data?: Record<string, any>;
 }
 
@@ -59,6 +59,9 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'new_quote_request_admin':
         html = generateAdminQuoteNotificationEmail(data);
+        break;
+      case 'account_deleted':
+        html = generateAccountDeletedEmail(data);
         break;
       default:
         throw new Error('Invalid email type');
@@ -598,6 +601,78 @@ function generateAdminQuoteNotificationEmail(data: any): string {
         <div class="footer">
           <p>Trust Link Ventures Admin System</p>
           <p style="font-size: 12px; color: #666;">This is an automated notification from your quote management system.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateAccountDeletedEmail(data: any): string {
+  const deletedAt = data?.deletedAt ? new Date(data.deletedAt).toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  }) : new Date().toLocaleString();
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #6c757d; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+        .info-box { background: #f8f9fa; border: 1px solid #e0e0e0; padding: 20px; border-radius: 6px; margin: 20px 0; }
+        .deleted-list { margin: 15px 0; padding-left: 20px; }
+        .deleted-list li { margin: 8px 0; color: #555; }
+        .notice { background: #e7f3ff; border: 1px solid #b3d7ff; padding: 15px; border-radius: 6px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Account Deletion Confirmed</h1>
+        </div>
+        <div class="content">
+          <p>Dear ${data?.name || 'Valued Customer'},</p>
+          
+          <p>This email confirms that your Trust Link Ventures account has been <strong>permanently deleted</strong> as requested.</p>
+          
+          <div class="info-box">
+            <p><strong>Deletion Date:</strong> ${deletedAt}</p>
+            ${data?.reason && data.reason !== 'Not specified' ? `<p><strong>Reason Provided:</strong> ${data.reason}</p>` : ''}
+          </div>
+
+          <h3>What Was Removed:</h3>
+          <ul class="deleted-list">
+            <li>Your account profile and login credentials</li>
+            <li>Saved delivery addresses</li>
+            <li>Notification preferences and settings</li>
+            <li>Security settings and device information</li>
+            <li>Shopping cart items</li>
+            <li>Communication history</li>
+          </ul>
+
+          <div class="notice">
+            <strong>Note:</strong> For business record-keeping purposes, your order and quote history has been anonymized but retained. Your personal information has been removed from these records.
+          </div>
+
+          <p>If you did not request this deletion or believe this was done in error, please contact our support team immediately at <a href="mailto:info@trustlinkcompany.com">info@trustlinkcompany.com</a>.</p>
+
+          <p>We're sorry to see you go. If you ever wish to return, you're always welcome to create a new account.</p>
+
+          <p>Thank you for being a part of Trust Link Ventures.</p>
+        </div>
+        <div class="footer">
+          <p>Best regards,<br><strong>Trust Link Ventures Team</strong></p>
+          <p style="font-size: 12px; color: #888;">This is a final confirmation email. No further action is required on your part.</p>
         </div>
       </div>
     </body>
