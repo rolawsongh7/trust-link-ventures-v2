@@ -129,7 +129,7 @@ export const CustomerNavigation: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <nav className="bg-white/95 backdrop-blur-sm border-b-2 border-primary/10 shadow-md sticky top-0 z-[100] min-h-[64px] overflow-x-hidden">
+      <nav className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b-2 border-primary/10 dark:border-slate-700/50 shadow-md dark:shadow-slate-900/50 sticky top-0 z-[100] min-h-[64px] overflow-x-hidden">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-3 md:gap-4">
             {/* Logo and Company Info */}
@@ -139,10 +139,10 @@ export const CustomerNavigation: React.FC = () => {
                   <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
                 </div>
                 <div className="hidden sm:block flex-shrink-0 max-w-[180px] md:max-w-[220px]">
-                  <div className="text-sm font-semibold text-primary truncate">
+                  <div className="text-sm font-semibold text-primary dark:text-slate-100 truncate">
                     {profile?.company_name}
                   </div>
-                  <div className="text-xs text-muted-foreground whitespace-nowrap">
+                  <div className="text-xs text-muted-foreground dark:text-slate-400 whitespace-nowrap">
                     Customer Portal
                   </div>
                 </div>
@@ -162,7 +162,7 @@ export const CustomerNavigation: React.FC = () => {
                       <Button
                         variant={isActive ? "secondary" : "ghost"}
                         size="icon"
-                        className="relative h-10 w-10 touch-safe flex-shrink-0"
+                        className="relative h-10 w-10 touch-safe flex-shrink-0 text-foreground dark:text-slate-200"
                       >
                         <Icon className="h-5 w-5" />
                         {item.badge && (
@@ -197,7 +197,7 @@ export const CustomerNavigation: React.FC = () => {
                   <Button
                     variant={isActive ? "secondary" : "ghost"}
                     size="sm"
-                    className="relative h-10 touch-manipulation whitespace-nowrap px-2.5 flex-shrink-0 min-h-[44px]"
+                    className="relative h-10 touch-manipulation whitespace-nowrap px-2.5 flex-shrink-0 min-h-[44px] text-foreground dark:text-slate-200"
                   >
                     <Icon className="h-4 w-4 mr-1.5" />
                     <span className="text-xs">{item.title}</span>
@@ -228,7 +228,7 @@ export const CustomerNavigation: React.FC = () => {
                   <Button
                     variant={isActive ? "secondary" : "ghost"}
                     size="sm"
-                    className="relative h-10 touch-manipulation whitespace-nowrap px-2 2xl:px-3 flex-shrink-0"
+                    className="relative h-10 touch-manipulation whitespace-nowrap px-2 2xl:px-3 flex-shrink-0 text-foreground dark:text-slate-200"
                   >
                     <Icon className="h-4 w-4 mr-1 2xl:mr-2" />
                     <span className="text-xs 2xl:text-sm">{item.title}</span>
@@ -257,7 +257,7 @@ export const CustomerNavigation: React.FC = () => {
                 <Button 
                   variant="ghost" 
                   size="icon"
-                  className="h-10 w-10 touch-safe flex-shrink-0"
+                  className="h-10 w-10 touch-safe flex-shrink-0 text-foreground dark:text-slate-200"
                   aria-label="Open menu"
                 >
                   <Menu className="h-5 w-5" />
@@ -330,12 +330,12 @@ export const CustomerNavigation: React.FC = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden xl:block text-left min-w-0 max-w-[120px] 2xl:max-w-[160px]">
-                    <div className="text-sm font-medium truncate">{profile?.full_name}</div>
-                    <div className="text-xs text-muted-foreground truncate">
+                    <div className="text-sm font-medium truncate dark:text-slate-200">{profile?.full_name}</div>
+                    <div className="text-xs text-muted-foreground dark:text-slate-400 truncate">
                       {profile?.email}
                     </div>
                   </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block flex-shrink-0" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground dark:text-slate-400 hidden sm:block flex-shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end">
