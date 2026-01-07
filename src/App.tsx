@@ -425,6 +425,10 @@ const App = () => {
                       <Route path="/track" element={<OrderTracking />} />
                       <Route path="/payment/callback" element={<PaymentCallback />} />
                       
+                      {/* Legacy customer routes - redirect to portal */}
+                      <Route path="/customer/*" element={<Navigate to="/portal" replace />} />
+                      <Route path="/customer-auth" element={<Navigate to="/portal-auth" replace />} />
+                      
                       {/* 404 */}
                       <Route path="*" element={<NotFound />} />
                     </>
@@ -504,6 +508,10 @@ const App = () => {
                       {/* Public tracking and payment pages */}
                       <Route path="/track" element={<OrderTracking />} />
                       <Route path="/payment/callback" element={<PaymentCallback />} />
+                      
+                      {/* Legacy customer routes - redirect to portal */}
+                      <Route path="/customer/*" element={<Navigate to="/portal" replace />} />
+                      <Route path="/customer-auth" element={<Navigate to="/portal-auth" replace />} />
                       
                       {/* 404 */}
                       <Route path="*" element={<NotFound />} />
