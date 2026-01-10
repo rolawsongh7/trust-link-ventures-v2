@@ -374,6 +374,7 @@ const App = () => {
                         <Route path="quotes" element={<QuotesPage />} />
                         <Route path="orders" element={<UnifiedOrdersManagement />} />
                         <Route path="invoices" element={<InvoicesPage />} />
+                        <Route path="price-management" element={<PriceManagement />} />
                         <Route path="analytics" element={<AnalyticsPage />} />
                         <Route path="crm" element={<CRM />} />
                         <Route path="quote-inquiries" element={<QuoteRequestManagement />} />
@@ -455,6 +456,7 @@ const App = () => {
                         <Route path="quotes" element={<QuotesPage />} />
                         <Route path="orders" element={<UnifiedOrdersManagement />} />
                         <Route path="invoices" element={<InvoicesPage />} />
+                        <Route path="price-management" element={<PriceManagement />} />
                         <Route path="analytics" element={<AnalyticsPage />} />
                         <Route path="crm" element={<CRM />} />
                         <Route path="quote-inquiries" element={<QuoteRequestManagement />} />
