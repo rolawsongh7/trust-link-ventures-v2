@@ -108,7 +108,7 @@ const getOriginIndicator = (order: Order) => {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border border-blue-200 gap-1">
+            <Badge variant="secondary" className="bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 gap-1">
               <Zap className="h-3 w-3" />
               Auto
             </Badge>
@@ -122,7 +122,7 @@ const getOriginIndicator = (order: Order) => {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Badge variant="secondary" className="bg-slate-50 text-slate-600 border border-slate-200 gap-1">
+          <Badge variant="secondary" className="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 gap-1">
             <PenLine className="h-3 w-3" />
             Manual
           </Badge>
@@ -140,8 +140,8 @@ const getAddressIndicator = (order: Order) => {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100">
-              <MapPin className="h-3.5 w-3.5 text-green-600" />
+            <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 dark:bg-green-950/50">
+              <MapPin className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
             </div>
           </TooltipTrigger>
           <TooltipContent>Delivery address confirmed</TooltipContent>
@@ -155,8 +155,8 @@ const getAddressIndicator = (order: Order) => {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+            <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950/50">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
             </div>
           </TooltipTrigger>
           <TooltipContent>Address required for shipping</TooltipContent>
@@ -186,7 +186,7 @@ const getPaymentIndicator = (order: Order) => {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge variant="secondary" className="bg-green-50 text-green-700 border border-green-200 gap-1">
+            <Badge variant="secondary" className="bg-green-50 dark:bg-green-950/50 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800 gap-1">
               <CheckCircle2 className="h-3 w-3" />
               Verified
             </Badge>
@@ -202,7 +202,7 @@ const getPaymentIndicator = (order: Order) => {
   
   if (order.payment_proof_url) {
     return (
-      <Badge variant="secondary" className="bg-amber-50 text-amber-700 border border-amber-200 gap-1">
+      <Badge variant="secondary" className="bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 gap-1">
         <Clock className="h-3 w-3" />
         Pending
       </Badge>
@@ -211,7 +211,7 @@ const getPaymentIndicator = (order: Order) => {
   
   if (order.payment_reference) {
     return (
-      <Badge variant="secondary" className="bg-blue-50 text-blue-700 border border-blue-200 gap-1">
+      <Badge variant="secondary" className="bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 gap-1">
         <Receipt className="h-3 w-3" />
         Ref: {order.payment_reference.slice(0, 8)}...
       </Badge>
