@@ -225,6 +225,37 @@ serve(async (req) => {
       console.warn(`⚠️ [${requestId}] Failed to log communication:`, commError);
     }
 
+    // Create admin in-app notifications
+    try {
+      const { data: adminRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+
+      if (adminRoles && adminRoles.length > 0) {
+        const notifications = adminRoles.map(admin => ({
+          user_id: admin.user_id,
+          type: 'address_confirmed',
+          title: 'Delivery Address Confirmed',
+          message: `${customerName} confirmed delivery address for order ${orderNumber}`,
+          link: '/admin/orders',
+          metadata: {
+            order_id: orderId,
+            order_number: orderNumber,
+            customer_name: customerName,
+          },
+        }));
+
+        await supabase
+          .from('user_notifications')
+          .insert(notifications);
+        
+        console.log(`🔔 [${requestId}] Created ${notifications.length} admin notifications`);
+      }
+    } catch (notifError) {
+      console.warn(`⚠️ [${requestId}] Failed to create admin notifications:`, notifError);
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 

@@ -1,10 +1,31 @@
 import { supabase } from '@/integrations/supabase/client';
 
+type NotificationType = 
+  | 'quote_ready' 
+  | 'quote_accepted' 
+  | 'order_confirmed' 
+  | 'order_shipped' 
+  | 'order_delivered' 
+  | 'system'
+  // Admin notification types
+  | 'new_quote_request'
+  | 'new_order'
+  | 'payment_proof_uploaded'
+  | 'address_confirmed';
+
 interface NotificationData {
   userId: string;
   title: string;
   message: string;
-  type: 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered' | 'system';
+  type: NotificationType;
+  link?: string;
+  metadata?: Record<string, any>;
+}
+
+interface AdminNotificationData {
+  type: NotificationType;
+  title: string;
+  message: string;
   link?: string;
   metadata?: Record<string, any>;
 }
@@ -34,6 +55,100 @@ export class NotificationService {
       return false;
     }
   }
+
+  /**
+   * Notify all admin users via the edge function
+   */
+  static async notifyAllAdmins(data: AdminNotificationData): Promise<boolean> {
+    try {
+      const { error } = await supabase.functions.invoke('notify-admins', {
+        body: data
+      });
+
+      if (error) {
+        console.error('Error notifying admins:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error notifying admins:', error);
+      return false;
+    }
+  }
+
+  // ============ ADMIN NOTIFICATION METHODS ============
+
+  /**
+   * Notify admins when a new quote request is submitted
+   */
+  static async notifyNewQuoteRequest(
+    companyName: string,
+    email: string,
+    itemCount: number
+  ): Promise<void> {
+    await this.notifyAllAdmins({
+      type: 'new_quote_request',
+      title: 'New Quote Request',
+      message: `${companyName} (${email}) submitted a quote request for ${itemCount} item(s)`,
+      link: '/admin/quote-requests',
+      metadata: { companyName, email, itemCount }
+    });
+  }
+
+  /**
+   * Notify admins when a customer accepts a quote
+   */
+  static async notifyQuoteAccepted(
+    quoteNumber: string,
+    customerName: string,
+    totalAmount: number,
+    currency: string
+  ): Promise<void> {
+    await this.notifyAllAdmins({
+      type: 'quote_accepted',
+      title: 'Quote Accepted',
+      message: `${customerName} accepted quote ${quoteNumber} (${currency} ${totalAmount.toLocaleString()})`,
+      link: '/admin/orders',
+      metadata: { quoteNumber, customerName, totalAmount, currency }
+    });
+  }
+
+  /**
+   * Notify admins when a new order is created
+   */
+  static async notifyNewOrder(
+    orderNumber: string,
+    customerName: string,
+    totalAmount: number,
+    currency: string
+  ): Promise<void> {
+    await this.notifyAllAdmins({
+      type: 'new_order',
+      title: 'New Order Created',
+      message: `Order ${orderNumber} created for ${customerName} (${currency} ${totalAmount.toLocaleString()})`,
+      link: '/admin/orders',
+      metadata: { orderNumber, customerName, totalAmount, currency }
+    });
+  }
+
+  /**
+   * Notify admins when customer confirms delivery address
+   */
+  static async notifyAddressConfirmed(
+    orderNumber: string,
+    customerName: string
+  ): Promise<void> {
+    await this.notifyAllAdmins({
+      type: 'address_confirmed',
+      title: 'Delivery Address Confirmed',
+      message: `${customerName} confirmed delivery address for order ${orderNumber}`,
+      link: '/admin/orders',
+      metadata: { orderNumber, customerName }
+    });
+  }
+
+  // ============ CUSTOMER NOTIFICATION METHODS ============
 
   static async sendQuoteReadyNotification(
     userId: string,
