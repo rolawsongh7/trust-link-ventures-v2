@@ -1,21 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { PortalPageHeader } from '@/components/customer/PortalPageHeader';
-import { Plus, Search, Edit, Phone, Mail, Calendar, MessageSquare, Users, Clock, Reply, Send, Inbox } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { Plus, Search, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
-import { ThreadCard } from '@/components/communications/ThreadCard';
-import { ThreadView } from '@/components/communications/ThreadView';
 import { groupCommunicationsIntoThreads } from '@/components/communications/groupThreads';
+import { CommunicationsKPISummary } from '@/components/communications/CommunicationsKPISummary';
+import { CommunicationsFilters } from '@/components/communications/CommunicationsFilters';
+import { ThreadCardEnhanced } from '@/components/communications/ThreadCardEnhanced';
+import { ConversationPanel } from '@/components/communications/ConversationPanel';
+import { CommunicationsEmptyState } from '@/components/communications/CommunicationsEmptyState';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Communication {
   id: string;
@@ -62,7 +65,7 @@ const CommunicationsManagement = () => {
   const [editingCommunication, setEditingCommunication] = useState<Communication | null>(null);
   const [replyingToCommunication, setReplyingToCommunication] = useState<Communication | null>(null);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
-  const [isThreadViewOpen, setIsThreadViewOpen] = useState(false);
+  const [isMobileConversationOpen, setIsMobileConversationOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm({
@@ -81,7 +84,6 @@ const CommunicationsManagement = () => {
     fetchCustomers();
     fetchLeads();
 
-    // Set up real-time subscription for communications
     const channel = supabase
       .channel('communications-changes')
       .on(
@@ -94,7 +96,7 @@ const CommunicationsManagement = () => {
         (payload) => {
           console.log('Communication change received:', payload);
           if (payload.eventType === 'INSERT') {
-            fetchCommunications(); // Refetch to get related data
+            fetchCommunications();
           } else if (payload.eventType === 'UPDATE') {
             setCommunications(prev => 
               prev.map(comm => 
@@ -194,7 +196,6 @@ const CommunicationsManagement = () => {
 
   const onSubmit = async (data: any) => {
     try {
-      // Clean up empty string UUIDs to null
       const cleanedData = {
         communication_type: data.communication_type,
         subject: data.subject || '',
@@ -207,7 +208,6 @@ const CommunicationsManagement = () => {
       };
 
       if (editingCommunication) {
-        // Update existing communication (don't modify threading fields)
         const { error } = await supabase
           .from('communications')
           .update(cleanedData)
@@ -220,7 +220,6 @@ const CommunicationsManagement = () => {
           description: "Communication updated successfully",
         });
       } else if (replyingToCommunication) {
-        // Insert reply with threading info
         const replyData = {
           ...cleanedData,
           customer_id: (replyingToCommunication as any).customers?.id || cleanedData.customer_id,
@@ -241,13 +240,12 @@ const CommunicationsManagement = () => {
           description: "Reply sent successfully",
         });
       } else {
-        // Insert new communication (start new thread)
         const { data: insertedData, error: insertError } = await supabase
           .from('communications')
           .insert({
             ...cleanedData,
             parent_communication_id: null,
-            thread_id: null, // Will be set to message ID after insert
+            thread_id: null,
             thread_position: 0
           })
           .select()
@@ -255,7 +253,6 @@ const CommunicationsManagement = () => {
         
         if (insertError) throw insertError;
         
-        // Update thread_id to self for new conversations
         if (insertedData) {
           await supabase
             .from('communications')
@@ -284,21 +281,6 @@ const CommunicationsManagement = () => {
     }
   };
 
-  const handleReply = (originalComm: Communication) => {
-    if (!originalComm.customers) return;
-    
-    setReplyingToCommunication(originalComm);
-    form.reset({
-      communication_type: 'email',
-      subject: `Re: ${originalComm.subject}`,
-      content: '',
-      customer_id: '',
-      lead_id: '',
-      communication_date: new Date().toISOString().slice(0, 16)
-    });
-    setIsDialogOpen(true);
-  };
-
   const handleQuickReply = async (threadId: string, content: string, type: string) => {
     try {
       const thread = threads.find(t => t.id === threadId);
@@ -307,7 +289,6 @@ const CommunicationsManagement = () => {
       const lastMessage = thread.messages[thread.messages.length - 1];
       const firstMessage = thread.messages[0];
       
-      // Map 'call' to 'phone' for database compatibility
       const commType = type === 'call' ? 'phone' : type;
       
       const replyData = {
@@ -351,6 +332,18 @@ const CommunicationsManagement = () => {
     return groupCommunicationsIntoThreads(communications);
   }, [communications]);
 
+  // Calculate filter counts
+  const filterCounts = useMemo(() => {
+    return {
+      all: threads.length,
+      unread: threads.filter(t => t.hasUnread).length,
+      contact_form: threads.filter(t => t.subject?.includes('Contact Form:')).length,
+      email: threads.filter(t => t.messages.some(m => m.communication_type === 'email')).length,
+      call: threads.filter(t => t.messages.some(m => m.communication_type === 'call' || m.communication_type === 'phone')).length,
+      meeting: threads.filter(t => t.messages.some(m => m.communication_type === 'meeting')).length,
+    };
+  }, [threads]);
+
   const filteredThreads = useMemo(() => {
     return threads.filter(thread => {
       const matchesSearch = 
@@ -360,56 +353,41 @@ const CommunicationsManagement = () => {
         ) ||
         thread.customer?.company_name?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesType = typeFilter === 'all' || 
-        thread.messages.some(msg => msg.communication_type === typeFilter);
+      let matchesType = true;
+      if (typeFilter === 'unread') {
+        matchesType = thread.hasUnread;
+      } else if (typeFilter === 'contact_form') {
+        matchesType = thread.subject?.includes('Contact Form:');
+      } else if (typeFilter !== 'all') {
+        matchesType = thread.messages.some(msg => 
+          msg.communication_type === typeFilter || 
+          (typeFilter === 'call' && msg.communication_type === 'phone')
+        );
+      }
       
-      const matchesContactForm = typeFilter === 'contact_form' 
-        ? thread.subject?.includes('Contact Form:')
-        : true;
-      
-      return matchesSearch && (matchesType || matchesContactForm);
+      return matchesSearch && matchesType;
     });
   }, [threads, searchTerm, typeFilter]);
 
   const selectedThread = threads.find(t => t.id === selectedThreadId);
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'email': return Mail;
-      case 'call': return Phone;
-      case 'meeting': return Users;
-      default: return MessageSquare;
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'email': return 'default';
-      case 'call': return 'secondary';
-      case 'meeting': return 'outline';
-      default: return 'default';
-    }
-  };
-
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="h-8 bg-muted rounded w-48 animate-pulse"></div>
-        <div className="space-y-4">
+      <div className="space-y-6">
+        {/* KPI Skeleton */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 bg-muted rounded w-3/4"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="h-3 bg-muted rounded"></div>
-                  <div className="h-3 bg-muted rounded w-2/3"></div>
-                </div>
-              </CardContent>
-            </Card>
+            <div key={i} className="rounded-xl border bg-muted/20 p-4 shimmer h-28" />
           ))}
+        </div>
+        
+        {/* Content Skeleton */}
+        <div className="flex gap-4">
+          <div className="flex-1 space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded-xl border bg-muted/20 p-4 shimmer h-32" />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -417,25 +395,14 @@ const CommunicationsManagement = () => {
 
   return (
     <div className="space-y-6">
-      <PortalPageHeader
-        variant="admin"
-        title="Communications Hub"
-        subtitle="Track all customer communications and interactions"
-        totalIcon={MessageSquare}
-        totalCount={communications.length}
-        stats={[
-          { label: 'Today', count: communications.filter(c => new Date(c.communication_date).toDateString() === new Date().toDateString()).length, icon: Clock },
-          { label: 'This Week', count: communications.filter(c => {
-            const date = new Date(c.communication_date);
-            const weekAgo = new Date();
-            weekAgo.setDate(weekAgo.getDate() - 7);
-            return date >= weekAgo;
-          }).length, icon: Calendar },
-          { label: 'Emails', count: communications.filter(c => c.communication_type === 'email').length, icon: Inbox },
-        ]}
-      />
-      
-      <div className="flex justify-end">
+      {/* Header with title and action */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Communications Hub</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Manage all customer conversations in one place
+          </p>
+        </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => {
@@ -612,64 +579,132 @@ const CommunicationsManagement = () => {
         </Dialog>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search communications..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
-        </div>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="contact_form">📧 Contact Forms</SelectItem>
-            <SelectItem value="email">Email</SelectItem>
-            <SelectItem value="call">Phone Call</SelectItem>
-            <SelectItem value="meeting">Meeting</SelectItem>
-            <SelectItem value="note">Note</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* KPI Summary */}
+      <CommunicationsKPISummary 
+        threads={threads}
+        communications={communications}
+      />
+
+      {/* Filters */}
+      <CommunicationsFilters
+        activeFilter={typeFilter}
+        onFilterChange={setTypeFilter}
+        counts={filterCounts}
+      />
+
+      {/* Search Bar */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search conversations..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 bg-background"
+        />
       </div>
 
-      <div className="space-y-4">
-        {filteredThreads.map((thread) => (
-          <ThreadCard
-            key={thread.id}
-            thread={thread}
-            onClick={() => {
-              setSelectedThreadId(thread.id);
-              setIsThreadViewOpen(true);
-            }}
-          />
-        ))}
+      {/* Split Panel Layout - Desktop */}
+      <div className="hidden lg:block h-[calc(100vh-420px)] min-h-[500px] rounded-xl border bg-card/50 overflow-hidden">
+        <ResizablePanelGroup direction="horizontal">
+          {/* Thread List Panel */}
+          <ResizablePanel defaultSize={40} minSize={30} maxSize={50}>
+            <ScrollArea className="h-full">
+              <div className="p-4 space-y-3">
+                {filteredThreads.length > 0 ? (
+                  <AnimatePresence mode="popLayout">
+                    {filteredThreads.map((thread, index) => (
+                      <motion.div
+                        key={thread.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ delay: index * 0.03 }}
+                      >
+                        <ThreadCardEnhanced
+                          thread={thread}
+                          isSelected={selectedThreadId === thread.id}
+                          onClick={() => setSelectedThreadId(thread.id)}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                ) : (
+                  <CommunicationsEmptyState 
+                    type={searchTerm || typeFilter !== 'all' ? 'no-results' : 'no-threads'}
+                    searchTerm={searchTerm}
+                    onCreateNew={() => setIsDialogOpen(true)}
+                  />
+                )}
+              </div>
+            </ScrollArea>
+          </ResizablePanel>
 
-        {filteredThreads.length === 0 && (
-          <Card className="border-2 border-dashed">
-            <CardContent className="py-12 text-center">
-              <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-              <p className="text-muted-foreground text-lg font-medium">No communications found</p>
-              <p className="text-sm text-muted-foreground/70 mt-2">
-                {searchTerm || typeFilter !== 'all' 
-                  ? 'Try adjusting your search or filters' 
-                  : 'Start by logging your first communication'}
-              </p>
-            </CardContent>
-          </Card>
+          <ResizableHandle withHandle />
+
+          {/* Conversation Panel */}
+          <ResizablePanel defaultSize={60}>
+            <AnimatePresence mode="wait">
+              <ConversationPanel
+                key={selectedThreadId || 'empty'}
+                thread={selectedThread || null}
+                onClose={() => setSelectedThreadId(null)}
+                onReply={handleQuickReply}
+              />
+            </AnimatePresence>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
+
+      {/* Mobile Layout */}
+      <div className="lg:hidden space-y-3">
+        {!isMobileConversationOpen ? (
+          <>
+            {filteredThreads.length > 0 ? (
+              <AnimatePresence mode="popLayout">
+                {filteredThreads.map((thread, index) => (
+                  <motion.div
+                    key={thread.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: index * 0.03 }}
+                  >
+                    <ThreadCardEnhanced
+                      thread={thread}
+                      onClick={() => {
+                        setSelectedThreadId(thread.id);
+                        setIsMobileConversationOpen(true);
+                      }}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            ) : (
+              <CommunicationsEmptyState 
+                type={searchTerm || typeFilter !== 'all' ? 'no-results' : 'no-threads'}
+                searchTerm={searchTerm}
+                onCreateNew={() => setIsDialogOpen(true)}
+              />
+            )}
+          </>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            className="fixed inset-0 z-50 bg-background"
+          >
+            <ConversationPanel
+              thread={selectedThread || null}
+              onClose={() => {
+                setSelectedThreadId(null);
+                setIsMobileConversationOpen(false);
+              }}
+              onReply={handleQuickReply}
+            />
+          </motion.div>
         )}
       </div>
-
-      <ThreadView
-        thread={selectedThread || null}
-        open={isThreadViewOpen}
-        onOpenChange={setIsThreadViewOpen}
-        onReply={handleQuickReply}
-      />
     </div>
   );
 };
