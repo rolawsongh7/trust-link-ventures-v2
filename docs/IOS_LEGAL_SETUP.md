@@ -252,8 +252,8 @@ Test on real iOS device:
    - Test all biometric flows on real device
 
 ## Legal Contact Information
-- General inquiries: info@trustlinkventures.com
-- Privacy concerns: privacy@trustlinkventures.com
+- General inquiries: info@truslinkcompany.com
+- Privacy concerns: privacy@truslinkcompany.com
 - Support: Available via contact form at /contact
 
 ## Effective Dates

@@ -11,7 +11,7 @@ export const SEO_CONFIG = {
     legalName: 'Trust Link Ventures Limited',
     foundingDate: '2006-12-20',
     telephone: '+233243131257',
-    email: 'info@trustlinkventures.com',
+    email: 'info@truslinkcompany.com',
     address: {
       streetAddress: 'Tema Industrial Area',
       addressLocality: 'Tema',

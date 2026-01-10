@@ -62,8 +62,8 @@ const Cookies = () => {
               </h2>
               <p className="text-foreground">
                 For questions about this policy, email:{' '}
-                <a href="mailto:info@trustlinkventures.com" className="text-primary hover:underline">
-                  info@trustlinkventures.com
+                <a href="mailto:info@truslinkcompany.com" className="text-primary hover:underline">
+                  info@truslinkcompany.com
                 </a>
               </p>
             </section>
