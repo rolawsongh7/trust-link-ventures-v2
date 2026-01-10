@@ -292,16 +292,16 @@ const UnifiedOrdersManagement = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'order_confirmed': return 'bg-cyan-100 text-cyan-800';
-      case 'pending_payment': return 'bg-yellow-100 text-yellow-800';
-      case 'payment_received': return 'bg-emerald-100 text-emerald-800';
-      case 'processing': return 'bg-purple-100 text-purple-800';
-      case 'ready_to_ship': return 'bg-indigo-100 text-indigo-800';
-      case 'shipped': return 'bg-orange-100 text-orange-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'delivery_failed': return 'bg-rose-100 text-rose-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'order_confirmed': return 'bg-cyan-100 dark:bg-cyan-950/50 text-cyan-800 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800';
+      case 'pending_payment': return 'bg-yellow-100 dark:bg-yellow-950/50 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800';
+      case 'payment_received': return 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800';
+      case 'processing': return 'bg-purple-100 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800';
+      case 'ready_to_ship': return 'bg-indigo-100 dark:bg-indigo-950/50 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800';
+      case 'shipped': return 'bg-orange-100 dark:bg-orange-950/50 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-800';
+      case 'delivered': return 'bg-green-100 dark:bg-green-950/50 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800';
+      case 'cancelled': return 'bg-red-100 dark:bg-red-950/50 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800';
+      case 'delivery_failed': return 'bg-rose-100 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800';
+      default: return 'bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700';
     }
   };
 
