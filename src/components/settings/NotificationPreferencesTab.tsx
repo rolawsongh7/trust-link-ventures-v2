@@ -7,10 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { Bell, Mail, Smartphone, MessageSquare, Package, FileText, Shield, TrendingUp, Clock, Loader2, Check } from 'lucide-react';
+import { AdminNotificationPreferences } from './AdminNotificationPreferences';
 
 interface NotificationPreferences {
   email_enabled: boolean;
@@ -27,6 +30,7 @@ interface NotificationPreferences {
 
 export const NotificationPreferencesTab = () => {
   const { user } = useAuth();
+  const { hasAdminAccess } = useRoleAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -108,7 +112,22 @@ export const NotificationPreferencesTab = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Admin Notification Preferences - Only shown to admins */}
+      {hasAdminAccess && (
+        <>
+          <AdminNotificationPreferences />
+          <Separator className="my-8" />
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">General Notification Settings</h3>
+            <p className="text-sm text-muted-foreground">
+              Configure your personal notification preferences for all channels
+            </p>
+          </div>
+        </>
+      )}
+      
+      <div className="space-y-6">
       {/* Notification Channels */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -372,6 +391,7 @@ export const NotificationPreferencesTab = () => {
           )}
         </Button>
       </motion.div>
+      </div>
     </div>
   );
 };
