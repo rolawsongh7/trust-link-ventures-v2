@@ -1276,6 +1276,7 @@ export type Database = {
       }
       notification_preferences: {
         Row: {
+          admin_notification_settings: Json | null
           created_at: string
           digest_frequency: string
           email_enabled: boolean
@@ -1292,6 +1293,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_notification_settings?: Json | null
           created_at?: string
           digest_frequency?: string
           email_enabled?: boolean
@@ -1308,6 +1310,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_notification_settings?: Json | null
           created_at?: string
           digest_frequency?: string
           email_enabled?: boolean
