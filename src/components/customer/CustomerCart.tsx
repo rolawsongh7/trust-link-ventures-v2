@@ -11,6 +11,7 @@ import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { NotificationService } from '@/services/notificationService';
 
 
 export const CustomerCart: React.FC = () => {
@@ -208,6 +209,15 @@ export const CustomerCart: React.FC = () => {
       } catch (adminEmailError) {
         console.error('Error sending admin notification email:', adminEmailError);
       }
+
+      // Notify admins in-app (non-blocking)
+      NotificationService.notifyNewQuoteRequest(
+        profile.company_name,
+        profile.email,
+        items.length
+      ).catch((error) => {
+        console.error('Error sending admin in-app notification:', error);
+      });
 
       // Clear cart and show success
       await clearCart();

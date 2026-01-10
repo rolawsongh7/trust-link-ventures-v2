@@ -26,6 +26,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useBiometric } from '@/hooks/useBiometric';
+import { NotificationService } from '@/services/notificationService';
 
 interface Address {
   id: string;
@@ -188,6 +189,16 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
         console.error('Proforma generation error (non-blocking):', proformaError);
       });
 
+      // Notify admins of quote acceptance (non-blocking)
+      NotificationService.notifyQuoteAccepted(
+        quote?.quote_number || '',
+        profile?.full_name || profile?.company_name || 'Customer',
+        order.total_amount,
+        order.currency
+      ).catch((error) => {
+        console.error('Error sending admin quote acceptance notification:', error);
+      });
+
       // Fetch payment options
       setLoadingPaymentOptions(true);
       const { data: options, error: optionsError } = await supabase.functions.invoke(
@@ -347,6 +358,16 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
       } catch (emailError) {
         console.error('Payment email error (non-blocking):', emailError);
       }
+
+      // Notify admins of quote acceptance (non-blocking)
+      NotificationService.notifyQuoteAccepted(
+        quote?.quote_number || '',
+        profile?.full_name || profile?.company_name || 'Customer',
+        quote?.total_amount || 0,
+        quote?.currency || 'GHS'
+      ).catch((error) => {
+        console.error('Error sending admin quote acceptance notification:', error);
+      });
 
       toast({
         title: 'Quote Accepted Successfully!',

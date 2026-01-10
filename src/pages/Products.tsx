@@ -19,6 +19,7 @@ import { CartModal } from '@/components/products/CartModal';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { categorySlides } from '@/data/categorySlides';
 import ProductCard from '@/components/products/ProductCard';
+import { NotificationService } from '@/services/notificationService';
 
 // SEAPRO SAS Product Images - using public folder paths
 import seafoodHeroImg from '@/assets/seafood-hero.jpg';
@@ -340,6 +341,15 @@ const Products = () => {
             status: 'completed'
           }]);
       }
+
+      // Notify admins in-app (non-blocking)
+      NotificationService.notifyNewQuoteRequest(
+        formData.buyerName,
+        formData.email,
+        validItems.length
+      ).catch((error) => {
+        console.error('Error sending admin in-app notification:', error);
+      });
 
       toast({
         title: "Success",

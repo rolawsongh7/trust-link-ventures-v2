@@ -33,16 +33,31 @@ export const NotificationCenter = () => {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
+      // Customer notification types
       case 'quote_ready':
         return '📋';
-      case 'quote_accepted':
-        return '✅';
       case 'order_confirmed':
         return '🛒';
       case 'order_shipped':
         return '📦';
       case 'order_delivered':
         return '🎉';
+      
+      // Admin notification types
+      case 'new_quote_request':
+        return '📝';
+      case 'quote_accepted':
+        return '✅';
+      case 'new_order':
+        return '🛍️';
+      case 'payment_proof_uploaded':
+        return '💳';
+      case 'address_confirmed':
+        return '📍';
+      
+      // System/default
+      case 'system':
+        return '⚙️';
       default:
         return '🔔';
     }
