@@ -17,6 +17,10 @@ interface Product {
   brand?: string;
   description?: string;
   image_public_url?: string;
+  unit_price?: number;
+  cost_price?: number;
+  price_currency?: string;
+  price_unit?: string;
 }
 
 interface SelectedItem {
@@ -57,7 +61,7 @@ export const ProductCatalogSelector: React.FC<ProductCatalogSelectorProps> = ({
     try {
       const { data, error } = await supabase
         .from('supplier_products')
-        .select('*')
+        .select('id, name, category, supplier, brand, description, image_public_url, is_active, unit_price, cost_price, price_currency, price_unit')
         .eq('is_active', true)
         .order('name');
 
@@ -120,8 +124,8 @@ export const ProductCatalogSelector: React.FC<ProductCatalogSelectorProps> = ({
           productId: product.id,
           productName: product.name,
           quantity: 1,
-          unitPrice: 0,
-          unit: 'kg',
+          unitPrice: product.unit_price || 0,
+          unit: product.price_unit || 'kg',
           description: product.description
         }
       ]);
@@ -221,7 +225,18 @@ export const ProductCatalogSelector: React.FC<ProductCatalogSelectorProps> = ({
                     )}
 
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium">{product.name}</h4>
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium">{product.name}</h4>
+                        {product.unit_price && product.unit_price > 0 ? (
+                          <Badge variant="default" className="bg-green-600 text-xs">
+                            {currency} {product.unit_price.toFixed(2)}/{product.price_unit || 'kg'}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-yellow-600 border-yellow-400 text-xs">
+                            No price
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="secondary" className="text-xs">
                           {product.category}
