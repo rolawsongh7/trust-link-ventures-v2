@@ -2710,53 +2710,115 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_product_price_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_cost_price: number | null
+          new_price: number
+          old_cost_price: number | null
+          old_price: number | null
+          product_id: string
+          reason: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_cost_price?: number | null
+          new_price: number
+          old_cost_price?: number | null
+          old_price?: number | null
+          product_id: string
+          reason?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_cost_price?: number | null
+          new_price?: number
+          old_cost_price?: number | null
+          old_price?: number | null
+          product_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_product_price_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_products: {
         Row: {
           brand: string | null
           category: string
+          cost_price: number | null
           created_at: string
           description: string | null
           id: string
           image_path: string | null
           image_public_url: string | null
           is_active: boolean
+          last_price_update: string | null
           name: string
+          price_currency: string | null
+          price_unit: string | null
+          price_updated_by: string | null
           remote_image_url: string | null
           slug: string
           source_url: string | null
           supplier: string
+          unit_price: number | null
           updated_at: string
         }
         Insert: {
           brand?: string | null
           category: string
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           id?: string
           image_path?: string | null
           image_public_url?: string | null
           is_active?: boolean
+          last_price_update?: string | null
           name: string
+          price_currency?: string | null
+          price_unit?: string | null
+          price_updated_by?: string | null
           remote_image_url?: string | null
           slug: string
           source_url?: string | null
           supplier: string
+          unit_price?: number | null
           updated_at?: string
         }
         Update: {
           brand?: string | null
           category?: string
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           id?: string
           image_path?: string | null
           image_public_url?: string | null
           is_active?: boolean
+          last_price_update?: string | null
           name?: string
+          price_currency?: string | null
+          price_unit?: string | null
+          price_updated_by?: string | null
           remote_image_url?: string | null
           slug?: string
           source_url?: string | null
           supplier?: string
+          unit_price?: number | null
           updated_at?: string
         }
         Relationships: []

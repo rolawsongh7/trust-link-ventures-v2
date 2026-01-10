@@ -14,7 +14,8 @@ import {
   Clock,
   Bot,
   Receipt,
-  Ship
+  Ship,
+  DollarSign
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
@@ -45,6 +46,7 @@ const navigationItems = [
   { title: 'Orders', url: '/admin/orders', icon: ShoppingCart, badge: 'orders' as const },
   { title: 'Quotes', url: '/admin/quotes', icon: FileText, badge: 'quotes' as const },
   { title: 'Invoices', url: '/admin/invoices', icon: Receipt, badge: null },
+  { title: 'Price Management', url: '/admin/price-management', icon: DollarSign, badge: null },
   { title: 'Customer Quote Requests', url: '/admin/quote-inquiries', icon: MessageSquare, badge: 'quoteInquiries' as const },
   { title: 'Communication', url: '/admin/communication', icon: Phone, badge: 'communications' as const },
 ];
