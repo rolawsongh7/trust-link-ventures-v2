@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download, Building, Package, Calendar, MessageSquare, Filter, CircleDot, RefreshCw, Mail } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -595,64 +596,88 @@ const QuoteRequestManagement = () => {
                           </TableCell>
                           
                           <TableCell>
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handlePreviewClick(request)}
-                                className="h-9 w-9 p-0 hover:bg-[#EFF6FF] hover:text-[#3B82F6] rounded-lg transition-all"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedRequest(request);
-                                  setNewStatus(request.status);
-                                  setAdminNotes(request.admin_notes || '');
-                                  setShowUpdateDialog(true);
-                                }}
-                                className="h-9 w-9 p-0 hover:bg-[#EFF6FF] hover:text-[#3B82F6] rounded-lg transition-all"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              
-                              {request.request_type === 'lead' && request.status !== 'converted' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => convertQuoteRequestToLead(request)}
-                                  className="h-9 w-9 p-0 hover:bg-[#F0FDF4] hover:text-[#22C55E] rounded-lg transition-all"
-                                  title="Convert to Lead"
-                                >
-                                  <UserPlus className="h-4 w-4" />
-                                </Button>
-                              )}
-                              
-                              {request.customer_id && request.status !== 'quoted' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => createQuoteFromRequest(request)}
-                                  className="h-9 w-9 p-0 hover:bg-[#F0F9FF] hover:text-[#0EA5E9] rounded-lg transition-all"
-                                  title="Create Quote"
-                                >
-                                  <FileText className="h-4 w-4" />
-                                </Button>
-                              )}
-                              
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDownloadPDF(request)}
-                                className="h-9 w-9 p-0 hover:bg-[#FEF3C7] hover:text-[#F59E0B] rounded-lg transition-all"
-                                title="Download PDF"
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            </div>
+                            <TooltipProvider>
+                              <div className="flex items-center gap-1">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handlePreviewClick(request)}
+                                      className="h-9 w-9 p-0 text-blue-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>View Details</TooltipContent>
+                                </Tooltip>
+                                
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedRequest(request);
+                                        setNewStatus(request.status);
+                                        setAdminNotes(request.admin_notes || '');
+                                        setShowUpdateDialog(true);
+                                      }}
+                                      className="h-9 w-9 p-0 text-slate-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Update Status</TooltipContent>
+                                </Tooltip>
+                                
+                                {request.request_type === 'lead' && request.status !== 'converted' && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => convertQuoteRequestToLead(request)}
+                                        className="h-9 w-9 p-0 text-green-500 hover:bg-green-50 hover:text-green-600 rounded-lg transition-all"
+                                      >
+                                        <UserPlus className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Convert to Lead</TooltipContent>
+                                  </Tooltip>
+                                )}
+                                
+                                {request.customer_id && request.status !== 'quoted' && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => createQuoteFromRequest(request)}
+                                        className="h-9 w-9 p-0 text-sky-500 hover:bg-sky-50 hover:text-sky-600 rounded-lg transition-all"
+                                      >
+                                        <FileText className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Create Quote</TooltipContent>
+                                  </Tooltip>
+                                )}
+                                
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDownloadPDF(request)}
+                                      className="h-9 w-9 p-0 text-amber-500 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-all"
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Download PDF</TooltipContent>
+                                </Tooltip>
+                              </div>
+                            </TooltipProvider>
                           </TableCell>
                         </TableRow>
                       ))}

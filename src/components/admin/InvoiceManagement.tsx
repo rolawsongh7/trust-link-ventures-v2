@@ -140,15 +140,17 @@ export default function InvoiceManagement() {
       let matchesDate = true;
       if (dateFilter !== "all") {
         const invoiceDate = new Date(invoice.created_at);
-        const now = new Date();
         
         if (dateFilter === "today") {
-          matchesDate = invoiceDate.toDateString() === now.toDateString();
+          const today = new Date();
+          matchesDate = invoiceDate.toDateString() === today.toDateString();
         } else if (dateFilter === "week") {
-          const weekAgo = new Date(now.setDate(now.getDate() - 7));
+          const weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
           matchesDate = invoiceDate >= weekAgo;
         } else if (dateFilter === "month") {
-          const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+          const monthAgo = new Date();
+          monthAgo.setMonth(monthAgo.getMonth() - 1);
           matchesDate = invoiceDate >= monthAgo;
         } else if (dateFilter === "failed") {
           matchesDate = !invoice.file_url;
