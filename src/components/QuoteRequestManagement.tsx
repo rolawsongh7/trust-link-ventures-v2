@@ -9,9 +9,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download, Building, Package, Calendar, MessageSquare, Filter, CircleDot, RefreshCw, Mail } from 'lucide-react';
+import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download, Building, Package, Calendar, MessageSquare, Filter, CircleDot, RefreshCw, Mail, MoreHorizontal } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -596,88 +602,58 @@ const QuoteRequestManagement = () => {
                           </TableCell>
                           
                           <TableCell>
-                            <TooltipProvider>
-                              <div className="flex items-center gap-1">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handlePreviewClick(request)}
-                                      className="h-9 w-9 p-0 text-blue-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all"
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>View Details</TooltipContent>
-                                </Tooltip>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 hover:bg-slate-100"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => handlePreviewClick(request)}>
+                                  <Eye className="mr-2 h-4 w-4 text-blue-500" />
+                                  View Details
+                                </DropdownMenuItem>
                                 
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => {
-                                        setSelectedRequest(request);
-                                        setNewStatus(request.status);
-                                        setAdminNotes(request.admin_notes || '');
-                                        setShowUpdateDialog(true);
-                                      }}
-                                      className="h-9 w-9 p-0 text-slate-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all"
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Update Status</TooltipContent>
-                                </Tooltip>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedRequest(request);
+                                    setNewStatus(request.status);
+                                    setAdminNotes(request.admin_notes || '');
+                                    setShowUpdateDialog(true);
+                                  }}
+                                >
+                                  <Edit className="mr-2 h-4 w-4 text-slate-500" />
+                                  Update Status
+                                </DropdownMenuItem>
+                                
+                                <DropdownMenuSeparator />
                                 
                                 {request.request_type === 'lead' && request.status !== 'converted' && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => convertQuoteRequestToLead(request)}
-                                        className="h-9 w-9 p-0 text-green-500 hover:bg-green-50 hover:text-green-600 rounded-lg transition-all"
-                                      >
-                                        <UserPlus className="h-4 w-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Convert to Lead</TooltipContent>
-                                  </Tooltip>
+                                  <DropdownMenuItem onClick={() => convertQuoteRequestToLead(request)}>
+                                    <UserPlus className="mr-2 h-4 w-4 text-green-500" />
+                                    Convert to Lead
+                                  </DropdownMenuItem>
                                 )}
                                 
                                 {request.customer_id && request.status !== 'quoted' && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => createQuoteFromRequest(request)}
-                                        className="h-9 w-9 p-0 text-sky-500 hover:bg-sky-50 hover:text-sky-600 rounded-lg transition-all"
-                                      >
-                                        <FileText className="h-4 w-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Create Quote</TooltipContent>
-                                  </Tooltip>
+                                  <DropdownMenuItem onClick={() => createQuoteFromRequest(request)}>
+                                    <FileText className="mr-2 h-4 w-4 text-sky-500" />
+                                    Create Quote
+                                  </DropdownMenuItem>
                                 )}
                                 
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleDownloadPDF(request)}
-                                      className="h-9 w-9 p-0 text-amber-500 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-all"
-                                    >
-                                      <Download className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Download PDF</TooltipContent>
-                                </Tooltip>
-                              </div>
-                            </TooltipProvider>
+                                <DropdownMenuSeparator />
+                                
+                                <DropdownMenuItem onClick={() => handleDownloadPDF(request)}>
+                                  <Download className="mr-2 h-4 w-4 text-amber-500" />
+                                  Download PDF
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))}
