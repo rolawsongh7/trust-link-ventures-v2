@@ -10,6 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { 
   MoreHorizontal, 
   Edit, 
@@ -26,7 +32,14 @@ import {
   FileText,
   FileSpreadsheet,
   Package,
-  CheckCircle
+  CheckCircle,
+  Zap,
+  PenLine,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Clock,
+  Receipt
 } from 'lucide-react';
 import { Column } from '@/components/ui/data-table';
 import { DataExporter } from '@/lib/exportHelpers';
@@ -36,6 +49,7 @@ import { OrdersSearchFilters } from './OrdersSearchFilters';
 import { SearchFilters } from '@/types/filters';
 import { AddressLinkDialog } from './AddressLinkDialog';
 import { PaymentReceiptPreviewDialog } from './PaymentReceiptPreviewDialog';
+import { OrderStatusProgress } from './OrderStatusProgress';
 
 interface Order {
   id: string;
@@ -87,44 +101,125 @@ interface OrdersDataTableProps {
   getStatusColor: (status: string) => string;
 }
 
-const getOriginBadge = (order: Order) => {
+// Professional icon-based origin indicator
+const getOriginIndicator = (order: Order) => {
   if (order.quote_id) {
     return (
-      <Badge variant="default" className="bg-blue-500 text-white">
-        <span className="mr-1">🤖</span>
-        Auto
-      </Badge>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border border-blue-200 gap-1">
+              <Zap className="h-3 w-3" />
+              Auto
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>Auto-generated from accepted quote</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
   return (
-    <Badge variant="default" className="bg-amber-500 text-white">
-      <span className="mr-1">✍️</span>
-      Manual
-    </Badge>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="secondary" className="bg-slate-50 text-slate-600 border border-slate-200 gap-1">
+            <PenLine className="h-3 w-3" />
+            Manual
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>Manually created order</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
-const getAddressBadge = (order: Order) => {
+// Professional address status indicator (icon only)
+const getAddressIndicator = (order: Order) => {
   if (order.delivery_address_id) {
     return (
-      <Badge variant="default" className="bg-green-100 text-green-800">
-        ✅ Confirmed
-      </Badge>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100">
+              <MapPin className="h-3.5 w-3.5 text-green-600" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>Delivery address confirmed</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
   
   if (['payment_received', 'processing', 'ready_to_ship'].includes(order.status)) {
     return (
-      <Badge variant="destructive">
-        ⚠️ Required
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>Address required for shipping</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+  
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-muted">
+            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>No address set</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
+// Payment status indicator (simplified)
+const getPaymentIndicator = (order: Order) => {
+  if (order.payment_verified_at) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="secondary" className="bg-green-50 text-green-700 border border-green-200 gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              Verified
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            {order.payment_reference && <div className="font-mono text-xs">{order.payment_reference}</div>}
+            Payment verified
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+  
+  if (order.payment_proof_url) {
+    return (
+      <Badge variant="secondary" className="bg-amber-50 text-amber-700 border border-amber-200 gap-1">
+        <Clock className="h-3 w-3" />
+        Pending
+      </Badge>
+    );
+  }
+  
+  if (order.payment_reference) {
+    return (
+      <Badge variant="secondary" className="bg-blue-50 text-blue-700 border border-blue-200 gap-1">
+        <Receipt className="h-3 w-3" />
+        Ref: {order.payment_reference.slice(0, 8)}...
       </Badge>
     );
   }
   
   return (
-    <Badge variant="outline" className="text-gray-500">
-      ❌ Not Set
-    </Badge>
+    <span className="text-muted-foreground text-sm">—</span>
   );
 };
 
@@ -247,75 +342,75 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
   const columns: Column<Order>[] = [
     {
       key: 'order_number' as keyof Order,
-      label: 'Order Number',
+      label: 'Order',
       sortable: true,
-      width: '150px',
-      render: (value: string) => (
-        <div className="font-medium">{value}</div>
+      width: '200px',
+      render: (value: string, row: Order) => (
+        <div className="space-y-1.5">
+          <div className="font-semibold text-foreground">{value}</div>
+          <div className="flex items-center gap-2">
+            {getOriginIndicator(row)}
+            {row.quotes && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onViewQuote(row); }}
+                      className="inline-flex items-center text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      <Link2 className="h-3 w-3 mr-0.5" />
+                      {row.quotes.quote_number}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{row.quotes.title || 'View quote'}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        </div>
       ),
     },
     {
       key: 'customer_name' as keyof Order,
       label: 'Customer',
       sortable: true,
-      render: (value: any, row: Order) => (
-        <div className="max-w-[200px] truncate">
-          {row.customers?.company_name || (
-            <span className="text-muted-foreground italic text-sm">No customer</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'quote_id' as keyof Order,
-      label: 'Quote Link',
-      sortable: false,
       width: '180px',
-      render: (value: any, row: Order) => {
-        if (row.quotes && row.quotes.quote_number) {
-          return (
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-blue-50 border-blue-200">
-                <Link2 className="w-3 h-3 mr-1" />
-                {row.quotes.quote_number}
-              </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onViewQuote(row)}
-                title="View related quote"
-              >
-                <Eye className="h-3 w-3" />
-              </Button>
-            </div>
-          );
-        }
-        return (
-          <Badge variant="outline" className="bg-muted text-muted-foreground">
-            Manual Order
-          </Badge>
-        );
-      },
-    },
-    {
-      key: 'origin' as keyof Order,
-      label: 'Origin',
-      sortable: false,
-      width: '120px',
       render: (value: any, row: Order) => (
-        <div title={row.quote_id ? "Auto-generated from accepted quote" : "Manually created order"}>
-          {getOriginBadge(row)}
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[180px]">
+                <div className="font-medium truncate">
+                  {row.customers?.company_name || (
+                    <span className="text-muted-foreground italic">No customer</span>
+                  )}
+                </div>
+                {row.customers?.contact_name && (
+                  <div className="text-xs text-muted-foreground truncate">
+                    {row.customers.contact_name}
+                  </div>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <div className="space-y-1">
+                <div className="font-medium">{row.customers?.company_name}</div>
+                {row.customers?.contact_name && <div>{row.customers.contact_name}</div>}
+                {row.customers?.email && <div className="text-xs">{row.customers.email}</div>}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       ),
     },
     {
       key: 'total_amount' as keyof Order,
       label: 'Amount',
       sortable: true,
-      width: '140px',
+      width: '130px',
       render: (value: number, row: Order) => (
-        <div className="font-medium">
-          {value.toLocaleString()} {row.currency}
+        <div className="font-semibold tabular-nums">
+          {row.currency} {value.toLocaleString()}
         </div>
       ),
     },
@@ -324,64 +419,63 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
       label: 'Status',
       sortable: true,
       filterable: true,
-      width: '150px',
+      width: '200px',
       render: (value: string, row: Order) => (
-        <Badge className={getStatusColor(value)}>
-          {value.replace(/_/g, ' ')}
-        </Badge>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Badge className={getStatusColor(value)}>
+              {value.replace(/_/g, ' ')}
+            </Badge>
+            {getAddressIndicator(row)}
+          </div>
+          <OrderStatusProgress currentStatus={value} size="sm" />
+        </div>
       ),
     },
     {
       key: 'payment_reference' as keyof Order,
-      label: 'Payment Details',
+      label: 'Payment',
       sortable: false,
-      width: '200px',
-      render: (value: any, row: Order) => {
-        if (!value && !row.payment_proof_url) {
-          return <Badge variant="secondary">Not Confirmed</Badge>;
-        }
-        
-        return (
-          <div className="space-y-1">
-            {value && (
-              <div className="font-mono text-xs font-semibold text-primary">
-                {value}
-              </div>
-            )}
-            {row.payment_proof_url && (
-              <Button
-                variant="link"
-                size="sm"
-                className="h-auto p-0 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setReceiptPreviewDialog({
-                    open: true,
-                    order: row,
-                  });
-                }}
-              >
-                <Eye className="mr-1 h-3 w-3" />
-                View Receipt
-              </Button>
-            )}
-          </div>
-        );
-      }
-    },
-    {
-      key: 'delivery_address_id' as keyof Order,
-      label: 'Delivery Address',
-      sortable: false,
-      width: '160px',
-      render: (value: any, row: Order) => getAddressBadge(row),
+      width: '140px',
+      render: (value: any, row: Order) => (
+        <div className="flex items-center gap-2">
+          {getPaymentIndicator(row)}
+          {row.payment_proof_url && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setReceiptPreviewDialog({ open: true, order: row });
+                    }}
+                  >
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>View payment receipt</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+      )
     },
     {
       key: 'created_at' as keyof Order,
-      label: 'Created',
+      label: 'Date',
       sortable: true,
-      width: '120px',
-      render: (value: string) => new Date(value).toLocaleDateString(),
+      width: '100px',
+      render: (value: string) => (
+        <div className="text-sm text-muted-foreground">
+          {new Date(value).toLocaleDateString('en-GB', { 
+            day: 'numeric', 
+            month: 'short' 
+          })}
+        </div>
+      ),
     },
     {
       key: 'id' as keyof Order,

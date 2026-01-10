@@ -17,6 +17,7 @@ import OrderStatusHistory from './OrderStatusHistory';
 import { PaymentConfirmationDialog } from './PaymentConfirmationDialog';
 import { ViewRelatedQuoteDialog } from './ViewRelatedQuoteDialog';
 import { VerifyPaymentDialog } from './VerifyPaymentDialog';
+import { OrdersKPISummary } from './OrdersKPISummary';
 
 interface Order {
   id: string;
@@ -346,14 +347,16 @@ const UnifiedOrdersManagement = () => {
             Track and manage all orders from accepted quotes
           </p>
         </div>
-        {/* Removed "Create New Quote" button - orders are created from accepted quotes */}
       </div>
+
+      {/* Executive KPI Summary */}
+      <OrdersKPISummary orders={orders as any} />
 
       {/* Warning Banner for Pending Addresses */}
       {pendingAddressCount > 0 && (
-        <Card className="border-amber-200 bg-amber-50">
+        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-amber-800">
+            <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
               <AlertTriangle className="h-5 w-5" />
               <span className="font-medium">
                 {pendingAddressCount} order{pendingAddressCount !== 1 ? 's' : ''} require{pendingAddressCount === 1 ? 's' : ''} delivery address before shipping
