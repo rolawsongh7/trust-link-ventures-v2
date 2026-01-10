@@ -70,7 +70,7 @@ const Terms = () => {
                 <p>Customers may cancel orders under the following conditions:</p>
                 <ul className="list-disc list-inside ml-4 space-y-1">
                   <li>Orders can be cancelled before "Processing Started" status</li>
-                  <li>Cancellation requests must be submitted via email to info@trustlinkventures.com</li>
+                  <li>Cancellation requests must be submitted via email to info@truslinkcompany.com</li>
                   <li>Orders in "Processing" or "Shipped" status cannot be cancelled</li>
                   <li>Cancellation timeframe: Within 24 hours of order placement for full refund</li>
                   <li>Partially processed orders are subject to a 15% restocking fee</li>
@@ -131,7 +131,7 @@ const Terms = () => {
               </h2>
               <div className="text-foreground space-y-2">
                 <ul className="list-disc list-inside space-y-1">
-                  <li><strong>Customer support:</strong> info@trustlinkventures.com, response within 24-48 hours</li>
+                  <li><strong>Customer support:</strong> info@truslinkcompany.com, response within 24-48 hours</li>
                   <li><strong>Escalation:</strong> Dispute resolution via email within 7 business days</li>
                   <li><strong>Mediation:</strong> Ghana Arbitration Centre for unresolved B2B disputes</li>
                   <li><strong>Jurisdiction:</strong> Courts of Ghana</li>
@@ -177,8 +177,8 @@ const Terms = () => {
               </h2>
               <p className="text-foreground">
                 For any legal inquiries, email us at:{' '}
-                <a href="mailto:info@trustlinkventures.com" className="text-primary hover:underline">
-                  info@trustlinkventures.com
+                <a href="mailto:info@truslinkcompany.com" className="text-primary hover:underline">
+                  info@truslinkcompany.com
                 </a>
               </p>
             </section>

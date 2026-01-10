@@ -417,6 +417,7 @@ const App = () => {
                         <Route path="profile" element={<CustomerProfile />} />
                         <Route path="notifications" element={<CustomerNotifications />} />
                         <Route path="more" element={<CustomerMore />} />
+                        <Route path="help" element={<CustomerHelp />} />
                         <Route path="analytics" element={<CustomerAnalytics />} />
                         <Route path="settings" element={<CustomerProfile />} />
                       </Route>
@@ -503,6 +504,10 @@ const App = () => {
                         <Route path="addresses" element={<CustomerAddresses />} />
                         <Route path="profile" element={<CustomerProfile />} />
                         <Route path="notifications" element={<CustomerNotifications />} />
+                        <Route path="more" element={<CustomerMore />} />
+                        <Route path="help" element={<CustomerHelp />} />
+                        <Route path="analytics" element={<CustomerAnalytics />} />
+                        <Route path="settings" element={<CustomerProfile />} />
                       </Route>
                       
                       {/* Public tracking and payment pages */}

@@ -196,7 +196,7 @@ const Partners = () => {
                   <div>
                     <h4 className="font-semibold mb-3 text-sm md:text-base">Contact Information</h4>
                     <div className="space-y-2 text-xs md:text-sm text-muted-foreground">
-                      <p><span className="font-medium">Email:</span> info@trustlinkventures.com</p>
+                      <p><span className="font-medium">Email:</span> info@truslinkcompany.com</p>
                       <p><span className="font-medium">Phone:</span> +233 243131257</p>
                     </div>
                   </div>

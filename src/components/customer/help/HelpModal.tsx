@@ -154,11 +154,11 @@ export const HelpModal: React.FC<HelpModalProps> = ({ open, onOpenChange }) => {
                                 </div>
                                 <div className="space-y-1 text-sm">
                                   <a 
-                                    href="mailto:info@trustlinkventures.com"
+                                    href="mailto:info@truslinkcompany.com"
                                     className="flex items-center gap-2 text-primary hover:underline"
                                   >
                                     <Mail className="h-4 w-4" />
-                                    info@trustlinkventures.com
+                                    info@truslinkcompany.com
                                   </a>
                                   <a 
                                     href="tel:+233243131257"

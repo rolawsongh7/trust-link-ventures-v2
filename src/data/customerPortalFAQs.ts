@@ -185,7 +185,7 @@ export const customerPortalFAQs: FAQCategory[] = [
       },
       {
         question: 'How do I contact support?',
-        answer: 'You can reach our support team through the Messages section, or email us at info@trustlinkventures.com. We typically respond within 24 hours during business days.',
+        answer: 'You can reach our support team through the Messages section, or email us at info@truslinkcompany.com. We typically respond within 24 hours during business days.',
         keywords: ['contact', 'support', 'help', 'email', 'reach out'],
         relatedLink: '/portal/communications'
       }

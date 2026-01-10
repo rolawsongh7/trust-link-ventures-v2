@@ -76,7 +76,7 @@ export const TermsDialog = ({ trigger }: { trigger: React.ReactNode }) => (
 
       <section>
         <h3 className="font-semibold mb-2">9. Contact Information</h3>
-        <p>For questions about these terms, contact us at: <a href="mailto:info@trustlinkventures.com" className="text-primary hover:underline">info@trustlinkventures.com</a></p>
+        <p>For questions about these terms, contact us at: <a href="mailto:info@truslinkcompany.com" className="text-primary hover:underline">info@truslinkcompany.com</a></p>
       </section>
     </div>
   </LegalDialog>
@@ -171,7 +171,7 @@ export const CookiesDialog = ({ trigger }: { trigger: React.ReactNode }) => (
 
       <section>
         <h3 className="font-semibold mb-2">7. Contact Us</h3>
-        <p>If you have questions about our use of cookies, please contact us at: <a href="mailto:info@trustlinkventures.com" className="text-primary hover:underline">info@trustlinkventures.com</a></p>
+        <p>If you have questions about our use of cookies, please contact us at: <a href="mailto:info@truslinkcompany.com" className="text-primary hover:underline">info@truslinkcompany.com</a></p>
       </section>
     </div>
   </LegalDialog>
