@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
@@ -28,6 +28,7 @@ export const OnboardingWizard: React.FC = () => {
   const [step, setStep] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [hasSkipped, setHasSkipped] = useState(false);
+  const isTransitioning = useRef(false);
 
   // Fetch addresses when wizard opens
   useEffect(() => {
@@ -36,9 +37,12 @@ export const OnboardingWizard: React.FC = () => {
     }
   }, [profile?.id, fetchAddresses, addressesLoaded]);
 
-  // Determine if wizard should be shown
+  // Determine if wizard should be shown - but only on initial load
   useEffect(() => {
-    if (addressesLoaded && shouldShowOnboarding) {
+    // Don't re-evaluate during step transitions
+    if (isTransitioning.current) return;
+    
+    if (addressesLoaded && shouldShowOnboarding && !isOpen && !hasSkipped) {
       // Determine starting step based on completion
       let startStep = savedStep || 0;
       
@@ -53,21 +57,28 @@ export const OnboardingWizard: React.FC = () => {
       
       setStep(startStep);
       setIsOpen(true);
-    } else if (addressesLoaded && !shouldShowOnboarding) {
-      setIsOpen(false);
     }
-  }, [shouldShowOnboarding, addressesLoaded, savedStep, completionStatus]);
+  }, [shouldShowOnboarding, addressesLoaded, savedStep, completionStatus, isOpen, hasSkipped]);
 
   const handleNext = () => {
+    isTransitioning.current = true;
     const nextStep = step + 1;
     setStep(nextStep);
     updateOnboardingStep(nextStep);
+    // Allow re-evaluation after a delay
+    setTimeout(() => {
+      isTransitioning.current = false;
+    }, 1000);
   };
 
   const handleBack = () => {
+    isTransitioning.current = true;
     const prevStep = Math.max(0, step - 1);
     setStep(prevStep);
     updateOnboardingStep(prevStep);
+    setTimeout(() => {
+      isTransitioning.current = false;
+    }, 500);
   };
 
   const handleSkip = async (permanent: boolean = false) => {
@@ -97,14 +108,14 @@ export const OnboardingWizard: React.FC = () => {
       }
     }}>
       <DialogContent 
-        className="sm:max-w-md p-0 gap-0 max-h-[80vh] md:max-h-[75vh] overflow-y-auto"
+        className="sm:max-w-md p-0 gap-0 max-h-[70vh] md:max-h-[65vh] overflow-hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         {/* Progress indicator */}
         <OnboardingProgress currentStep={step} totalSteps={TOTAL_STEPS} />
         
         {/* Step content */}
-        <div className="min-h-[350px] pb-6">
+        <div className="min-h-[280px] max-h-[55vh] overflow-y-auto pb-4">
           <AnimatePresence mode="wait">
             {step === 0 && (
               <WelcomeStep
