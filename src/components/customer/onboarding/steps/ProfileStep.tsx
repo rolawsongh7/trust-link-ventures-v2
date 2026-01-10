@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,6 +36,17 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({ onNext, onBack }) => {
     industry: profile?.industry || '',
   });
 
+  // Sync form data when profile updates
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        phone: profile.phone || '',
+        country: profile.country || '',
+        industry: profile.industry || '',
+      });
+    }
+  }, [profile]);
+
   const isValid = formData.phone && formData.country && formData.industry;
 
   const handleSubmit = async () => {
@@ -67,16 +78,16 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({ onNext, onBack }) => {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="px-4 py-6"
+      className="px-4 py-3"
     >
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-bold text-foreground mb-2">Complete Your Profile</h2>
-        <p className="text-sm text-muted-foreground">
-          Help us serve you better with a few details
+      <div className="text-center mb-4">
+        <h2 className="text-lg font-bold text-foreground mb-1">Complete Your Profile</h2>
+        <p className="text-xs text-muted-foreground">
+          Help us serve you better
         </p>
       </div>
 
-      <div className="space-y-4 max-w-sm mx-auto">
+      <div className="space-y-3 max-w-sm mx-auto">
         {/* Phone Number */}
         <div className="space-y-2">
           <Label htmlFor="phone" className="flex items-center gap-2">
@@ -137,14 +148,15 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({ onNext, onBack }) => {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 mt-8 max-w-sm mx-auto">
-        <Button variant="outline" onClick={onBack} className="flex-1">
+      <div className="flex gap-3 mt-5 max-w-sm mx-auto">
+        <Button variant="outline" onClick={onBack} className="flex-1" size="sm">
           Back
         </Button>
         <Button
           onClick={handleSubmit}
           disabled={!isValid || saving}
           className="flex-1 bg-tl-gradient hover:opacity-90 text-white"
+          size="sm"
         >
           {saving ? (
             <>

@@ -68,11 +68,11 @@ export const useOnboarding = () => {
     if (!profile) return false;
     if (!addressesLoaded) return false;
     
-    // Check onboarding_completed_at from profile (extended fields)
+    // FIRST check: if onboarding is completed, NEVER show again
     const onboardingCompletedAt = (profile as any).onboarding_completed_at;
     if (onboardingCompletedAt) return false;
     
-    // Check if skipped recently (within 7 days)
+    // Check if skipped recently (within 7 days) - temporary skip only
     const onboardingSkippedAt = (profile as any).onboarding_skipped_at;
     if (onboardingSkippedAt) {
       const skipDate = new Date(onboardingSkippedAt);

@@ -57,23 +57,23 @@ export const TourStep: React.FC<TourStepProps> = ({ onComplete, onBack }) => {
   };
 
   return (
-    <div className="px-4 py-6 flex flex-col items-center">
-      <div className="text-center mb-4">
-        <h2 className="text-xl font-bold text-foreground mb-2">Quick Tour</h2>
-        <p className="text-sm text-muted-foreground">
-          Here's how to get the most out of your account
+    <div className="px-4 py-3 flex flex-col items-center">
+      <div className="text-center mb-3">
+        <h2 className="text-lg font-bold text-foreground mb-1">Quick Tour</h2>
+        <p className="text-xs text-muted-foreground">
+          Get the most out of your account
         </p>
       </div>
 
       {/* Slide Indicator */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-1.5 mb-4">
         {tourSlides.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`w-2 h-2 rounded-full transition-all ${
+            className={`w-1.5 h-1.5 rounded-full transition-all ${
               index === currentSlide 
-                ? 'w-6 bg-primary' 
+                ? 'w-5 bg-primary' 
                 : 'bg-muted hover:bg-muted-foreground/50'
             }`}
           />
@@ -81,7 +81,7 @@ export const TourStep: React.FC<TourStepProps> = ({ onComplete, onBack }) => {
       </div>
 
       {/* Slide Content */}
-      <div className="w-full max-w-sm min-h-[200px] flex items-center justify-center">
+      <div className="w-full max-w-sm min-h-[140px] flex items-center justify-center">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
@@ -91,13 +91,13 @@ export const TourStep: React.FC<TourStepProps> = ({ onComplete, onBack }) => {
             transition={{ duration: 0.2 }}
             className="flex flex-col items-center text-center"
           >
-            <div className={`w-16 h-16 rounded-2xl ${slide.color} flex items-center justify-center mb-4 shadow-lg`}>
-              <slide.icon className="w-8 h-8 text-white" />
+            <div className={`w-12 h-12 rounded-xl ${slide.color} flex items-center justify-center mb-3 shadow-lg`}>
+              <slide.icon className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">
+            <h3 className="text-base font-semibold text-foreground mb-1">
               {slide.title}
             </h3>
-            <p className="text-sm text-muted-foreground max-w-xs">
+            <p className="text-xs text-muted-foreground max-w-xs">
               {slide.description}
             </p>
           </motion.div>
@@ -105,11 +105,12 @@ export const TourStep: React.FC<TourStepProps> = ({ onComplete, onBack }) => {
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center gap-4 mt-8 w-full max-w-sm">
+      <div className="flex items-center gap-3 mt-4 w-full max-w-sm">
         <Button
           variant="outline"
           onClick={prevSlide}
           className="flex-1"
+          size="sm"
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
           Back
@@ -117,6 +118,7 @@ export const TourStep: React.FC<TourStepProps> = ({ onComplete, onBack }) => {
         <Button
           onClick={nextSlide}
           className="flex-1 bg-tl-gradient hover:opacity-90 text-white"
+          size="sm"
         >
           {isLastSlide ? (
             "Get Started"
@@ -133,7 +135,7 @@ export const TourStep: React.FC<TourStepProps> = ({ onComplete, onBack }) => {
       {!isLastSlide && (
         <button
           onClick={onComplete}
-          className="mt-4 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           Skip tour
         </button>

@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Phone, User, Loader2 } from 'lucide-react';
+import { MapPin, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
@@ -35,6 +34,17 @@ export const AddressStep: React.FC<AddressStepProps> = ({ onNext, onBack, onAddr
     street_address: '',
     additional_directions: '',
   });
+
+  // Sync form data when profile updates
+  useEffect(() => {
+    if (profile) {
+      setFormData(prev => ({
+        ...prev,
+        receiver_name: prev.receiver_name || profile.full_name || '',
+        phone_number: prev.phone_number || profile.phone || '',
+      }));
+    }
+  }, [profile]);
 
   const isValid = 
     formData.receiver_name && 
@@ -106,74 +116,65 @@ export const AddressStep: React.FC<AddressStepProps> = ({ onNext, onBack, onAddr
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="px-4 py-6"
+      className="px-4 py-3"
     >
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-bold text-foreground mb-2">Add Delivery Address</h2>
-        <p className="text-sm text-muted-foreground">
-          Where should we deliver your orders?
+      <div className="text-center mb-3">
+        <h2 className="text-lg font-bold text-foreground mb-1">Delivery Address</h2>
+        <p className="text-xs text-muted-foreground">
+          Where should we deliver?
         </p>
       </div>
 
-      <div className="space-y-4 max-w-sm mx-auto">
-        {/* Receiver Name */}
-        <div className="space-y-2">
-          <Label htmlFor="receiver_name" className="flex items-center gap-2">
-            <User className="w-4 h-4" />
-            Receiver Name
-          </Label>
-          <Input
-            id="receiver_name"
-            value={formData.receiver_name}
-            onChange={(e) => setFormData(prev => ({ ...prev, receiver_name: e.target.value }))}
-            placeholder="Full name"
-            className="bg-background"
-          />
-        </div>
-
-        {/* Phone Number */}
-        <div className="space-y-2">
-          <Label htmlFor="phone" className="flex items-center gap-2">
-            <Phone className="w-4 h-4" />
-            Phone Number
-          </Label>
-          <Input
-            id="phone"
-            type="tel"
-            value={formData.phone_number}
-            onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
-            placeholder="+233 XX XXX XXXX"
-            className="bg-background"
-          />
+      <div className="space-y-2.5 max-w-sm mx-auto">
+        {/* Receiver Name & Phone in row */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label htmlFor="receiver_name" className="text-xs">Receiver Name</Label>
+            <Input
+              id="receiver_name"
+              value={formData.receiver_name}
+              onChange={(e) => setFormData(prev => ({ ...prev, receiver_name: e.target.value }))}
+              placeholder="Full name"
+              className="bg-background h-9 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="phone" className="text-xs">Phone</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={formData.phone_number}
+              onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
+              placeholder="+233 XX XXX XXXX"
+              className="bg-background h-9 text-sm"
+            />
+          </div>
         </div>
 
         {/* Ghana Digital Address */}
-        <div className="space-y-2">
-          <Label htmlFor="gps" className="flex items-center gap-2">
-            <MapPin className="w-4 h-4" />
-            Ghana Digital Address
+        <div className="space-y-1">
+          <Label htmlFor="gps" className="flex items-center gap-1 text-xs">
+            <MapPin className="w-3 h-3" />
+            Ghana Digital Address (e.g., GA-123-4567)
           </Label>
           <Input
             id="gps"
             value={formData.ghana_digital_address}
             onChange={(e) => setFormData(prev => ({ ...prev, ghana_digital_address: e.target.value.toUpperCase() }))}
             placeholder="GA-123-4567"
-            className="bg-background uppercase"
+            className="bg-background uppercase h-9 text-sm"
           />
-          <p className="text-xs text-muted-foreground">
-            Format: AA-000-0000 (e.g., GA-123-4567)
-          </p>
         </div>
 
         {/* Region & City */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label>Region</Label>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label className="text-xs">Region</Label>
             <Select
               value={formData.region}
               onValueChange={(value) => setFormData(prev => ({ ...prev, region: value }))}
             >
-              <SelectTrigger className="bg-background">
+              <SelectTrigger className="bg-background h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -183,55 +184,41 @@ export const AddressStep: React.FC<AddressStepProps> = ({ onNext, onBack, onAddr
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="city">City</Label>
+          <div className="space-y-1">
+            <Label htmlFor="city" className="text-xs">City</Label>
             <Input
               id="city"
               value={formData.city}
               onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
               placeholder="City"
-              className="bg-background"
+              className="bg-background h-9 text-sm"
             />
           </div>
         </div>
 
-        {/* Street Address */}
-        <div className="space-y-2">
-          <Label htmlFor="street">Street Address</Label>
-          <Textarea
+        {/* Street Address with optional directions */}
+        <div className="space-y-1">
+          <Label htmlFor="street" className="text-xs">Street Address & Landmarks</Label>
+          <Input
             id="street"
             value={formData.street_address}
             onChange={(e) => setFormData(prev => ({ ...prev, street_address: e.target.value }))}
-            placeholder="Street name, building number, landmarks..."
-            className="bg-background resize-none"
-            rows={2}
-          />
-        </div>
-
-        {/* Additional Directions (optional) */}
-        <div className="space-y-2">
-          <Label htmlFor="directions" className="text-muted-foreground">
-            Additional Directions (optional)
-          </Label>
-          <Input
-            id="directions"
-            value={formData.additional_directions}
-            onChange={(e) => setFormData(prev => ({ ...prev, additional_directions: e.target.value }))}
-            placeholder="Near the blue gate, opposite..."
-            className="bg-background"
+            placeholder="Street, building, landmarks..."
+            className="bg-background h-9 text-sm"
           />
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 mt-8 max-w-sm mx-auto">
-        <Button variant="outline" onClick={onBack} className="flex-1">
+      <div className="flex gap-3 mt-4 max-w-sm mx-auto">
+        <Button variant="outline" onClick={onBack} className="flex-1" size="sm">
           Back
         </Button>
         <Button
           onClick={handleSubmit}
           disabled={!isValid || saving}
           className="flex-1 bg-tl-gradient hover:opacity-90 text-white"
+          size="sm"
         >
           {saving ? (
             <>
