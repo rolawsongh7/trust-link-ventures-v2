@@ -17,11 +17,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download, Building, Package, Calendar, MessageSquare, Filter, CircleDot, RefreshCw, Mail, MoreHorizontal } from 'lucide-react';
+import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download, Building, Package, Calendar, MessageSquare, Filter, CircleDot, RefreshCw, Mail, MoreHorizontal, Info, Lightbulb, ArrowRight } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { InviteUserDialog } from '@/components/admin/InviteUserDialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface QuoteRequest {
   id: string;
@@ -78,6 +84,9 @@ const QuoteRequestManagement = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteTargetRequest, setInviteTargetRequest] = useState<QuoteRequest | null>(null);
+  const [showWorkflowTip, setShowWorkflowTip] = useState(() => {
+    return localStorage.getItem('hideQuoteWorkflowTip') !== 'true';
+  });
 
   useEffect(() => {
     fetchQuoteRequests();
@@ -283,21 +292,49 @@ const QuoteRequestManagement = () => {
 
   const createQuoteFromRequest = async (request: QuoteRequest) => {
     try {
+      // Validate customer_id first
+      if (!request.customer_id) {
+        if (request.request_type === 'lead') {
+          toast.error('Please convert this lead to a customer first', {
+            description: 'Use "Convert to Lead" to create a customer record before creating a quote.',
+            duration: 5000,
+          });
+        } else {
+          toast.error('Customer information is missing', {
+            description: 'This request does not have a linked customer.',
+          });
+        }
+        return;
+      }
+
+      // Ensure we have the full request data with items
+      let fullRequest = request;
+      if (!request.quote_request_items || request.quote_request_items.length === 0) {
+        const { data, error } = await supabase
+          .from('quote_requests')
+          .select(`*, customer:customers(*), quote_request_items(*)`)
+          .eq('id', request.id)
+          .single();
+        
+        if (error) throw error;
+        fullRequest = data;
+      }
+
       // Determine customer info
-      const customerEmail = request.lead_email || request.customer?.email;
+      const customerEmail = fullRequest.lead_email || fullRequest.customer?.email;
       
       // 1. Create quote record WITH linked_quote_request_id
       const quoteData = {
-        title: `Quote for: ${request.title}`,
-        customer_id: request.customer_id,
+        title: `Quote for: ${fullRequest.title}`,
+        customer_id: fullRequest.customer_id,
         customer_email: customerEmail, // Store email for easy access
-        linked_quote_request_id: request.id, // CRITICAL: Link to quote request
+        linked_quote_request_id: fullRequest.id, // CRITICAL: Link to quote request
         status: 'draft',
         quote_number: `Q-${Date.now()}`,
         total_amount: 0,
         currency: 'USD',
-        notes: request.message,
-        description: `Quote generated from request: ${request.quote_number || request.id}`,
+        notes: fullRequest.message,
+        description: `Quote generated from request: ${fullRequest.quote_number || fullRequest.id}`,
         created_by: (await supabase.auth.getUser()).data.user?.id
       };
 
@@ -310,8 +347,8 @@ const QuoteRequestManagement = () => {
       if (quoteError) throw quoteError;
 
       // 2. Copy items from quote request to quote
-      if (request.quote_request_items && request.quote_request_items.length > 0) {
-        const quoteItems = request.quote_request_items.map(item => ({
+      if (fullRequest.quote_request_items && fullRequest.quote_request_items.length > 0) {
+        const quoteItems = fullRequest.quote_request_items.map(item => ({
           quote_id: quote.id,
           product_name: item.product_name,
           quantity: item.quantity,
@@ -330,14 +367,20 @@ const QuoteRequestManagement = () => {
       }
 
       // 3. Update request status
-      await updateRequestStatus(request.id, 'processing');
+      await updateRequestStatus(fullRequest.id, 'processing');
 
       toast.success('Quote created! Add prices, generate PDF, and send to customer.');
       fetchQuoteRequests();
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating quote:', error);
-      toast.error('Failed to create quote from request');
+      if (error.message?.includes('permission') || error.message?.includes('policy')) {
+        toast.error('You do not have permission to create quotes');
+      } else {
+        toast.error('Failed to create quote', {
+          description: 'Please view the request details first and try again.',
+        });
+      }
     }
   };
 
@@ -426,6 +469,35 @@ const QuoteRequestManagement = () => {
           </p>
         </div>
       </div>
+
+      {/* Workflow Tip Banner for New Admins */}
+      {showWorkflowTip && (
+        <div className="bg-gradient-to-r from-blue-50 to-sky-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-sky-500 flex items-center justify-center flex-shrink-0">
+            <Lightbulb className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm text-blue-900 font-semibold mb-1">Workflow Tip</p>
+            <p className="text-sm text-blue-700">
+              For each quote request: <strong className="text-blue-900">1.</strong> View Details → 
+              <strong className="text-blue-900"> 2.</strong> Update Status to "Reviewed" → 
+              <strong className="text-blue-900"> 3.</strong> Convert to Lead (if applicable) → 
+              <strong className="text-blue-900"> 4.</strong> Create Quote
+            </p>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 -mt-1"
+            onClick={() => {
+              setShowWorkflowTip(false);
+              localStorage.setItem('hideQuoteWorkflowTip', 'true');
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Frosted Glass Filter Container */}
       <div className="bg-white/90 backdrop-blur-md border border-white/20 rounded-2xl p-4 sm:p-6 shadow-lg space-y-4">
@@ -636,15 +708,62 @@ const QuoteRequestManagement = () => {
                                   <DropdownMenuItem onClick={() => convertQuoteRequestToLead(request)}>
                                     <UserPlus className="mr-2 h-4 w-4 text-green-500" />
                                     Convert to Lead
+                                    {!request.customer_id && (
+                                      <span className="ml-auto text-xs text-green-600 font-medium">Required</span>
+                                    )}
                                   </DropdownMenuItem>
                                 )}
                                 
-                                {request.customer_id && request.status !== 'quoted' && (
-                                  <DropdownMenuItem onClick={() => createQuoteFromRequest(request)}>
-                                    <FileText className="mr-2 h-4 w-4 text-sky-500" />
-                                    Create Quote
-                                  </DropdownMenuItem>
-                                )}
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <DropdownMenuItem 
+                                        onClick={() => {
+                                          if (!request.customer_id) {
+                                            toast.error(
+                                              request.request_type === 'lead' 
+                                                ? 'Please convert this lead to a customer first' 
+                                                : 'Customer information is missing',
+                                              {
+                                                description: 'Use "Convert to Lead" before creating a quote.',
+                                                duration: 5000,
+                                              }
+                                            );
+                                            return;
+                                          }
+                                          if (request.status === 'pending') {
+                                            toast.info('Tip: Consider reviewing this request first', {
+                                              description: 'Click "View Details" to see the full submission before creating a quote.',
+                                            });
+                                          }
+                                          createQuoteFromRequest(request);
+                                        }}
+                                        disabled={request.status === 'quoted'}
+                                        className={cn(
+                                          !request.customer_id && 'opacity-60'
+                                        )}
+                                      >
+                                        <FileText className="mr-2 h-4 w-4 text-sky-500" />
+                                        Create Quote
+                                        {!request.customer_id && (
+                                          <span className="ml-auto text-xs text-amber-600">(Convert first)</span>
+                                        )}
+                                        {request.status === 'quoted' && (
+                                          <span className="ml-auto text-xs text-gray-400">(Already quoted)</span>
+                                        )}
+                                      </DropdownMenuItem>
+                                    </TooltipTrigger>
+                                    {!request.customer_id && (
+                                      <TooltipContent side="left" className="max-w-xs">
+                                        <p className="text-sm">
+                                          {request.request_type === 'lead' 
+                                            ? 'Convert this lead to a customer first using "Convert to Lead"' 
+                                            : 'This request is missing customer information'}
+                                        </p>
+                                      </TooltipContent>
+                                    )}
+                                  </Tooltip>
+                                </TooltipProvider>
                                 
                                 <DropdownMenuSeparator />
                                 
@@ -853,6 +972,49 @@ const QuoteRequestManagement = () => {
                       </Table>
                     </div>
                   )}
+                </div>
+
+                {/* Action Buttons in Dialog */}
+                <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-[#E2E8F0] p-4 -mx-4 -mb-4 rounded-b-xl flex flex-wrap gap-3 justify-between items-center">
+                  <div className="flex items-center gap-2 text-sm text-[#64748B]">
+                    <Info className="h-4 w-4" />
+                    <span>Follow the workflow to create a quote</span>
+                  </div>
+                  <div className="flex gap-3">
+                    {selectedRequest.request_type === 'lead' && !selectedRequest.customer_id && (
+                      <Button 
+                        onClick={() => {
+                          convertQuoteRequestToLead(selectedRequest);
+                          setShowDetailsDialog(false);
+                        }}
+                        className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md"
+                      >
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Step 1: Convert to Lead
+                      </Button>
+                    )}
+                    
+                    {selectedRequest.customer_id && selectedRequest.status !== 'quoted' && (
+                      <Button 
+                        onClick={() => {
+                          setShowDetailsDialog(false);
+                          createQuoteFromRequest(selectedRequest);
+                        }}
+                        className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-md"
+                      >
+                        <FileText className="mr-2 h-4 w-4" />
+                        {selectedRequest.request_type === 'lead' ? 'Step 2: Create Quote' : 'Create Quote'}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    )}
+                    
+                    {selectedRequest.status === 'quoted' && (
+                      <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-lg">
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="font-medium">Quote already created</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
