@@ -15,7 +15,9 @@ import {
   Bot,
   Receipt,
   Ship,
-  DollarSign
+  DollarSign,
+  AlertTriangle,
+  ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
@@ -49,11 +51,13 @@ const navigationItems = [
   { title: 'Price Management', url: '/admin/price-management', icon: DollarSign, badge: null },
   { title: 'Customer Quote Requests', url: '/admin/quote-inquiries', icon: MessageSquare, badge: 'quoteInquiries' as const },
   { title: 'Communication', url: '/admin/communication', icon: Phone, badge: 'communications' as const },
+  { title: 'Order Issues', url: '/admin/orders/issues', icon: AlertTriangle, badge: null },
 ];
 
 
 const systemItems = [
   { title: 'Settings', url: '/admin/settings', icon: Settings },
+  { title: 'Diagnostics', url: '/admin/diagnostics', icon: ShieldCheck },
 ];
 
 export function AppSidebar() {

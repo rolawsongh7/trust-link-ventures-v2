@@ -67,6 +67,8 @@ import CommunicationPage from "./pages/CommunicationPage";
 import Settings from "./pages/Settings";
 import InvoicesPage from "./pages/InvoicesPage";
 import PriceManagement from "./pages/admin/PriceManagement";
+import Diagnostics from "./pages/admin/Diagnostics";
+import OrderIssues from "./pages/admin/OrderIssues";
 
 import UnifiedAuth from "./pages/UnifiedAuth";
 import AdminAuth from "./pages/AdminAuth";
@@ -195,6 +197,8 @@ const App = () => {
                         <Route path="communication" element={<CommunicationPage />} />
                         <Route path="quote-system" element={<QuoteSystem />} />
                         <Route path="settings" element={<Settings />} />
+                        <Route path="diagnostics" element={<Diagnostics />} />
+                        <Route path="orders/issues" element={<OrderIssues />} />
                       </Route>
                       
                       {/* Mobile Hub - standalone page outside PublicLayout */}

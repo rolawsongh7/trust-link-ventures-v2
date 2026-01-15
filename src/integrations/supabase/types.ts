@@ -1423,6 +1423,66 @@ export type Database = {
           },
         ]
       }
+      order_issues: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          customer_id: string
+          description: string
+          id: string
+          issue_type: Database["public"]["Enums"]["order_issue_type"]
+          order_id: string
+          photos: string[] | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["order_issue_status"]
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          customer_id: string
+          description: string
+          id?: string
+          issue_type: Database["public"]["Enums"]["order_issue_type"]
+          order_id: string
+          photos?: string[] | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["order_issue_status"]
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          customer_id?: string
+          description?: string
+          id?: string
+          issue_type?: Database["public"]["Enums"]["order_issue_type"]
+          order_id?: string
+          photos?: string[] | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["order_issue_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_issues_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_issues_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -3622,6 +3682,14 @@ export type Database = {
         | "negotiation"
         | "closed_won"
         | "closed_lost"
+      order_issue_status: "submitted" | "reviewing" | "resolved" | "rejected"
+      order_issue_type:
+        | "missing_items"
+        | "damaged_items"
+        | "wrong_items"
+        | "late_delivery"
+        | "quality_issue"
+        | "other"
       order_status_enhanced:
         | "quote_pending"
         | "quote_sent"
@@ -3800,6 +3868,15 @@ export const Constants = {
         "negotiation",
         "closed_won",
         "closed_lost",
+      ],
+      order_issue_status: ["submitted", "reviewing", "resolved", "rejected"],
+      order_issue_type: [
+        "missing_items",
+        "damaged_items",
+        "wrong_items",
+        "late_delivery",
+        "quality_issue",
+        "other",
       ],
       order_status_enhanced: [
         "quote_pending",
