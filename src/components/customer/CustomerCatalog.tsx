@@ -9,8 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Search, Filter, Package, Plus, ShoppingCart, Grid3X3, Building2, CheckCircle } from 'lucide-react';
 import { PortalPageHeader } from './PortalPageHeader';
+import { FavoriteButton } from './FavoriteButton';
 import { supabase } from '@/integrations/supabase/client';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
+import { useFavorites } from '@/hooks/useFavorites';
 import { useToast } from '@/hooks/use-toast';
 import { CartModal } from '@/components/products/CartModal';
 import { FloatingCart } from '@/components/products/FloatingCart';
@@ -46,6 +48,7 @@ export const CustomerCatalog: React.FC = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [suppliers, setSuppliers] = useState<string[]>([]);
   const { addItem } = useShoppingCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const { toast } = useToast();
 
   // Add to cart dialog state
@@ -301,8 +304,18 @@ export const CustomerCatalog: React.FC = () => {
           {filteredProducts.map((product) => (
           <article 
             key={product.id} 
-            className="bg-tl-surface border border-tl-border border-l-4 border-l-maritime-400 rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 overflow-hidden"
+            className="bg-tl-surface border border-tl-border border-l-4 border-l-maritime-400 rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 overflow-hidden relative"
           >
+              {/* Favorite Button */}
+              <div className="absolute top-2 right-2 z-10">
+                <FavoriteButton
+                  isFavorite={isFavorite(product.id)}
+                  onToggle={() => toggleFavorite(product.id)}
+                  size="md"
+                  className="bg-white/90 dark:bg-slate-800/90 shadow-sm"
+                />
+              </div>
+
               {product.image_public_url && (
                 <div className="h-40 w-full overflow-hidden">
                   <img
