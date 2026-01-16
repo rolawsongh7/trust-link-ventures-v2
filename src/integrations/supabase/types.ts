@@ -2296,6 +2296,66 @@ export type Database = {
           },
         ]
       }
+      quote_revisions: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          customer_id: string
+          customer_note: string | null
+          id: string
+          quote_id: string
+          request_type: string
+          requested_by_user_id: string | null
+          requested_changes: Json
+          revision_number: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          customer_id: string
+          customer_note?: string | null
+          id?: string
+          quote_id: string
+          request_type: string
+          requested_by_user_id?: string | null
+          requested_changes?: Json
+          revision_number?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          customer_id?: string
+          customer_note?: string | null
+          id?: string
+          quote_id?: string
+          request_type?: string
+          requested_by_user_id?: string | null
+          requested_changes?: Json
+          revision_number?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_revisions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_revisions_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_status_history: {
         Row: {
           changed_at: string | null
