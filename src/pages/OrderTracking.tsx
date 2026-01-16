@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Package, MapPin, Calendar, Truck, CheckCircle2, Clock, AlertCircle, FileText, Download } from 'lucide-react';
+import { Package, MapPin, Calendar, Truck, CheckCircle2, Clock, AlertCircle, FileText, Download, AlertTriangle } from 'lucide-react';
+import { ProofOfDeliverySection } from '@/components/customer/ProofOfDeliverySection';
 import { format } from 'date-fns';
 import { OrderStatusDisplay } from '@/components/customer/OrderStatusDisplay';
 
@@ -24,6 +25,9 @@ interface OrderDetails {
   customer_name: string;
   delivery_address: string;
   delivery_window?: string | null;
+  delivery_proof_url?: string | null;
+  proof_of_delivery_url?: string | null;
+  delivery_signature?: string | null;
 }
 
 interface Invoice {
@@ -477,6 +481,16 @@ const OrderTracking = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Proof of Delivery Section */}
+        {(order.status === 'delivered' || order.status === 'shipped') && (
+          <ProofOfDeliverySection
+            deliveryProofUrl={order.delivery_proof_url}
+            proofOfDeliveryUrl={order.proof_of_delivery_url}
+            deliverySignature={order.delivery_signature}
+            deliveredAt={order.delivered_at}
+          />
+        )}
 
         {/* Help Section */}
         <Card>

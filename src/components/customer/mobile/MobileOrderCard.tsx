@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { InteractiveCard } from '@/components/ui/interactive-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Package, Truck, Eye, RotateCcw, MapPin, Upload, ChevronDown, ChevronUp } from 'lucide-react';
+import { Package, Truck, Eye, RotateCcw, MapPin, Upload, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -34,6 +34,7 @@ interface MobileOrderCardProps {
   onViewInvoices: () => void;
   onAddAddress: () => void;
   onUploadPayment: () => void;
+  onReportIssue?: () => void;
 }
 
 export const MobileOrderCard = ({ 
@@ -43,9 +44,11 @@ export const MobileOrderCard = ({
   onReorder, 
   onViewInvoices,
   onAddAddress,
-  onUploadPayment 
+  onUploadPayment,
+  onReportIssue
 }: MobileOrderCardProps) => {
   const [showItems, setShowItems] = useState(false);
+  const canReportIssue = ['shipped', 'delivered', 'delivery_failed'].includes(order.status);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -203,6 +206,20 @@ export const MobileOrderCard = ({
               <RotateCcw className="h-3 w-3 mr-1" />
               <span className="text-xs">Reorder</span>
             </Button>
+            {canReportIssue && onReportIssue && (
+              <Button 
+                onClick={(e) => {
+                  console.log('🔵 Report Issue clicked:', order.order_number);
+                  e.stopPropagation();
+                  onReportIssue();
+                }}
+                variant="outline" 
+                size="sm" 
+                className="h-9 text-destructive hover:text-destructive"
+              >
+                <AlertTriangle className="h-3 w-3" />
+              </Button>
+            )}
           </>
         )}
       </div>

@@ -2,7 +2,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Package, MapPin, Calendar, DollarSign, FileText, RotateCcw, Truck, Upload } from 'lucide-react';
+import { Package, MapPin, Calendar, DollarSign, FileText, RotateCcw, Truck, Upload, AlertTriangle } from 'lucide-react';
+import { ProofOfDeliverySection } from '../ProofOfDeliverySection';
 
 interface Order {
   id: string;
@@ -16,6 +17,10 @@ interface Order {
   tracking_number?: string;
   delivery_address_id?: string;
   delivery_address_requested_at?: string;
+  delivered_at?: string;
+  delivery_proof_url?: string;
+  proof_of_delivery_url?: string;
+  delivery_signature?: string;
   order_items?: any[];
   quotes?: {
     quote_number: string;
@@ -35,6 +40,7 @@ interface MobileOrderDetailDialogProps {
   onViewInvoices: () => void;
   onAddAddress?: () => void;
   onUploadPayment?: () => void;
+  onReportIssue?: () => void;
 }
 
 export const MobileOrderDetailDialog = ({
@@ -45,9 +51,12 @@ export const MobileOrderDetailDialog = ({
   onReorder,
   onViewInvoices,
   onAddAddress,
-  onUploadPayment
+  onUploadPayment,
+  onReportIssue
 }: MobileOrderDetailDialogProps) => {
   if (!order) return null;
+
+  const canReportIssue = ['shipped', 'delivered', 'delivery_failed'].includes(order.status);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -189,6 +198,19 @@ export const MobileOrderDetailDialog = ({
               </div>
             )}
 
+            {/* Proof of Delivery */}
+            {order.status === 'delivered' && (
+              <div className="pt-2 border-t">
+                <ProofOfDeliverySection
+                  deliveryProofUrl={order.delivery_proof_url}
+                  proofOfDeliveryUrl={order.proof_of_delivery_url}
+                  deliverySignature={order.delivery_signature}
+                  deliveredAt={order.delivered_at}
+                  compact
+                />
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="space-y-2 pt-4">
               {needsAddress ? (
@@ -228,6 +250,17 @@ export const MobileOrderDetailDialog = ({
                     <RotateCcw className="h-4 w-4 mr-2" />
                     Reorder
                   </Button>
+                  {/* Report Issue */}
+                  {canReportIssue && onReportIssue && (
+                    <Button 
+                      onClick={onReportIssue} 
+                      variant="outline" 
+                      className="w-full text-destructive hover:text-destructive"
+                    >
+                      <AlertTriangle className="h-4 w-4 mr-2" />
+                      Report Issue
+                    </Button>
+                  )}
                 </>
               )}
             </div>

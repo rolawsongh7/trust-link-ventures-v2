@@ -15,8 +15,11 @@ import {
   FileText,
   AlertCircle,
   ArrowLeft,
-  Download
+  Download,
+  AlertTriangle
 } from 'lucide-react';
+import { ProofOfDeliverySection } from './ProofOfDeliverySection';
+import { OrderIssueReportDialog } from './OrderIssueReportDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -44,6 +47,9 @@ interface Order {
   delivered_at?: string;
   estimated_delivery_date?: string;
   delivery_address_id?: string;
+  delivery_proof_url?: string;
+  proof_of_delivery_url?: string;
+  delivery_signature?: string;
   order_items: OrderItem[];
   quotes?: {
     quote_number: string;
@@ -72,6 +78,7 @@ export const OrderTracking: React.FC = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showReportIssue, setShowReportIssue] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -424,8 +431,18 @@ export const OrderTracking: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* Proof of Delivery */}
+        {(order.status === 'delivered' || order.status === 'shipped') && (
+          <ProofOfDeliverySection
+            deliveryProofUrl={order.delivery_proof_url}
+            proofOfDeliveryUrl={order.proof_of_delivery_url}
+            deliverySignature={order.delivery_signature}
+            deliveredAt={order.delivered_at}
+          />
+        )}
+
         {/* Actions */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <Button variant="outline" asChild>
             <a href="/portal/orders">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -439,7 +456,27 @@ export const OrderTracking: React.FC = () => {
               Download Invoice
             </Button>
           )}
+
+          {/* Report Issue - only for shipped/delivered orders */}
+          {['shipped', 'delivered', 'delivery_failed'].includes(order.status) && (
+            <Button 
+              variant="outline" 
+              onClick={() => setShowReportIssue(true)}
+              className="text-destructive hover:text-destructive"
+            >
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Report Issue
+            </Button>
+          )}
         </div>
+
+        {/* Report Issue Dialog */}
+        <OrderIssueReportDialog
+          open={showReportIssue}
+          onOpenChange={setShowReportIssue}
+          orderId={order.id}
+          orderNumber={order.order_number}
+        />
       </div>
     </div>
   );
