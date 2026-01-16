@@ -78,6 +78,7 @@ import Unauthorized from "./pages/Unauthorized";
 import NotificationSettingsPage from "./pages/NotificationSettings";
 import MobileHub from "./pages/MobileHub";
 import CustomerSettings from "./pages/CustomerSettings";
+import ProductDetail from "./pages/ProductDetail";
 
 
 const queryClient = new QueryClient({
