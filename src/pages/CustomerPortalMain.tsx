@@ -11,7 +11,8 @@ import {
   Clock,
   ArrowRight,
   Building2,
-  DollarSign
+  DollarSign,
+  Heart
 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
@@ -22,6 +23,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CustomerAddresses } from '@/components/customer/CustomerAddresses';
 import { DashboardCard } from '@/components/customer/DashboardCard';
 import { RecentActivityList } from '@/components/customer/RecentActivityList';
+import { FavoritesWidget } from '@/components/customer/FavoritesWidget';
 import { TabletPillNav } from '@/components/customer/navigation/TabletPillNav';
 import { DesktopSidebar } from '@/components/customer/navigation/DesktopSidebar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -131,6 +133,14 @@ const CustomerPortalMain = () => {
       href: '/portal/orders',
       color: 'from-[#023E8A] to-[#0077B6]',
       borderColor: 'border-l-green-500'
+    },
+    {
+      title: 'My Favorites',
+      description: 'Quick reorder your saved products',
+      icon: Heart,
+      href: '/portal/favorites',
+      color: 'from-[#E11D48] to-[#BE123C]',
+      borderColor: 'border-l-rose-500'
     },
     {
       title: 'Communications',
@@ -427,6 +437,9 @@ const CustomerPortalMain = () => {
                 </div>
               </div>
             </div>
+
+            {/* Favorites Widget */}
+            <FavoritesWidget />
 
             {/* Recent Activity */}
             {recentActivities.length > 0 && (

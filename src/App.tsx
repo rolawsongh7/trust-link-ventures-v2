@@ -45,6 +45,7 @@ import { CustomerMore } from "@/pages/CustomerMore";
 import CustomerNotifications from "@/pages/CustomerNotifications";
 import CustomerAnalytics from "@/pages/CustomerAnalytics";
 import CustomerHelp from "@/pages/CustomerHelp";
+import CustomerFavorites from "@/pages/CustomerFavorites";
 import QuoteView from "@/pages/QuoteView";
 import ManualQuoteAnalytics from "@/components/analytics/ManualQuoteAnalytics";
 import CurrencyAnalytics from "@/components/analytics/CurrencyAnalytics";
@@ -235,6 +236,7 @@ const App = () => {
                         <Route path="orders" element={<CustomerOrders />} />
                         <Route path="orders/:orderId" element={<OrderTracking />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
+                        <Route path="favorites" element={<CustomerFavorites />} />
                         <Route path="communications" element={<CustomerCommunications />} />
                         <Route path="addresses" element={<CustomerAddresses />} />
                         <Route path="notifications" element={<CustomerNotifications />} />
@@ -328,6 +330,7 @@ const App = () => {
                         <Route path="orders" element={<CustomerOrders />} />
                         <Route path="orders/:orderId" element={<OrderTracking />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
+                        <Route path="favorites" element={<CustomerFavorites />} />
                         <Route path="communications" element={<CustomerCommunications />} />
                         <Route path="addresses" element={<CustomerAddresses />} />
                         <Route path="notifications" element={<CustomerNotifications />} />
