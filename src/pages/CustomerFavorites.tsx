@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Heart, Package, Plus, ShoppingCart, ArrowRight, Sparkles } from 'lucide-react';
 import { PortalPageHeader } from '@/components/customer/PortalPageHeader';
 import { FavoriteButton } from '@/components/customer/FavoriteButton';
+import { FavoritesEmptyState } from '@/components/customer/empty-states';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { useToast } from '@/hooks/use-toast';
@@ -185,26 +186,7 @@ const CustomerFavorites = () => {
 
       {/* Empty State */}
       {favoriteProducts.length === 0 ? (
-        <Card className="text-center py-16 bg-tl-surface border-tl-border shadow-sm">
-          <CardContent>
-            <div className="w-20 h-20 rounded-full bg-rose-50 dark:bg-rose-950/20 flex items-center justify-center mx-auto mb-6">
-              <Heart className="h-10 w-10 text-rose-300" />
-            </div>
-            <h3 className="text-xl font-semibold text-tl-text mb-2">
-              No favorites yet
-            </h3>
-            <p className="text-tl-muted mb-6 max-w-md mx-auto">
-              Save products you buy often for quick reordering. 
-              Browse our catalog and tap the heart icon on any product.
-            </p>
-            <Button asChild className="bg-tl-gradient hover:opacity-95">
-              <Link to="/portal/catalog">
-                <Package className="w-4 h-4 mr-2" />
-                Browse Catalog
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <FavoritesEmptyState />
       ) : (
         /* Products Grid */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">

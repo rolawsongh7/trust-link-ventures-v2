@@ -24,9 +24,11 @@ import { CustomerAddresses } from '@/components/customer/CustomerAddresses';
 import { DashboardCard } from '@/components/customer/DashboardCard';
 import { RecentActivityList } from '@/components/customer/RecentActivityList';
 import { FavoritesWidget } from '@/components/customer/FavoritesWidget';
+import { DashboardAlerts } from '@/components/customer/DashboardAlerts';
 import { TabletPillNav } from '@/components/customer/navigation/TabletPillNav';
 import { DesktopSidebar } from '@/components/customer/navigation/DesktopSidebar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useDashboardAlerts } from '@/hooks/useDashboardAlerts';
 
 interface DashboardStats {
   totalQuotes: number;
@@ -38,6 +40,7 @@ interface DashboardStats {
 const CustomerPortalMain = () => {
   const { profile, signOut } = useCustomerAuth();
   const { totalItems } = useShoppingCart();
+  const { alerts, loading: alertsLoading, fetchAlerts, dismissAlert } = useDashboardAlerts();
   
   const [stats, setStats] = useState<DashboardStats>({
     totalQuotes: 0,
@@ -50,7 +53,8 @@ const CustomerPortalMain = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [profile]);
+    fetchAlerts();
+  }, [profile, fetchAlerts]);
 
   const fetchDashboardData = async () => {
     if (!profile?.id) return;
@@ -300,6 +304,13 @@ const CustomerPortalMain = () => {
 
             {/* Address Banner */}
             <AddressBanner onAddAddressClick={() => setShowAddressDialog(true)} />
+
+            {/* Dashboard Alerts - What Needs Your Attention */}
+            <DashboardAlerts 
+              alerts={alerts} 
+              loading={alertsLoading} 
+              onDismiss={dismissAlert} 
+            />
 
             {/* Tablet Pill Navigation */}
             <TabletPillNav />

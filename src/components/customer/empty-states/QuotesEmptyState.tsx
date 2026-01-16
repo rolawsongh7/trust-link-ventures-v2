@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Package } from 'lucide-react';
+import { FileText, Package, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export const EmptyQuotesState: React.FC = () => {
+export function QuotesEmptyState() {
   const navigate = useNavigate();
   
   return (
@@ -34,4 +34,4 @@ export const EmptyQuotesState: React.FC = () => {
       </div>
     </div>
   );
-};
+}

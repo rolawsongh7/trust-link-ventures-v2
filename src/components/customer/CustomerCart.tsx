@@ -12,6 +12,7 @@ import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { NotificationService } from '@/services/notificationService';
+import { CartEmptyState } from './empty-states';
 
 
 export const CustomerCart: React.FC = () => {
@@ -251,19 +252,8 @@ export const CustomerCart: React.FC = () => {
   if (items.length === 0) {
     return (
       <div className="max-w-4xl mx-auto p-6">
-          <Card className="text-center py-12">
-            <CardContent>
-              <ShoppingCart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Your cart is empty</h3>
-              <p className="text-muted-foreground mb-6">
-                Add products from our catalog to request a quote
-              </p>
-              <Button asChild>
-                <a href="/customer/catalog">Browse Products</a>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        <CartEmptyState />
+      </div>
     );
   }
 
