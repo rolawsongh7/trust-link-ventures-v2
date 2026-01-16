@@ -165,7 +165,7 @@ export const useQuoteRevisions = (): UseQuoteRevisionsReturn => {
           customer_id: customerMapping.customer_id,
           requested_by_user_id: profile.id,
           request_type: request.request_type,
-          requested_changes: requestedChanges,
+          requested_changes: requestedChanges as unknown as Record<string, never>,
           customer_note: request.customer_note || null,
           status: 'submitted',
         }]);
