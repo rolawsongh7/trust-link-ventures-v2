@@ -23,6 +23,7 @@ import { OrderTimeline } from '@/components/orders/OrderTimeline';
 import { OrderStatusBadge } from './OrderStatusBadge';
 import { getOrderStatusConfig, orderStatusFilterOptions } from '@/utils/orderStatusConfig';
 import { OrderIssueReportDialog } from './OrderIssueReportDialog';
+import { OrdersEmptyState } from './empty-states';
 
 
 // Order interface matching database schema
@@ -548,25 +549,13 @@ export const CustomerOrders: React.FC = () => {
 
       {/* Orders List */}
       {filteredOrders.length === 0 ? (
-        <Card className="text-center py-12 bg-tl-surface border-tl-border">
-          <CardContent>
-            <div className="mx-auto mb-4 inline-flex items-center justify-center w-16 h-16 rounded-full bg-tl-gradient/10">
-              <Package className="h-8 w-8 text-tl-accent" />
-            </div>
-            <h3 className="text-xl font-semibold text-tl-primary mb-2">No orders found</h3>
-            <p className="text-tl-muted mb-6">
-              {orders.length === 0 
-                ? "You haven't placed any orders yet." 
-                : "No orders match your current filters."
-              }
-            </p>
-            {orders.length === 0 && (
-              <Button asChild className="bg-tl-gradient hover:opacity-90">
-                <a href="/customer/catalog">Browse Products</a>
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+        <OrdersEmptyState 
+          filtered={orders.length > 0} 
+          onClearFilters={() => {
+            setSearchTerm('');
+            setStatusFilter('all');
+          }}
+        />
       ) : isMobile ? (
         // Mobile View
         <div className="space-y-4">
