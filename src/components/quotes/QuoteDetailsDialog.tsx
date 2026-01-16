@@ -32,6 +32,8 @@ export const QuoteDetailsDialog: React.FC<QuoteDetailsDialogProps> = ({
     
     setLoading(true);
     try {
+      console.log(`[QuoteDetails] Loading quote ${quoteId}...`);
+      
       const { data, error } = await supabase
         .from('quotes')
         .select(`
@@ -47,10 +49,22 @@ export const QuoteDetailsDialog: React.FC<QuoteDetailsDialogProps> = ({
         .eq('id', quoteId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[QuoteDetails] Failed to fetch quote:', error);
+        throw error;
+      }
+      
+      console.log(`[QuoteDetails] Quote loaded with ${data?.quote_items?.length || 0} items`);
       setQuote(data);
-    } catch (error) {
-      console.error('Error fetching quote details:', error);
+    } catch (error: any) {
+      console.error('[QuoteDetails] Error fetching quote details:', error);
+      // Set quote to empty object so we can still render the dialog with an error
+      setQuote({ 
+        quote_number: 'Error', 
+        status: 'error',
+        quote_items: [],
+        _error: error.message || 'Failed to load quote details'
+      });
     } finally {
       setLoading(false);
     }
@@ -70,6 +84,9 @@ export const QuoteDetailsDialog: React.FC<QuoteDetailsDialogProps> = ({
 
   if (!quote) return null;
 
+  const hasError = quote._error;
+  const hasNoItems = !quote.quote_items || quote.quote_items.length === 0;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -81,6 +98,20 @@ export const QuoteDetailsDialog: React.FC<QuoteDetailsDialogProps> = ({
             </Badge>
           </div>
         </DialogHeader>
+
+        {hasError && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
+            <p className="text-sm text-destructive font-medium">Error loading quote</p>
+            <p className="text-sm text-muted-foreground">{quote._error}</p>
+          </div>
+        )}
+
+        {hasNoItems && !hasError && (
+          <div className="bg-warning/10 border border-warning/20 rounded-lg p-4 mb-4">
+            <p className="text-sm text-yellow-700 dark:text-yellow-300 font-medium">No items found</p>
+            <p className="text-sm text-muted-foreground">This quote has no line items. Use the Editor to add or recover items.</p>
+          </div>
+        )}
 
         <Tabs defaultValue="details" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="grid w-full grid-cols-3">

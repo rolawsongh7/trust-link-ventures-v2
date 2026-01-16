@@ -348,6 +348,8 @@ const QuoteRequestManagement = () => {
 
       // 2. Copy items from quote request to quote
       if (fullRequest.quote_request_items && fullRequest.quote_request_items.length > 0) {
+        console.log(`[CreateQuote] Copying ${fullRequest.quote_request_items.length} items to quote ${quote.id}`);
+        
         const quoteItems = fullRequest.quote_request_items.map(item => ({
           quote_id: quote.id,
           product_name: item.product_name,
@@ -355,15 +357,34 @@ const QuoteRequestManagement = () => {
           unit: item.unit,
           unit_price: 0,
           total_price: 0,
-          product_description: item.specifications,
-          specifications: item.preferred_grade
+          product_description: item.specifications || '',
+          specifications: item.preferred_grade || ''
         }));
 
-        const { error: itemsError } = await supabase
+        const { data: insertedItems, error: itemsError } = await supabase
           .from('quote_items')
-          .insert(quoteItems);
+          .insert(quoteItems)
+          .select();
 
-        if (itemsError) throw itemsError;
+        if (itemsError) {
+          console.error('[CreateQuote] Failed to insert quote items:', {
+            error: itemsError,
+            quoteId: quote.id,
+            itemCount: quoteItems.length
+          });
+          
+          // Rollback: delete the quote since items failed
+          await supabase.from('quotes').delete().eq('id', quote.id);
+          
+          throw new Error(`Failed to create quote items: ${itemsError.message}`);
+        }
+        
+        console.log(`[CreateQuote] Successfully created ${insertedItems?.length || 0} quote items`);
+      } else {
+        console.warn('[CreateQuote] No quote_request_items found to copy');
+        toast.warning('Quote created without items', {
+          description: 'The quote request had no items. Please add items manually in the Quote Editor.',
+        });
       }
 
       // 3. Update request status
@@ -373,12 +394,20 @@ const QuoteRequestManagement = () => {
       fetchQuoteRequests();
       
     } catch (error: any) {
-      console.error('Error creating quote:', error);
+      console.error('[CreateQuote] Error creating quote:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      
       if (error.message?.includes('permission') || error.message?.includes('policy')) {
-        toast.error('You do not have permission to create quotes');
+        toast.error('You do not have permission to create quotes', {
+          description: 'Check that you have admin access and try again.',
+        });
       } else {
         toast.error('Failed to create quote', {
-          description: 'Please view the request details first and try again.',
+          description: error.message || 'Please view the request details first and try again.',
         });
       }
     }

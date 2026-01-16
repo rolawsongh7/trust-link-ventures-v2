@@ -60,14 +60,19 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
   const fetchQuoteDetails = async () => {
     setLoading(true);
     try {
-      // Fetch quote details
+      console.log(`[QuoteEditor] Loading quote ${quoteId}...`);
+      
+      // Fetch quote details with linked_quote_request_id for potential recovery
       const { data: quote, error: quoteError } = await supabase
         .from('quotes')
-        .select('currency, notes, terms, tax_rate, tax_amount, shipping_fee, subtotal')
+        .select('currency, notes, terms, tax_rate, tax_amount, shipping_fee, subtotal, linked_quote_request_id')
         .eq('id', quoteId)
         .single();
 
-      if (quoteError) throw quoteError;
+      if (quoteError) {
+        console.error('[QuoteEditor] Failed to fetch quote header:', quoteError);
+        throw quoteError;
+      }
 
       if (quote) {
         setCurrency(quote.currency || 'USD');
@@ -90,14 +95,77 @@ export const QuoteEditor: React.FC<QuoteEditorProps> = ({
         .eq('quote_id', quoteId)
         .order('created_at', { ascending: true });
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('[QuoteEditor] Failed to fetch quote items:', itemsError);
+        throw itemsError;
+      }
+
+      // If no items found, try to recover from linked quote request
+      if ((!quoteItems || quoteItems.length === 0) && quote?.linked_quote_request_id) {
+        console.warn(`[QuoteEditor] No quote items found, attempting recovery from quote request ${quote.linked_quote_request_id}`);
+        
+        const { data: requestItems, error: requestItemsError } = await supabase
+          .from('quote_request_items')
+          .select('*')
+          .eq('quote_request_id', quote.linked_quote_request_id);
+
+        if (requestItemsError) {
+          console.error('[QuoteEditor] Failed to fetch quote request items for recovery:', requestItemsError);
+        } else if (requestItems && requestItems.length > 0) {
+          console.log(`[QuoteEditor] Found ${requestItems.length} items in quote request, creating quote_items...`);
+          
+          // Create quote items from request items
+          const newItems = requestItems.map(item => ({
+            quote_id: quoteId,
+            product_name: item.product_name,
+            quantity: item.quantity,
+            unit: item.unit,
+            unit_price: 0,
+            total_price: 0,
+            product_description: item.specifications || '',
+            specifications: item.preferred_grade || ''
+          }));
+
+          const { data: insertedItems, error: insertError } = await supabase
+            .from('quote_items')
+            .insert(newItems)
+            .select();
+
+          if (insertError) {
+            console.error('[QuoteEditor] Failed to recover quote items:', insertError);
+            toast({
+              title: "Warning",
+              description: "Quote items were missing. Please try again or contact support.",
+              variant: "destructive",
+            });
+          } else {
+            console.log(`[QuoteEditor] Successfully recovered ${insertedItems?.length} quote items`);
+            setItems(insertedItems || []);
+            toast({
+              title: "Items Recovered",
+              description: `Recovered ${insertedItems?.length} items from the original request. Please set prices.`,
+            });
+            return;
+          }
+        }
+      }
+
+      // Handle case where no items exist
+      if (!quoteItems || quoteItems.length === 0) {
+        console.warn('[QuoteEditor] Quote has no items and no linked request to recover from');
+        toast({
+          title: "No Items Found",
+          description: "This quote has no line items. You may need to add items manually.",
+          variant: "destructive",
+        });
+      }
 
       setItems(quoteItems || []);
-    } catch (error) {
-      console.error('Error fetching quote details:', error);
+    } catch (error: any) {
+      console.error('[QuoteEditor] Error fetching quote details:', error);
       toast({
         title: "Error",
-        description: "Failed to load quote details",
+        description: `Failed to load quote: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
