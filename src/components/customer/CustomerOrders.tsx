@@ -22,6 +22,7 @@ import { InvoicePreviewDialog } from './InvoicePreviewDialog';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
 import { OrderStatusBadge } from './OrderStatusBadge';
 import { getOrderStatusConfig, orderStatusFilterOptions } from '@/utils/orderStatusConfig';
+import { OrderIssueReportDialog } from './OrderIssueReportDialog';
 
 
 // Order interface matching database schema
@@ -61,6 +62,8 @@ export const CustomerOrders: React.FC = () => {
   const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState<Order | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<Order | null>(null);
+  const [reportIssueDialogOpen, setReportIssueDialogOpen] = useState(false);
+  const [selectedOrderForIssue, setSelectedOrderForIssue] = useState<Order | null>(null);
   const { profile } = useCustomerAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -586,6 +589,10 @@ export const CustomerOrders: React.FC = () => {
                 setSelectedOrderForPayment(order);
                 setPaymentProofDialogOpen(true);
               }}
+              onReportIssue={() => {
+                setSelectedOrderForIssue(order);
+                setReportIssueDialogOpen(true);
+              }}
             />
           ))}
         </div>
@@ -838,7 +845,24 @@ export const CustomerOrders: React.FC = () => {
             setDetailDialogOpen(false);
           }
         }}
+        onReportIssue={() => {
+          if (selectedOrderForDetail) {
+            setSelectedOrderForIssue(selectedOrderForDetail);
+            setReportIssueDialogOpen(true);
+            setDetailDialogOpen(false);
+          }
+        }}
       />
+
+      {/* Order Issue Report Dialog */}
+      {selectedOrderForIssue && (
+        <OrderIssueReportDialog
+          open={reportIssueDialogOpen}
+          onOpenChange={setReportIssueDialogOpen}
+          orderId={selectedOrderForIssue.id}
+          orderNumber={selectedOrderForIssue.order_number}
+        />
+      )}
     </div>
   );
 };
