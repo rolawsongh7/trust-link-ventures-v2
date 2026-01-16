@@ -231,6 +231,7 @@ const App = () => {
                       }>
                         <Route index element={<CustomerPortalMain />} />
                         <Route path="catalog" element={<CustomerCatalog />} />
+                        <Route path="catalog/:productId" element={<ProductDetail />} />
                         <Route path="cart" element={<CustomerCart />} />
                         <Route path="quotes" element={<CustomerQuotes />} />
                         <Route path="orders" element={<CustomerOrders />} />
