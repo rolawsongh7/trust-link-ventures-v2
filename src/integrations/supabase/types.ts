@@ -3712,6 +3712,7 @@ export type Database = {
       }
       get_password_policy: { Args: never; Returns: Json }
       get_user_role: { Args: { user_id: string }; Returns: string }
+      is_admin: { Args: never; Returns: boolean }
       is_allowed_admin_email: { Args: { user_email: string }; Returns: boolean }
       is_super_admin: { Args: { check_user_id: string }; Returns: boolean }
       link_quote_to_request: {
