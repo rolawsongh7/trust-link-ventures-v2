@@ -23,12 +23,21 @@ export const OnboardingWizard: React.FC = () => {
     refreshAddresses,
     addressesLoaded,
     completionStatus,
+    sessionSkipped,
   } = useOnboarding();
 
   const [step, setStep] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-  const [hasSkipped, setHasSkipped] = useState(false);
+  // Initialize hasSkipped from sessionSkipped state (from sessionStorage)
+  const [hasSkipped, setHasSkipped] = useState(sessionSkipped);
   const isTransitioning = useRef(false);
+  
+  // Sync hasSkipped with sessionSkipped when it changes
+  useEffect(() => {
+    if (sessionSkipped) {
+      setHasSkipped(true);
+    }
+  }, [sessionSkipped]);
 
   // Fetch addresses when wizard opens
   useEffect(() => {

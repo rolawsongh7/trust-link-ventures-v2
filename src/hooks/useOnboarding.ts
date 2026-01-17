@@ -1,8 +1,11 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays } from 'date-fns';
 import { isPlaceholderAddress, type Address } from '@/utils/addressHelpers';
+
+// Session storage key for "Skip for now" behavior
+const SESSION_SKIP_KEY = 'onboarding_skipped_session';
 
 export interface OnboardingState {
   shouldShowOnboarding: boolean;
@@ -19,6 +22,13 @@ export const useOnboarding = () => {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [addressesLoaded, setAddressesLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionSkipped, setSessionSkipped] = useState(false);
+
+  // Check sessionStorage on mount for "Skip for now" state
+  useEffect(() => {
+    const skipped = sessionStorage.getItem(SESSION_SKIP_KEY) === 'true';
+    setSessionSkipped(skipped);
+  }, []);
 
   // Fetch addresses for the current customer
   const fetchAddresses = useCallback(async () => {
@@ -41,6 +51,8 @@ export const useOnboarding = () => {
 
       if (!error && data) {
         setAddresses(data as Address[]);
+      } else if (error) {
+        console.error('Error fetching addresses:', error);
       }
       setAddressesLoaded(true);
     } catch (error) {
@@ -49,9 +61,12 @@ export const useOnboarding = () => {
     }
   }, [profile?.id]);
 
-  // Check profile completion
+  // Enhanced profile completion check - includes all key fields
   const getCompletionStatus = useMemo(() => {
     const profileComplete = !!(
+      profile?.full_name && 
+      profile?.email &&
+      profile?.company_name &&
       profile?.phone && 
       profile?.country && 
       profile?.industry
@@ -65,6 +80,9 @@ export const useOnboarding = () => {
 
   // Determine if onboarding should be shown
   const shouldShowOnboarding = useMemo(() => {
+    // Check session skip first (immediate, no DB needed)
+    if (sessionSkipped) return false;
+    
     if (!profile) return false;
     if (!addressesLoaded) return false;
     
@@ -82,8 +100,14 @@ export const useOnboarding = () => {
     
     // Show if profile or address is incomplete
     const { profileComplete, addressComplete } = getCompletionStatus;
+    
+    // If both are complete, don't show onboarding even if not formally completed
+    if (profileComplete && addressComplete) {
+      return false;
+    }
+    
     return !profileComplete || !addressComplete;
-  }, [profile, addressesLoaded, getCompletionStatus]);
+  }, [profile, addressesLoaded, getCompletionStatus, sessionSkipped]);
 
   // Get the current onboarding step
   const currentStep = useMemo(() => {
@@ -93,6 +117,10 @@ export const useOnboarding = () => {
   // Complete onboarding
   const completeOnboarding = useCallback(async () => {
     if (!profile?.id) return;
+    
+    // Clear session skip flag on completion
+    sessionStorage.removeItem(SESSION_SKIP_KEY);
+    setSessionSkipped(false);
     
     setIsLoading(true);
     try {
@@ -113,7 +141,11 @@ export const useOnboarding = () => {
         })
         .eq('id', customerId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error completing onboarding in DB:', error);
+        // Even if DB fails, the onboarding flow can proceed
+        // The user might see it again next session, but that's acceptable
+      }
       
       // Refresh profile to update local state
       await refreshProfile();
@@ -126,6 +158,10 @@ export const useOnboarding = () => {
 
   // Skip onboarding (permanent = true means "Don't show again")
   const skipOnboarding = useCallback(async (permanent: boolean = false) => {
+    // Set session skip immediately - this works even if DB update fails
+    sessionStorage.setItem(SESSION_SKIP_KEY, 'true');
+    setSessionSkipped(true);
+    
     if (!profile?.id) return;
     
     setIsLoading(true);
@@ -152,12 +188,16 @@ export const useOnboarding = () => {
         .update(updateData)
         .eq('id', customerId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving skip preference to DB:', error);
+        // Session skip still works, just won't persist across sessions until DB is fixed
+      }
       
       // Refresh profile to update local state
       await refreshProfile();
     } catch (error) {
       console.error('Error skipping onboarding:', error);
+      // Session skip still active even if DB fails
     } finally {
       setIsLoading(false);
     }
@@ -176,10 +216,14 @@ export const useOnboarding = () => {
 
       const customerId = customerMapping?.customer_id || profile.id;
       
-      await supabase
+      const { error } = await supabase
         .from('customers')
         .update({ onboarding_step: step })
         .eq('id', customerId);
+        
+      if (error) {
+        console.error('Error updating onboarding step:', error);
+      }
     } catch (error) {
       console.error('Error updating onboarding step:', error);
     }
@@ -189,6 +233,12 @@ export const useOnboarding = () => {
   const refreshAddresses = useCallback(() => {
     fetchAddresses();
   }, [fetchAddresses]);
+
+  // Clear session skip (for testing or reset purposes)
+  const clearSessionSkip = useCallback(() => {
+    sessionStorage.removeItem(SESSION_SKIP_KEY);
+    setSessionSkipped(false);
+  }, []);
 
   return {
     shouldShowOnboarding,
@@ -201,5 +251,7 @@ export const useOnboarding = () => {
     fetchAddresses,
     refreshAddresses,
     addressesLoaded,
+    sessionSkipped,
+    clearSessionSkip,
   };
 };
