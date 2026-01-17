@@ -52,8 +52,25 @@ const Privacy = () => {
               </h2>
               <ul className="list-disc pl-6 space-y-2 text-foreground">
                 <li>To respond to inquiries and fulfill service requests.</li>
+                <li>To process and track your orders and deliveries.</li>
+                <li>To verify payment proof documents you upload.</li>
                 <li>To improve website functionality and customer experience.</li>
                 <li>To send updates, newsletters, or promotional offers (only with consent).</li>
+              </ul>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-poppins font-semibold text-foreground mb-3">
+                2.1 Payment Processing
+              </h2>
+              <p className="text-foreground mb-3">
+                <strong>Important:</strong> All billing and payment transactions occur <strong>outside of this app</strong>. 
+                We do not collect, store, or process credit card numbers or bank account details within the app.
+              </p>
+              <ul className="list-disc pl-6 space-y-2 text-foreground">
+                <li><strong>Payment Methods:</strong> Bank transfers, mobile money, and card payments are processed through external payment providers (Paystack, bank institutions).</li>
+                <li><strong>Payment Proof:</strong> You may upload images of payment receipts for verification purposes only.</li>
+                <li><strong>No In-App Purchases:</strong> This app does not process payments directly. All payments are arranged offline or through external payment links.</li>
               </ul>
             </section>
 
@@ -140,11 +157,35 @@ const Privacy = () => {
 
             <section>
               <h2 className="text-xl font-poppins font-semibold text-foreground mb-3">
-                6. Your Rights
+                6. Your Rights & Account Deletion
               </h2>
-              <p className="text-foreground">
-                You may request access, correction, or deletion of your personal information by contacting us.
+              <p className="text-foreground mb-3">
+                You may request access, correction, or deletion of your personal information by contacting us or using in-app features.
               </p>
+              <div className="space-y-3">
+                <div>
+                  <h3 className="font-semibold text-foreground mb-2">Account Deletion</h3>
+                  <p className="text-foreground">
+                    You can delete your account at any time through <strong>Settings → Security → Delete Account</strong> in the app. 
+                    When you delete your account:
+                  </p>
+                  <ul className="list-disc pl-6 mt-2 space-y-1 text-foreground">
+                    <li>Your profile, saved addresses, and preferences are permanently deleted</li>
+                    <li>You will no longer be able to log in with your credentials</li>
+                    <li>Order history is anonymized (personal details removed) but retained for legal/accounting purposes for up to 7 years</li>
+                    <li>This action cannot be undone</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground mb-2">Data Export</h3>
+                  <p className="text-foreground">
+                    You may request a copy of your data by emailing{' '}
+                    <a href="mailto:privacy@trustlinkcompany.com" className="text-primary hover:underline">
+                      privacy@trustlinkcompany.com
+                    </a>
+                  </p>
+                </div>
+              </div>
             </section>
 
             <section>

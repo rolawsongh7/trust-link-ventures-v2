@@ -121,13 +121,16 @@ export function DeleteAccountDialog({ open, onOpenChange, userEmail }: DeleteAcc
 
               <div className="rounded-lg border bg-muted/50 p-4">
                 <h4 className="font-medium mb-2">
-                  The following data will be anonymized (kept for business records):
+                  Data retained for legal compliance:
                 </h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                  <li>Order history (your name will be removed)</li>
+                  <li>Order history (anonymized - your name removed)</li>
                   <li>Quote requests (contact details removed)</li>
-                  <li>Invoices (required for accounting purposes)</li>
+                  <li>Invoices (required for accounting for up to 7 years)</li>
                 </ul>
+                <p className="text-xs text-muted-foreground mt-2 italic">
+                  This data is kept for legal and accounting purposes but will no longer be linked to your identity.
+                </p>
               </div>
             </div>
 
