@@ -215,8 +215,33 @@ const CustomerManagement = () => {
     }
   };
 
-  const openDeleteDialog = (customer: Customer) => {
+  const [deleteRelatedCounts, setDeleteRelatedCounts] = useState<{
+    orders: number;
+    quotes: number;
+    communications: number;
+  } | null>(null);
+
+  const openDeleteDialog = async (customer: Customer) => {
     setCustomerToDelete(customer);
+    
+    // Fetch related records counts for cascade warning
+    try {
+      const [ordersRes, quotesRes, commsRes] = await Promise.all([
+        supabase.from('orders').select('id', { count: 'exact', head: true }).eq('customer_id', customer.id),
+        supabase.from('quotes').select('id', { count: 'exact', head: true }).eq('customer_id', customer.id),
+        supabase.from('communications').select('id', { count: 'exact', head: true }).eq('customer_id', customer.id),
+      ]);
+      
+      setDeleteRelatedCounts({
+        orders: ordersRes.count || 0,
+        quotes: quotesRes.count || 0,
+        communications: commsRes.count || 0,
+      });
+    } catch (error) {
+      console.error('Error fetching related counts:', error);
+      setDeleteRelatedCounts(null);
+    }
+    
     setDeleteDialogOpen(true);
   };
 
@@ -774,12 +799,20 @@ const CustomerManagement = () => {
 
       <ConfirmationDialog
         open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setDeleteRelatedCounts(null);
+        }}
         title="Delete Customer"
         description={`Are you sure you want to delete ${customerToDelete?.company_name}? This action cannot be undone.`}
         onConfirm={handleDeleteCustomer}
-        confirmText="Delete"
+        confirmText="Delete Customer"
         variant="destructive"
+        affectedRecords={deleteRelatedCounts ? [
+          { label: 'orders', count: deleteRelatedCounts.orders },
+          { label: 'quotes', count: deleteRelatedCounts.quotes },
+          { label: 'communications', count: deleteRelatedCounts.communications },
+        ] : undefined}
       />
     </div>
   );

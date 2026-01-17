@@ -291,6 +291,11 @@ const CommunicationsManagement = () => {
       
       const commType = type === 'call' ? 'phone' : type;
       
+      // Get customer email for sending actual email
+      const customerEmail = (firstMessage.customers as any)?.email;
+      const customerName = (firstMessage.customers as any)?.contact_name || 
+                          (firstMessage.customers as any)?.company_name || 'Valued Customer';
+      
       const replyData = {
         communication_type: commType as 'email' | 'phone' | 'meeting' | 'note',
         subject: `Re: ${thread.subject}`,
@@ -305,15 +310,60 @@ const CommunicationsManagement = () => {
         thread_position: (lastMessage.thread_position || 0) + 1,
       };
 
-      const { error } = await supabase
+      // Insert communication record first
+      const { data: insertedComm, error } = await supabase
         .from('communications')
-        .insert([replyData]);
+        .insert([replyData])
+        .select()
+        .single();
 
       if (error) throw error;
 
+      // If type is email and customer has email, send actual email
+      if (commType === 'email' && customerEmail) {
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-email', {
+            body: {
+              to: customerEmail,
+              subject: `Re: ${thread.subject}`,
+              type: 'support_reply',
+              data: {
+                customerName,
+                content,
+                threadSubject: thread.subject,
+                portalLink: 'https://trust-link-ventures-v2.lovable.app/portal',
+              }
+            }
+          });
+
+          if (emailError) {
+            console.error('Failed to send email:', emailError);
+            toast({
+              title: "Warning",
+              description: "Reply saved but email delivery failed",
+              variant: "destructive",
+            });
+          } else {
+            // Log email to email_logs
+            await supabase.from('email_logs').insert({
+              email_type: 'support_reply',
+              recipient_email: customerEmail,
+              subject: `Re: ${thread.subject}`,
+              status: 'sent',
+              customer_id: firstMessage.customers?.id,
+              metadata: { communication_id: insertedComm?.id, thread_id: threadId }
+            });
+          }
+        } catch (emailErr) {
+          console.error('Email sending error:', emailErr);
+        }
+      }
+
       toast({
         title: "Success",
-        description: "Reply sent successfully",
+        description: commType === 'email' && customerEmail 
+          ? "Reply sent and email delivered to customer" 
+          : "Reply logged successfully",
       });
 
       fetchCommunications();

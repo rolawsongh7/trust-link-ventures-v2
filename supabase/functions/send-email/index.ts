@@ -11,7 +11,7 @@ const corsHeaders = {
 interface EmailRequest {
   to: string;
   subject: string;
-  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification' | 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered' | 'new_quote_request_admin' | 'account_deleted';
+  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification' | 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered' | 'new_quote_request_admin' | 'account_deleted' | 'support_reply';
   data?: Record<string, any>;
 }
 
@@ -62,6 +62,10 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'account_deleted':
         html = generateAccountDeletedEmail(data);
+        break;
+      case 'support_reply':
+        html = generateSupportReplyEmail(data);
+        from = "Trust Link Support <support@trustlinkcompany.com>";
         break;
       default:
         throw new Error('Invalid email type');
@@ -673,6 +677,56 @@ function generateAccountDeletedEmail(data: any): string {
         <div class="footer">
           <p>Best regards,<br><strong>Trust Link Ventures Team</strong></p>
           <p style="font-size: 12px; color: #888;">This is a final confirmation email. No further action is required on your part.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateSupportReplyEmail(data: any): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #0066cc; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+        .message-box { background: #f8f9fa; border-left: 4px solid #0066cc; padding: 20px; margin: 20px 0; }
+        .button { display: inline-block; background: #0066cc; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .ref-box { background: #e7f3ff; padding: 10px 15px; border-radius: 6px; font-size: 14px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📧 Message from Trust Link Support</h1>
+        </div>
+        <div class="content">
+          <p>Dear ${data?.customerName || 'Valued Customer'},</p>
+          
+          <p>We have received your inquiry and here is our response:</p>
+          
+          <div class="ref-box">
+            <strong>Reference:</strong> ${data?.threadSubject || 'Support Inquiry'}
+          </div>
+
+          <div class="message-box">
+            ${(data?.content || '').replace(/\n/g, '<br>')}
+          </div>
+
+          ${data?.orderId ? `<p><strong>Related Order:</strong> ${data.orderNumber || data.orderId}</p>` : ''}
+
+          <p>If you have any further questions, please reply to this email or contact us through your customer portal.</p>
+
+          ${data?.portalLink ? `<a href="${data.portalLink}" class="button">View in Customer Portal</a>` : ''}
+        </div>
+        <div class="footer">
+          <p>Best regards,<br><strong>Trust Link Ventures Support Team</strong></p>
+          <p style="font-size: 12px; color: #888;">Do not reply directly to this email. Use your customer portal or contact support@trustlinkcompany.com</p>
         </div>
       </div>
     </body>
