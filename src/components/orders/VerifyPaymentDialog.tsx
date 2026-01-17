@@ -10,7 +10,9 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, FileText, CreditCard, Calendar } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { CheckCircle, FileText, CreditCard, Calendar, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -41,21 +43,33 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
 }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [paymentReference, setPaymentReference] = useState(order.payment_reference || '');
 
   const handleVerify = async () => {
+    // Require payment reference for verification
+    if (!paymentReference.trim()) {
+      toast({
+        title: 'Payment Reference Required',
+        description: 'Please enter the payment reference or transaction ID before verifying.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) throw new Error('Not authenticated');
 
-      // Step 1: Mark payment as received (required transition)
+      // Step 1: Mark payment as received with reference
       const { error: paymentReceivedError } = await supabase
         .from('orders')
         .update({
           status: 'payment_received',
           payment_verified_by: user.id,
           payment_verified_at: new Date().toISOString(),
+          payment_reference: paymentReference.trim(),
         })
         .eq('id', order.id);
 
@@ -141,9 +155,57 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
 
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="space-y-6 py-4">
+            {/* Payment Proof Display */}
+            {order.payment_proof_url && (
+              <div className="space-y-2">
+                <Label>Payment Proof</Label>
+                <a 
+                  href={order.payment_proof_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-primary hover:underline"
+                >
+                  <FileText className="h-4 w-4" />
+                  View uploaded payment proof
+                </a>
+              </div>
+            )}
+
             {/* Payment Details */}
             <div className="grid grid-cols-2 gap-4">
-...
+              <div>
+                <Label className="text-muted-foreground">Payment Method</Label>
+                <p className="font-medium">{order.payment_method || 'Not specified'}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Uploaded At</Label>
+                <p className="font-medium">
+                  {order.payment_proof_uploaded_at 
+                    ? new Date(order.payment_proof_uploaded_at).toLocaleString() 
+                    : 'N/A'}
+                </p>
+              </div>
+            </div>
+
+            {/* Payment Reference - Required */}
+            <div className="space-y-2">
+              <Label htmlFor="payment_reference" className="flex items-center gap-1">
+                Payment Reference / Transaction ID
+                <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="payment_reference"
+                value={paymentReference}
+                onChange={(e) => setPaymentReference(e.target.value)}
+                placeholder="Enter payment reference or transaction ID"
+                className={!paymentReference.trim() ? 'border-amber-500' : ''}
+              />
+              {!paymentReference.trim() && (
+                <div className="flex items-center gap-2 text-amber-600 text-sm">
+                  <AlertTriangle className="h-4 w-4" />
+                  Required for payment verification
+                </div>
+              )}
             </div>
           </div>
         </ScrollArea>

@@ -24,8 +24,10 @@ import {
   Package,
   MessageSquare,
   Image as ImageIcon,
-  ExternalLink
+  ExternalLink,
+  ArrowRight
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -80,6 +82,7 @@ const statusLabels: Record<string, string> = {
 
 const OrderIssues = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [issues, setIssues] = useState<OrderIssue[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -414,6 +417,32 @@ const OrderIssues = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Reported On</p>
                   <p className="font-medium">{format(new Date(selectedIssue.created_at), 'PPpp')}</p>
+                </div>
+              </div>
+
+              {/* Quick Navigation to Order */}
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Related Order</p>
+                    <p className="text-lg font-bold">#{selectedIssue.orders?.order_number}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Status: {selectedIssue.orders?.status?.replace(/_/g, ' ')}
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setIsDetailOpen(false);
+                      navigate('/admin/orders', { 
+                        state: { highlightOrderId: selectedIssue.order_id } 
+                      });
+                    }}
+                  >
+                    <ArrowRight className="h-4 w-4 mr-2" />
+                    View Order
+                  </Button>
                 </div>
               </div>
 

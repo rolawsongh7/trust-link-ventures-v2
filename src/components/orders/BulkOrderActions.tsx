@@ -138,6 +138,8 @@ export const BulkOrderActions: React.FC<BulkOrderActionsProps> = ({ selectedOrde
     setResults(null);
   };
 
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
   return (
     <>
       <Button onClick={() => setOpen(true)} disabled={selectedOrderIds.length === 0}>
@@ -155,6 +157,31 @@ export const BulkOrderActions: React.FC<BulkOrderActionsProps> = ({ selectedOrde
               Update status for {selectedOrderIds.length} selected order(s)
             </DialogDescription>
           </DialogHeader>
+
+          {/* Confirmation Warning */}
+          {!results && showConfirmation && (
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-medium">
+                <Loader2 className="h-5 w-5" />
+                Confirm Bulk Action
+              </div>
+              <p className="text-sm text-muted-foreground">
+                You are about to update <strong className="text-foreground">{selectedOrderIds.length} orders</strong> to status: <strong className="text-foreground">{newStatus.replace(/_/g, ' ')}</strong>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                This action cannot be undone. Are you sure you want to proceed?
+              </p>
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setShowConfirmation(false)}>
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={() => { setShowConfirmation(false); handleBulkUpdate(); }} disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Yes, Update {selectedOrderIds.length} Orders
+                </Button>
+              </div>
+            </div>
+          )}
 
           {!results ? (
             <div className="space-y-4">
@@ -221,15 +248,16 @@ export const BulkOrderActions: React.FC<BulkOrderActionsProps> = ({ selectedOrde
 
           <DialogFooter>
             {!results ? (
-              <>
-                <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
-                  Cancel
-                </Button>
-                <Button onClick={handleBulkUpdate} disabled={loading || !newStatus}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Update Orders
-                </Button>
-              </>
+              !showConfirmation && (
+                <>
+                  <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+                    Cancel
+                  </Button>
+                  <Button onClick={() => setShowConfirmation(true)} disabled={loading || !newStatus}>
+                    Review & Update Orders
+                  </Button>
+                </>
+              )
             ) : (
               <Button onClick={() => {
                 setOpen(false);
