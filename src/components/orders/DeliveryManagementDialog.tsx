@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Package, Truck, AlertTriangle } from 'lucide-react';
+import { ProofOfDeliveryUpload } from './ProofOfDeliveryUpload';
 
 interface DeliveryManagementDialogProps {
   order: any;
@@ -30,6 +31,7 @@ export const DeliveryManagementDialog = ({
     delivery_window: order?.delivery_window || '',
     delivery_notes: order?.delivery_notes || '',
     status: order?.status || '',
+    proof_of_delivery_url: order?.proof_of_delivery_url || '',
   });
   const [loading, setLoading] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -115,6 +117,13 @@ export const DeliveryManagementDialog = ({
         }
       }
 
+      // Require proof of delivery when marking as delivered
+      if (formData.status === 'delivered' && !formData.proof_of_delivery_url) {
+        toast.error('Proof of delivery is required to mark order as delivered');
+        setLoading(false);
+        return;
+      }
+
       const updateData: any = {
         tracking_number: formData.tracking_number || null,
         carrier: formData.carrier || null,
@@ -122,6 +131,8 @@ export const DeliveryManagementDialog = ({
         delivery_window: formData.delivery_window || null,
         delivery_notes: formData.delivery_notes || null,
         status: formData.status,
+        proof_of_delivery_url: formData.proof_of_delivery_url || null,
+        ...(formData.status === 'delivered' && { delivered_at: new Date().toISOString() }),
       };
 
       // Update order
@@ -336,6 +347,17 @@ export const DeliveryManagementDialog = ({
                 onChange={(e) => setFormData({ ...formData, delivery_notes: e.target.value })}
               />
             </div>
+
+            {/* Proof of Delivery Upload - shown when status is delivered */}
+            {formData.status === 'delivered' && (
+              <ProofOfDeliveryUpload
+                orderId={order?.id}
+                orderNumber={order?.order_number}
+                onUploadComplete={(url) => setFormData({ ...formData, proof_of_delivery_url: url })}
+                existingUrl={formData.proof_of_delivery_url}
+                required={true}
+              />
+            )}
 
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
