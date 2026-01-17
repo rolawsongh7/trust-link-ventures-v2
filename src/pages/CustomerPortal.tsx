@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { MFAVerificationModal } from '@/components/security/MFAVerificationModal';
 import { getNativeHomeUrl } from '@/utils/env';
+import { LegalLinks } from '@/components/common/LegalLinks';
 
 const CustomerPortal = () => {
   const [email, setEmail] = useState('');
@@ -236,6 +236,9 @@ const CustomerPortal = () => {
               </form>
             </TabsContent>
           </Tabs>
+          
+          {/* Legal Links */}
+          <LegalLinks className="mt-6" variant="muted" />
         </div>
       </div>
       </div>

@@ -70,14 +70,28 @@ The test accounts are pre-populated with:
 
 ## Important Notes
 
-- **Payment Processing:** Test payments will not charge real cards. Payment proof upload is for demonstration purposes.
-- **Notifications:** Push notifications are configured for demo purposes and won't spam real devices.
+- **Payment Processing:** All billing/payment occurs OUTSIDE the app via bank transfer or external payment links. Payment proof upload is for verification only.
+- **No In-App Purchases:** This app does not process payments directly.
+- **Notifications:** Push notifications are configured for order updates only - no marketing spam.
 - **Data Privacy:** All test data is isolated and follows privacy policies at https://trustlinkcompany.com/privacy
-- **No Signup Required:** Use provided credentials. New signup functionality works but test accounts have pre-populated data for review.
+- **Account Deletion:** Fully functional via Settings → Security → Delete Account. Deletes auth user and anonymizes order history for legal compliance.
+- **Photo Library Access:** Used ONLY for uploading payment proof documents. We never access camera or scan photo library.
+- **No Camera Access:** The app does not request or use camera permissions.
+
+## App Store Data Use Declaration
+
+Based on this app's functionality, declare the following in App Store Connect:
+
+- **Photos (Read Only):** Yes - for payment proof uploads
+- **Camera:** No - not used
+- **Location:** Optional - for delivery address auto-fill only
+- **Financial Info:** No - payments processed externally
+- **Tracking:** No - no third-party tracking
 
 ## Support
 
 For any questions during review:
+- **Support Email:** support@trustlinkcompany.com
 - **Support URL:** https://trustlinkcompany.com/contact
 - **Privacy Policy:** https://trustlinkcompany.com/privacy
 - **Terms of Service:** https://trustlinkcompany.com/terms

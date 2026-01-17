@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { SupportContactCard } from "@/components/common/SupportContactCard";
+
 const settingsLinks = [
   {
     label: "Help & Support",
@@ -26,6 +28,13 @@ const settingsLinks = [
     icon: FileText,
     href: "/terms",
     gradient: "from-blue-500 to-cyan-500",
+  },
+  {
+    label: "Privacy Policy",
+    description: "How we protect your data",
+    icon: Shield,
+    href: "/privacy",
+    gradient: "from-indigo-500 to-purple-500",
   },
   {
     label: "About Trust Link",
@@ -188,10 +197,36 @@ export default function CustomerSettings() {
           <TabsContent value="notifications" className="space-y-6">
             <Card className="p-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-white/30 dark:border-slate-800/30">
               <h2 className="text-xl font-semibold mb-4">Notification Preferences</h2>
-              <p className="text-muted-foreground">
-                Notification settings will be available soon.
+              <p className="text-muted-foreground mb-4">
+                Manage your notification preferences for order updates, quotes, and deliveries.
               </p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div>
+                    <p className="font-medium">Order Updates</p>
+                    <p className="text-sm text-muted-foreground">Get notified about order status changes</p>
+                  </div>
+                  <div className="text-sm text-primary font-medium">Enabled</div>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div>
+                    <p className="font-medium">Quote Responses</p>
+                    <p className="text-sm text-muted-foreground">Notifications when quotes are ready</p>
+                  </div>
+                  <div className="text-sm text-primary font-medium">Enabled</div>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div>
+                    <p className="font-medium">Delivery Updates</p>
+                    <p className="text-sm text-muted-foreground">Real-time delivery tracking alerts</p>
+                  </div>
+                  <div className="text-sm text-primary font-medium">Enabled</div>
+                </div>
+              </div>
             </Card>
+            
+            {/* Support Contact */}
+            <SupportContactCard />
           </TabsContent>
         </Tabs>
       </div>
