@@ -108,6 +108,23 @@ export const CustomerOrders: React.FC = () => {
     }
   }, [orders]);
 
+  // Check for uploadPayment query parameter to auto-open payment dialog
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orderIdNeedingPayment = params.get('uploadPayment');
+    
+    if (orderIdNeedingPayment && orders.length > 0) {
+      const order = orders.find(o => o.id === orderIdNeedingPayment);
+      // Only open if order exists and needs payment
+      if (order && ['order_confirmed', 'pending_payment'].includes(order.status)) {
+        setSelectedOrderForPayment(order);
+        setPaymentProofDialogOpen(true);
+        // Clear the query param
+        window.history.replaceState({}, '', '/portal/orders');
+      }
+    }
+  }, [orders]);
+
   const fetchOrders = async () => {
     if (!profile?.email) {
       console.error('No profile email found');
