@@ -5,36 +5,44 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Mail, Phone, MessageSquare, Send, Inbox, Calendar, Reply } from 'lucide-react';
+import { Mail, Phone, MessageSquare, Send, Inbox, Calendar, Reply, Paperclip } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { CommunicationThread } from './MobileCommunicationThreadCard';
+import { AttachmentUploader, type AttachmentFile } from '../communications/AttachmentUploader';
+import { AttachmentDisplay } from '../communications/AttachmentDisplay';
 
 interface MobileCommunicationThreadViewProps {
   thread: CommunicationThread | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onReply?: (threadId: string, content: string) => Promise<void>;
+  onReply?: (threadId: string, content: string, attachments?: AttachmentFile[]) => Promise<void>;
+  customerId?: string;
 }
 
 export const MobileCommunicationThreadView: React.FC<MobileCommunicationThreadViewProps> = ({ 
   thread, 
   open, 
   onOpenChange,
-  onReply
+  onReply,
+  customerId
 }) => {
   const [replyContent, setReplyContent] = useState('');
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   const [sending, setSending] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
 
   if (!thread) return null;
 
   const handleSendReply = async () => {
-    if (!replyContent.trim() || sending || !onReply) return;
+    if ((!replyContent.trim() && attachments.length === 0) || sending || !onReply) return;
     
     setSending(true);
     try {
-      await onReply(thread.id, replyContent.trim());
+      await onReply(thread.id, replyContent.trim(), attachments.length > 0 ? attachments : undefined);
       setReplyContent('');
+      setAttachments([]);
+      setShowAttachments(false);
     } finally {
       setSending(false);
     }
@@ -91,6 +99,7 @@ export const MobileCommunicationThreadView: React.FC<MobileCommunicationThreadVi
               const isLast = index === thread.communications.length - 1;
               const isReply = comm.thread_position && comm.thread_position > 0;
               const isOutbound = comm.direction === 'outbound';
+              const messageAttachments = (comm as any).attachments || [];
               
               return (
                 <div 
@@ -154,6 +163,13 @@ export const MobileCommunicationThreadView: React.FC<MobileCommunicationThreadVi
                         <p className="text-base text-foreground whitespace-pre-wrap leading-relaxed">
                           {comm.content}
                         </p>
+                        
+                        {/* Attachments */}
+                        {messageAttachments.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-border/50">
+                            <AttachmentDisplay attachments={messageAttachments} />
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -165,29 +181,63 @@ export const MobileCommunicationThreadView: React.FC<MobileCommunicationThreadVi
 
         {/* Reply composer */}
         {onReply && (
-          <div className="flex-shrink-0 p-4 border-t bg-muted/20">
-            <div className="space-y-3">
+          <div className="flex-shrink-0 p-4 border-t bg-muted/20 space-y-3">
+            {/* Attachment uploader */}
+            {showAttachments && customerId && (
+              <AttachmentUploader
+                attachments={attachments}
+                onAttachmentsChange={setAttachments}
+                customerId={customerId}
+                maxFiles={5}
+                disabled={sending}
+              />
+            )}
+
+            <div className="flex gap-2">
+              {/* Attach button */}
+              {customerId && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowAttachments(!showAttachments)}
+                  className={cn(
+                    "self-end flex-shrink-0",
+                    showAttachments && "bg-primary/10 border-primary"
+                  )}
+                  disabled={sending}
+                >
+                  <Paperclip className={cn(
+                    "h-4 w-4",
+                    showAttachments && "text-primary"
+                  )} />
+                </Button>
+              )}
+
               <Textarea
                 placeholder="Type your reply..."
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 rows={3}
-                className="resize-none border-2 focus:ring-2 focus:ring-primary/20"
+                className="flex-1 resize-none border-2 focus:ring-2 focus:ring-primary/20"
               />
-              <div className="flex justify-end">
-                <Button
-                  onClick={handleSendReply}
-                  disabled={!replyContent.trim() || sending}
-                  className="bg-primary hover:bg-primary/90"
-                >
-                  {sending ? (
-                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                  ) : (
-                    <Send className="h-4 w-4 mr-2" />
-                  )}
-                  {sending ? 'Sending...' : 'Send Reply'}
-                </Button>
-              </div>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <p className="text-xs text-muted-foreground">
+                {attachments.length > 0 && `${attachments.length} file(s) attached`}
+              </p>
+              <Button
+                onClick={handleSendReply}
+                disabled={(!replyContent.trim() && attachments.length === 0) || sending}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {sending ? (
+                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                {sending ? 'Sending...' : 'Send Reply'}
+              </Button>
             </div>
           </div>
         )}

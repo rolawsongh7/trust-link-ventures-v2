@@ -9,13 +9,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ThreadListItem, type CommunicationThread } from './ThreadListItem';
 import { CustomerThreadConversation } from './CustomerThreadConversation';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
+import type { AttachmentFile } from './AttachmentUploader';
 
 interface CustomerInboxLayoutProps {
   threads: CommunicationThread[];
   selectedThread: CommunicationThread | null;
   onSelectThread: (thread: CommunicationThread) => void;
-  onReply: (threadId: string, content: string) => Promise<void>;
+  onReply: (threadId: string, content: string, attachments?: AttachmentFile[]) => Promise<void>;
   onBack?: () => void;
+  customerId?: string;
 }
 
 export const CustomerInboxLayout: React.FC<CustomerInboxLayoutProps> = ({
@@ -23,7 +25,8 @@ export const CustomerInboxLayout: React.FC<CustomerInboxLayoutProps> = ({
   selectedThread,
   onSelectThread,
   onReply,
-  onBack
+  onBack,
+  customerId
 }) => {
   const { isMobile } = useMobileDetection();
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,9 +38,9 @@ export const CustomerInboxLayout: React.FC<CustomerInboxLayoutProps> = ({
 
   const totalUnread = threads.reduce((sum, t) => sum + t.unreadCount, 0);
 
-  const handleReply = async (content: string) => {
+  const handleReply = async (content: string, attachments?: AttachmentFile[]) => {
     if (selectedThread) {
-      await onReply(selectedThread.id, content);
+      await onReply(selectedThread.id, content, attachments);
     }
   };
 
@@ -60,6 +63,7 @@ export const CustomerInboxLayout: React.FC<CustomerInboxLayoutProps> = ({
                 onBack={onBack}
                 onReply={handleReply}
                 isMobile
+                customerId={customerId}
               />
             </Card>
           </motion.div>
@@ -183,6 +187,7 @@ export const CustomerInboxLayout: React.FC<CustomerInboxLayoutProps> = ({
           <CustomerThreadConversation
             thread={selectedThread}
             onReply={handleReply}
+            customerId={customerId}
           />
         </div>
       </div>

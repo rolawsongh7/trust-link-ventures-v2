@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
@@ -13,10 +12,10 @@ import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { MobileCommunicationDetailDialog } from './mobile/MobileCommunicationDetailDialog';
 import { MobileCommunicationThreadView } from './mobile/MobileCommunicationThreadView';
 import { CustomerInboxLayout } from './communications/CustomerInboxLayout';
+import type { AttachmentFile } from './communications/AttachmentUploader';
 import { 
   MessageSquare, 
   Send, 
-  Calendar,
   User,
   Mail,
   Phone,
@@ -24,6 +23,15 @@ import {
   CheckCircle2,
   Bell
 } from 'lucide-react';
+
+interface Attachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+  path?: string;
+}
 
 interface Communication {
   id: string;
@@ -38,6 +46,7 @@ interface Communication {
   thread_id?: string | null;
   thread_position?: number;
   read_at?: string | null;
+  attachments?: Attachment[];
 }
 
 export interface CommunicationThread {
@@ -100,19 +109,35 @@ export const CustomerCommunications: React.FC = () => {
       if (commsError) throw commsError;
 
       // Transform the data to match our interface
-      const transformedComms: Communication[] = (commsData || []).map(comm => ({
-        id: comm.id,
-        subject: comm.subject || 'No Subject',
-        content: comm.content || '',
-        communication_type: comm.communication_type || 'email',
-        direction: (comm.direction === 'outbound' ? 'outbound' : 'inbound') as 'inbound' | 'outbound',
-        communication_date: comm.communication_date || comm.created_at,
-        contact_person: comm.contact_person || 'Support Team',
-        parent_communication_id: comm.parent_communication_id,
-        thread_id: comm.thread_id,
-        thread_position: comm.thread_position || 0,
-        read_at: comm.read_at
-      }));
+      const transformedComms: Communication[] = (commsData || []).map(comm => {
+        // Safely parse attachments from JSONB
+        let parsedAttachments: Attachment[] = [];
+        if (comm.attachments && Array.isArray(comm.attachments)) {
+          parsedAttachments = (comm.attachments as any[]).map((att: any) => ({
+            id: att.id || '',
+            name: att.name || '',
+            size: att.size || 0,
+            type: att.type || '',
+            url: att.url || '',
+            path: att.path
+          }));
+        }
+
+        return {
+          id: comm.id,
+          subject: comm.subject || 'No Subject',
+          content: comm.content || '',
+          communication_type: comm.communication_type || 'email',
+          direction: (comm.direction === 'outbound' ? 'outbound' : 'inbound') as 'inbound' | 'outbound',
+          communication_date: comm.communication_date || comm.created_at,
+          contact_person: comm.contact_person || 'Support Team',
+          parent_communication_id: comm.parent_communication_id,
+          thread_id: comm.thread_id,
+          thread_position: comm.thread_position || 0,
+          read_at: comm.read_at,
+          attachments: parsedAttachments
+        };
+      });
       
       setCommunications(transformedComms);
     } catch (error) {
@@ -253,7 +278,8 @@ export const CustomerCommunications: React.FC = () => {
           parent_communication_id: null,
           thread_id: null,
           thread_position: 0,
-          read_at: new Date().toISOString() // Mark as read immediately since customer sent it
+          read_at: new Date().toISOString(),
+          attachments: []
         })
         .select()
         .single();
@@ -288,8 +314,8 @@ export const CustomerCommunications: React.FC = () => {
     }
   };
 
-  // Handle reply to a thread
-  const handleReplyToThread = useCallback(async (threadId: string, content: string) => {
+  // Handle reply to a thread with attachments
+  const handleReplyToThread = useCallback(async (threadId: string, content: string, attachments?: AttachmentFile[]) => {
     if (!customerId || !profile) {
       toast({
         title: "Error",
@@ -305,6 +331,15 @@ export const CustomerCommunications: React.FC = () => {
     const lastMessage = thread.communications[thread.communications.length - 1];
     const newPosition = (lastMessage?.thread_position || 0) + 1;
 
+    // Format attachments for storage
+    const attachmentsData = attachments?.map(att => ({
+      id: att.id,
+      name: att.name,
+      size: att.size,
+      type: att.type,
+      url: att.url
+    })) || [];
+
     try {
       const { error } = await supabase
         .from('communications')
@@ -319,7 +354,8 @@ export const CustomerCommunications: React.FC = () => {
           parent_communication_id: lastMessage?.id || null,
           thread_id: threadId,
           thread_position: newPosition,
-          read_at: new Date().toISOString()
+          read_at: new Date().toISOString(),
+          attachments: attachmentsData
         });
 
       if (error) throw error;
@@ -328,7 +364,9 @@ export const CustomerCommunications: React.FC = () => {
       
       toast({
         title: "Reply sent!",
-        description: "Your reply has been sent successfully.",
+        description: attachmentsData.length > 0 
+          ? `Your reply with ${attachmentsData.length} attachment(s) has been sent.`
+          : "Your reply has been sent successfully.",
       });
     } catch (error) {
       console.error('Error sending reply:', error);
@@ -566,6 +604,7 @@ export const CustomerCommunications: React.FC = () => {
           onSelectThread={handleViewThread}
           onReply={handleReplyToThread}
           onBack={handleBackFromThread}
+          customerId={customerId || undefined}
         />
       )}
 
@@ -575,6 +614,7 @@ export const CustomerCommunications: React.FC = () => {
         open={threadViewOpen}
         onOpenChange={setThreadViewOpen}
         onReply={handleReplyToThread}
+        customerId={customerId || undefined}
       />
 
       {/* Legacy Detail Dialog (fallback) */}
