@@ -103,7 +103,8 @@ export const QuoteTableView: React.FC<QuoteTableViewProps> = ({
                 </div>
               </td>
               <td className="px-4 py-4 text-right">
-                {quote.final_quote?.total_amount ? (
+                {quote.final_quote?.total_amount && 
+                 ['sent', 'accepted', 'converted', 'rejected'].includes(quote.final_quote.status) ? (
                   <span className="text-base font-semibold text-trustlink-navy dark:text-white">
                     ${quote.final_quote.total_amount.toLocaleString()}
                   </span>
