@@ -13,28 +13,34 @@ import {
   ArrowLeft,
   Calendar,
   CheckCheck,
-  Check
+  Paperclip
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { CommunicationThread } from './ThreadListItem';
+import { AttachmentUploader, type AttachmentFile } from './AttachmentUploader';
+import { AttachmentDisplay } from './AttachmentDisplay';
 
 interface CustomerThreadConversationProps {
   thread: CommunicationThread | null;
   onBack?: () => void;
-  onReply: (content: string) => Promise<void>;
+  onReply: (content: string, attachments?: AttachmentFile[]) => Promise<void>;
   isMobile?: boolean;
+  customerId?: string;
 }
 
 export const CustomerThreadConversation: React.FC<CustomerThreadConversationProps> = ({ 
   thread, 
   onBack,
   onReply,
-  isMobile = false
+  isMobile = false,
+  customerId
 }) => {
   const [replyContent, setReplyContent] = useState('');
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   const [sending, setSending] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,6 +49,12 @@ export const CustomerThreadConversation: React.FC<CustomerThreadConversationProp
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [thread?.communications.length]);
+
+  // Reset attachments when thread changes
+  useEffect(() => {
+    setAttachments([]);
+    setShowAttachments(false);
+  }, [thread?.id]);
 
   if (!thread) {
     return (
@@ -63,12 +75,14 @@ export const CustomerThreadConversation: React.FC<CustomerThreadConversationProp
   }
 
   const handleSend = async () => {
-    if (!replyContent.trim() || sending) return;
+    if ((!replyContent.trim() && attachments.length === 0) || sending) return;
     
     setSending(true);
     try {
-      await onReply(replyContent.trim());
+      await onReply(replyContent.trim(), attachments.length > 0 ? attachments : undefined);
       setReplyContent('');
+      setAttachments([]);
+      setShowAttachments(false);
     } finally {
       setSending(false);
     }
@@ -135,6 +149,7 @@ export const CustomerThreadConversation: React.FC<CustomerThreadConversationProp
             {thread.communications.map((comm, index) => {
               const isOutbound = comm.direction === 'outbound';
               const senderName = isOutbound ? 'You' : (comm.contact_person || 'Support Team');
+              const messageAttachments = (comm as any).attachments || [];
               
               return (
                 <motion.div
@@ -190,6 +205,19 @@ export const CustomerThreadConversation: React.FC<CustomerThreadConversationProp
                       <p className="text-sm whitespace-pre-wrap leading-relaxed">
                         {comm.content}
                       </p>
+                      
+                      {/* Attachments */}
+                      {messageAttachments.length > 0 && (
+                        <div className={cn(
+                          "mt-3 pt-3 border-t",
+                          isOutbound ? "border-primary-foreground/20" : "border-border"
+                        )}>
+                          <AttachmentDisplay 
+                            attachments={messageAttachments} 
+                            className={isOutbound ? "text-primary-foreground" : ""}
+                          />
+                        </div>
+                      )}
                     </div>
 
                     {/* Status */}
@@ -217,8 +245,38 @@ export const CustomerThreadConversation: React.FC<CustomerThreadConversationProp
       </ScrollArea>
 
       {/* Reply composer */}
-      <div className="flex-shrink-0 p-4 border-t bg-muted/20">
+      <div className="flex-shrink-0 p-4 border-t bg-muted/20 space-y-3">
+        {/* Attachment uploader */}
+        {showAttachments && customerId && (
+          <AttachmentUploader
+            attachments={attachments}
+            onAttachmentsChange={setAttachments}
+            customerId={customerId}
+            maxFiles={5}
+            disabled={sending}
+          />
+        )}
+
         <div className="flex gap-3">
+          {/* Attach button */}
+          {customerId && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowAttachments(!showAttachments)}
+              className={cn(
+                "self-end flex-shrink-0",
+                showAttachments && "bg-primary/10 border-primary"
+              )}
+              disabled={sending}
+            >
+              <Paperclip className={cn(
+                "h-4 w-4",
+                showAttachments && "text-primary"
+              )} />
+            </Button>
+          )}
+
           <Textarea
             placeholder="Type your reply..."
             value={replyContent}
@@ -229,7 +287,7 @@ export const CustomerThreadConversation: React.FC<CustomerThreadConversationProp
           />
           <Button
             onClick={handleSend}
-            disabled={!replyContent.trim() || sending}
+            disabled={(!replyContent.trim() && attachments.length === 0) || sending}
             className="self-end bg-primary hover:bg-primary/90"
           >
             {sending ? (
@@ -239,8 +297,9 @@ export const CustomerThreadConversation: React.FC<CustomerThreadConversationProp
             )}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
+        <p className="text-xs text-muted-foreground">
           Press Enter to send, Shift+Enter for new line
+          {attachments.length > 0 && ` • ${attachments.length} file(s) attached`}
         </p>
       </div>
     </div>

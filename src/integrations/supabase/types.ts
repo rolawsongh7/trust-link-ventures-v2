@@ -235,6 +235,7 @@ export type Database = {
       }
       communications: {
         Row: {
+          attachments: Json | null
           communication_date: string
           communication_type:
             | Database["public"]["Enums"]["communication_type"]
@@ -261,6 +262,7 @@ export type Database = {
           verification_status: string | null
         }
         Insert: {
+          attachments?: Json | null
           communication_date?: string
           communication_type?:
             | Database["public"]["Enums"]["communication_type"]
@@ -287,6 +289,7 @@ export type Database = {
           verification_status?: string | null
         }
         Update: {
+          attachments?: Json | null
           communication_date?: string
           communication_type?:
             | Database["public"]["Enums"]["communication_type"]
