@@ -104,7 +104,7 @@ export const GenerateQuoteDialog: React.FC<GenerateQuoteDialogProps> = ({
 
           <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-3">
             <p className="text-sm text-blue-800 dark:text-blue-200">
-              After generation, the quote will be set to "Pending Review" status. You can preview it before sending to the customer.
+              After generation, the quote will be sent directly to the customer's portal for review. You can view or edit it afterward via the Actions menu (⋯) under the Quotes table.
             </p>
           </div>
         </div>
