@@ -32,7 +32,8 @@ import {
   MapPin,
   Menu,
   Bell,
-  HelpCircle
+  HelpCircle,
+  Heart
 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
@@ -73,6 +74,11 @@ export const CustomerNavigation: React.FC = () => {
       href: '/portal/cart',
       icon: ShoppingCart,
       badge: totalItems > 0 ? totalItems : undefined
+    },
+    {
+      title: 'Favorites',
+      href: '/portal/favorites',
+      icon: Heart
     },
     {
       title: 'Quotes',

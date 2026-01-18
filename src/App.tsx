@@ -424,6 +424,7 @@ const App = () => {
                     <Route path="quotes" element={<CustomerQuotes />} />
                     <Route path="quotes/:quoteId" element={<CustomerQuotes />} />
                         <Route path="orders" element={<CustomerOrders />} />
+                        <Route path="favorites" element={<CustomerFavorites />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="communications" element={<CustomerCommunications />} />
                         <Route path="addresses" element={<CustomerAddresses />} />
@@ -513,6 +514,7 @@ const App = () => {
                   <Route path="quotes" element={<CustomerQuotes />} />
                   <Route path="quotes/:quoteId" element={<CustomerQuotes />} />
                         <Route path="orders" element={<CustomerOrders />} />
+                        <Route path="favorites" element={<CustomerFavorites />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="communications" element={<CustomerCommunications />} />
                         <Route path="addresses" element={<CustomerAddresses />} />
