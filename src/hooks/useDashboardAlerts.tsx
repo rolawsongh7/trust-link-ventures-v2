@@ -203,7 +203,7 @@ export function useDashboardAlerts() {
         title: `Payment needed for Order #${order.order_number}`,
         description: 'Upload payment proof to continue processing your order.',
         ctaLabel: 'Upload Payment',
-        ctaRoute: `/portal/orders/${order.id}`,
+        ctaRoute: `/portal/orders?uploadPayment=${order.id}`,
         priority: 'high',
         icon: 'credit-card',
         orderId: order.id,
