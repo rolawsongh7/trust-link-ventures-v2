@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Mail, Phone, MessageSquare, Send, Inbox, Calendar, Reply } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -12,14 +14,31 @@ interface MobileCommunicationThreadViewProps {
   thread: CommunicationThread | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onReply?: (threadId: string, content: string) => Promise<void>;
 }
 
 export const MobileCommunicationThreadView: React.FC<MobileCommunicationThreadViewProps> = ({ 
   thread, 
   open, 
-  onOpenChange 
+  onOpenChange,
+  onReply
 }) => {
+  const [replyContent, setReplyContent] = useState('');
+  const [sending, setSending] = useState(false);
+
   if (!thread) return null;
+
+  const handleSendReply = async () => {
+    if (!replyContent.trim() || sending || !onReply) return;
+    
+    setSending(true);
+    try {
+      await onReply(thread.id, replyContent.trim());
+      setReplyContent('');
+    } finally {
+      setSending(false);
+    }
+  };
 
   const getMessageIcon = (type: string, direction: string) => {
     if (direction === 'outbound') {
@@ -69,7 +88,6 @@ export const MobileCommunicationThreadView: React.FC<MobileCommunicationThreadVi
         <ScrollArea className="flex-1 px-6">
           <div className="space-y-4 py-4">
             {thread.communications.map((comm, index) => {
-              const isFirst = index === 0;
               const isLast = index === thread.communications.length - 1;
               const isReply = comm.thread_position && comm.thread_position > 0;
               const isOutbound = comm.direction === 'outbound';
@@ -144,6 +162,35 @@ export const MobileCommunicationThreadView: React.FC<MobileCommunicationThreadVi
             })}
           </div>
         </ScrollArea>
+
+        {/* Reply composer */}
+        {onReply && (
+          <div className="flex-shrink-0 p-4 border-t bg-muted/20">
+            <div className="space-y-3">
+              <Textarea
+                placeholder="Type your reply..."
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                rows={3}
+                className="resize-none border-2 focus:ring-2 focus:ring-primary/20"
+              />
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleSendReply}
+                  disabled={!replyContent.trim() || sending}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  {sending ? (
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-2" />
+                  )}
+                  {sending ? 'Sending...' : 'Send Reply'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

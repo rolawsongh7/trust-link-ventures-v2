@@ -251,6 +251,7 @@ export type Database = {
           lead_id: string | null
           order_id: string | null
           parent_communication_id: string | null
+          read_at: string | null
           scheduled_date: string | null
           subject: string | null
           submission_metadata: Json | null
@@ -276,6 +277,7 @@ export type Database = {
           lead_id?: string | null
           order_id?: string | null
           parent_communication_id?: string | null
+          read_at?: string | null
           scheduled_date?: string | null
           subject?: string | null
           submission_metadata?: Json | null
@@ -301,6 +303,7 @@ export type Database = {
           lead_id?: string | null
           order_id?: string | null
           parent_communication_id?: string | null
+          read_at?: string | null
           scheduled_date?: string | null
           subject?: string | null
           submission_metadata?: Json | null

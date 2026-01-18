@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,10 +10,9 @@ import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { PortalPageHeader } from './PortalPageHeader';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
-import { MobileCommunicationCard } from './mobile/MobileCommunicationCard';
 import { MobileCommunicationDetailDialog } from './mobile/MobileCommunicationDetailDialog';
-import { MobileCommunicationThreadCard, CommunicationThread } from './mobile/MobileCommunicationThreadCard';
 import { MobileCommunicationThreadView } from './mobile/MobileCommunicationThreadView';
+import { CustomerInboxLayout } from './communications/CustomerInboxLayout';
 import { 
   MessageSquare, 
   Send, 
@@ -21,9 +20,9 @@ import {
   User,
   Mail,
   Phone,
-  AlertCircle,
   Inbox,
-  CheckCircle2
+  CheckCircle2,
+  Bell
 } from 'lucide-react';
 
 interface Communication {
@@ -38,6 +37,17 @@ interface Communication {
   parent_communication_id?: string | null;
   thread_id?: string | null;
   thread_position?: number;
+  read_at?: string | null;
+}
+
+export interface CommunicationThread {
+  id: string;
+  subject: string;
+  latestMessage: string;
+  latestDate: string;
+  messageCount: number;
+  unreadCount: number;
+  communications: Communication[];
 }
 
 export const CustomerCommunications: React.FC = () => {
@@ -48,6 +58,7 @@ export const CustomerCommunications: React.FC = () => {
   const [communications, setCommunications] = useState<Communication[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState({
     subject: '',
     content: ''
@@ -57,9 +68,68 @@ export const CustomerCommunications: React.FC = () => {
   const [threadViewOpen, setThreadViewOpen] = useState(false);
   const [selectedThread, setSelectedThread] = useState<CommunicationThread | null>(null);
 
+  const fetchCommunications = useCallback(async () => {
+    if (!profile?.email) return;
+    
+    try {
+      // First find the customer by email
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', profile.email)
+        .single();
+
+      if (customerError && customerError.code !== 'PGRST116') {
+        throw customerError;
+      }
+
+      if (!customerData) {
+        setCommunications([]);
+        return;
+      }
+
+      setCustomerId(customerData.id);
+
+      // Fetch communications for this customer with threading info
+      const { data: commsData, error: commsError } = await supabase
+        .from('communications')
+        .select('*')
+        .eq('customer_id', customerData.id)
+        .order('communication_date', { ascending: false });
+
+      if (commsError) throw commsError;
+
+      // Transform the data to match our interface
+      const transformedComms: Communication[] = (commsData || []).map(comm => ({
+        id: comm.id,
+        subject: comm.subject || 'No Subject',
+        content: comm.content || '',
+        communication_type: comm.communication_type || 'email',
+        direction: (comm.direction === 'outbound' ? 'outbound' : 'inbound') as 'inbound' | 'outbound',
+        communication_date: comm.communication_date || comm.created_at,
+        contact_person: comm.contact_person || 'Support Team',
+        parent_communication_id: comm.parent_communication_id,
+        thread_id: comm.thread_id,
+        thread_position: comm.thread_position || 0,
+        read_at: comm.read_at
+      }));
+      
+      setCommunications(transformedComms);
+    } catch (error) {
+      console.error('Error fetching communications:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load communications",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [profile?.email, toast]);
+
   useEffect(() => {
     fetchCommunications();
-  }, [profile]);
+  }, [fetchCommunications]);
 
   // Real-time subscription for thread updates
   useEffect(() => {
@@ -83,64 +153,33 @@ export const CustomerCommunications: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile]);
+  }, [profile, fetchCommunications]);
 
-  const fetchCommunications = async () => {
-    if (!profile?.email) return;
+  // Mark thread as read when opened
+  const markThreadAsRead = useCallback(async (threadId: string) => {
+    if (!customerId) return;
     
     try {
-      // First find the customer by email
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('email', profile.email)
-        .single();
-
-      if (customerError && customerError.code !== 'PGRST116') {
-        throw customerError;
-      }
-
-      if (!customerData) {
-        // No customer found, show empty state
-        setCommunications([]);
-        return;
-      }
-
-      // Fetch communications for this customer with threading info
-      const { data: commsData, error: commsError } = await supabase
+      await supabase
         .from('communications')
-        .select('*')
-        .eq('customer_id', customerData.id)
-        .order('communication_date', { ascending: false });
-
-      if (commsError) throw commsError;
-
-      // Transform the data to match our interface
-      const transformedComms: Communication[] = (commsData || []).map(comm => ({
-        id: comm.id,
-        subject: comm.subject || 'No Subject',
-        content: comm.content || '',
-        communication_type: comm.communication_type || 'email',
-        direction: (comm.direction === 'outbound' ? 'outbound' : 'inbound') as 'inbound' | 'outbound',
-        communication_date: comm.communication_date || comm.created_at,
-        contact_person: comm.contact_person || 'Support Team',
-        parent_communication_id: comm.parent_communication_id,
-        thread_id: comm.thread_id,
-        thread_position: comm.thread_position || 0
-      }));
+        .update({ read_at: new Date().toISOString() })
+        .eq('thread_id', threadId)
+        .eq('customer_id', customerId)
+        .eq('direction', 'inbound')
+        .is('read_at', null);
       
-      setCommunications(transformedComms);
+      // Update local state
+      setCommunications(prev => 
+        prev.map(c => 
+          c.thread_id === threadId && c.direction === 'inbound' && !c.read_at
+            ? { ...c, read_at: new Date().toISOString() }
+            : c
+        )
+      );
     } catch (error) {
-      console.error('Error fetching communications:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load communications",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      console.error('Error marking thread as read:', error);
     }
-  };
+  }, [customerId]);
 
   const handleSendMessage = async () => {
     if (!newMessage.subject.trim() || !newMessage.content.trim()) {
@@ -165,43 +204,46 @@ export const CustomerCommunications: React.FC = () => {
     
     try {
       // First, find or create the customer record
-      let customerId: string;
+      let currentCustomerId = customerId;
       
-      const { data: existingCustomer, error: customerError } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('email', profile.email)
-        .single();
-
-      if (customerError && customerError.code !== 'PGRST116') {
-        throw customerError;
-      }
-
-      if (existingCustomer) {
-        customerId = existingCustomer.id;
-      } else {
-        // Create new customer record
-        const { data: newCustomer, error: createError } = await supabase
+      if (!currentCustomerId) {
+        const { data: existingCustomer, error: customerError } = await supabase
           .from('customers')
-          .insert({
-            company_name: profile.company_name || 'Customer Portal User',
-            contact_name: profile.full_name || 'Customer',
-            email: profile.email,
-            customer_status: 'active',
-            priority: 'medium'
-          })
           .select('id')
+          .eq('email', profile.email)
           .single();
 
-        if (createError) throw createError;
-        customerId = newCustomer.id;
+        if (customerError && customerError.code !== 'PGRST116') {
+          throw customerError;
+        }
+
+        if (existingCustomer) {
+          currentCustomerId = existingCustomer.id;
+        } else {
+          // Create new customer record
+          const { data: newCustomer, error: createError } = await supabase
+            .from('customers')
+            .insert({
+              company_name: profile.company_name || 'Customer Portal User',
+              contact_name: profile.full_name || 'Customer',
+              email: profile.email,
+              customer_status: 'active',
+              priority: 'medium'
+            })
+            .select('id')
+            .single();
+
+          if (createError) throw createError;
+          currentCustomerId = newCustomer.id;
+        }
+        setCustomerId(currentCustomerId);
       }
 
       // Insert the communication record
       const { data, error } = await supabase
         .from('communications')
         .insert({
-          customer_id: customerId,
+          customer_id: currentCustomerId,
           communication_type: 'email',
           subject: newMessage.subject,
           content: newMessage.content,
@@ -209,8 +251,9 @@ export const CustomerCommunications: React.FC = () => {
           contact_person: profile.full_name || 'Customer',
           communication_date: new Date().toISOString(),
           parent_communication_id: null,
-          thread_id: null, // Will be set to message ID after insert
-          thread_position: 0
+          thread_id: null,
+          thread_position: 0,
+          read_at: new Date().toISOString() // Mark as read immediately since customer sent it
         })
         .select()
         .single();
@@ -245,37 +288,74 @@ export const CustomerCommunications: React.FC = () => {
     }
   };
 
-  const getMessageIcon = (type: string, direction: string) => {
-    if (direction === 'outbound') {
-      return <Send className="h-4 w-4 text-blue-500" />;
+  // Handle reply to a thread
+  const handleReplyToThread = useCallback(async (threadId: string, content: string) => {
+    if (!customerId || !profile) {
+      toast({
+        title: "Error",
+        description: "Please try logging in again.",
+        variant: "destructive",
+      });
+      return;
     }
-    return <MessageSquare className="h-4 w-4 text-green-500" />;
-  };
 
-  const getDirectionBadge = (direction: string) => {
-    return direction === 'outbound' ? (
-      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-        Sent
-      </Badge>
-    ) : (
-      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-        Received
-      </Badge>
-    );
-  };
+    const thread = threads.find(t => t.id === threadId);
+    if (!thread) return;
 
-  const handleViewCommunicationDetails = (communication: Communication) => {
-    setSelectedCommunication(communication);
-    setDetailDialogOpen(true);
-  };
+    const lastMessage = thread.communications[thread.communications.length - 1];
+    const newPosition = (lastMessage?.thread_position || 0) + 1;
 
-  const handleViewThread = (thread: CommunicationThread) => {
+    try {
+      const { error } = await supabase
+        .from('communications')
+        .insert({
+          customer_id: customerId,
+          communication_type: 'email',
+          subject: `Re: ${thread.subject}`,
+          content: content,
+          direction: 'outbound',
+          contact_person: profile.full_name || 'Customer',
+          communication_date: new Date().toISOString(),
+          parent_communication_id: lastMessage?.id || null,
+          thread_id: threadId,
+          thread_position: newPosition,
+          read_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      await fetchCommunications();
+      
+      toast({
+        title: "Reply sent!",
+        description: "Your reply has been sent successfully.",
+      });
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send reply. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  }, [customerId, profile, toast, fetchCommunications]);
+
+  const handleViewThread = useCallback((thread: CommunicationThread) => {
     setSelectedThread(thread);
-    setThreadViewOpen(true);
-  };
+    markThreadAsRead(thread.id);
+    if (isMobile) {
+      setThreadViewOpen(true);
+    }
+  }, [markThreadAsRead, isMobile]);
 
-  // Group communications into threads
-  const groupCommunicationsIntoThreads = (comms: Communication[]): CommunicationThread[] => {
+  const handleBackFromThread = useCallback(() => {
+    setSelectedThread(null);
+    setThreadViewOpen(false);
+  }, []);
+
+  // Group communications into threads with unread tracking
+  const groupCommunicationsIntoThreads = useCallback((comms: Communication[]): CommunicationThread[] => {
     const threadMap = new Map<string, CommunicationThread>();
     
     comms.forEach(comm => {
@@ -296,6 +376,11 @@ export const CustomerCommunications: React.FC = () => {
       const thread = threadMap.get(threadId)!;
       thread.communications.push(comm);
       thread.messageCount++;
+      
+      // Count unread inbound messages
+      if (comm.direction === 'inbound' && !comm.read_at) {
+        thread.unreadCount++;
+      }
       
       // Update latest message info if this message is newer
       if (new Date(comm.communication_date) > new Date(thread.latestDate)) {
@@ -318,12 +403,22 @@ export const CustomerCommunications: React.FC = () => {
     return Array.from(threadMap.values()).sort(
       (a, b) => new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime()
     );
-  };
+  }, []);
 
   const threads = useMemo(() => 
     groupCommunicationsIntoThreads(communications),
-    [communications]
+    [communications, groupCommunicationsIntoThreads]
   );
+
+  // Update selected thread when communications change
+  useEffect(() => {
+    if (selectedThread) {
+      const updatedThread = threads.find(t => t.id === selectedThread.id);
+      if (updatedThread) {
+        setSelectedThread(updatedThread);
+      }
+    }
+  }, [threads, selectedThread?.id]);
 
   if (loading) {
     return (
@@ -342,31 +437,31 @@ export const CustomerCommunications: React.FC = () => {
 
   const totalMessages = communications.length;
   const totalThreads = threads.length;
-  const unreadCount = 0; // This would need to be tracked in the database
+  const unreadCount = threads.reduce((sum, t) => sum + t.unreadCount, 0);
   const recentCount = communications.filter(c => {
     const daysDiff = Math.floor((new Date().getTime() - new Date(c.communication_date).getTime()) / (1000 * 60 * 60 * 24));
     return daysDiff <= 7;
   }).length;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       {/* Portal Page Header */}
       <PortalPageHeader
         title="Communications"
-        subtitle="Send messages to our team and view communication history"
+        subtitle="Send messages to our team and view your conversation history"
         totalCount={totalThreads}
         totalIcon={MessageSquare}
         stats={[
           { label: 'Conversations', count: totalThreads, icon: MessageSquare },
+          { label: 'Unread', count: unreadCount, icon: Bell },
           { label: 'Total Messages', count: totalMessages, icon: Inbox },
-          { label: 'Recent', count: recentCount, icon: CheckCircle2 }
+          { label: 'This Week', count: recentCount, icon: CheckCircle2 }
         ]}
         variant="customer"
       />
 
       {/* Send New Message */}
       <Card className="relative overflow-hidden border-2 border-primary/30 shadow-xl hover:shadow-2xl transition-all duration-300">
-        {/* Gradient background overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
         
         <CardHeader className="relative border-b bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
@@ -448,19 +543,11 @@ export const CustomerCommunications: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Communication History */}
-      <Card className="border-2 border-indigo-400/30 bg-gradient-to-br from-background via-indigo-50/5 to-background shadow-lg hover:shadow-xl transition-all duration-300">
-        <CardHeader className="bg-gradient-to-r from-indigo-400/10 via-indigo-400/5 to-transparent border-b">
-          <CardTitle className="flex items-center gap-3 text-xl">
-            <div className="p-2 bg-indigo-400/20 rounded-lg shadow-sm">
-              <MessageSquare className="h-6 w-6 text-indigo-400" />
-            </div>
-            Communication History
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {threads.length === 0 ? (
-            <div className="text-center py-12 px-6">
+      {/* Gmail-Style Inbox */}
+      {threads.length === 0 ? (
+        <Card className="border-2 border-indigo-400/30 bg-gradient-to-br from-background via-indigo-50/5 to-background shadow-lg">
+          <CardContent className="py-12">
+            <div className="text-center">
               <div className="mb-6 relative">
                 <div className="absolute inset-0 blur-3xl opacity-30 bg-gradient-to-r from-primary via-accent to-primary animate-pulse" />
                 <MessageSquare className="h-20 w-20 text-primary/40 mx-auto relative z-10" />
@@ -470,62 +557,24 @@ export const CustomerCommunications: React.FC = () => {
                 Send your first message to start communicating with our team
               </p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {isMobile ? (
-                // Mobile view - use thread cards
-                threads.map(thread => (
-                  <MobileCommunicationThreadCard
-                    key={thread.id}
-                    thread={thread}
-                    onClick={() => handleViewThread(thread)}
-                  />
-                ))
-              ) : (
-                // Desktop view - use thread cards
-                threads.map(thread => (
-                  <div 
-                    key={thread.id} 
-                    className="p-4 border border-l-4 border-l-indigo-400 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                    onClick={() => handleViewThread(thread)}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <MessageSquare className="h-5 w-5 text-primary" />
-                        <div>
-                          <h4 className="font-medium">{thread.subject}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {thread.messageCount} {thread.messageCount === 1 ? 'message' : 'messages'} in conversation
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">{thread.messageCount}</Badge>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(thread.latestDate).toLocaleDateString()}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(thread.latestDate).toLocaleTimeString()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground pl-8 line-clamp-2">{thread.latestMessage}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : (
+        <CustomerInboxLayout
+          threads={threads}
+          selectedThread={isMobile ? null : selectedThread}
+          onSelectThread={handleViewThread}
+          onReply={handleReplyToThread}
+          onBack={handleBackFromThread}
+        />
+      )}
 
       {/* Mobile Thread View Dialog */}
       <MobileCommunicationThreadView
         thread={selectedThread}
         open={threadViewOpen}
         onOpenChange={setThreadViewOpen}
+        onReply={handleReplyToThread}
       />
 
       {/* Legacy Detail Dialog (fallback) */}
@@ -536,13 +585,6 @@ export const CustomerCommunications: React.FC = () => {
           onOpenChange={setDetailDialogOpen}
         />
       )}
-
-      {/* Communication Detail Dialog */}
-      <MobileCommunicationDetailDialog
-        communication={selectedCommunication}
-        open={detailDialogOpen}
-        onOpenChange={setDetailDialogOpen}
-      />
     </div>
   );
 };

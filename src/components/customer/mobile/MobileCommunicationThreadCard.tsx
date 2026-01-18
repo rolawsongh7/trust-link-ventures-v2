@@ -22,6 +22,7 @@ export interface CommunicationThread {
     contact_person?: string;
     created_by?: string;
     thread_position?: number;
+    read_at?: string | null;
   }>;
 }
 
