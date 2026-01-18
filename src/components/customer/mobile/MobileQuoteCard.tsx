@@ -134,8 +134,8 @@ export const MobileQuoteCard = ({
         </div>
       )}
 
-      {/* Total Amount */}
-      {quote.final_quote && (
+      {/* Total Amount - Only show if quote has been sent */}
+      {quote.final_quote && ['sent', 'accepted', 'converted', 'rejected'].includes(quote.final_quote.status) && (
         <div className="border-t pt-3">
           <div className="flex justify-between items-center">
             <span className="text-xs text-muted-foreground">Total Amount:</span>

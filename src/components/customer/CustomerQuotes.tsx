@@ -382,14 +382,23 @@ export const CustomerQuotes: React.FC = () => {
   };
 
   const handleViewQuote = (quote: Quote) => {
-    if (quote.final_quote?.final_file_url) {
+    const sentStatuses = ['sent', 'accepted', 'converted', 'rejected'];
+    const isQuoteSent = quote.final_quote && sentStatuses.includes(quote.final_quote.status);
+    
+    if (isQuoteSent && quote.final_quote?.final_file_url) {
       setSelectedQuoteForPDF(quote);
       setPdfDialogOpen(true);
-    } else {
+    } else if (quote.final_quote && !isQuoteSent) {
+      // Quote exists but hasn't been sent yet
       toast({
-        title: "No PDF available",
-        description: "This quote doesn't have a PDF document yet.",
-        variant: "destructive"
+        title: "Quote in progress",
+        description: "Your quote is still being prepared. Please check back soon.",
+      });
+    } else {
+      // No quote created yet
+      toast({
+        title: "Processing your request",
+        description: "Our team is working on your quote. We'll notify you when it's ready.",
       });
     }
   };

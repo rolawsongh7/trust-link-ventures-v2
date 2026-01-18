@@ -82,7 +82,8 @@ export const QuoteCardView: React.FC<QuoteCardViewProps> = ({
               <UrgencyBadge urgency={quote.urgency} variant="compact" />
             </div>
             
-            {quote.final_quote?.total_amount && (
+            {quote.final_quote?.total_amount && 
+             ['sent', 'accepted', 'converted', 'rejected'].includes(quote.final_quote.status) && (
               <div className="pt-3 border-t border-[hsl(var(--tl-border))]">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-[hsl(var(--tl-text-secondary))]">Total Amount:</span>

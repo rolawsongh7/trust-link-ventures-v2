@@ -175,7 +175,7 @@ export function CustomerQuotesTable({ quotes, onApprove, onReject, onDownload }:
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    {quote.final_quote ? (
+                    {quote.final_quote && ['sent', 'accepted', 'converted', 'rejected'].includes(quote.final_quote.status) ? (
                       <div className="flex flex-col items-end gap-1">
                         <span className="font-bold text-xl text-primary">
                           {quote.final_quote.currency} {quote.final_quote.total_amount.toLocaleString()}
