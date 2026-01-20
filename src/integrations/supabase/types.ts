@@ -1478,6 +1478,7 @@ export type Database = {
       order_issues: {
         Row: {
           admin_notes: string | null
+          affected_items: Json | null
           created_at: string
           customer_id: string
           description: string
@@ -1487,11 +1488,13 @@ export type Database = {
           photos: string[] | null
           resolved_at: string | null
           resolved_by: string | null
+          source: string | null
           status: Database["public"]["Enums"]["order_issue_status"]
           updated_at: string
         }
         Insert: {
           admin_notes?: string | null
+          affected_items?: Json | null
           created_at?: string
           customer_id: string
           description: string
@@ -1501,11 +1504,13 @@ export type Database = {
           photos?: string[] | null
           resolved_at?: string | null
           resolved_by?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["order_issue_status"]
           updated_at?: string
         }
         Update: {
           admin_notes?: string | null
+          affected_items?: Json | null
           created_at?: string
           customer_id?: string
           description?: string
@@ -1515,6 +1520,7 @@ export type Database = {
           photos?: string[] | null
           resolved_at?: string | null
           resolved_by?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["order_issue_status"]
           updated_at?: string
         }
