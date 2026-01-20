@@ -101,33 +101,79 @@ export const CustomerOrders: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const orderIdNeedingAddress = params.get('addressNeeded');
     
-    if (orderIdNeedingAddress && orders.length > 0) {
-      const order = orders.find(o => o.id === orderIdNeedingAddress);
-      if (order && !order.delivery_address_id) {
-        setSelectedOrderForAddress(order);
-        setAddressDialogOpen(true);
-        // Clear the query param
-        window.history.replaceState({}, '', '/customer/orders');
-      }
+    if (!orderIdNeedingAddress) return;
+    if (loading) return; // Wait for orders to load
+    
+    const order = orders.find(o => o.id === orderIdNeedingAddress);
+    
+    if (!order) {
+      toast({
+        title: "Order Not Found",
+        description: "This order may have been updated or removed.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, '', '/portal/orders');
+      return;
     }
-  }, [orders]);
+    
+    if (order.delivery_address_id) {
+      toast({
+        title: "Address Already Set",
+        description: "A delivery address has already been added to this order.",
+      });
+      window.history.replaceState({}, '', '/portal/orders');
+      return;
+    }
+    
+    setSelectedOrderForAddress(order);
+    setAddressDialogOpen(true);
+    window.history.replaceState({}, '', '/portal/orders');
+  }, [orders, loading, toast]);
 
   // Check for uploadPayment query parameter to auto-open payment dialog
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const orderIdNeedingPayment = params.get('uploadPayment');
     
-    if (orderIdNeedingPayment && orders.length > 0) {
-      const order = orders.find(o => o.id === orderIdNeedingPayment);
-      // Only open if order exists and needs payment
-      if (order && ['order_confirmed', 'pending_payment'].includes(order.status)) {
-        setSelectedOrderForPayment(order);
-        setPaymentProofDialogOpen(true);
-        // Clear the query param
-        window.history.replaceState({}, '', '/portal/orders');
-      }
+    if (!orderIdNeedingPayment) return;
+    if (loading) return; // Wait for orders to load
+    
+    const order = orders.find(o => o.id === orderIdNeedingPayment);
+    
+    if (!order) {
+      toast({
+        title: "Order Not Found",
+        description: "This order may have been updated or removed.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, '', '/portal/orders');
+      return;
     }
-  }, [orders]);
+    
+    // Check if payment already uploaded
+    if (order.payment_proof_url) {
+      toast({
+        title: "Payment Already Submitted",
+        description: "Payment proof has already been uploaded for this order.",
+      });
+      window.history.replaceState({}, '', '/portal/orders');
+      return;
+    }
+    
+    // Check if order status is valid for payment
+    if (!['order_confirmed', 'pending_payment'].includes(order.status)) {
+      toast({
+        title: "Payment Not Required",
+        description: "This order no longer requires payment upload.",
+      });
+      window.history.replaceState({}, '', '/portal/orders');
+      return;
+    }
+    
+    setSelectedOrderForPayment(order);
+    setPaymentProofDialogOpen(true);
+    window.history.replaceState({}, '', '/portal/orders');
+  }, [orders, loading, toast]);
 
   const fetchOrders = async () => {
     if (!profile?.email) {

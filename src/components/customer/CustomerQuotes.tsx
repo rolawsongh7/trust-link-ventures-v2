@@ -69,7 +69,7 @@ export const CustomerQuotes: React.FC = () => {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const { isMobile: isMobileDetection } = useMobileDetection();
 
-  // Auto-open quote PDF when navigating with quoteId in URL
+  // Auto-open quote PDF when navigating with quoteId in URL path
   useEffect(() => {
     if (quoteId && quotes.length > 0 && !loading && !hasAutoOpened) {
       const matchingQuote = quotes.find(q => q.id === quoteId || q.final_quote?.id === quoteId);
@@ -93,6 +93,45 @@ export const CustomerQuotes: React.FC = () => {
       }
     }
   }, [quoteId, quotes, loading, hasAutoOpened, toast]);
+
+  // Handle ?open= query parameter for dashboard alert links
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const openQuoteId = params.get('open');
+    
+    if (!openQuoteId) return;
+    if (loading) return; // Wait for quotes to load
+    if (hasAutoOpened) return; // Already opened one
+    
+    const matchingQuote = quotes.find(q => 
+      q.id === openQuoteId || q.final_quote?.id === openQuoteId
+    );
+    
+    if (!matchingQuote) {
+      toast({
+        variant: "destructive",
+        title: "Quote not found",
+        description: "The requested quote could not be found.",
+      });
+      window.history.replaceState({}, '', '/portal/quotes');
+      setHasAutoOpened(true);
+      return;
+    }
+    
+    if (matchingQuote.final_quote?.final_file_url) {
+      setSelectedQuoteForPDF(matchingQuote);
+      setPdfDialogOpen(true);
+      setHasAutoOpened(true);
+      window.history.replaceState({}, '', '/portal/quotes');
+    } else {
+      toast({
+        title: "Quote pending",
+        description: "This quote request is still being processed.",
+      });
+      setHasAutoOpened(true);
+      window.history.replaceState({}, '', '/portal/quotes');
+    }
+  }, [quotes, loading, hasAutoOpened, toast]);
 
   // Force card view on mobile
   useEffect(() => {
