@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Heart, Plus, ArrowRight, ShoppingCart, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,8 +8,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
 import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 
 export const FavoritesWidget: React.FC = () => {
+  const navigate = useNavigate();
   const { favoriteProducts, loading } = useFavorites();
   const { addItem } = useShoppingCart();
   const { toast } = useToast();
@@ -31,6 +33,11 @@ export const FavoritesWidget: React.FC = () => {
     toast({
       title: "Added to cart",
       description: `${product.name} added with default quantity.`,
+      action: (
+        <ToastAction altText="Go to Cart" onClick={() => navigate('/portal/cart')}>
+          Go to Cart
+        </ToastAction>
+      ),
     });
   };
 
