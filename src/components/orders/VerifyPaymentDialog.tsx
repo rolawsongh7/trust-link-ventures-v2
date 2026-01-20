@@ -15,6 +15,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { 
   CheckCircle, 
   FileText, 
@@ -25,8 +27,14 @@ import {
   ChevronLeft,
   ExternalLink,
   DollarSign,
-  MessageCircleQuestion
+  MessageCircleQuestion,
+  CalendarIcon,
+  ZoomIn,
+  Download,
+  Minus,
+  CreditCard as CardIcon
 } from 'lucide-react';
+import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -56,7 +64,10 @@ type Step = 'review' | 'details' | 'confirm';
 
 const PAYMENT_METHODS = [
   { value: 'bank_transfer', label: 'Bank Transfer' },
-  { value: 'mobile_money', label: 'Mobile Money' },
+  { value: 'mtn_momo', label: 'MTN MoMo' },
+  { value: 'vodafone_cash', label: 'Vodafone Cash' },
+  { value: 'airteltigo', label: 'AirtelTigo Money' },
+  { value: 'mobile_money', label: 'Other Mobile Money' },
   { value: 'cash', label: 'Cash' },
   { value: 'cheque', label: 'Cheque' },
   { value: 'other', label: 'Other' },
@@ -76,9 +87,15 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
   const [paymentReference, setPaymentReference] = useState(order.payment_reference || '');
   const [amountReceived, setAmountReceived] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState(order.payment_method || '');
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>(new Date());
   const [verificationNotes, setVerificationNotes] = useState('');
   const [mismatchAcknowledged, setMismatchAcknowledged] = useState(false);
   const [mismatchJustification, setMismatchJustification] = useState('');
+  const [isPartialPayment, setIsPartialPayment] = useState(false);
+
+  // Image zoom state
+  const [imageZoom, setImageZoom] = useState(1);
+  const [showImageDialog, setShowImageDialog] = useState(false);
 
   // Rejection state
   const [showRejectDialog, setShowRejectDialog] = useState(false);
@@ -95,15 +112,21 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
   const mismatchPercentage = invoiceTotal > 0 ? Math.abs(difference / invoiceTotal) * 100 : 0;
   const hasMismatch = amountReceived !== '' && mismatchPercentage > 1; // More than 1% difference
 
+  // Check if this is an underpayment (potential partial payment)
+  const isUnderpayment = parsedAmount > 0 && parsedAmount < invoiceTotal;
+
   // Validation
   const canProceedToDetails = !!order.payment_proof_url;
   const canProceedToConfirm = useMemo(() => {
     if (!paymentReference.trim()) return false;
     if (!amountReceived || parsedAmount <= 0) return false;
     if (!paymentMethod) return false;
-    if (hasMismatch && (!mismatchAcknowledged || !mismatchJustification.trim())) return false;
+    if (!paymentDate) return false;
+    // If payment date is in the future, block
+    if (paymentDate > new Date()) return false;
+    if (hasMismatch && !isPartialPayment && (!mismatchAcknowledged || !mismatchJustification.trim())) return false;
     return true;
-  }, [paymentReference, amountReceived, parsedAmount, paymentMethod, hasMismatch, mismatchAcknowledged, mismatchJustification]);
+  }, [paymentReference, amountReceived, parsedAmount, paymentMethod, paymentDate, hasMismatch, isPartialPayment, mismatchAcknowledged, mismatchJustification]);
 
   const handleVerify = async () => {
     if (!canProceedToConfirm) {
@@ -121,24 +144,29 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
       if (!user) throw new Error('Not authenticated');
 
       // Step 1: Mark payment as received with all verification details
+      const orderUpdateData: Record<string, any> = {
+        status: isPartialPayment ? 'pending_payment' : 'payment_received',
+        payment_verified_by: user.id,
+        payment_verified_at: new Date().toISOString(),
+        payment_reference: paymentReference.trim(),
+        payment_amount_confirmed: parsedAmount,
+        payment_method: paymentMethod,
+        payment_date: paymentDate ? format(paymentDate, 'yyyy-MM-dd') : null,
+        payment_verification_notes: hasMismatch && !isPartialPayment
+          ? `${verificationNotes}\n\n[MISMATCH JUSTIFICATION]: ${mismatchJustification}`
+          : isPartialPayment 
+            ? `${verificationNotes}\n\n[PARTIAL PAYMENT]: ${formatCurrency(parsedAmount)} of ${formatCurrency(invoiceTotal)} received. Balance: ${formatCurrency(invoiceTotal - parsedAmount)}`
+            : verificationNotes,
+        payment_mismatch_acknowledged: (hasMismatch && !isPartialPayment) ? mismatchAcknowledged : false,
+        // Clear any previous rejection
+        payment_rejected_at: null,
+        payment_rejected_by: null,
+        payment_status_reason: isPartialPayment ? 'Partial payment received' : null,
+      };
+
       const { error: paymentReceivedError } = await supabase
         .from('orders')
-        .update({
-          status: 'payment_received',
-          payment_verified_by: user.id,
-          payment_verified_at: new Date().toISOString(),
-          payment_reference: paymentReference.trim(),
-          payment_amount_confirmed: parsedAmount,
-          payment_method: paymentMethod,
-          payment_verification_notes: hasMismatch 
-            ? `${verificationNotes}\n\n[MISMATCH JUSTIFICATION]: ${mismatchJustification}`
-            : verificationNotes,
-          payment_mismatch_acknowledged: hasMismatch ? mismatchAcknowledged : false,
-          // Clear any previous rejection
-          payment_rejected_at: null,
-          payment_rejected_by: null,
-          payment_status_reason: null,
-        })
+        .update(orderUpdateData)
         .eq('id', order.id);
 
       if (paymentReceivedError) {
@@ -146,23 +174,61 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
         throw new Error(`Failed to confirm payment: ${paymentReceivedError.message}`);
       }
 
-      // Step 2: Move to processing
-      const { error: processingError } = await supabase
-        .from('orders')
-        .update({
-          status: 'processing',
-          processing_started_at: new Date().toISOString(),
-        })
-        .eq('id', order.id);
+      // Create payment record for tracking (non-blocking)
+      supabase.from('payment_records').insert({
+        order_id: order.id,
+        amount: parsedAmount,
+        payment_date: paymentDate ? format(paymentDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+        payment_method: paymentMethod,
+        payment_reference: paymentReference.trim(),
+        notes: verificationNotes || (isPartialPayment ? 'Partial payment' : 'Full payment'),
+        recorded_by: user.id,
+      }).then(({ error }) => {
+        if (error) {
+          console.error('Failed to create payment record (non-blocking):', error);
+        } else {
+          console.log('Payment record created');
+        }
+      });
 
-      if (processingError) {
-        console.error('Failed to move order to processing:', processingError);
-        toast({
-          title: 'Partial Success',
-          description: 'Payment confirmed but order not moved to processing. Please manually update status.',
-          variant: 'destructive',
-        });
-        return;
+      // Update invoice if exists - set amount_paid
+      const { data: invoices } = await supabase
+        .from('invoices')
+        .select('id, amount_paid')
+        .eq('order_id', order.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (invoices && invoices.length > 0) {
+        const currentAmountPaid = invoices[0].amount_paid || 0;
+        await supabase
+          .from('invoices')
+          .update({
+            amount_paid: currentAmountPaid + parsedAmount,
+            status: (currentAmountPaid + parsedAmount) >= invoiceTotal ? 'paid' : 'partial',
+          })
+          .eq('id', invoices[0].id);
+      }
+
+      // Step 2: Move to processing (only if not partial payment)
+      if (!isPartialPayment) {
+        const { error: processingError } = await supabase
+          .from('orders')
+          .update({
+            status: 'processing',
+            processing_started_at: new Date().toISOString(),
+          })
+          .eq('id', order.id);
+
+        if (processingError) {
+          console.error('Failed to move order to processing:', processingError);
+          toast({
+            title: 'Partial Success',
+            description: 'Payment confirmed but order not moved to processing. Please manually update status.',
+            variant: 'destructive',
+          });
+          return;
+        }
       }
 
       // Send payment confirmation email (non-blocking)
@@ -370,9 +436,13 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
     setPaymentReference(order.payment_reference || '');
     setAmountReceived('');
     setPaymentMethod(order.payment_method || '');
+    setPaymentDate(new Date());
     setVerificationNotes('');
     setMismatchAcknowledged(false);
     setMismatchJustification('');
+    setIsPartialPayment(false);
+    setImageZoom(1);
+    setShowImageDialog(false);
     setShowRejectDialog(false);
     setRejectionReason('');
     setShowClarificationDialog(false);
@@ -453,13 +523,35 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
                     <FileText className="h-4 w-4" />
                     Payment Proof Uploaded
                   </Label>
-                  <div className="rounded-lg border overflow-hidden bg-muted/20">
+                  <div className="rounded-lg border overflow-hidden bg-muted/20 relative">
                     {order.payment_proof_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                      <img 
-                        src={order.payment_proof_url} 
-                        alt="Payment proof"
-                        className="max-h-64 w-full object-contain"
-                      />
+                      <div className="relative">
+                        <img 
+                          src={order.payment_proof_url} 
+                          alt="Payment proof"
+                          className="max-h-64 w-full object-contain cursor-zoom-in transition-transform"
+                          style={{ transform: `scale(${imageZoom})` }}
+                          onClick={() => setShowImageDialog(true)}
+                        />
+                        <div className="absolute bottom-2 right-2 flex gap-1">
+                          <Button
+                            size="icon"
+                            variant="secondary"
+                            className="h-8 w-8"
+                            onClick={() => setImageZoom(Math.min(imageZoom + 0.5, 3))}
+                          >
+                            <ZoomIn className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="secondary"
+                            className="h-8 w-8"
+                            onClick={() => setImageZoom(Math.max(imageZoom - 0.5, 1))}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     ) : (
                       <div className="p-8 text-center">
                         <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
@@ -467,15 +559,31 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
                       </div>
                     )}
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => window.open(order.payment_proof_url, '_blank')}
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    View Full Size
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => window.open(order.payment_proof_url, '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View Full Size
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = order.payment_proof_url!;
+                        link.download = `payment-proof-${order.order_number}`;
+                        link.click();
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <Alert variant="destructive">
@@ -544,8 +652,39 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
                 />
               </div>
 
-              {/* Mismatch Warning */}
-              {hasMismatch && (
+              {/* Underpayment - Partial Payment Option */}
+              {isUnderpayment && (
+                <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950/20">
+                  <CardIcon className="h-4 w-4 text-blue-600" />
+                  <AlertTitle className="text-blue-800 dark:text-blue-200">Partial Payment Detected</AlertTitle>
+                  <AlertDescription className="text-blue-700 dark:text-blue-300">
+                    <p className="mb-3">
+                      Amount received ({formatCurrency(parsedAmount)}) is less than invoice total ({formatCurrency(invoiceTotal)}).
+                      Balance remaining: <strong>{formatCurrency(invoiceTotal - parsedAmount)}</strong>
+                    </p>
+                    
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="partial_payment"
+                        checked={isPartialPayment}
+                        onCheckedChange={(checked) => {
+                          setIsPartialPayment(checked === true);
+                          if (checked) {
+                            setMismatchAcknowledged(false);
+                            setMismatchJustification('');
+                          }
+                        }}
+                      />
+                      <Label htmlFor="partial_payment" className="text-sm cursor-pointer">
+                        Record as partial payment (order will remain in pending payment status)
+                      </Label>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Mismatch Warning - Only show if not partial payment and there's a mismatch */}
+              {hasMismatch && !isPartialPayment && (
                 <Alert variant="destructive" className="border-amber-500 bg-amber-50 dark:bg-amber-950/20">
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
                   <AlertTitle className="text-amber-800 dark:text-amber-200">Amount Mismatch Detected</AlertTitle>
@@ -587,23 +726,61 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
                 </Alert>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="payment_method" className="flex items-center gap-1">
-                  Payment Method
-                  <span className="text-destructive">*</span>
-                </Label>
-                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger className={cn(!paymentMethod && "border-amber-500")}>
-                    <SelectValue placeholder="Select payment method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAYMENT_METHODS.map((method) => (
-                      <SelectItem key={method.value} value={method.value}>
-                        {method.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="payment_method" className="flex items-center gap-1">
+                    Payment Method
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger className={cn(!paymentMethod && "border-amber-500")}>
+                      <SelectValue placeholder="Select payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map((method) => (
+                        <SelectItem key={method.value} value={method.value}>
+                          {method.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1">
+                    <CalendarIcon className="h-4 w-4" />
+                    Payment Date
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !paymentDate && "text-muted-foreground",
+                          !paymentDate && "border-amber-500",
+                          paymentDate && paymentDate > new Date() && "border-destructive"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {paymentDate ? format(paymentDate, 'PPP') : 'Select date'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={paymentDate}
+                        onSelect={setPaymentDate}
+                        disabled={(date) => date > new Date()}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {paymentDate && paymentDate > new Date() && (
+                    <p className="text-xs text-destructive">Payment date cannot be in the future</p>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -655,13 +832,27 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
                     {PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label || paymentMethod}
                   </span>
                 </div>
+                <div className="p-3 flex justify-between">
+                  <span className="text-muted-foreground">Payment Date</span>
+                  <span className="font-medium">
+                    {paymentDate ? format(paymentDate, 'PPP') : 'Not specified'}
+                  </span>
+                </div>
+                {isPartialPayment && (
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/20">
+                    <span className="text-blue-700 dark:text-blue-300 font-medium">Partial Payment</span>
+                    <span className="text-sm block mt-1 text-blue-600 dark:text-blue-400">
+                      Balance remaining: {formatCurrency(invoiceTotal - parsedAmount)}
+                    </span>
+                  </div>
+                )}
                 {verificationNotes && (
                   <div className="p-3">
                     <span className="text-muted-foreground block mb-1">Notes</span>
                     <span className="text-sm">{verificationNotes}</span>
                   </div>
                 )}
-                {hasMismatch && mismatchJustification && (
+                {hasMismatch && !isPartialPayment && mismatchJustification && (
                   <div className="p-3 bg-amber-50 dark:bg-amber-950/20">
                     <span className="text-muted-foreground block mb-1">Mismatch Justification</span>
                     <span className="text-sm">{mismatchJustification}</span>
@@ -670,8 +861,17 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
               </div>
 
               <p className="text-sm text-muted-foreground">
-                After verification, the order will automatically move to <strong>Processing</strong> status 
-                and the customer will be notified.
+                {isPartialPayment ? (
+                  <>
+                    Payment will be recorded and the order will remain in <strong>Pending Payment</strong> status 
+                    until full payment is received.
+                  </>
+                ) : (
+                  <>
+                    After verification, the order will automatically move to <strong>Processing</strong> status 
+                    and the customer will be notified.
+                  </>
+                )}
               </p>
             </div>
           )}

@@ -38,17 +38,26 @@ interface ReconciliationOrder {
   payment_method: string | null;
   payment_reference: string | null;
   payment_mismatch_acknowledged: boolean | null;
+  payment_date: string | null;
   created_at: string;
   customers: {
     company_name: string;
     email: string | null;
   } | null;
+  invoices: {
+    id: string;
+    total_amount: number;
+    amount_paid: number | null;
+  }[] | null;
 }
 
 type DateFilter = 'today' | 'yesterday' | 'week' | 'month' | 'custom';
 
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
   bank_transfer: 'Bank Transfer',
+  mtn_momo: 'MTN MoMo',
+  vodafone_cash: 'Vodafone Cash',
+  airteltigo: 'AirtelTigo Money',
   mobile_money: 'Mobile Money',
   cash: 'Cash',
   cheque: 'Cheque',
@@ -62,6 +71,7 @@ export default function FinancialReconciliation() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('all');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all');
   const [showMismatchOnly, setShowMismatchOnly] = useState(false);
 
   // Calculate date range
@@ -105,10 +115,16 @@ export default function FinancialReconciliation() {
           payment_method,
           payment_reference,
           payment_mismatch_acknowledged,
+          payment_date,
           created_at,
           customers (
             company_name,
             email
+          ),
+          invoices (
+            id,
+            total_amount,
+            amount_paid
           )
         `)
         .gte('created_at', dateRange.start.toISOString())
