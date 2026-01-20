@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -84,6 +85,7 @@ interface Quote {
 }
 
 const UnifiedQuoteManagement = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [deletedQuotes, setDeletedQuotes] = useState<Quote[]>([]);
@@ -125,6 +127,16 @@ const UnifiedQuoteManagement = () => {
       origin_type: 'manual'
     }
   });
+
+  // Handle ?open=create query parameter for Quick Actions
+  useEffect(() => {
+    const openAction = searchParams.get('open');
+    if (openAction === 'create') {
+      setShowQuoteWizard(true);
+      // Clean up URL
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     fetchQuotes();

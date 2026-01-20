@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { OrderCardSkeleton } from '@/components/orders/OrderCardSkeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,6 +51,7 @@ interface Order {
 }
 
 const UnifiedOrdersManagement = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   
   // Use React Query ONLY for data fetching with caching
@@ -66,6 +67,19 @@ const UnifiedOrdersManagement = () => {
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [viewQuoteDialogOpen, setViewQuoteDialogOpen] = useState(false);
   const [verifyPaymentDialogOpen, setVerifyPaymentDialogOpen] = useState(false);
+
+  // Handle ?open=create query parameter for Quick Actions
+  useEffect(() => {
+    const openAction = searchParams.get('open');
+    if (openAction === 'create') {
+      toast.info(
+        'Orders are created from approved quotes',
+        { description: 'Go to Quotes → Quote Wizard to create and approve a quote, then convert it to an order.' }
+      );
+      // Clean up URL
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Set up real-time subscription for notifications and auto-generation
   useEffect(() => {
