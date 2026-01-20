@@ -165,7 +165,7 @@ export const CustomerPaymentProofDialog: React.FC<CustomerPaymentProofDialogProp
 
       if (updateError) throw updateError;
 
-      // Send notification to admin
+      // Send notification to admin via edge function
       await supabase.functions.invoke('notify-payment-proof-uploaded', {
         body: {
           orderId: order.id,
@@ -174,7 +174,23 @@ export const CustomerPaymentProofDialog: React.FC<CustomerPaymentProofDialogProp
           paymentReference,
         },
       }).catch(err => {
-        console.error('Notification error (non-blocking):', err);
+        console.error('Admin notification error (non-blocking):', err);
+      });
+
+      // Also notify all admins in-app
+      await supabase.functions.invoke('notify-admins', {
+        body: {
+          type: 'payment_proof_uploaded',
+          title: 'Payment Proof Uploaded',
+          message: `Customer has uploaded payment proof for order ${order.order_number}. Please review and verify.`,
+          data: {
+            orderId: order.id,
+            orderNumber: order.order_number,
+            link: '/admin/orders',
+          },
+        },
+      }).catch(err => {
+        console.error('Admin in-app notification error (non-blocking):', err);
       });
 
       setUploadStatus('success');

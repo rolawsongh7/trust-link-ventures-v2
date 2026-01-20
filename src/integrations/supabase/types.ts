@@ -1663,6 +1663,8 @@ export type Database = {
           payment_amount_confirmed: number | null
           payment_amount_paid: number | null
           payment_channel: string | null
+          payment_clarification_message: string | null
+          payment_clarification_requested_at: string | null
           payment_confirmed_at: string | null
           payment_gateway: string | null
           payment_initiated_at: string | null
@@ -1725,6 +1727,8 @@ export type Database = {
           payment_amount_confirmed?: number | null
           payment_amount_paid?: number | null
           payment_channel?: string | null
+          payment_clarification_message?: string | null
+          payment_clarification_requested_at?: string | null
           payment_confirmed_at?: string | null
           payment_gateway?: string | null
           payment_initiated_at?: string | null
@@ -1787,6 +1791,8 @@ export type Database = {
           payment_amount_confirmed?: number | null
           payment_amount_paid?: number | null
           payment_channel?: string | null
+          payment_clarification_message?: string | null
+          payment_clarification_requested_at?: string | null
           payment_confirmed_at?: string | null
           payment_gateway?: string | null
           payment_initiated_at?: string | null

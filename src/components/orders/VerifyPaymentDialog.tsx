@@ -24,7 +24,8 @@ import {
   ChevronRight,
   ChevronLeft,
   ExternalLink,
-  DollarSign
+  DollarSign,
+  MessageCircleQuestion
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -82,6 +83,10 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
   // Rejection state
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
+
+  // Clarification state
+  const [showClarificationDialog, setShowClarificationDialog] = useState(false);
+  const [clarificationMessage, setClarificationMessage] = useState('');
 
   // Calculate mismatch
   const parsedAmount = parseFloat(amountReceived) || 0;
@@ -282,6 +287,84 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
     }
   };
 
+  const handleRequestClarification = async () => {
+    if (!clarificationMessage.trim()) {
+      toast({
+        title: 'Message Required',
+        description: 'Please provide a message explaining what clarification you need.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Update order with clarification request
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          payment_clarification_requested_at: new Date().toISOString(),
+          payment_clarification_message: clarificationMessage.trim(),
+          payment_status_reason: `Clarification requested: ${clarificationMessage.trim()}`,
+        })
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      // Send clarification email (non-blocking)
+      supabase.functions.invoke('send-email', {
+        body: {
+          to: order.customers?.email,
+          subject: `Clarification Needed for Order ${order.order_number}`,
+          type: 'payment_clarification_needed',
+          data: {
+            customerName: order.customers?.company_name,
+            orderNumber: order.order_number,
+            message: clarificationMessage.trim(),
+            portalLink: `${window.location.origin}/portal/orders`,
+          },
+        },
+      }).catch(err => {
+        console.error('Email notification error (non-blocking):', err);
+      });
+
+      // Notify customer in-app (non-blocking)
+      if (order.customer_id) {
+        supabase.from('user_notifications').insert({
+          user_id: order.customer_id,
+          type: 'system',
+          title: 'Payment Clarification Needed',
+          message: `We need additional information about your payment for order ${order.order_number}: ${clarificationMessage}`,
+          link: '/portal/orders',
+        }).then(() => {
+          console.log('Customer clarification notification sent');
+        });
+      }
+
+      toast({
+        title: 'Clarification Requested',
+        description: `Customer has been notified to provide additional information for order ${order.order_number}.`,
+      });
+
+      onSuccess();
+      onOpenChange(false);
+      resetForm();
+
+    } catch (error: any) {
+      console.error('Error requesting clarification:', error);
+      toast({
+        title: 'Request Failed',
+        description: error.message || 'Failed to request clarification',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setCurrentStep('review');
     setPaymentReference(order.payment_reference || '');
@@ -292,6 +375,8 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
     setMismatchJustification('');
     setShowRejectDialog(false);
     setRejectionReason('');
+    setShowClarificationDialog(false);
+    setClarificationMessage('');
   };
 
   const formatCurrency = (amount: number) => {
@@ -645,10 +730,46 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
               )}
             </div>
           )}
+
+          {/* Clarification Dialog Content */}
+          {showClarificationDialog && (
+            <div className="space-y-4 py-4">
+              <Alert className="border-amber-500 bg-amber-50 dark:bg-amber-950/20">
+                <MessageCircleQuestion className="h-4 w-4 text-amber-600" />
+                <AlertTitle className="text-amber-800 dark:text-amber-200">Request Clarification</AlertTitle>
+                <AlertDescription className="text-amber-700 dark:text-amber-300">
+                  The customer will receive your message and can respond with more information.
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-2">
+                <Label htmlFor="clarification_message" className="flex items-center gap-1">
+                  What information do you need?
+                  <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="clarification_message"
+                  value={clarificationMessage}
+                  onChange={(e) => setClarificationMessage(e.target.value)}
+                  placeholder="e.g., Please provide a clearer image of the payment confirmation showing the transaction reference..."
+                  rows={4}
+                />
+              </div>
+
+              <div className="text-sm text-muted-foreground">
+                <p><strong>Example questions:</strong></p>
+                <ul className="list-disc ml-4 mt-1 space-y-1">
+                  <li>Can you provide the full transaction reference?</li>
+                  <li>The payment date on the proof doesn't match our records</li>
+                  <li>Please upload a clearer image of the receipt</li>
+                </ul>
+              </div>
+            </div>
+          )}
         </ScrollArea>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
-          {!showRejectDialog ? (
+          {!showRejectDialog && !showClarificationDialog ? (
             <>
               <div className="flex gap-2 w-full sm:w-auto">
                 <Button
@@ -671,14 +792,25 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
                 </Button>
 
                 {currentStep === 'review' && (
-                  <Button
-                    variant="destructive"
-                    onClick={() => setShowRejectDialog(true)}
-                    disabled={loading}
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Reject
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      className="border-amber-500 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20"
+                      onClick={() => setShowClarificationDialog(true)}
+                      disabled={loading}
+                    >
+                      <MessageCircleQuestion className="h-4 w-4 mr-2" />
+                      Clarify
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => setShowRejectDialog(true)}
+                      disabled={loading}
+                    >
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Reject
+                    </Button>
+                  </>
                 )}
               </div>
 
@@ -709,7 +841,8 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
                   <Button
                     onClick={handleVerify}
                     disabled={loading}
-                    className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700"
+                    className="flex-1 sm:flex-none"
+                    variant="default"
                   >
                     {loading ? 'Verifying...' : (
                       <>
@@ -721,7 +854,7 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
                 )}
               </div>
             </>
-          ) : (
+          ) : showRejectDialog ? (
             <>
               <Button
                 variant="outline"
@@ -742,6 +875,31 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
                   <>
                     <XCircle className="h-4 w-4 mr-2" />
                     Confirm Rejection
+                  </>
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowClarificationDialog(false);
+                  setClarificationMessage('');
+                }}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="border-amber-500 bg-amber-500 hover:bg-amber-600 text-white"
+                onClick={handleRequestClarification}
+                disabled={loading || !clarificationMessage.trim()}
+              >
+                {loading ? 'Sending...' : (
+                  <>
+                    <MessageCircleQuestion className="h-4 w-4 mr-2" />
+                    Send Clarification Request
                   </>
                 )}
               </Button>

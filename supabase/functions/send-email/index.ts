@@ -11,7 +11,7 @@ const corsHeaders = {
 interface EmailRequest {
   to: string;
   subject: string;
-  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification' | 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered' | 'new_quote_request_admin' | 'account_deleted' | 'support_reply';
+  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification' | 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered' | 'new_quote_request_admin' | 'account_deleted' | 'support_reply' | 'payment_verified' | 'payment_rejected' | 'payment_clarification_needed';
   data?: Record<string, any>;
 }
 
@@ -66,6 +66,15 @@ const handler = async (req: Request): Promise<Response> => {
       case 'support_reply':
         html = generateSupportReplyEmail(data);
         from = "Trust Link Support <support@trustlinkcompany.com>";
+        break;
+      case 'payment_verified':
+        html = generatePaymentVerifiedEmail(data);
+        break;
+      case 'payment_rejected':
+        html = generatePaymentRejectedEmail(data);
+        break;
+      case 'payment_clarification_needed':
+        html = generatePaymentClarificationEmail(data);
         break;
       default:
         throw new Error('Invalid email type');
@@ -727,6 +736,186 @@ function generateSupportReplyEmail(data: any): string {
         <div class="footer">
           <p>Best regards,<br><strong>Trust Link Ventures Support Team</strong></p>
           <p style="font-size: 12px; color: #888;">Do not reply directly to this email. Use your customer portal or contact support@trustlinkcompany.com</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generatePaymentVerifiedEmail(data: any): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #28a745; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+        .button { display: inline-block; background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .info-box { background: #d4edda; border: 1px solid #c3e6cb; padding: 20px; border-radius: 6px; margin: 20px 0; }
+        .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e0e0e0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>✅ Payment Verified!</h1>
+        </div>
+        <div class="content">
+          <p>Dear ${data?.customerName || 'Valued Customer'},</p>
+          
+          <p>Great news! Your payment for order <strong>${data?.orderNumber}</strong> has been verified and confirmed.</p>
+          
+          <div class="info-box">
+            <h3 style="margin-top: 0;">Payment Details</h3>
+            <div class="detail-row">
+              <span>Order Number:</span>
+              <strong>${data?.orderNumber || 'N/A'}</strong>
+            </div>
+            <div class="detail-row">
+              <span>Amount Confirmed:</span>
+              <strong>${data?.currency || 'GHS'} ${(data?.amount || 0).toLocaleString()}</strong>
+            </div>
+            <div class="detail-row">
+              <span>Payment Reference:</span>
+              <strong>${data?.reference || 'N/A'}</strong>
+            </div>
+            <div class="detail-row" style="border-bottom: none;">
+              <span>Verified On:</span>
+              <strong>${data?.verifiedAt ? new Date(data.verifiedAt).toLocaleString() : new Date().toLocaleString()}</strong>
+            </div>
+          </div>
+
+          <h3>What Happens Next?</h3>
+          <p>Your order is now being processed. Here's what to expect:</p>
+          <ol>
+            <li><strong>Processing:</strong> We're preparing your order</li>
+            <li><strong>Ready to Ship:</strong> Your order will be packaged</li>
+            <li><strong>Shipped:</strong> Your order is on its way</li>
+            <li><strong>Delivered:</strong> Your order arrives at your location</li>
+          </ol>
+
+          <p>You can track your order status anytime from your customer portal.</p>
+          
+          <a href="${data?.trackingLink || '#'}" class="button">Track Your Order</a>
+        </div>
+        <div class="footer">
+          <p>Thank you for your business!</p>
+          <p><strong>Trust Link Ventures Team</strong></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generatePaymentRejectedEmail(data: any): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #dc3545; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+        .button { display: inline-block; background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .warning-box { background: #f8d7da; border: 1px solid #f5c6cb; padding: 20px; border-radius: 6px; margin: 20px 0; }
+        .reason-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 6px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>⚠️ Payment Proof Rejected</h1>
+        </div>
+        <div class="content">
+          <p>Dear ${data?.customerName || 'Valued Customer'},</p>
+          
+          <p>Unfortunately, we were unable to verify the payment proof you submitted for order <strong>${data?.orderNumber}</strong>.</p>
+          
+          <div class="warning-box">
+            <h3 style="margin-top: 0; color: #721c24;">Rejection Reason</h3>
+            <p style="margin-bottom: 0;">${data?.reason || 'The payment proof could not be verified. Please submit a new proof of payment.'}</p>
+          </div>
+
+          <div class="reason-box">
+            <h4 style="margin-top: 0;">What You Need To Do</h4>
+            <ol>
+              <li>Ensure your payment was successfully processed</li>
+              <li>Take a clear screenshot or photo of your payment confirmation</li>
+              <li>Make sure the transaction reference and amount are visible</li>
+              <li>Upload the new payment proof through your customer portal</li>
+            </ol>
+          </div>
+
+          <p>Your order will remain on hold until we can verify your payment. If you believe this was an error or need assistance, please contact our support team.</p>
+          
+          <a href="${data?.portalLink || '#'}" class="button">Upload New Payment Proof</a>
+          
+          <p style="margin-top: 20px;">
+            <strong>Need Help?</strong><br>
+            Contact us at <a href="mailto:info@trustlinkcompany.com">info@trustlinkcompany.com</a>
+          </p>
+        </div>
+        <div class="footer">
+          <p>We're here to help!</p>
+          <p><strong>Trust Link Ventures Team</strong></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generatePaymentClarificationEmail(data: any): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #fd7e14; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+        .button { display: inline-block; background: #fd7e14; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .message-box { background: #fff3cd; border: 1px solid #ffc107; padding: 20px; border-radius: 6px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📋 Clarification Needed</h1>
+        </div>
+        <div class="content">
+          <p>Dear ${data?.customerName || 'Valued Customer'},</p>
+          
+          <p>We're reviewing your payment for order <strong>${data?.orderNumber}</strong> and need some additional information before we can proceed.</p>
+          
+          <div class="message-box">
+            <h3 style="margin-top: 0;">Message from Our Team</h3>
+            <p style="margin-bottom: 0;">${data?.message || 'Please provide additional information about your payment.'}</p>
+          </div>
+
+          <p>Please respond by:</p>
+          <ul>
+            <li>Uploading additional payment proof if needed</li>
+            <li>Contacting our support team with the requested information</li>
+            <li>Replying through your customer portal</li>
+          </ul>
+
+          <p>Your order is on hold pending this clarification. We appreciate your prompt response.</p>
+          
+          <a href="${data?.portalLink || '#'}" class="button">Respond Now</a>
+        </div>
+        <div class="footer">
+          <p>Thank you for your patience!</p>
+          <p><strong>Trust Link Ventures Team</strong></p>
         </div>
       </div>
     </body>
