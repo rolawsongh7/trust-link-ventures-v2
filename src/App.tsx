@@ -70,6 +70,8 @@ import InvoicesPage from "./pages/InvoicesPage";
 import PriceManagement from "./pages/admin/PriceManagement";
 import Diagnostics from "./pages/admin/Diagnostics";
 import OrderIssues from "./pages/admin/OrderIssues";
+import CustomerIssueDetail from "./pages/CustomerIssueDetail";
+import CustomerIssues from "./pages/CustomerIssues";
 
 import UnifiedAuth from "./pages/UnifiedAuth";
 import AdminAuth from "./pages/AdminAuth";
@@ -237,6 +239,8 @@ const App = () => {
                         <Route path="quotes" element={<CustomerQuotes />} />
                         <Route path="orders" element={<CustomerOrders />} />
                         <Route path="orders/:orderId" element={<OrderTracking />} />
+                        <Route path="order-issues" element={<CustomerIssues />} />
+                        <Route path="order-issues/:id" element={<CustomerIssueDetail />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="favorites" element={<CustomerFavorites />} />
                         <Route path="communications" element={<CustomerCommunications />} />
@@ -331,6 +335,8 @@ const App = () => {
                         <Route path="quotes" element={<CustomerQuotes />} />
                         <Route path="orders" element={<CustomerOrders />} />
                         <Route path="orders/:orderId" element={<OrderTracking />} />
+                        <Route path="order-issues" element={<CustomerIssues />} />
+                        <Route path="order-issues/:id" element={<CustomerIssueDetail />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="favorites" element={<CustomerFavorites />} />
                         <Route path="communications" element={<CustomerCommunications />} />

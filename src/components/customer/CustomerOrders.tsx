@@ -785,6 +785,22 @@ export const CustomerOrders: React.FC = () => {
                         <Eye className="h-4 w-4 mr-2" />
                         View Invoice
                       </Button>
+
+                      {/* Report Issue Button for shipped/delivered orders */}
+                      {['shipped', 'delivered', 'delivery_failed'].includes(order.status) && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setSelectedOrderForIssue(order);
+                            setReportIssueDialogOpen(true);
+                          }}
+                          className="border-destructive text-destructive hover:bg-destructive/10"
+                        >
+                          <AlertCircle className="h-4 w-4 mr-2" />
+                          Report Issue
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>

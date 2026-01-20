@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { 
@@ -25,7 +26,8 @@ import {
   MessageSquare,
   Image as ImageIcon,
   ExternalLink,
-  ArrowRight
+  ArrowRight,
+  Send
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -92,6 +94,9 @@ const OrderIssues = () => {
   const [newStatus, setNewStatus] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [issueMessages, setIssueMessages] = useState<any[]>([]);
+  const [replyContent, setReplyContent] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
 
   useEffect(() => {
     fetchIssues();
@@ -176,11 +181,70 @@ const OrderIssues = () => {
     }
   };
 
+  const fetchIssueMessages = async (issueId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('communications')
+        .select('id, content, direction, communication_date, contact_person, created_by')
+        .eq('issue_id', issueId)
+        .order('communication_date', { ascending: true });
+
+      if (error) throw error;
+      setIssueMessages(data || []);
+    } catch (err) {
+      console.error('Error fetching issue messages:', err);
+    }
+  };
+
+  const handleSendAdminReply = async () => {
+    if (!selectedIssue || !replyContent.trim()) return;
+
+    setSendingReply(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from('communications')
+        .insert({
+          customer_id: selectedIssue.customer_id,
+          issue_id: selectedIssue.id,
+          subject: `Re: Order Issue - ${selectedIssue.orders?.order_number}`,
+          content: replyContent.trim(),
+          direction: 'inbound', // Admin → Customer
+          communication_type: 'email',
+          contact_person: 'Support Team',
+          created_by: user?.id
+        });
+
+      if (error) throw error;
+
+      setReplyContent('');
+      fetchIssueMessages(selectedIssue.id);
+
+      toast({
+        title: "Reply sent",
+        description: "Your reply has been sent to the customer."
+      });
+    } catch (err) {
+      console.error('Error sending reply:', err);
+      toast({
+        title: "Error",
+        description: "Failed to send reply",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
   const openIssueDetail = (issue: OrderIssue) => {
     setSelectedIssue(issue);
     setNewStatus(issue.status);
     setAdminNotes(issue.admin_notes || '');
+    setReplyContent('');
+    setIssueMessages([]);
     setIsDetailOpen(true);
+    fetchIssueMessages(issue.id);
   };
 
   const getStatusBadge = (status: string) => {
@@ -480,6 +544,47 @@ const OrderIssues = () => {
                   </div>
                 </div>
               )}
+
+              {/* Message Thread */}
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Messages ({issueMessages.length})
+                </p>
+                <ScrollArea className="h-[200px] border rounded-lg p-3 mb-3">
+                  {issueMessages.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">No messages yet</p>
+                  ) : (
+                    issueMessages.map((msg) => (
+                      <div 
+                        key={msg.id} 
+                        className={`mb-3 p-2 rounded ${msg.direction === 'inbound' ? 'bg-primary/10 ml-4' : 'bg-muted mr-4'}`}
+                      >
+                        <p className="text-sm">{msg.content}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {msg.direction === 'inbound' ? 'Support Team' : 'Customer'} • {format(new Date(msg.communication_date), 'PPp')}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </ScrollArea>
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder="Reply to customer..."
+                    value={replyContent}
+                    onChange={(e) => setReplyContent(e.target.value)}
+                    rows={2}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={handleSendAdminReply} 
+                    disabled={!replyContent.trim() || sendingReply}
+                    size="sm"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
 
               {/* Admin Actions */}
               <div className="border-t pt-4 space-y-4">
