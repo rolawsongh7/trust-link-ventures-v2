@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,11 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, Mail, Phone, Building, MapPin, Calendar, 
   DollarSign, TrendingUp, FileText, MessageSquare, 
-  Activity, Target, ShoppingCart
+  Activity, Target, ShoppingCart, Eye
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { AdminBreadcrumb } from '@/components/shared/AdminBreadcrumb';
 
 interface Customer {
   id: string;
@@ -79,6 +81,7 @@ interface UnifiedCustomerViewProps {
 }
 
 export const UnifiedCustomerView: React.FC<UnifiedCustomerViewProps> = ({ customerId, onBack }) => {
+  const navigate = useNavigate();
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [metrics, setMetrics] = useState<CustomerMetrics | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -213,6 +216,14 @@ export const UnifiedCustomerView: React.FC<UnifiedCustomerViewProps> = ({ custom
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumb */}
+      <AdminBreadcrumb 
+        items={[
+          { label: 'Customers', href: '/admin/customers' },
+          { label: customer.company_name }
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -412,11 +423,22 @@ export const UnifiedCustomerView: React.FC<UnifiedCustomerViewProps> = ({ custom
                         <p className="text-sm text-muted-foreground">{quote.title}</p>
                         <Badge variant="outline">{quote.status}</Badge>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold">{quote.currency} {quote.total_amount?.toLocaleString() || 0}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(quote.created_at), 'MMM d, yyyy')}
-                        </p>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="font-bold">{quote.currency} {quote.total_amount?.toLocaleString() || 0}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(quote.created_at), 'MMM d, yyyy')}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="min-h-[44px]"
+                          onClick={() => navigate('/admin/quotes', { state: { viewQuoteId: quote.id } })}
+                          aria-label={`View quote ${quote.quote_number}`}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   ))
@@ -443,11 +465,22 @@ export const UnifiedCustomerView: React.FC<UnifiedCustomerViewProps> = ({ custom
                         <p className="font-medium">{order.order_number}</p>
                         <Badge variant="outline">{order.status}</Badge>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold">${order.total_amount?.toLocaleString() || 0}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(order.created_at), 'MMM d, yyyy')}
-                        </p>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="font-bold">${order.total_amount?.toLocaleString() || 0}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(order.created_at), 'MMM d, yyyy')}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="min-h-[44px]"
+                          onClick={() => navigate('/admin/orders', { state: { highlightOrderId: order.id } })}
+                          aria-label={`View order ${order.order_number}`}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   ))
