@@ -6,6 +6,7 @@ export interface SearchFilters {
   amountRange: { min: number; max: number } | null;
   origin: 'all' | 'auto' | 'manual';
   currency: string[];
+  paymentStatus?: 'all' | 'unverified' | 'verified' | 'rejected';
 }
 
 export interface QuoteSearchFilters {
@@ -20,6 +21,7 @@ export const ORDER_STATUSES = [
   'order_confirmed',
   'pending_payment',
   'payment_received',
+  'payment_rejected',
   'processing',
   'ready_to_ship',
   'shipped',

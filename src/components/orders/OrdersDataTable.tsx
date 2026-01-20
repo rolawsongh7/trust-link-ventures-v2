@@ -181,6 +181,26 @@ const getAddressIndicator = (order: Order) => {
 
 // Payment status indicator (simplified)
 const getPaymentIndicator = (order: Order) => {
+  // Check if payment was rejected
+  if ((order as any).payment_rejected_at) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="secondary" className="bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 gap-1">
+              <XCircle className="h-3 w-3" />
+              Rejected
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            {(order as any).payment_status_reason && <div className="text-xs">{(order as any).payment_status_reason}</div>}
+            Payment proof was rejected
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
   if (order.payment_verified_at) {
     return (
       <TooltipProvider>
@@ -223,6 +243,14 @@ const getPaymentIndicator = (order: Order) => {
   );
 };
 
+// Check if order can transition to processing (requires verified payment)
+const canTransitionToProcessing = (order: Order): { allowed: boolean; reason?: string } => {
+  if (!order.payment_verified_at) {
+    return { allowed: false, reason: 'Payment must be verified before processing' };
+  }
+  return { allowed: true };
+};
+
 export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
   orders,
   onEditDetails,
@@ -258,7 +286,8 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
     dateRange: null,
     amountRange: null,
     origin: 'all',
-    currency: []
+    currency: [],
+    paymentStatus: 'all'
   });
 
   // Apply filters to orders
@@ -312,6 +341,19 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
         return false;
       }
 
+      // Payment status filter
+      if (filters.paymentStatus && filters.paymentStatus !== 'all') {
+        if (filters.paymentStatus === 'verified' && !order.payment_verified_at) {
+          return false;
+        }
+        if (filters.paymentStatus === 'unverified' && (order.payment_verified_at || (order as any).payment_rejected_at)) {
+          return false;
+        }
+        if (filters.paymentStatus === 'rejected' && !(order as any).payment_rejected_at) {
+          return false;
+        }
+      }
+
       return true;
     });
   }, [orders, filters]);
@@ -324,7 +366,8 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
       dateRange: null,
       amountRange: null,
       origin: 'all',
-      currency: []
+      currency: [],
+      paymentStatus: 'all'
     });
   };
 
@@ -560,12 +603,33 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
             
             <DropdownMenuSeparator />
             
-            {/* Quick Status Actions */}
+            {/* Quick Status Actions - Block processing without verified payment */}
             {row.status === 'payment_received' && (
-              <DropdownMenuItem onClick={() => onQuickStatusChange(row, 'processing')}>
-                <Package className="mr-2 h-4 w-4" />
-                Start Processing
-              </DropdownMenuItem>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        const check = canTransitionToProcessing(row);
+                        if (check.allowed) {
+                          onQuickStatusChange(row, 'processing');
+                        }
+                      }}
+                      disabled={!row.payment_verified_at}
+                      className={!row.payment_verified_at ? 'opacity-50 cursor-not-allowed' : ''}
+                    >
+                      <Package className="mr-2 h-4 w-4" />
+                      Start Processing
+                      {!row.payment_verified_at && (
+                        <AlertTriangle className="ml-auto h-3 w-3 text-amber-500" />
+                      )}
+                    </DropdownMenuItem>
+                  </TooltipTrigger>
+                  {!row.payment_verified_at && (
+                    <TooltipContent>Payment must be verified before processing</TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             )}
             
             {row.status === 'processing' && (

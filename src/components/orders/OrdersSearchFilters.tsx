@@ -43,7 +43,8 @@ export const OrdersSearchFilters = ({
     filters.dateRange !== null,
     filters.amountRange !== null,
     filters.origin !== 'all',
-    filters.currency.length > 0
+    filters.currency.length > 0,
+    filters.paymentStatus && filters.paymentStatus !== 'all'
   ].filter(Boolean).length;
 
   const handleStatusToggle = (status: string) => {
@@ -256,6 +257,34 @@ export const OrdersSearchFilters = ({
                 </div>
               </div>
 
+              {/* Payment Status */}
+              <div className="space-y-2">
+                <Label>Payment Status</Label>
+                <RadioGroup
+                  value={filters.paymentStatus || 'all'}
+                  onValueChange={(value: 'all' | 'unverified' | 'verified' | 'rejected') => 
+                    onFiltersChange({ ...filters, paymentStatus: value })
+                  }
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="all" id="payment-all" />
+                    <Label htmlFor="payment-all" className="font-normal cursor-pointer">All Payments</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="unverified" id="payment-unverified" />
+                    <Label htmlFor="payment-unverified" className="font-normal cursor-pointer">Unverified (Pending)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="verified" id="payment-verified" />
+                    <Label htmlFor="payment-verified" className="font-normal cursor-pointer">Verified</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="rejected" id="payment-rejected" />
+                    <Label htmlFor="payment-rejected" className="font-normal cursor-pointer">Rejected</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
               {/* Origin */}
               <div className="space-y-2">
                 <Label>Order Origin</Label>
@@ -346,6 +375,15 @@ export const OrdersSearchFilters = ({
                 <X 
                   className="h-3 w-3 cursor-pointer" 
                   onClick={() => onFiltersChange({ ...filters, currency: [] })}
+                />
+              </Badge>
+            )}
+            {filters.paymentStatus && filters.paymentStatus !== 'all' && (
+              <Badge variant="secondary" className="gap-1">
+                Payment: {filters.paymentStatus}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => onFiltersChange({ ...filters, paymentStatus: 'all' })}
                 />
               </Badge>
             )}
