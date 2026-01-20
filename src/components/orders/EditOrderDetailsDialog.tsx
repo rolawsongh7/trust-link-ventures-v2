@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,9 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Lock, AlertTriangle } from 'lucide-react';
+import { Lock, AlertTriangle, User, FileText, Receipt, Package } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { QuoteOriginInfo } from '@/components/quotes/QuoteOriginInfo';
+import { RelatedEntitiesPanel } from '@/components/shared/RelatedEntitiesPanel';
 
 interface EditOrderDetailsDialogProps {
   order: any;
@@ -26,6 +28,7 @@ export const EditOrderDetailsDialog = ({
   onOpenChange,
   onSuccess,
 }: EditOrderDetailsDialogProps) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     total_amount: order?.total_amount || '',
     currency: order?.currency || 'USD',
@@ -34,6 +37,39 @@ export const EditOrderDetailsDialog = ({
   });
   const [loading, setLoading] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [relatedInvoices, setRelatedInvoices] = useState<any[]>([]);
+  const [relatedIssues, setRelatedIssues] = useState<any[]>([]);
+
+  // Fetch related invoices and issues
+  useEffect(() => {
+    if (open && order?.id) {
+      fetchRelatedData();
+    }
+  }, [open, order?.id]);
+
+  const fetchRelatedData = async () => {
+    if (!order?.id) return;
+    
+    try {
+      // Fetch invoices for this order
+      const { data: invoices } = await supabase
+        .from('invoices')
+        .select('id, invoice_number, invoice_type')
+        .eq('order_id', order.id);
+      
+      setRelatedInvoices(invoices || []);
+
+      // Fetch issues for this order
+      const { data: issues } = await supabase
+        .from('order_issues')
+        .select('id, issue_type, status')
+        .eq('order_id', order.id);
+      
+      setRelatedIssues(issues || []);
+    } catch (error) {
+      console.error('Error fetching related data:', error);
+    }
+  };
 
   const originalAmount = parseFloat(order?.total_amount || '0');
   const newAmount = parseFloat(formData.total_amount || '0');
@@ -217,6 +253,31 @@ export const EditOrderDetailsDialog = ({
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   />
                 </div>
+
+                {/* Related Entities Panel */}
+                <RelatedEntitiesPanel
+                  customer={order?.customers ? {
+                    id: order.customer_id,
+                    name: order.customers.company_name,
+                    email: order.customers.email
+                  } : null}
+                  quote={order?.quotes ? {
+                    id: order.quote_id,
+                    number: order.quotes.quote_number
+                  } : null}
+                  invoices={relatedInvoices.map(inv => ({
+                    id: inv.id,
+                    number: inv.invoice_number,
+                    type: inv.invoice_type
+                  }))}
+                  issues={relatedIssues.map(issue => ({
+                    id: issue.id,
+                    type: issue.issue_type,
+                    status: issue.status
+                  }))}
+                  onCloseDialog={() => onOpenChange(false)}
+                  variant="panel"
+                />
               </form>
             </div>
           </ScrollArea>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,7 @@ interface Customer {
 
 const CustomerManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -92,6 +93,19 @@ const CustomerManagement = () => {
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams, form]);
+
+  // Handle navigation state for viewing customer from other pages
+  useEffect(() => {
+    const viewCustomerId = (location.state as any)?.viewCustomerId;
+    if (viewCustomerId && customers.length > 0) {
+      const customerToView = customers.find(c => c.id === viewCustomerId);
+      if (customerToView) {
+        setViewingCustomer(customerToView);
+        // Clear state to prevent re-triggering
+        window.history.replaceState({}, '', '/admin/customers');
+      }
+    }
+  }, [customers, location.state]);
 
   useEffect(() => {
     fetchCustomers();

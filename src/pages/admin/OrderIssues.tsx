@@ -27,7 +27,8 @@ import {
   Image as ImageIcon,
   ExternalLink,
   ArrowRight,
-  Send
+  Send,
+  User
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -514,29 +515,60 @@ const OrderIssues = () => {
                 </div>
               </div>
 
-              {/* Quick Navigation to Order */}
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">Related Order</p>
-                    <p className="text-lg font-bold">#{selectedIssue.orders?.order_number}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Status: {selectedIssue.orders?.status?.replace(/_/g, ' ')}
-                    </p>
+              {/* Quick Navigation Links */}
+              <div className="space-y-3">
+                {/* Related Order */}
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">Related Order</p>
+                      <p className="text-lg font-bold">#{selectedIssue.orders?.order_number}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Status: {selectedIssue.orders?.status?.replace(/_/g, ' ')}
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="min-h-[44px]"
+                      onClick={() => {
+                        setIsDetailOpen(false);
+                        navigate('/admin/orders', { 
+                          state: { highlightOrderId: selectedIssue.order_id } 
+                        });
+                      }}
+                    >
+                      <Package className="h-4 w-4 mr-2" />
+                      View Order
+                    </Button>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setIsDetailOpen(false);
-                      navigate('/admin/orders', { 
-                        state: { highlightOrderId: selectedIssue.order_id } 
-                      });
-                    }}
-                  >
-                    <ArrowRight className="h-4 w-4 mr-2" />
-                    View Order
-                  </Button>
+                </div>
+
+                {/* Related Customer */}
+                <div className="bg-muted/50 border rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">Customer</p>
+                      <p className="font-medium">{selectedIssue.orders?.customers?.company_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedIssue.orders?.customers?.email}
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="min-h-[44px]"
+                      onClick={() => {
+                        setIsDetailOpen(false);
+                        navigate('/admin/customers', { 
+                          state: { viewCustomerId: selectedIssue.customer_id } 
+                        });
+                      }}
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      View Customer
+                    </Button>
+                  </div>
                 </div>
               </div>
 

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Package, History } from 'lucide-react';
+import { FileText, Package, History, User, ShoppingCart } from 'lucide-react';
 import QuoteAuditTrail from './QuoteAuditTrail';
 
 interface QuoteDetailsDialogProps {
@@ -18,14 +20,33 @@ export const QuoteDetailsDialog: React.FC<QuoteDetailsDialogProps> = ({
   onOpenChange,
   quoteId
 }) => {
+  const navigate = useNavigate();
   const [quote, setQuote] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [convertedOrder, setConvertedOrder] = useState<any>(null);
 
   useEffect(() => {
     if (open && quoteId) {
       fetchQuoteDetails();
+      fetchConvertedOrder();
     }
   }, [open, quoteId]);
+
+  const fetchConvertedOrder = async () => {
+    if (!quoteId) return;
+    
+    try {
+      const { data } = await supabase
+        .from('orders')
+        .select('id, order_number, status')
+        .or(`quote_id.eq.${quoteId},source_quote_id.eq.${quoteId}`)
+        .maybeSingle();
+      
+      setConvertedOrder(data);
+    } catch (error) {
+      console.error('Error fetching converted order:', error);
+    }
+  };
 
   const fetchQuoteDetails = async () => {
     if (!quoteId) return;
@@ -175,6 +196,42 @@ export const QuoteDetailsDialog: React.FC<QuoteDetailsDialogProps> = ({
                       <p className="mt-1 text-sm">{quote.notes}</p>
                     </div>
                   )}
+
+                  {/* Navigation Buttons */}
+                  <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
+                    {quote.customers && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="min-h-[44px] gap-2"
+                        onClick={() => {
+                          onOpenChange(false);
+                          navigate('/admin/customers', { 
+                            state: { viewCustomerId: quote.customer_id } 
+                          });
+                        }}
+                      >
+                        <User className="h-4 w-4" />
+                        View Customer
+                      </Button>
+                    )}
+                    {convertedOrder && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="min-h-[44px] gap-2"
+                        onClick={() => {
+                          onOpenChange(false);
+                          navigate('/admin/orders', { 
+                            state: { highlightOrderId: convertedOrder.id } 
+                          });
+                        }}
+                      >
+                        <ShoppingCart className="h-4 w-4" />
+                        View Order ({convertedOrder.order_number})
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
