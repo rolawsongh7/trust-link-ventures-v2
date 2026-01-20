@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { InteractiveCard } from '@/components/ui/interactive-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Package, Truck, Eye, RotateCcw, MapPin, Upload, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Package, Truck, Eye, RotateCcw, MapPin, Upload, ChevronDown, ChevronUp, AlertTriangle, XCircle, Clock } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -16,6 +17,10 @@ interface Order {
   tracking_number?: string;
   delivery_address_id?: string;
   delivery_address_requested_at?: string;
+  payment_proof_url?: string;
+  payment_verified_at?: string;
+  payment_rejected_at?: string;
+  payment_status_reason?: string;
   order_items?: any[];
   quotes?: {
     quote_number: string;
@@ -49,6 +54,10 @@ export const MobileOrderCard = ({
 }: MobileOrderCardProps) => {
   const [showItems, setShowItems] = useState(false);
   const canReportIssue = ['shipped', 'delivered', 'delivery_failed'].includes(order.status);
+  
+  // Payment status helpers
+  const isPaymentRejected = order.status === 'payment_rejected' || !!order.payment_rejected_at;
+  const isPaymentPendingVerification = order.payment_proof_url && !order.payment_verified_at && !order.payment_rejected_at;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -61,6 +70,7 @@ export const MobileOrderCard = ({
       case 'shipped': return 'bg-orange-100 text-orange-800';
       case 'delivered': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'payment_rejected': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -112,6 +122,24 @@ export const MobileOrderCard = ({
           )}
         </div>
       </div>
+
+      {/* Payment Rejected Alert */}
+      {isPaymentRejected && order.payment_status_reason && (
+        <Alert variant="destructive" className="py-2">
+          <XCircle className="h-4 w-4" />
+          <AlertDescription className="text-xs">
+            <strong>Payment Issue:</strong> {order.payment_status_reason}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Payment Pending Verification */}
+      {isPaymentPendingVerification && (
+        <div className="bg-amber-50 border border-amber-200 rounded-md p-2 text-xs text-amber-800 flex items-start gap-2">
+          <Clock className="h-4 w-4 flex-shrink-0 mt-0.5" />
+          <span>Payment under review. We're verifying your payment.</span>
+        </div>
+      )}
 
       {/* Address Alert */}
       {needsAddress && (

@@ -173,34 +173,30 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
         console.error('Email notification error (non-blocking):', err);
       });
 
-      // Notify customer with system notification
+      // Notify customer with system notification (non-blocking)
       if (order.customer_id) {
-        try {
-          await supabase.from('user_notifications').insert({
-            user_id: order.customer_id,
-            type: 'system',
-            title: 'Payment Verified - Order Processing',
-            message: `Great news! Your payment of ${order.currency} ${parsedAmount.toLocaleString()} for order ${order.order_number} has been verified and your order is now being processed.`,
-            link: '/portal/orders',
-          });
-        } catch (err) {
-          console.error('Customer notification error (non-blocking):', err);
-        }
+        supabase.from('user_notifications').insert({
+          user_id: order.customer_id,
+          type: 'system',
+          title: 'Payment Verified - Order Processing',
+          message: `Great news! Your payment of ${order.currency} ${parsedAmount.toLocaleString()} for order ${order.order_number} has been verified and your order is now being processed.`,
+          link: '/portal/orders',
+        }).then(() => {
+          console.log('Customer notification sent');
+        });
       }
 
-      // If mismatch was overridden, notify admins
+      // If mismatch was overridden, notify admins (non-blocking)
       if (hasMismatch && mismatchAcknowledged) {
-        try {
-          await supabase.from('user_notifications').insert({
-            user_id: user.id,
-            type: 'system',
-            title: 'Payment Mismatch Override',
-            message: `Payment mismatch approved for ${order.order_number}. Invoice: ${order.currency} ${invoiceTotal.toLocaleString()}, Received: ${order.currency} ${parsedAmount.toLocaleString()}. Reason: ${mismatchJustification}`,
-            link: '/admin/finance/reconciliation',
-          });
-        } catch (err) {
-          console.error('Admin notification error (non-blocking):', err);
-        }
+        supabase.from('user_notifications').insert({
+          user_id: user.id,
+          type: 'system',
+          title: 'Payment Mismatch Override',
+          message: `Payment mismatch approved for ${order.order_number}. Invoice: ${order.currency} ${invoiceTotal.toLocaleString()}, Received: ${order.currency} ${parsedAmount.toLocaleString()}. Reason: ${mismatchJustification}`,
+          link: '/admin/finance/reconciliation',
+        }).then(() => {
+          console.log('Admin notification sent');
+        });
       }
 
       toast({
@@ -239,10 +235,11 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Use type assertion since payment_rejected is added to enum via migration
       const { error } = await supabase
         .from('orders')
         .update({
-          status: 'payment_rejected',
+          status: 'payment_rejected' as any, // Cast needed until types regenerate
           payment_rejected_at: new Date().toISOString(),
           payment_rejected_by: user.id,
           payment_status_reason: rejectionReason.trim(),
@@ -251,19 +248,17 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
 
       if (error) throw error;
 
-      // Notify customer
+      // Notify customer (non-blocking)
       if (order.customer_id) {
-        try {
-          await supabase.from('user_notifications').insert({
-            user_id: order.customer_id,
-            type: 'system',
-            title: 'Payment Proof Rejected',
-            message: `Your payment proof for order ${order.order_number} was rejected: ${rejectionReason}. Please upload a new payment proof.`,
-            link: '/portal/orders',
-          });
-        } catch (err) {
-          console.error('Customer notification error (non-blocking):', err);
-        }
+        supabase.from('user_notifications').insert({
+          user_id: order.customer_id,
+          type: 'system',
+          title: 'Payment Proof Rejected',
+          message: `Your payment proof for order ${order.order_number} was rejected: ${rejectionReason}. Please upload a new payment proof.`,
+          link: '/portal/orders',
+        }).then(() => {
+          console.log('Customer rejection notification sent');
+        });
       }
 
       toast({

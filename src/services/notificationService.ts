@@ -12,6 +12,10 @@ type NotificationType =
   | 'new_order'
   | 'payment_proof_uploaded'
   | 'address_confirmed'
+  // Payment verification types
+  | 'payment_verified'
+  | 'payment_rejected'
+  | 'payment_mismatch_override'
   // Order issue types
   | 'order_issue_submitted'
   | 'order_issue_reply'
@@ -149,6 +153,98 @@ export class NotificationService {
       message: `${customerName} confirmed delivery address for order ${orderNumber}`,
       link: '/admin/orders',
       metadata: { orderNumber, customerName }
+    });
+  }
+
+  // ============ PAYMENT VERIFICATION NOTIFICATION METHODS ============
+
+  /**
+   * Notify customer when payment is verified
+   */
+  static async notifyPaymentVerified(
+    userId: string,
+    orderNumber: string,
+    orderId: string,
+    customerEmail: string
+  ): Promise<void> {
+    // Create in-app notification
+    await this.createNotification({
+      userId,
+      title: 'Payment Confirmed',
+      message: `Your payment for order ${orderNumber} has been verified. Your order is now being processed.`,
+      type: 'payment_verified',
+      link: `/portal/orders`,
+      metadata: { orderId, orderNumber }
+    });
+
+    // Send email
+    await supabase.functions.invoke('send-email', {
+      body: {
+        to: customerEmail,
+        subject: `Payment Confirmed - Order ${orderNumber}`,
+        type: 'payment_verified',
+        data: {
+          orderNumber,
+          orderId,
+          customerPortalLink: `${window.location.origin}/portal/orders`
+        }
+      }
+    });
+  }
+
+  /**
+   * Notify customer when payment proof is rejected
+   */
+  static async notifyPaymentRejected(
+    userId: string,
+    orderNumber: string,
+    orderId: string,
+    reason: string,
+    customerEmail: string
+  ): Promise<void> {
+    // Create in-app notification
+    await this.createNotification({
+      userId,
+      title: 'Payment Proof Rejected',
+      message: `Your payment for order ${orderNumber} requires attention: ${reason}`,
+      type: 'payment_rejected',
+      link: `/portal/orders`,
+      metadata: { orderId, orderNumber, reason }
+    });
+
+    // Send email
+    await supabase.functions.invoke('send-email', {
+      body: {
+        to: customerEmail,
+        subject: `Payment Issue - Order ${orderNumber}`,
+        type: 'payment_rejected',
+        data: {
+          orderNumber,
+          orderId,
+          reason,
+          customerPortalLink: `${window.location.origin}/portal/orders`
+        }
+      }
+    });
+  }
+
+  /**
+   * Internal alert when payment mismatch is overridden
+   */
+  static async notifyPaymentMismatchOverride(
+    orderNumber: string,
+    invoiceTotal: number,
+    amountReceived: number,
+    justification: string,
+    verifiedBy: string,
+    currency: string
+  ): Promise<void> {
+    await this.notifyAllAdmins({
+      type: 'payment_mismatch_override',
+      title: 'Payment Mismatch Approved',
+      message: `${verifiedBy} approved payment mismatch for ${orderNumber}. Invoice: ${currency} ${invoiceTotal.toLocaleString()}, Received: ${currency} ${amountReceived.toLocaleString()}`,
+      link: '/admin/finance/reconciliation',
+      metadata: { orderNumber, invoiceTotal, amountReceived, justification, currency }
     });
   }
 
