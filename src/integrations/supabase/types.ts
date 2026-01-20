@@ -3250,6 +3250,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_devices: {
+        Row: {
+          created_at: string | null
+          device_id: string
+          id: string
+          last_active: string | null
+          platform: string
+          push_token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_id: string
+          id?: string
+          last_active?: string | null
+          platform: string
+          push_token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string
+          id?: string
+          last_active?: string | null
+          platform?: string
+          push_token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_invitations: {
         Row: {
           accepted_at: string | null

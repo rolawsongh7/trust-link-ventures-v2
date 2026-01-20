@@ -11,11 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, Upload, X, CheckCircle2, Image as ImageIcon } from 'lucide-react';
+import { AlertTriangle, Upload, X, CheckCircle2, WifiOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { NotificationService } from '@/services/notificationService';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface OrderIssueReportDialogProps {
   open: boolean;
@@ -43,6 +45,7 @@ export const OrderIssueReportDialog: React.FC<OrderIssueReportDialogProps> = ({
 }) => {
   const { toast } = useToast();
   const { profile } = useCustomerAuth();
+  const { isOnline } = useNetworkStatus();
   const [issueType, setIssueType] = useState<IssueType | ''>('');
   const [description, setDescription] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
@@ -258,6 +261,16 @@ export const OrderIssueReportDialog: React.FC<OrderIssueReportDialogProps> = ({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Offline Warning */}
+          {!isOnline && (
+            <Alert variant="destructive">
+              <WifiOff className="h-4 w-4" />
+              <AlertDescription>
+                You are offline. Submitting an issue requires an internet connection.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Issue Type */}
           <div className="space-y-2">
             <Label htmlFor="issue-type">What type of issue are you experiencing?</Label>
@@ -357,19 +370,26 @@ export const OrderIssueReportDialog: React.FC<OrderIssueReportDialogProps> = ({
           <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isSubmitting || !issueType || !description.trim()}
-          >
-            {isSubmitting ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Submitting...
-              </>
-            ) : (
-              'Submit Report'
-            )}
-          </Button>
+          {!isOnline ? (
+            <Button disabled className="pointer-events-none">
+              <WifiOff className="mr-2 h-4 w-4" />
+              Requires Internet
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleSubmit} 
+              disabled={isSubmitting || !issueType || !description.trim()}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Report'
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

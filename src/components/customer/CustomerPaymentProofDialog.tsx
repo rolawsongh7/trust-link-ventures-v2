@@ -12,9 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader2, WifiOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface CustomerPaymentProofDialogProps {
   open: boolean;
@@ -34,6 +36,7 @@ export const CustomerPaymentProofDialog: React.FC<CustomerPaymentProofDialogProp
   onSuccess,
 }) => {
   const { toast } = useToast();
+  const { isOnline } = useNetworkStatus();
   const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'mobile_money'>('mobile_money');
   const [paymentReference, setPaymentReference] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -256,6 +259,16 @@ export const CustomerPaymentProofDialog: React.FC<CustomerPaymentProofDialogProp
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Offline Warning */}
+          {!isOnline && (
+            <Alert variant="destructive">
+              <WifiOff className="h-4 w-4" />
+              <AlertDescription>
+                You are offline. Payment proof upload requires an internet connection.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Payment Method */}
           <div className="space-y-3">
             <Label>Payment Method</Label>
@@ -359,22 +372,29 @@ export const CustomerPaymentProofDialog: React.FC<CustomerPaymentProofDialogProp
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!selectedFile || !paymentReference.trim() || uploading}
-          >
-            {uploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                Submit Payment Proof
-              </>
-            )}
-          </Button>
+          {!isOnline ? (
+            <Button disabled className="pointer-events-none">
+              <WifiOff className="mr-2 h-4 w-4" />
+              Requires Internet
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={!selectedFile || !paymentReference.trim() || uploading}
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Submit Payment Proof
+                </>
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -15,6 +15,9 @@ verify_jwt = true
 [functions.notify-admins]
 verify_jwt = false
 
+[functions.send-push-notification]
+verify_jwt = false
+
 [api]
 enabled = true
 port = 54321
