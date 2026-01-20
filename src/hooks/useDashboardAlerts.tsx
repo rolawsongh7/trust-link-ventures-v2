@@ -188,6 +188,11 @@ export function useDashboardAlerts() {
     }
   }, [profile?.id, user?.id, profile?.company_name, profile?.full_name, profile?.phone]);
 
+  // Initial fetch on mount
+  useEffect(() => {
+    fetchAlertsData();
+  }, [fetchAlertsData]);
+
   // Realtime subscription for auto-refresh
   useEffect(() => {
     if (!profile?.id) return;
@@ -209,6 +214,17 @@ export function useDashboardAlerts() {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'invoices' },
         () => fetchAlertsData()
+      )
+      // Also listen for unified notifications changes (for action resolutions)
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'user_notifications', filter: `user_id=eq.${profile.id}` },
+        (payload) => {
+          // If an action notification was resolved, refresh alerts
+          if (payload.eventType === 'UPDATE' && (payload.new as any)?.resolved === true) {
+            console.log('Action notification resolved, refreshing dashboard alerts');
+            fetchAlertsData();
+          }
+        }
       )
       .subscribe();
 

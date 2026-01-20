@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ActionEventService } from '@/services/actionEventService';
 
 interface CustomerPaymentProofDialogProps {
   open: boolean;
@@ -194,6 +195,11 @@ export const CustomerPaymentProofDialog: React.FC<CustomerPaymentProofDialogProp
         },
       }).catch(err => {
         console.error('Admin in-app notification error (non-blocking):', err);
+      });
+
+      // Resolve any payment-related action alerts for this order
+      await ActionEventService.resolve('order', order.id, ['payment_required', 'payment_needed']).catch(err => {
+        console.error('Action resolution error (non-blocking):', err);
       });
 
       setUploadStatus('success');

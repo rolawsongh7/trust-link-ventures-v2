@@ -11,6 +11,12 @@ interface Notification {
   read: boolean;
   link?: string;
   created_at: string;
+  // New action event fields
+  requires_action?: boolean;
+  resolved?: boolean;
+  entity_type?: string;
+  entity_id?: string;
+  deep_link?: string;
 }
 
 export const useRealtimeNotifications = () => {
