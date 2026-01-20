@@ -279,19 +279,20 @@ export class NotificationService {
     userId: string,
     orderNumber: string,
     orderId: string,
-    customerEmail: string
+    customerEmail: string,
+    hasPOD: boolean = true
   ): Promise<void> {
-    // Create in-app notification
+    // Create in-app notification with POD info
     await this.createNotification({
       userId,
       title: 'Order Delivered',
-      message: `Your order ${orderNumber} has been delivered`,
+      message: `Your order ${orderNumber} has been delivered.${hasPOD ? ' Proof of delivery is available in your order details.' : ''}`,
       type: 'order_delivered',
       link: `/portal/orders`,
-      metadata: { orderId, orderNumber }
+      metadata: { orderId, orderNumber, hasPOD }
     });
 
-    // Send email
+    // Send email with POD info
     await supabase.functions.invoke('send-email', {
       body: {
         to: customerEmail,
@@ -299,7 +300,9 @@ export class NotificationService {
         type: 'order_delivered',
         data: {
           orderNumber,
-          orderId
+          orderId,
+          hasPOD,
+          viewOrderLink: `${window.location.origin}/portal/orders`
         }
       }
     });

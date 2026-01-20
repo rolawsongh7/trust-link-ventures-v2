@@ -124,6 +124,16 @@ export const orderStatusConfig: Record<string, OrderStatusConfig> = {
     customerHint: 'Your order is temporarily on hold. We will contact you with more information.',
     group: 'active',
   },
+  delivery_confirmation_pending: {
+    label: 'Pending Confirmation',
+    customerLabel: 'Delivery Pending',
+    icon: MapPin,
+    className: 'bg-amber-100 text-amber-700 border border-amber-300 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700',
+    borderClass: 'border-l-amber-500',
+    description: 'Awaiting delivery confirmation',
+    customerHint: 'Your order delivery is pending confirmation. We will update you shortly.',
+    group: 'active',
+  },
 };
 
 // Default config for unknown statuses
@@ -160,6 +170,7 @@ export const orderStatusFilterOptions = [
   { value: 'processing', label: 'Being Prepared' },
   { value: 'ready_to_ship', label: 'Ready for Dispatch' },
   { value: 'shipped', label: 'On the Way' },
+  { value: 'delivery_confirmation_pending', label: 'Delivery Pending' },
   { value: 'delivered', label: 'Delivered' },
   { value: 'cancelled', label: 'Cancelled' },
   { value: 'delivery_failed', label: 'Delivery Issue' },
