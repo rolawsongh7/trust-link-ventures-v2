@@ -8,7 +8,8 @@ import {
   XCircle, 
   AlertTriangle,
   Loader2,
-  MapPin
+  MapPin,
+  Ban
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -134,6 +135,16 @@ export const orderStatusConfig: Record<string, OrderStatusConfig> = {
     customerHint: 'Your order delivery is pending confirmation. We will update you shortly.',
     group: 'active',
   },
+  payment_rejected: {
+    label: 'Payment Rejected',
+    customerLabel: 'Payment Issue',
+    icon: Ban,
+    className: 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700',
+    borderClass: 'border-l-red-500',
+    description: 'Payment proof was rejected',
+    customerHint: 'There was an issue with your payment proof. Please check the details and resubmit.',
+    group: 'active',
+  },
 };
 
 // Default config for unknown statuses
@@ -165,6 +176,7 @@ export function getOrderStatusIcon(status: string) {
 export const orderStatusFilterOptions = [
   { value: 'all', label: 'All Orders' },
   { value: 'pending_payment', label: 'Payment Required' },
+  { value: 'payment_rejected', label: 'Payment Issue' },
   { value: 'order_confirmed', label: 'Order Placed' },
   { value: 'payment_received', label: 'Payment Confirmed' },
   { value: 'processing', label: 'Being Prepared' },
