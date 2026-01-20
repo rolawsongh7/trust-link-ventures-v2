@@ -70,6 +70,7 @@ import InvoicesPage from "./pages/InvoicesPage";
 import PriceManagement from "./pages/admin/PriceManagement";
 import Diagnostics from "./pages/admin/Diagnostics";
 import OrderIssues from "./pages/admin/OrderIssues";
+import FinancialReconciliation from "./pages/admin/FinancialReconciliation";
 import CustomerIssueDetail from "./pages/CustomerIssueDetail";
 import CustomerIssues from "./pages/CustomerIssues";
 
@@ -203,6 +204,7 @@ const App = () => {
                         <Route path="settings" element={<Settings />} />
                         <Route path="diagnostics" element={<Diagnostics />} />
                         <Route path="orders/issues" element={<OrderIssues />} />
+                        <Route path="finance/reconciliation" element={<FinancialReconciliation />} />
                       </Route>
                       
                       {/* Mobile Hub - standalone page outside PublicLayout */}

@@ -1660,15 +1660,21 @@ export type Database = {
           manual_confirmation_notes: string | null
           notes: string | null
           order_number: string
+          payment_amount_confirmed: number | null
           payment_amount_paid: number | null
           payment_channel: string | null
           payment_confirmed_at: string | null
           payment_gateway: string | null
           payment_initiated_at: string | null
           payment_method: string | null
+          payment_mismatch_acknowledged: boolean | null
           payment_proof_uploaded_at: string | null
           payment_proof_url: string | null
           payment_reference: string | null
+          payment_rejected_at: string | null
+          payment_rejected_by: string | null
+          payment_status_reason: string | null
+          payment_verification_notes: string | null
           payment_verified_at: string | null
           payment_verified_by: string | null
           processing_started_at: string | null
@@ -1716,15 +1722,21 @@ export type Database = {
           manual_confirmation_notes?: string | null
           notes?: string | null
           order_number: string
+          payment_amount_confirmed?: number | null
           payment_amount_paid?: number | null
           payment_channel?: string | null
           payment_confirmed_at?: string | null
           payment_gateway?: string | null
           payment_initiated_at?: string | null
           payment_method?: string | null
+          payment_mismatch_acknowledged?: boolean | null
           payment_proof_uploaded_at?: string | null
           payment_proof_url?: string | null
           payment_reference?: string | null
+          payment_rejected_at?: string | null
+          payment_rejected_by?: string | null
+          payment_status_reason?: string | null
+          payment_verification_notes?: string | null
           payment_verified_at?: string | null
           payment_verified_by?: string | null
           processing_started_at?: string | null
@@ -1772,15 +1784,21 @@ export type Database = {
           manual_confirmation_notes?: string | null
           notes?: string | null
           order_number?: string
+          payment_amount_confirmed?: number | null
           payment_amount_paid?: number | null
           payment_channel?: string | null
           payment_confirmed_at?: string | null
           payment_gateway?: string | null
           payment_initiated_at?: string | null
           payment_method?: string | null
+          payment_mismatch_acknowledged?: boolean | null
           payment_proof_uploaded_at?: string | null
           payment_proof_url?: string | null
           payment_reference?: string | null
+          payment_rejected_at?: string | null
+          payment_rejected_by?: string | null
+          payment_status_reason?: string | null
+          payment_verification_notes?: string | null
           payment_verified_at?: string | null
           payment_verified_by?: string | null
           processing_started_at?: string | null
@@ -3830,6 +3848,7 @@ export type Database = {
         | "cancelled"
         | "delivery_failed"
         | "pending_payment"
+        | "payment_rejected"
       order_status_new:
         | "quote_pending"
         | "quote_sent"
@@ -4020,6 +4039,7 @@ export const Constants = {
         "cancelled",
         "delivery_failed",
         "pending_payment",
+        "payment_rejected",
       ],
       order_status_new: [
         "quote_pending",
