@@ -11,7 +11,11 @@ type NotificationType =
   | 'new_quote_request'
   | 'new_order'
   | 'payment_proof_uploaded'
-  | 'address_confirmed';
+  | 'address_confirmed'
+  // Order issue types
+  | 'order_issue_submitted'
+  | 'order_issue_reply'
+  | 'order_issue_status_change';
 
 interface NotificationData {
   userId: string;
@@ -296,6 +300,98 @@ export class NotificationService {
         data: {
           orderNumber,
           orderId
+        }
+      }
+    });
+  }
+
+  // ============ ORDER ISSUE NOTIFICATION METHODS ============
+
+  /**
+   * Notify admins when a customer submits an order issue
+   */
+  static async notifyOrderIssueSubmitted(
+    orderNumber: string,
+    customerName: string,
+    issueType: string
+  ): Promise<void> {
+    await this.notifyAllAdmins({
+      type: 'order_issue_submitted',
+      title: 'New Order Issue Reported',
+      message: `${customerName} reported "${issueType}" for order ${orderNumber}`,
+      link: '/admin/orders/issues',
+      metadata: { orderNumber, customerName, issueType }
+    });
+  }
+
+  /**
+   * Notify customer when admin replies to their issue
+   */
+  static async notifyIssueReply(
+    userId: string,
+    orderNumber: string,
+    issueId: string,
+    customerEmail: string
+  ): Promise<void> {
+    // Create in-app notification
+    await this.createNotification({
+      userId,
+      title: 'Response to Your Issue Report',
+      message: `Support team replied to your issue for order ${orderNumber}`,
+      type: 'order_issue_reply',
+      link: `/portal/order-issues/${issueId}`,
+      metadata: { orderNumber, issueId }
+    });
+
+    // Send email notification
+    await supabase.functions.invoke('send-email', {
+      body: {
+        to: customerEmail,
+        subject: `Update on Your Order Issue - ${orderNumber}`,
+        type: 'order_issue_reply',
+        data: {
+          orderNumber,
+          issueId,
+          customerPortalLink: `${window.location.origin}/portal/order-issues/${issueId}`
+        }
+      }
+    });
+  }
+
+  /**
+   * Notify customer when issue status changes
+   */
+  static async notifyIssueStatusChange(
+    userId: string,
+    orderNumber: string,
+    issueId: string,
+    newStatus: string,
+    customerEmail: string
+  ): Promise<void> {
+    const statusText = newStatus === 'resolved' ? 'Resolved' : 
+                       newStatus === 'rejected' ? 'Rejected' : 'Updated';
+    
+    // Create in-app notification
+    await this.createNotification({
+      userId,
+      title: `Issue ${statusText}`,
+      message: `Your issue for order ${orderNumber} has been ${newStatus}`,
+      type: 'order_issue_status_change',
+      link: `/portal/order-issues/${issueId}`,
+      metadata: { orderNumber, issueId, newStatus }
+    });
+
+    // Send email notification
+    await supabase.functions.invoke('send-email', {
+      body: {
+        to: customerEmail,
+        subject: `Order Issue ${statusText} - ${orderNumber}`,
+        type: 'order_issue_status_change',
+        data: {
+          orderNumber,
+          issueId,
+          newStatus,
+          customerPortalLink: `${window.location.origin}/portal/order-issues/${issueId}`
         }
       }
     });

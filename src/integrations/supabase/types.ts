@@ -249,6 +249,7 @@ export type Database = {
           direction: string | null
           id: string
           ip_address: unknown
+          issue_id: string | null
           lead_id: string | null
           order_id: string | null
           parent_communication_id: string | null
@@ -276,6 +277,7 @@ export type Database = {
           direction?: string | null
           id?: string
           ip_address?: unknown
+          issue_id?: string | null
           lead_id?: string | null
           order_id?: string | null
           parent_communication_id?: string | null
@@ -303,6 +305,7 @@ export type Database = {
           direction?: string | null
           id?: string
           ip_address?: unknown
+          issue_id?: string | null
           lead_id?: string | null
           order_id?: string | null
           parent_communication_id?: string | null
@@ -321,6 +324,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communications_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "order_issues"
             referencedColumns: ["id"]
           },
           {

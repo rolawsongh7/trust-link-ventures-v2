@@ -15,6 +15,7 @@ import { AlertTriangle, Upload, X, CheckCircle2, Image as ImageIcon } from 'luci
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { NotificationService } from '@/services/notificationService';
 
 interface OrderIssueReportDialogProps {
   open: boolean;
@@ -180,6 +181,13 @@ export const OrderIssueReportDialog: React.FC<OrderIssueReportDialogProps> = ({
         });
 
       if (error) throw error;
+
+      // Notify admins about the new issue
+      await NotificationService.notifyOrderIssueSubmitted(
+        orderNumber,
+        profile?.full_name || profile?.company_name || 'Customer',
+        issueTypeOptions.find(o => o.value === issueType)?.label || issueType
+      );
 
       setIsSuccess(true);
       toast({
