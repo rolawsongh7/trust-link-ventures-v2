@@ -576,9 +576,16 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
             )}
             
             {row.status === 'shipped' && (
-              <DropdownMenuItem onClick={() => onQuickStatusChange(row, 'delivered')}>
+              <DropdownMenuItem onClick={() => onSendTracking(row)}>
                 <CheckCircle className="mr-2 h-4 w-4" />
-                Mark as Delivered
+                Complete Delivery (POD Required)
+              </DropdownMenuItem>
+            )}
+            
+            {row.status === 'delivery_confirmation_pending' && (
+              <DropdownMenuItem onClick={() => onSendTracking(row)}>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Confirm Delivery (POD Required)
               </DropdownMenuItem>
             )}
             

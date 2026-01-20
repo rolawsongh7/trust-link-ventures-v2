@@ -32,6 +32,7 @@ export const DeliveryManagementDialog = ({
     delivery_notes: order?.delivery_notes || '',
     status: order?.status || '',
     proof_of_delivery_url: order?.proof_of_delivery_url || '',
+    delivered_by: order?.delivered_by || '',
   });
   const [loading, setLoading] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -46,6 +47,7 @@ export const DeliveryManagementDialog = ({
       'processing': ['ready_to_ship', 'cancelled'],
       'ready_to_ship': ['shipped', 'cancelled'],
       'shipped': ['delivered', 'delivery_failed'],
+      'delivery_confirmation_pending': ['delivered'],
       'delivered': [],
       'cancelled': [],
       'delivery_failed': ['shipped'],
@@ -132,6 +134,7 @@ export const DeliveryManagementDialog = ({
         delivery_notes: formData.delivery_notes || null,
         status: formData.status,
         proof_of_delivery_url: formData.proof_of_delivery_url || null,
+        delivered_by: formData.delivered_by || null,
         ...(formData.status === 'delivered' && { delivered_at: new Date().toISOString() }),
       };
 
@@ -201,7 +204,8 @@ export const DeliveryManagementDialog = ({
                   orderData.customer_id,
                   orderData.order_number,
                   order.id,
-                  orderData.customers.email
+                  orderData.customers.email,
+                  !!formData.proof_of_delivery_url // hasPOD
                 );
                 break;
             }
@@ -347,6 +351,21 @@ export const DeliveryManagementDialog = ({
                 onChange={(e) => setFormData({ ...formData, delivery_notes: e.target.value })}
               />
             </div>
+
+            {/* Delivered By field - shown when status is delivered */}
+            {formData.status === 'delivered' && (
+              <div className="space-y-2">
+                <Label htmlFor="delivered_by">
+                  Delivered By
+                </Label>
+                <Input
+                  id="delivered_by"
+                  placeholder="Enter driver or delivery person name"
+                  value={formData.delivered_by}
+                  onChange={(e) => setFormData({ ...formData, delivered_by: e.target.value })}
+                />
+              </div>
+            )}
 
             {/* Proof of Delivery Upload - shown when status is delivered */}
             {formData.status === 'delivered' && (

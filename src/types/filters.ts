@@ -23,6 +23,7 @@ export const ORDER_STATUSES = [
   'processing',
   'ready_to_ship',
   'shipped',
+  'delivery_confirmation_pending',
   'delivered',
   'cancelled',
   'delivery_failed'

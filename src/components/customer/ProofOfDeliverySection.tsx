@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Camera, CheckCircle2, FileSignature, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Camera, CheckCircle2, FileSignature, Calendar, Download } from 'lucide-react';
 import { format } from 'date-fns';
+import { ensureSignedUrl } from '@/lib/storageHelpers';
+import { toast } from 'sonner';
 
 interface ProofOfDeliverySectionProps {
   deliveryProofUrl?: string | null;
@@ -19,15 +22,31 @@ export const ProofOfDeliverySection: React.FC<ProofOfDeliverySectionProps> = ({
   compact = false
 }) => {
   const hasProof = deliveryProofUrl || proofOfDeliveryUrl || deliverySignature;
+  const [isDownloading, setIsDownloading] = useState(false);
   
-  if (!hasProof) return null;
-
   const photoUrl = deliveryProofUrl || proofOfDeliveryUrl;
+
+  const handleDownload = async () => {
+    if (!photoUrl) return;
+    
+    setIsDownloading(true);
+    try {
+      const signedUrl = await ensureSignedUrl(photoUrl);
+      window.open(signedUrl, '_blank');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download proof of delivery');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  if (!hasProof) return null;
 
   if (compact) {
     return (
-      <div className="border rounded-lg p-3 bg-green-50 dark:bg-green-900/20 space-y-2">
-        <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+      <div className="border rounded-lg p-3 bg-[hsl(var(--tl-success-bg))] dark:bg-[hsl(var(--tl-success))]/10 space-y-2">
+        <div className="flex items-center gap-2 text-[hsl(var(--tl-success-text))] dark:text-[hsl(var(--tl-success))]">
           <CheckCircle2 className="h-4 w-4" />
           <span className="text-sm font-medium">Proof of Delivery</span>
         </div>
@@ -52,7 +71,7 @@ export const ProofOfDeliverySection: React.FC<ProofOfDeliverySectionProps> = ({
               <img 
                 src={deliverySignature} 
                 alt="Delivery signature" 
-                className="h-10 bg-white rounded border p-1"
+                className="h-10 bg-background rounded border p-1"
               />
             </div>
           )}
@@ -67,9 +86,9 @@ export const ProofOfDeliverySection: React.FC<ProofOfDeliverySectionProps> = ({
   }
 
   return (
-    <Card className="border-green-200 bg-green-50/50 dark:bg-green-900/10 dark:border-green-800">
+    <Card className="border-[hsl(var(--tl-success))]/30 bg-[hsl(var(--tl-success-bg))] dark:bg-[hsl(var(--tl-success))]/10">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
+        <CardTitle className="flex items-center gap-2 text-[hsl(var(--tl-success-text))] dark:text-[hsl(var(--tl-success))]">
           <CheckCircle2 className="h-5 w-5" />
           Proof of Delivery
         </CardTitle>
@@ -81,18 +100,29 @@ export const ProofOfDeliverySection: React.FC<ProofOfDeliverySectionProps> = ({
               <Camera className="h-4 w-4" />
               <span>Delivery Photo</span>
             </div>
-            <a 
-              href={photoUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="block rounded-lg overflow-hidden border bg-white hover:opacity-90 transition-opacity max-w-sm"
-            >
-              <img 
-                src={photoUrl} 
-                alt="Delivery proof" 
-                className="w-full max-h-64 object-cover"
-              />
-            </a>
+            <div className="flex items-start gap-4">
+              <a 
+                href={photoUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block rounded-lg overflow-hidden border bg-background hover:opacity-90 transition-opacity max-w-sm"
+              >
+                <img 
+                  src={photoUrl} 
+                  alt="Delivery proof" 
+                  className="w-full max-h-64 object-cover"
+                />
+              </a>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleDownload}
+                disabled={isDownloading}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {isDownloading ? 'Opening...' : 'Download'}
+              </Button>
+            </div>
           </div>
         )}
 
@@ -102,7 +132,7 @@ export const ProofOfDeliverySection: React.FC<ProofOfDeliverySectionProps> = ({
               <FileSignature className="h-4 w-4" />
               <span>Signature</span>
             </div>
-            <div className="inline-block bg-white rounded-lg border p-3">
+            <div className="inline-block bg-background rounded-lg border p-3">
               <img 
                 src={deliverySignature} 
                 alt="Delivery signature" 

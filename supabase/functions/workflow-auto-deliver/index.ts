@@ -22,45 +22,100 @@ serve(async (req) => {
 
     const { data: orders, error: fetchError } = await supabase
       .from('orders')
-      .select('id, order_number, shipped_at')
+      .select('id, order_number, shipped_at, proof_of_delivery_url, delivery_proof_url')
       .eq('status', 'shipped')
       .lt('shipped_at', sevenDaysAgo.toISOString());
 
     if (fetchError) throw fetchError;
 
-    let updatedCount = 0;
+    let deliveredCount = 0;
+    let pendingPodCount = 0;
+
     if (orders && orders.length > 0) {
       for (const order of orders) {
-        const { error: updateError } = await supabase
-          .from('orders')
-          .update({ status: 'delivered', delivered_at: new Date().toISOString() })
-          .eq('id', order.id);
+        // Check if POD exists (either proof_of_delivery_url or delivery_proof_url)
+        const hasPod = order.proof_of_delivery_url || order.delivery_proof_url;
 
-        if (!updateError) {
-          updatedCount++;
+        if (hasPod) {
+          // POD exists - safe to auto-complete as delivered
+          const { error: updateError } = await supabase
+            .from('orders')
+            .update({ 
+              status: 'delivered', 
+              delivered_at: new Date().toISOString(),
+              delivered_by: 'system_auto_delivery'
+            })
+            .eq('id', order.id);
 
-          // Log the automation
-          await supabase.from('audit_logs').insert({
-            event_type: 'workflow_automation',
-            event_data: {
-              workflow: 'auto_mark_delivered',
-              order_id: order.id,
-              order_number: order.order_number,
-              old_status: 'shipped',
-              new_status: 'delivered',
-            },
-            severity: 'low',
-          });
+          if (!updateError) {
+            deliveredCount++;
+
+            // Log the automation
+            await supabase.from('audit_logs').insert({
+              event_type: 'workflow_automation',
+              event_data: {
+                workflow: 'auto_mark_delivered',
+                order_id: order.id,
+                order_number: order.order_number,
+                old_status: 'shipped',
+                new_status: 'delivered',
+                has_pod: true,
+                auto_completed: true,
+              },
+              severity: 'low',
+            });
+          }
+        } else {
+          // No POD - flag as delivery_confirmation_pending
+          const { error: updateError } = await supabase
+            .from('orders')
+            .update({ 
+              status: 'delivery_confirmation_pending'
+            })
+            .eq('id', order.id);
+
+          if (!updateError) {
+            pendingPodCount++;
+
+            // Log the pending POD alert
+            await supabase.from('audit_logs').insert({
+              event_type: 'workflow_automation',
+              event_data: {
+                workflow: 'auto_delivery_blocked',
+                order_id: order.id,
+                order_number: order.order_number,
+                old_status: 'shipped',
+                new_status: 'delivery_confirmation_pending',
+                has_pod: false,
+                reason: 'Proof of delivery required before closure',
+              },
+              severity: 'medium',
+            });
+
+            // Create admin notification for POD requirement
+            await supabase.from('notifications').insert({
+              title: 'Proof of Delivery Required',
+              message: `Order ${order.order_number} requires proof of delivery before it can be marked as delivered.`,
+              type: 'order_pod_required',
+              data: {
+                order_id: order.id,
+                order_number: order.order_number,
+              },
+            });
+          }
         }
       }
     }
 
+    console.log(`Auto-delivery processed: ${deliveredCount} delivered, ${pendingPodCount} pending POD`);
+
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Processed ${updatedCount} orders`,
+        message: `Processed ${deliveredCount + pendingPodCount} orders`,
         ordersChecked: orders?.length || 0,
-        ordersUpdated: updatedCount,
+        ordersDelivered: deliveredCount,
+        ordersPendingPod: pendingPodCount,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -68,6 +123,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
+    console.error('Auto-deliver error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {

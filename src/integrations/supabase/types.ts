@@ -1638,6 +1638,7 @@ export type Database = {
           currency: string
           customer_id: string | null
           delivered_at: string | null
+          delivered_by: string | null
           delivery_address_confirmed_at: string | null
           delivery_address_id: string | null
           delivery_address_requested_at: string | null
@@ -1693,6 +1694,7 @@ export type Database = {
           currency?: string
           customer_id?: string | null
           delivered_at?: string | null
+          delivered_by?: string | null
           delivery_address_confirmed_at?: string | null
           delivery_address_id?: string | null
           delivery_address_requested_at?: string | null
@@ -1748,6 +1750,7 @@ export type Database = {
           currency?: string
           customer_id?: string | null
           delivered_at?: string | null
+          delivered_by?: string | null
           delivery_address_confirmed_at?: string | null
           delivery_address_id?: string | null
           delivery_address_requested_at?: string | null
@@ -3822,6 +3825,7 @@ export type Database = {
         | "processing"
         | "ready_to_ship"
         | "shipped"
+        | "delivery_confirmation_pending"
         | "delivered"
         | "cancelled"
         | "delivery_failed"
@@ -4011,6 +4015,7 @@ export const Constants = {
         "processing",
         "ready_to_ship",
         "shipped",
+        "delivery_confirmation_pending",
         "delivered",
         "cancelled",
         "delivery_failed",

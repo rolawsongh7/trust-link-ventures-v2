@@ -339,10 +339,25 @@ export const OrderCard = ({
                         <span>Update Tracking Info</span>
                       </DropdownMenuItem>
                     )}
-                    {onQuickStatusChange && (
-                      <DropdownMenuItem onClick={() => onQuickStatusChange(order, 'delivered')} className="cursor-pointer">
+                    {onSendTracking && (
+                      <DropdownMenuItem onClick={() => onSendTracking(order)} className="cursor-pointer">
                         <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                        <span>Mark as Delivered</span>
+                        <span>Complete Delivery (POD Required)</span>
+                      </DropdownMenuItem>
+                    )}
+                  </>
+                )}
+
+                {order.status === 'delivery_confirmation_pending' && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-xs uppercase text-amber-600">
+                      Pending POD
+                    </DropdownMenuLabel>
+                    {onSendTracking && (
+                      <DropdownMenuItem onClick={() => onSendTracking(order)} className="cursor-pointer">
+                        <CheckCircle className="mr-2 h-4 w-4 text-amber-500" />
+                        <span>Confirm Delivery (POD Required)</span>
                       </DropdownMenuItem>
                     )}
                   </>
