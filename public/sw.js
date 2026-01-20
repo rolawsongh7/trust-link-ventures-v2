@@ -90,8 +90,14 @@ self.addEventListener('push', (event) => {
     icon: '/favicon.png',
     badge: '/favicon.png',
     vibrate: [200, 100, 200],
-    data: data.data || {},
+    data: {
+      ...data.data,
+      link: data.link || data.data?.link || '/portal',
+      notificationId: data.notificationId || Date.now().toString(),
+    },
     actions: data.actions || [],
+    tag: data.tag || 'default',
+    renotify: true,
   };
 
   event.waitUntil(
@@ -99,26 +105,72 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// Notification click event
+// Notification click event - handle deep linking
 self.addEventListener('notificationclick', (event) => {
   console.log('[Service Worker] Notification click');
   event.notification.close();
 
-  const urlToOpen = event.notification.data?.url || '/customer';
+  // Get the deep link from notification data
+  const link = event.notification.data?.link;
+  const baseUrl = self.location.origin;
+  
+  // Construct full URL
+  let urlToOpen = baseUrl;
+  if (link) {
+    if (link.startsWith('http')) {
+      urlToOpen = link;
+    } else if (link.startsWith('/')) {
+      urlToOpen = baseUrl + link;
+    } else {
+      urlToOpen = baseUrl + '/' + link;
+    }
+  }
+
+  console.log('[Service Worker] Opening URL:', urlToOpen);
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        // Check if window is already open
+        // Check if a window is already open with the same origin
         for (const client of clientList) {
-          if (client.url === urlToOpen && 'focus' in client) {
-            return client.focus();
+          const clientUrl = new URL(client.url);
+          const targetUrl = new URL(urlToOpen);
+          
+          // If same origin, focus and navigate
+          if (clientUrl.origin === targetUrl.origin && 'focus' in client) {
+            return client.focus().then((focusedClient) => {
+              // Navigate to the deep link
+              if ('navigate' in focusedClient) {
+                return focusedClient.navigate(urlToOpen);
+              }
+              // Fallback: post message to navigate
+              focusedClient.postMessage({
+                type: 'NAVIGATE',
+                url: urlToOpen,
+              });
+              return focusedClient;
+            });
           }
         }
-        // Open new window
+        
+        // No existing window, open new one
         if (clients.openWindow) {
           return clients.openWindow(urlToOpen);
         }
       })
   );
+});
+
+// Handle notification close
+self.addEventListener('notificationclose', (event) => {
+  console.log('[Service Worker] Notification closed:', event.notification.tag);
+});
+
+// Handle messages from the main app
+self.addEventListener('message', (event) => {
+  console.log('[Service Worker] Message received:', event.data);
+  
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

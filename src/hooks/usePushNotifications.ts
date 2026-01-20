@@ -1,20 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PushNotifications, Token, PushNotificationSchema, ActionPerformed } from '@capacitor/push-notifications';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { useToast } from '@/hooks/use-toast';
+import { registerDevice, unregisterAllDevices, updateDeviceActivity } from '@/lib/deviceRegistration';
 
 interface NotificationHook {
   isSupported: boolean;
   token: string | null;
+  isRegistered: boolean;
   requestPermissions: () => Promise<void>;
   registerForNotifications: () => Promise<void>;
-  sendLocalNotification: (title: string, body: string) => Promise<void>;
+  sendLocalNotification: (title: string, body: string, data?: Record<string, any>) => Promise<void>;
+  unregisterDevice: () => Promise<void>;
 }
 
 export const usePushNotifications = (): NotificationHook => {
   const [isSupported, setIsSupported] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+  const [isRegistered, setIsRegistered] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -24,6 +28,15 @@ export const usePushNotifications = (): NotificationHook => {
     if (Capacitor.isNativePlatform()) {
       initializePushNotifications();
     }
+
+    // Update device activity periodically
+    const activityInterval = setInterval(() => {
+      updateDeviceActivity();
+    }, 5 * 60 * 1000); // Every 5 minutes
+
+    return () => {
+      clearInterval(activityInterval);
+    };
   }, []);
 
   const initializePushNotifications = async () => {
@@ -31,15 +44,35 @@ export const usePushNotifications = (): NotificationHook => {
     await addListeners();
   };
 
+  const navigateToDeepLink = useCallback((link: string | undefined) => {
+    if (!link) return;
+    
+    // Handle deep link navigation
+    // Use window.location for simplicity - works across platforms
+    if (link.startsWith('/')) {
+      window.location.href = link;
+    } else if (link.startsWith('http')) {
+      window.location.href = link;
+    }
+  }, []);
+
   const addListeners = async () => {
     // Listen for registration success
-    await PushNotifications.addListener('registration', (token: Token) => {
-      console.log('Push registration success, token: ', token.value);
-      setToken(token.value);
-      toast({
-        title: "Notifications Enabled",
-        description: "You'll receive important updates from Trust Link Ventures.",
-      });
+    await PushNotifications.addListener('registration', async (tokenData: Token) => {
+      console.log('Push registration success, token: ', tokenData.value);
+      setToken(tokenData.value);
+
+      // Register device in database
+      const result = await registerDevice(tokenData.value);
+      if (result.success) {
+        setIsRegistered(true);
+        toast({
+          title: "Notifications Enabled",
+          description: "You'll receive important updates from Trust Link Ventures.",
+        });
+      } else {
+        console.error('Failed to register device in database:', result.error);
+      }
     });
 
     // Listen for registration errors
@@ -52,7 +85,7 @@ export const usePushNotifications = (): NotificationHook => {
       });
     });
 
-    // Listen for push notifications received
+    // Listen for push notifications received (foreground)
     await PushNotifications.addListener(
       'pushNotificationReceived',
       (notification: PushNotificationSchema) => {
@@ -60,7 +93,11 @@ export const usePushNotifications = (): NotificationHook => {
         
         // Show a local notification when app is in foreground
         if (notification.title && notification.body) {
-          sendLocalNotification(notification.title, notification.body);
+          sendLocalNotification(
+            notification.title, 
+            notification.body,
+            notification.data
+          );
         }
       }
     );
@@ -68,14 +105,22 @@ export const usePushNotifications = (): NotificationHook => {
     // Listen for push notification actions (when user taps notification)
     await PushNotifications.addListener(
       'pushNotificationActionPerformed',
-      (notification: ActionPerformed) => {
-        console.log('Push notification action performed: ', JSON.stringify(notification));
+      (action: ActionPerformed) => {
+        console.log('Push notification action performed: ', JSON.stringify(action));
         
-        // Handle notification tap - could navigate to specific page
-        toast({
-          title: notification.notification.title || "Notification",
-          description: notification.notification.body || "New notification received",
-        });
+        // Get deep link from notification data
+        const link = action.notification.data?.link as string | undefined;
+        
+        if (link) {
+          // Navigate to the deep link
+          navigateToDeepLink(link);
+        } else {
+          // Fallback toast
+          toast({
+            title: action.notification.title || "Notification",
+            description: action.notification.body || "New notification received",
+          });
+        }
       }
     );
   };
@@ -128,7 +173,11 @@ export const usePushNotifications = (): NotificationHook => {
     }
   };
 
-  const sendLocalNotification = async (title: string, body: string) => {
+  const sendLocalNotification = async (
+    title: string, 
+    body: string, 
+    data?: Record<string, any>
+  ) => {
     if (!Capacitor.isNativePlatform()) {
       // Fallback for web - show toast
       toast({
@@ -153,7 +202,7 @@ export const usePushNotifications = (): NotificationHook => {
               sound: 'beep.wav',
               attachments: undefined,
               actionTypeId: '',
-              extra: null
+              extra: data || null
             }
           ]
         });
@@ -163,11 +212,27 @@ export const usePushNotifications = (): NotificationHook => {
     }
   };
 
+  const unregisterDevice = async () => {
+    try {
+      await unregisterAllDevices();
+      setToken(null);
+      setIsRegistered(false);
+      toast({
+        title: "Notifications Disabled",
+        description: "You will no longer receive push notifications.",
+      });
+    } catch (error) {
+      console.error('Error unregistering device:', error);
+    }
+  };
+
   return {
     isSupported,
     token,
+    isRegistered,
     requestPermissions,
     registerForNotifications,
     sendLocalNotification,
+    unregisterDevice,
   };
 };
