@@ -12,6 +12,11 @@ interface AdminNotificationRequest {
   message: string;
   link?: string;
   metadata?: Record<string, any>;
+  // New action event fields
+  requiresAction?: boolean;
+  entityType?: string;
+  entityId?: string;
+  deepLink?: string;
 }
 
 serve(async (req) => {
@@ -20,9 +25,19 @@ serve(async (req) => {
   }
 
   try {
-    const { type, title, message, link, metadata }: AdminNotificationRequest = await req.json();
+    const { 
+      type, 
+      title, 
+      message, 
+      link, 
+      metadata,
+      requiresAction,
+      entityType,
+      entityId,
+      deepLink
+    }: AdminNotificationRequest = await req.json();
 
-    console.log('Admin notification request:', { type, title, message, link });
+    console.log('Admin notification request:', { type, title, message, link, requiresAction, entityType, entityId });
 
     if (!type || !title || !message) {
       return new Response(
@@ -54,14 +69,21 @@ serve(async (req) => {
       );
     }
 
-    // Create notifications for all admins
+    // Create notifications for all admins with action fields
     const notifications = adminRoles.map(admin => ({
       user_id: admin.user_id,
       type,
       title,
       message,
-      link,
+      link: deepLink || link,
       metadata: metadata || {},
+      // New action event fields
+      requires_action: requiresAction || false,
+      resolved: false,
+      entity_type: entityType,
+      entity_id: entityId,
+      deep_link: deepLink || link,
+      role: 'admin',
     }));
 
     const { error: notificationError } = await supabase
@@ -73,7 +95,36 @@ serve(async (req) => {
       throw notificationError;
     }
 
-    console.log(`Created ${notifications.length} admin notifications for type: ${type}`);
+    console.log(`Created ${notifications.length} admin notifications for type: ${type}${requiresAction ? ' (requires action)' : ''}`);
+
+    // Send push notifications to admins if requires_action
+    if (requiresAction) {
+      for (const admin of adminRoles) {
+        try {
+          // Call send-push-notification edge function for each admin
+          const pushResponse = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({
+              userId: admin.user_id,
+              title,
+              body: message,
+              link: deepLink || link,
+              data: { entityType, entityId }
+            })
+          });
+          
+          if (!pushResponse.ok) {
+            console.warn(`Push notification failed for admin ${admin.user_id}:`, await pushResponse.text());
+          }
+        } catch (pushError) {
+          console.warn(`Push notification error for admin ${admin.user_id}:`, pushError);
+        }
+      }
+    }
 
     return new Response(
       JSON.stringify({ 

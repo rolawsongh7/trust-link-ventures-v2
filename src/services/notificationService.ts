@@ -38,10 +38,18 @@ interface AdminNotificationData {
   metadata?: Record<string, any>;
 }
 
+interface ActionNotificationData extends NotificationData {
+  requiresAction?: boolean;
+  entityType?: 'order' | 'quote' | 'issue' | 'invoice';
+  entityId?: string;
+  deepLink?: string;
+  role?: 'customer' | 'admin';
+}
+
 export class NotificationService {
-  static async createNotification(data: NotificationData): Promise<boolean> {
+  static async createNotification(data: ActionNotificationData): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { data: notification, error } = await supabase
         .from('user_notifications')
         .insert({
           user_id: data.userId,
@@ -50,11 +58,39 @@ export class NotificationService {
           type: data.type,
           link: data.link,
           metadata: data.metadata || {},
-        });
+          // New action event fields
+          requires_action: data.requiresAction || false,
+          resolved: false,
+          entity_type: data.entityType,
+          entity_id: data.entityId,
+          deep_link: data.deepLink || data.link,
+          role: data.role || 'customer',
+        })
+        .select()
+        .single();
 
       if (error) {
         console.error('Error creating notification:', error);
         return false;
+      }
+
+      // If requires action, also send push notification
+      if (data.requiresAction && notification) {
+        await supabase.functions.invoke('send-push-notification', {
+          body: {
+            userId: data.userId,
+            title: data.title,
+            body: data.message,
+            link: data.deepLink || data.link,
+            data: { 
+              entityType: data.entityType, 
+              entityId: data.entityId,
+              notificationId: notification.id
+            }
+          }
+        }).catch(err => {
+          console.error('Push notification error (non-blocking):', err);
+        });
       }
 
       return true;
