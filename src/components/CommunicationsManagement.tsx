@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -55,6 +56,7 @@ interface Lead {
 }
 
 const CommunicationsManagement = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [communications, setCommunications] = useState<Communication[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -78,6 +80,26 @@ const CommunicationsManagement = () => {
       communication_date: ''
     }
   });
+
+  // Handle ?open=compose query parameter for Quick Actions
+  useEffect(() => {
+    const openAction = searchParams.get('open');
+    if (openAction === 'compose') {
+      form.reset({
+        communication_type: 'email',
+        subject: '',
+        content: '',
+        customer_id: '',
+        lead_id: '',
+        communication_date: new Date().toISOString().split('T')[0]
+      });
+      setEditingCommunication(null);
+      setReplyingToCommunication(null);
+      setIsDialogOpen(true);
+      // Clean up URL
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams, form]);
 
   useEffect(() => {
     fetchCommunications();

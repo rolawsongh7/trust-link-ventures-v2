@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,7 @@ interface Customer {
 }
 
 const CustomerManagement = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -64,6 +66,32 @@ const CustomerManagement = () => {
       notes: ''
     }
   });
+
+  // Handle ?open=add query parameter for Quick Actions
+  useEffect(() => {
+    const openAction = searchParams.get('open');
+    if (openAction === 'add') {
+      form.reset({
+        company_name: '',
+        contact_name: '',
+        email: '',
+        phone: '',
+        industry: '',
+        customer_status: 'active',
+        priority: 'medium',
+        annual_revenue: 0,
+        address: '',
+        city: '',
+        country: '',
+        website: '',
+        notes: ''
+      });
+      setEditingCustomer(null);
+      setIsDialogOpen(true);
+      // Clean up URL
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams, form]);
 
   useEffect(() => {
     fetchCustomers();
