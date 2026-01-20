@@ -980,6 +980,7 @@ export type Database = {
       }
       invoices: {
         Row: {
+          amount_paid: number | null
           created_at: string
           created_by: string | null
           currency: string
@@ -1004,6 +1005,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          amount_paid?: number | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -1028,6 +1030,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          amount_paid?: number | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -1672,6 +1675,7 @@ export type Database = {
           payment_clarification_message: string | null
           payment_clarification_requested_at: string | null
           payment_confirmed_at: string | null
+          payment_date: string | null
           payment_gateway: string | null
           payment_initiated_at: string | null
           payment_method: string | null
@@ -1736,6 +1740,7 @@ export type Database = {
           payment_clarification_message?: string | null
           payment_clarification_requested_at?: string | null
           payment_confirmed_at?: string | null
+          payment_date?: string | null
           payment_gateway?: string | null
           payment_initiated_at?: string | null
           payment_method?: string | null
@@ -1800,6 +1805,7 @@ export type Database = {
           payment_clarification_message?: string | null
           payment_clarification_requested_at?: string | null
           payment_confirmed_at?: string | null
+          payment_date?: string | null
           payment_gateway?: string | null
           payment_initiated_at?: string | null
           payment_method?: string | null
@@ -1918,6 +1924,60 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      payment_records: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          order_id: string | null
+          payment_date: string
+          payment_method: string | null
+          payment_reference: string | null
+          recorded_by: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          order_id?: string | null
+          payment_date: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          recorded_by?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          order_id?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          recorded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_records_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_records_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_settings: {
         Row: {
