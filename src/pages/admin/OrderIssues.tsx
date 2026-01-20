@@ -55,6 +55,8 @@ interface OrderIssue {
   resolved_by: string | null;
   created_at: string;
   updated_at: string;
+  source?: string | null;
+  affected_items?: any;
   orders?: {
     order_number: string;
     status: string;
@@ -97,6 +99,7 @@ const OrderIssues = () => {
   const [issueMessages, setIssueMessages] = useState<any[]>([]);
   const [replyContent, setReplyContent] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
+  const [sourceFilter, setSourceFilter] = useState<string>('all');
 
   useEffect(() => {
     fetchIssues();
@@ -281,13 +284,27 @@ const OrderIssues = () => {
       issue.description.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesTab = activeTab === 'all' || issue.status === activeTab;
+    const matchesSource = sourceFilter === 'all' || issue.source === sourceFilter;
     
-    return matchesSearch && matchesTab;
+    return matchesSearch && matchesTab && matchesSource;
   });
 
   const getTabCount = (status: string) => {
     if (status === 'all') return issues.length;
     return issues.filter(i => i.status === status).length;
+  };
+
+  const getSourceBadge = (source?: string) => {
+    switch (source) {
+      case 'customer_portal':
+        return <Badge className="bg-blue-100 text-blue-800 text-xs">Customer Portal</Badge>;
+      case 'internal':
+        return <Badge className="bg-gray-100 text-gray-800 text-xs">Internal</Badge>;
+      case 'admin':
+        return <Badge className="bg-purple-100 text-purple-800 text-xs">Admin</Badge>;
+      default:
+        return <Badge variant="outline" className="text-xs">{source || 'Unknown'}</Badge>;
+    }
   };
 
   const renderIssueRow = (issue: OrderIssue) => (
@@ -301,6 +318,7 @@ const OrderIssues = () => {
       </TableCell>
       <TableCell>{getIssueTypeBadge(issue.issue_type)}</TableCell>
       <TableCell>{getStatusBadge(issue.status)}</TableCell>
+      <TableCell>{getSourceBadge(issue.source)}</TableCell>
       <TableCell className="text-sm text-muted-foreground">
         {format(new Date(issue.created_at), 'MMM d, yyyy')}
       </TableCell>
@@ -397,6 +415,17 @@ const OrderIssues = () => {
                 className="pl-10"
               />
             </div>
+            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by source" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sources</SelectItem>
+                <SelectItem value="customer_portal">Customer Portal</SelectItem>
+                <SelectItem value="internal">Internal</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -435,6 +464,7 @@ const OrderIssues = () => {
                   <TableHead>Customer</TableHead>
                   <TableHead>Issue Type</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Source</TableHead>
                   <TableHead>Reported</TableHead>
                   <TableHead>Photos</TableHead>
                   <TableHead>Actions</TableHead>

@@ -177,7 +177,8 @@ export const OrderIssueReportDialog: React.FC<OrderIssueReportDialogProps> = ({
           customer_id: customerUser.customer_id,
           issue_type: issueType,
           description: description.trim(),
-          photos: photos
+          photos: photos,
+          source: 'customer_portal'
         });
 
       if (error) throw error;

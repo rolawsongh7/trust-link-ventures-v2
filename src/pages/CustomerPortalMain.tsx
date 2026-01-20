@@ -12,7 +12,8 @@ import {
   ArrowRight,
   Building2,
   DollarSign,
-  Heart
+  Heart,
+  AlertTriangle
 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
@@ -34,6 +35,7 @@ interface DashboardStats {
   totalQuotes: number;
   pendingQuotes: number;
   totalOrders: number;
+  pendingIssues: number;
   recentActivity: any[];
 }
 
@@ -46,6 +48,7 @@ const CustomerPortalMain = () => {
     totalQuotes: 0,
     pendingQuotes: 0,
     totalOrders: 0,
+    pendingIssues: 0,
     recentActivity: []
   });
   const [loading, setLoading] = useState(true);
@@ -88,6 +91,15 @@ const CustomerPortalMain = () => {
 
       const totalOrders = orders?.length || 0;
 
+      // Fetch pending order issues
+      const { data: issuesData } = await supabase
+        .from('order_issues')
+        .select('id, status')
+        .eq('customer_id', customerId)
+        .in('status', ['submitted', 'reviewing']);
+
+      const pendingIssues = issuesData?.length || 0;
+
       // Fetch recent activity (last 5 quotes)
       const recentActivity = quotes?.slice(0, 5) || [];
 
@@ -95,6 +107,7 @@ const CustomerPortalMain = () => {
         totalQuotes,
         pendingQuotes,
         totalOrders,
+        pendingIssues,
         recentActivity
       });
     } catch (error) {
@@ -145,6 +158,15 @@ const CustomerPortalMain = () => {
       href: '/portal/favorites',
       color: 'from-[#E11D48] to-[#BE123C]',
       borderColor: 'border-l-rose-500'
+    },
+    {
+      title: 'Order Issues',
+      description: 'Report problems and track resolutions',
+      icon: AlertTriangle,
+      href: '/portal/order-issues',
+      color: 'from-[#DC2626] to-[#B91C1C]',
+      badge: stats.pendingIssues > 0 ? stats.pendingIssues : undefined,
+      borderColor: 'border-l-red-500'
     },
     {
       title: 'Communications',
