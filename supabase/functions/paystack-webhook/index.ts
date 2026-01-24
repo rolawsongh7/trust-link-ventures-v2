@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
             // Notify admin
             await supabase.functions.invoke('send-email', {
               body: {
-                to: 'admin@trustlinkventures.com',
+                to: 'info@trustlinkcompany.com',
                 subject: `New Payment Received - ${orderData.order_number}`,
                 html: `
                   <h2>Payment Received</h2>

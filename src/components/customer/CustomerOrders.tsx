@@ -201,7 +201,7 @@ export const CustomerOrders: React.FC = () => {
         console.log('🔍 DEBUG - Tried email:', profile.email);
         toast({
           title: "No Customer Profile",
-          description: `Your account (${profile.email}) is not linked to a customer profile. Please contact support at support@trustlinkventures.com`,
+          description: `Your account (${profile.email}) is not linked to a customer profile. Please contact support at support@trustlinkcompany.com`,
           variant: "destructive",
         });
         setOrders([]);
