@@ -264,7 +264,7 @@ const OrderTracking = () => {
               If you continue to experience issues, please contact our support team with your tracking link.
             </p>
             <Button
-              onClick={() => window.location.href = 'mailto:support@trustlinkventures.com?subject=Tracking%20Issue'}
+              onClick={() => window.location.href = 'mailto:support@trustlinkcompany.com?subject=Tracking%20Issue'}
               variant="outline"
               className="w-full"
             >
@@ -497,8 +497,8 @@ const OrderTracking = () => {
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground text-center">
               Questions about your order? Contact us at{' '}
-              <a href="mailto:support@trustlinkventures.com" className="text-primary hover:underline">
-                support@trustlinkventures.com
+              <a href="mailto:support@trustlinkcompany.com" className="text-primary hover:underline">
+                support@trustlinkcompany.com
               </a>
             </p>
           </CardContent>

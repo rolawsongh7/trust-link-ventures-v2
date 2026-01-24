@@ -69,8 +69,8 @@ serve(async (req) => {
     // Send email to admin
     try {
       await resend.emails.send({
-        from: 'Trust Link Ventures <info@trustlinkcompany.com>',
-        to: ['trustlventuresghana_a01@yahoo.com'],
+        from: 'Trust Link Company <info@trustlinkcompany.com>',
+        to: ['info@trustlinkcompany.com'],
         subject: `✅ Delivery Address Confirmed - Order ${orderNumber}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -133,7 +133,7 @@ serve(async (req) => {
     // Send confirmation email to customer
     try {
       await resend.emails.send({
-        from: 'Trust Link Ventures <info@trustlinkcompany.com>',
+        from: 'Trust Link Company <info@trustlinkcompany.com>',
         to: [customerEmail],
         subject: `Delivery Address Confirmed - Order ${orderNumber}`,
         html: `

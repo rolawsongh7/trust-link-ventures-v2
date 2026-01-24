@@ -12,8 +12,8 @@ const DemoModeContext = createContext<DemoModeContextType>({
 
 // Demo accounts for App Store reviewers
 const DEMO_ACCOUNTS = [
-  'appstore-customer@trustlinkventures.com',
-  'appstore-admin@trustlinkventures.com',
+  'appstore-customer@trustlinkcompany.com',
+  'appstore-admin@trustlinkcompany.com',
 ];
 
 export function DemoModeProvider({ children, userEmail }: { children: ReactNode; userEmail?: string | null }) {
