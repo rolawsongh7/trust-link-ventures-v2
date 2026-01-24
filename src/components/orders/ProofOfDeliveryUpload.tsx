@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Upload, X, Image, FileText, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { NotificationService } from '@/services/notificationService';
 
 interface ProofOfDeliveryUploadProps {
   orderId: string;
@@ -13,6 +14,7 @@ interface ProofOfDeliveryUploadProps {
   onUploadComplete: (url: string) => void;
   existingUrl?: string;
   required?: boolean;
+  notifyCustomer?: boolean; // Option to notify customer when POD is uploaded
 }
 
 export const ProofOfDeliveryUpload: React.FC<ProofOfDeliveryUploadProps> = ({
@@ -21,6 +23,7 @@ export const ProofOfDeliveryUpload: React.FC<ProofOfDeliveryUploadProps> = ({
   onUploadComplete,
   existingUrl,
   required = false,
+  notifyCustomer = true,
 }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(existingUrl || null);
@@ -70,13 +73,46 @@ export const ProofOfDeliveryUpload: React.FC<ProofOfDeliveryUploadProps> = ({
       setPreviewUrl(file.type.startsWith('image/') ? URL.createObjectURL(file) : url);
       onUploadComplete(url);
       toast.success('Proof of delivery uploaded');
+
+      // Notify customer if enabled
+      if (notifyCustomer) {
+        try {
+          // Get customer info from the order
+          const { data: orderData } = await supabase
+            .from('orders')
+            .select('customer_id, customers(email)')
+            .eq('id', orderId)
+            .single();
+
+          if (orderData?.customers?.email) {
+            // Get user_id from customer record
+            const { data: customerUser } = await supabase
+              .from('customer_users')
+              .select('user_id')
+              .eq('customer_id', orderData.customer_id)
+              .maybeSingle();
+
+            if (customerUser?.user_id) {
+              await NotificationService.notifyPODUploaded(
+                customerUser.user_id,
+                orderNumber,
+                orderId,
+                orderData.customers.email
+              );
+            }
+          }
+        } catch (notifyError) {
+          console.error('Error notifying customer about POD:', notifyError);
+          // Don't fail the upload if notification fails
+        }
+      }
     } catch (error: any) {
       console.error('POD upload error:', error);
       toast.error(error.message || 'Failed to upload proof of delivery');
     } finally {
       setUploading(false);
     }
-  }, [orderId, onUploadComplete]);
+  }, [orderId, orderNumber, onUploadComplete, notifyCustomer]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

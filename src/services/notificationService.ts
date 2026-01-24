@@ -19,7 +19,9 @@ type NotificationType =
   // Order issue types
   | 'order_issue_submitted'
   | 'order_issue_reply'
-  | 'order_issue_status_change';
+  | 'order_issue_status_change'
+  // POD notification
+  | 'pod_uploaded';
 
 interface NotificationData {
   userId: string;
@@ -527,6 +529,42 @@ export class NotificationService {
           issueId,
           newStatus,
           customerPortalLink: `${window.location.origin}/portal/order-issues/${issueId}`
+        }
+      }
+    });
+  }
+
+  // ============ PROOF OF DELIVERY NOTIFICATION METHODS ============
+
+  /**
+   * Notify customer when proof of delivery is uploaded
+   */
+  static async notifyPODUploaded(
+    userId: string,
+    orderNumber: string,
+    orderId: string,
+    customerEmail: string
+  ): Promise<void> {
+    // Create in-app notification
+    await this.createNotification({
+      userId,
+      title: 'Proof of Delivery Uploaded',
+      message: `Delivery proof for order ${orderNumber} has been uploaded. View it in your order details.`,
+      type: 'pod_uploaded',
+      link: `/portal/orders`,
+      metadata: { orderId, orderNumber }
+    });
+
+    // Send email notification
+    await supabase.functions.invoke('send-email', {
+      body: {
+        to: customerEmail,
+        subject: `Proof of Delivery Available - Order ${orderNumber}`,
+        type: 'pod_uploaded',
+        data: {
+          orderNumber,
+          orderId,
+          customerPortalLink: `${window.location.origin}/portal/orders`
         }
       }
     });
