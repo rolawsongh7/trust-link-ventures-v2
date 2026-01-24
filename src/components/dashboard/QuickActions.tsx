@@ -52,7 +52,7 @@ export const QuickActions = () => {
               key={action.title}
               onClick={action.action}
               aria-label={`${action.title}: ${action.description}`}
-              className="group relative h-auto min-h-[80px] flex flex-col items-start p-5 bg-white rounded-xl border border-[#E2E8F0] hover:border-[#3B82F6]/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="group relative h-auto min-h-[80px] flex flex-col items-start p-5 bg-white rounded-xl border border-[#E2E8F0] hover:border-[#3B82F6]/50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 touch-manipulation"
             >
               <div className={`p-3 rounded-xl mb-3 ${action.color} bg-gradient-to-br group-hover:scale-110 transition-transform duration-200`}>
                 <Icon className="h-6 w-6" />

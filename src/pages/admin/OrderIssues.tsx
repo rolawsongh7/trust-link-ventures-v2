@@ -42,6 +42,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { MobileIssueCard } from '@/components/admin/MobileIssueCard';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
 
 interface OrderIssue {
   id: string;
@@ -88,6 +90,7 @@ const statusLabels: Record<string, string> = {
 const OrderIssues = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isMobile, isTablet } = useMobileDetection();
   const [issues, setIssues] = useState<OrderIssue[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -101,6 +104,8 @@ const OrderIssues = () => {
   const [replyContent, setReplyContent] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
   const [sourceFilter, setSourceFilter] = useState<string>('all');
+  
+  const showMobileCards = isMobile || isTablet;
 
   useEffect(() => {
     fetchIssues();
@@ -343,20 +348,20 @@ const OrderIssues = () => {
   );
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 sm:p-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <AlertTriangle className="h-8 w-8 text-orange-500" />
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+          <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500" />
           Order Issues
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           Manage customer-reported order issues and delivery problems
         </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -457,24 +462,42 @@ const OrderIssues = () => {
                 {searchTerm ? 'Try adjusting your search terms' : 'No order issues have been reported yet'}
               </p>
             </div>
+          ) : showMobileCards ? (
+            /* Mobile Card View */
+            <div className="grid grid-cols-1 gap-3">
+              {filteredIssues.map((issue) => (
+                <MobileIssueCard 
+                  key={issue.id} 
+                  issue={issue} 
+                  onViewDetails={openIssueDetail}
+                />
+              ))}
+            </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Issue Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Reported</TableHead>
-                  <TableHead>Photos</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredIssues.map(renderIssueRow)}
-              </TableBody>
-            </Table>
+            /* Desktop Table View */
+            <div className="relative">
+              <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background to-transparent pointer-events-none z-10 lg:hidden" />
+              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10 lg:hidden" />
+              <div className="overflow-x-auto scrollbar-hide">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Issue Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Source</TableHead>
+                      <TableHead>Reported</TableHead>
+                      <TableHead>Photos</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredIssues.map(renderIssueRow)}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

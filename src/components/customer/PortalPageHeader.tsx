@@ -65,9 +65,9 @@ export const PortalPageHeader: React.FC<PortalPageHeaderProps> = ({
           </div>
           
           {/* Total count badge */}
-          <div className="rounded-full bg-trustlink-gold px-4 py-2 shadow-md">
+          <div className="rounded-full bg-trustlink-gold px-4 py-2 shadow-md flex-shrink-0">
             <div className="flex items-center gap-2">
-              <TotalIcon className="h-5 w-5 text-white" />
+              <TotalIcon className="h-5 w-5 text-white flex-shrink-0" />
               <span className="text-white font-semibold text-lg">{totalCount}</span>
             </div>
           </div>
