@@ -51,6 +51,8 @@ interface Order {
       contact_name: string;
     };
   };
+  // Added for issue tracking
+  has_active_issue?: boolean;
 }
 
 export const CustomerOrders: React.FC = () => {
@@ -234,9 +236,33 @@ export const CustomerOrders: React.FC = () => {
         throw ordersError;
       }
 
-      console.log('✅ Orders data:', ordersData);
-      console.log('🔍 DEBUG - Number of orders found:', ordersData?.length || 0);
-      setOrders(ordersData || []);
+      // Fetch active issues for these orders to show issue badges
+      const orderIds = ordersData?.map(o => o.id) || [];
+      let activeIssuesMap: Record<string, boolean> = {};
+      
+      if (orderIds.length > 0) {
+        const { data: issuesData } = await supabase
+          .from('order_issues')
+          .select('order_id')
+          .in('order_id', orderIds)
+          .in('status', ['submitted', 'reviewing']);
+        
+        if (issuesData) {
+          issuesData.forEach(issue => {
+            activeIssuesMap[issue.order_id] = true;
+          });
+        }
+      }
+
+      // Merge issue status into orders
+      const ordersWithIssues = (ordersData || []).map(order => ({
+        ...order,
+        has_active_issue: activeIssuesMap[order.id] || false
+      }));
+
+      console.log('✅ Orders data:', ordersWithIssues);
+      console.log('🔍 DEBUG - Number of orders found:', ordersWithIssues.length);
+      setOrders(ordersWithIssues);
       
     } catch (error) {
       console.error('💥 Error in fetchOrders:', error);
@@ -696,6 +722,12 @@ export const CustomerOrders: React.FC = () => {
                         </div>
                       </div>
                       <OrderStatusBadge status={order.status} />
+                      {order.has_active_issue && (
+                        <Badge variant="destructive" className="text-xs">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          Issue Reported
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </CardHeader>

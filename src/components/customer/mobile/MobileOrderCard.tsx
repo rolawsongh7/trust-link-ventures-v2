@@ -29,6 +29,7 @@ interface Order {
       contact_name: string;
     };
   };
+  has_active_issue?: boolean;
 }
 
 interface MobileOrderCardProps {
@@ -112,9 +113,17 @@ export const MobileOrderCard = ({
 
       {/* Status and Date */}
       <div className="flex items-center justify-between text-xs">
-        <Badge className={`${getStatusColor(order.status)} text-xs px-2.5 py-1 font-semibold`}>
-          {formatStatus(order.status)}
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          <Badge className={`${getStatusColor(order.status)} text-xs px-2.5 py-1 font-semibold`}>
+            {formatStatus(order.status)}
+          </Badge>
+          {order.has_active_issue && (
+            <Badge variant="destructive" className="text-xs px-1.5 py-0.5">
+              <AlertTriangle className="h-3 w-3 mr-0.5" />
+              Issue
+            </Badge>
+          )}
+        </div>
         <div className="text-muted-foreground">
           {new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           {order.estimated_delivery_date && (
