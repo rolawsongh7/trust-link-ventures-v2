@@ -168,7 +168,7 @@ export const CustomerNavigation: React.FC = () => {
                       <Button
                         variant={isActive ? "secondary" : "ghost"}
                         size="icon"
-                        className="relative h-10 w-10 touch-safe flex-shrink-0 text-foreground dark:text-slate-200"
+                        className="relative h-10 w-10 touch-safe flex-shrink-0 text-foreground dark:text-slate-200 active:scale-[0.97] transition-transform"
                       >
                         <Icon className="h-5 w-5" />
                         {item.badge && (
@@ -203,7 +203,7 @@ export const CustomerNavigation: React.FC = () => {
                   <Button
                     variant={isActive ? "secondary" : "ghost"}
                     size="sm"
-                    className="relative h-10 touch-manipulation whitespace-nowrap px-2.5 flex-shrink-0 min-h-[44px] text-foreground dark:text-slate-200"
+                    className="relative h-10 touch-manipulation whitespace-nowrap px-2.5 flex-shrink-0 min-h-[44px] text-foreground dark:text-slate-200 active:scale-[0.97] transition-transform"
                   >
                     <Icon className="h-4 w-4 mr-1.5" />
                     <span className="text-xs">{item.title}</span>

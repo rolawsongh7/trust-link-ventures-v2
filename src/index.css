@@ -79,9 +79,28 @@ html {
   }
 }
 
+/* Subtle pulse animation for CTAs */
+@keyframes pulse-subtle {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px hsl(var(--primary) / 0);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
 .stagger-animation {
   animation: fadeInUp 0.4s ease-out forwards;
   opacity: 0;
+}
+
+/* Scroll trap prevention for modals */
+.overscroll-contain {
+  overscroll-behavior: contain;
 }
 
 /* Disable animations for reduced motion */
@@ -89,6 +108,10 @@ html {
   .stagger-animation {
     animation: none !important;
     opacity: 1 !important;
+  }
+  
+  .animate-pulse-subtle {
+    animation: none !important;
   }
   
   * {

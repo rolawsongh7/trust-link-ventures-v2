@@ -459,8 +459,13 @@ export default function FinancialReconciliation() {
               <p>No orders found for the selected filters</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="relative">
+              {/* Scroll hint gradient - left */}
+              <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background to-transparent pointer-events-none z-10 md:hidden" />
+              {/* Scroll hint gradient - right */}
+              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10 md:hidden" />
+              <div className="overflow-x-auto scrollbar-hide">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Order #</TableHead>
@@ -564,6 +569,7 @@ export default function FinancialReconciliation() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             </div>
           )}
         </CardContent>

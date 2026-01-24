@@ -25,14 +25,14 @@ const Dashboard = () => {
             }} />
           </div>
           
-          <div className="relative z-10 flex items-center justify-between">
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-semibold text-white mb-2">Dashboard</h1>
-              <p className="text-white/90 text-base">Welcome back! Here's what's happening with your business.</p>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-white mb-2">Dashboard</h1>
+              <p className="text-white/90 text-sm sm:text-base">Welcome back! Here's what's happening with your business.</p>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-white/70">Last updated</p>
-              <p className="text-sm font-medium text-white">{new Date().toLocaleString()}</p>
+            <div className="text-left sm:text-right">
+              <p className="text-xs sm:text-sm text-white/70">Last updated</p>
+              <p className="text-xs sm:text-sm font-medium text-white">{new Date().toLocaleString()}</p>
             </div>
           </div>
         </motion.div>
