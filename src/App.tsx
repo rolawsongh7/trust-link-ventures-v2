@@ -439,9 +439,12 @@ const App = () => {
                         <Route index element={<CustomerPortalMain />} />
                         <Route path="catalog" element={<CustomerCatalog />} />
                         <Route path="cart" element={<CustomerCart />} />
-                    <Route path="quotes" element={<CustomerQuotes />} />
-                    <Route path="quotes/:quoteId" element={<CustomerQuotes />} />
+                        <Route path="quotes" element={<CustomerQuotes />} />
+                        <Route path="quotes/:quoteId" element={<CustomerQuotes />} />
                         <Route path="orders" element={<CustomerOrders />} />
+                        <Route path="orders/:orderId" element={<OrderTracking />} />
+                        <Route path="order-issues" element={<CustomerIssues />} />
+                        <Route path="order-issues/:id" element={<CustomerIssueDetail />} />
                         <Route path="favorites" element={<CustomerFavorites />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="communications" element={<CustomerCommunications />} />
@@ -451,7 +454,8 @@ const App = () => {
                         <Route path="more" element={<CustomerMore />} />
                         <Route path="help" element={<CustomerHelp />} />
                         <Route path="analytics" element={<CustomerAnalytics />} />
-                        <Route path="settings" element={<CustomerProfile />} />
+                        <Route path="settings" element={<CustomerSettings />} />
+                        <Route path="payment-callback" element={<PaymentCallback />} />
                       </Route>
                       
                       {/* Public tracking and payment pages */}
@@ -534,9 +538,12 @@ const App = () => {
                         <Route index element={<CustomerPortalMain />} />
                         <Route path="catalog" element={<CustomerCatalog />} />
                         <Route path="cart" element={<CustomerCart />} />
-                  <Route path="quotes" element={<CustomerQuotes />} />
-                  <Route path="quotes/:quoteId" element={<CustomerQuotes />} />
+                        <Route path="quotes" element={<CustomerQuotes />} />
+                        <Route path="quotes/:quoteId" element={<CustomerQuotes />} />
                         <Route path="orders" element={<CustomerOrders />} />
+                        <Route path="orders/:orderId" element={<OrderTracking />} />
+                        <Route path="order-issues" element={<CustomerIssues />} />
+                        <Route path="order-issues/:id" element={<CustomerIssueDetail />} />
                         <Route path="favorites" element={<CustomerFavorites />} />
                         <Route path="invoices" element={<CustomerInvoices />} />
                         <Route path="communications" element={<CustomerCommunications />} />
@@ -546,7 +553,8 @@ const App = () => {
                         <Route path="more" element={<CustomerMore />} />
                         <Route path="help" element={<CustomerHelp />} />
                         <Route path="analytics" element={<CustomerAnalytics />} />
-                        <Route path="settings" element={<CustomerProfile />} />
+                        <Route path="settings" element={<CustomerSettings />} />
+                        <Route path="payment-callback" element={<PaymentCallback />} />
                       </Route>
                       
                       {/* Public tracking and payment pages */}
