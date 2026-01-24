@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -86,6 +86,7 @@ interface Quote {
 
 const UnifiedQuoteManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const { user } = useAuth();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [deletedQuotes, setDeletedQuotes] = useState<Quote[]>([]);
@@ -137,6 +138,22 @@ const UnifiedQuoteManagement = () => {
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
+  // Handle viewQuoteId from navigation state (from Dashboard Pending Quotes)
+  useEffect(() => {
+    const viewQuoteId = (location.state as any)?.viewQuoteId;
+    if (viewQuoteId && !loading) {
+      // Find the quote to ensure it exists
+      const quoteExists = quotes.find(q => q.id === viewQuoteId) || 
+                          deletedQuotes.find(q => q.id === viewQuoteId);
+      if (quoteExists) {
+        setSelectedQuoteForDetails(viewQuoteId);
+        setIsDetailsDialogOpen(true);
+        // Clear state to prevent re-triggering
+        window.history.replaceState({}, '', '/admin/quotes');
+      }
+    }
+  }, [quotes, deletedQuotes, location.state, loading]);
 
   useEffect(() => {
     fetchQuotes();
