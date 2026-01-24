@@ -28,8 +28,10 @@ import {
   ExternalLink,
   ArrowRight,
   Send,
-  User
+  User,
+  Camera
 } from 'lucide-react';
+import { ProofOfDeliverySection } from '@/components/customer/ProofOfDeliverySection';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -63,6 +65,12 @@ interface OrderIssue {
   orders?: {
     order_number: string;
     status: string;
+    delivered_at: string | null;
+    shipped_at: string | null;
+    proof_of_delivery_url: string | null;
+    delivery_proof_url: string | null;
+    delivery_signature: string | null;
+    delivered_by: string | null;
     customers?: {
       company_name: string;
       contact_name: string;
@@ -121,6 +129,12 @@ const OrderIssues = () => {
           orders!inner(
             order_number,
             status,
+            delivered_at,
+            shipped_at,
+            proof_of_delivery_url,
+            delivery_proof_url,
+            delivery_signature,
+            delivered_by,
             customers(
               company_name,
               contact_name,
@@ -548,6 +562,9 @@ const OrderIssues = () => {
                       <p className="text-lg font-bold">#{selectedIssue.orders?.order_number}</p>
                       <p className="text-xs text-muted-foreground">
                         Status: {selectedIssue.orders?.status?.replace(/_/g, ' ')}
+                        {selectedIssue.orders?.delivered_at && (
+                          <> • Delivered: {format(new Date(selectedIssue.orders.delivered_at), 'PPp')}</>
+                        )}
                       </p>
                     </div>
                     <Button 
@@ -627,6 +644,25 @@ const OrderIssues = () => {
                       </a>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Proof of Delivery for Dispute Resolution */}
+              {(selectedIssue.orders?.proof_of_delivery_url || 
+                selectedIssue.orders?.delivery_proof_url || 
+                selectedIssue.orders?.delivery_signature) && (
+                <div className="border-t pt-4">
+                  <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <Camera className="h-4 w-4" />
+                    Proof of Delivery (For Dispute Resolution)
+                  </p>
+                  <ProofOfDeliverySection
+                    deliveryProofUrl={selectedIssue.orders?.delivery_proof_url}
+                    proofOfDeliveryUrl={selectedIssue.orders?.proof_of_delivery_url}
+                    deliverySignature={selectedIssue.orders?.delivery_signature}
+                    deliveredAt={selectedIssue.orders?.delivered_at}
+                    compact
+                  />
                 </div>
               )}
 

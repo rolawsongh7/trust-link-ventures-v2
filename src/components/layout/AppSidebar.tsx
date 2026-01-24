@@ -52,7 +52,7 @@ const navigationItems = [
   { title: 'Price Management', url: '/admin/price-management', icon: Calculator, badge: null },
   { title: 'Customer Quote Requests', url: '/admin/quote-inquiries', icon: MessageSquare, badge: 'quoteInquiries' as const },
   { title: 'Communication', url: '/admin/communication', icon: Phone, badge: 'communications' as const },
-  { title: 'Order Issues', url: '/admin/orders/issues', icon: AlertTriangle, badge: null },
+  { title: 'Order Issues', url: '/admin/orders/issues', icon: AlertTriangle, badge: 'orderIssues' as const },
 ];
 
 
@@ -71,8 +71,9 @@ export function AppSidebar() {
   const isActive = (path: string) => currentPath === path;
   const isExpanded = state === 'expanded';
 
-  const getBadgeCount = (badgeKey: 'orders' | 'quotes' | 'leads' | 'communications' | 'quoteInquiries' | 'analytics' | null) => {
+  const getBadgeCount = (badgeKey: 'orders' | 'quotes' | 'leads' | 'communications' | 'quoteInquiries' | 'analytics' | 'orderIssues' | null) => {
     if (!badgeKey || !counts) return 0;
+    if (badgeKey === 'analytics') return 0; // Analytics doesn't have a count
     return counts[badgeKey] || 0;
   };
 
