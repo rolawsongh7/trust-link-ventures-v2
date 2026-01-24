@@ -515,6 +515,13 @@ export type Database = {
             foreignKeyName: "customer_favorites_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "public_product_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_favorites_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "supplier_products"
             referencedColumns: ["id"]
           },
@@ -3014,6 +3021,13 @@ export type Database = {
             foreignKeyName: "supplier_product_price_history_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "public_product_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_product_price_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "supplier_products"
             referencedColumns: ["id"]
           },
@@ -3719,7 +3733,54 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_product_catalog: {
+        Row: {
+          brand: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          image_public_url: string | null
+          is_active: boolean | null
+          name: string | null
+          price_currency: string | null
+          price_unit: string | null
+          slug: string | null
+          unit_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          image_public_url?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          price_currency?: string | null
+          price_unit?: string | null
+          slug?: string | null
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          image_public_url?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          price_currency?: string | null
+          price_unit?: string | null
+          slug?: string | null
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_communication_rate_limit: {
