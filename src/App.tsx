@@ -296,6 +296,11 @@ const App = () => {
                         <Route path="communication" element={<CommunicationPage />} />
                         <Route path="quote-system" element={<QuoteSystem />} />
                         <Route path="settings" element={<Settings />} />
+                        <Route path="diagnostics" element={<Diagnostics />} />
+                        <Route path="orders/issues" element={<OrderIssues />} />
+                        <Route path="finance/reconciliation" element={<FinancialReconciliation />} />
+                        <Route path="analytics/manual-quotes" element={<ManualQuoteAnalytics />} />
+                        <Route path="analytics/currency" element={<CurrencyAnalytics />} />
                       </Route>
                       
                       <Route path="*" element={<Navigate to="/" replace />} />
@@ -398,6 +403,11 @@ const App = () => {
                         <Route path="communication" element={<CommunicationPage />} />
                         <Route path="quote-system" element={<QuoteSystem />} />
                         <Route path="settings" element={<Settings />} />
+                        <Route path="diagnostics" element={<Diagnostics />} />
+                        <Route path="orders/issues" element={<OrderIssues />} />
+                        <Route path="finance/reconciliation" element={<FinancialReconciliation />} />
+                        <Route path="analytics/manual-quotes" element={<ManualQuoteAnalytics />} />
+                        <Route path="analytics/currency" element={<CurrencyAnalytics />} />
                       </Route>
                       
                       {/* Mobile Hub - standalone page outside PublicLayout */}
@@ -481,6 +491,11 @@ const App = () => {
                         <Route path="communication" element={<CommunicationPage />} />
                         <Route path="quote-system" element={<QuoteSystem />} />
                         <Route path="settings" element={<Settings />} />
+                        <Route path="diagnostics" element={<Diagnostics />} />
+                        <Route path="orders/issues" element={<OrderIssues />} />
+                        <Route path="finance/reconciliation" element={<FinancialReconciliation />} />
+                        <Route path="analytics/manual-quotes" element={<ManualQuoteAnalytics />} />
+                        <Route path="analytics/currency" element={<CurrencyAnalytics />} />
                       </Route>
                       
                       {/* Redirect all other routes to admin login */}
