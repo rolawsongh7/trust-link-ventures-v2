@@ -7,13 +7,14 @@ interface NavigationCounts {
   leads: number;
   communications: number;
   quoteInquiries: number;
+  orderIssues: number;
 }
 
 export const useNavigationCounts = () => {
   return useQuery({
     queryKey: ['navigation-counts'],
     queryFn: async (): Promise<NavigationCounts> => {
-      const [ordersResult, quotesResult, leadsResult, communicationsResult, quoteInquiriesResult] = await Promise.all([
+      const [ordersResult, quotesResult, leadsResult, communicationsResult, quoteInquiriesResult, orderIssuesResult] = await Promise.all([
         supabase
           .from('orders')
           .select('id', { count: 'exact', head: true })
@@ -33,7 +34,11 @@ export const useNavigationCounts = () => {
         supabase
           .from('quote_requests')
           .select('id', { count: 'exact', head: true })
-          .eq('status', 'pending')
+          .eq('status', 'pending'),
+        supabase
+          .from('order_issues')
+          .select('id', { count: 'exact', head: true })
+          .in('status', ['submitted', 'reviewing'])
       ]);
 
       return {
@@ -42,6 +47,7 @@ export const useNavigationCounts = () => {
         leads: leadsResult.count || 0,
         communications: communicationsResult.count || 0,
         quoteInquiries: quoteInquiriesResult.count || 0,
+        orderIssues: orderIssuesResult.count || 0,
       };
     },
     refetchInterval: 30000, // Refetch every 30 seconds

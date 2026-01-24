@@ -16,8 +16,10 @@ import {
   XCircle,
   Package,
   Image as ImageIcon,
-  ExternalLink
+  ExternalLink,
+  Camera
 } from 'lucide-react';
+import { ProofOfDeliverySection } from '@/components/customer/ProofOfDeliverySection';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
@@ -38,6 +40,10 @@ interface OrderIssue {
   orders?: {
     order_number: string;
     status: string;
+    delivered_at: string | null;
+    proof_of_delivery_url: string | null;
+    delivery_proof_url: string | null;
+    delivery_signature: string | null;
   };
 }
 
@@ -87,7 +93,7 @@ export default function CustomerIssueDetail() {
         .from('order_issues')
         .select(`
           *,
-          orders(order_number, status)
+          orders(order_number, status, delivered_at, proof_of_delivery_url, delivery_proof_url, delivery_signature)
         `)
         .eq('id', id)
         .single();
@@ -328,6 +334,25 @@ export default function CustomerIssueDetail() {
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                 <p className="text-sm">{issue.admin_notes}</p>
               </div>
+            </div>
+          )}
+
+          {/* Proof of Delivery if available */}
+          {(issue.orders?.proof_of_delivery_url || 
+            issue.orders?.delivery_proof_url || 
+            issue.orders?.delivery_signature) && (
+            <div className="pt-4 border-t">
+              <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Camera className="h-4 w-4" />
+                Delivery Confirmation
+              </p>
+              <ProofOfDeliverySection
+                deliveryProofUrl={issue.orders?.delivery_proof_url}
+                proofOfDeliveryUrl={issue.orders?.proof_of_delivery_url}
+                deliverySignature={issue.orders?.delivery_signature}
+                deliveredAt={issue.orders?.delivered_at}
+                compact
+              />
             </div>
           )}
 
