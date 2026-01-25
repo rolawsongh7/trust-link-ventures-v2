@@ -1,4 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
+import { getMainUrl } from '@/utils/domainUtils';
+import { EMAIL_CONFIG } from '@/lib/emailConfig';
 
 type NotificationType = 
   | 'quote_ready' 
@@ -224,7 +226,7 @@ export class NotificationService {
         data: {
           orderNumber,
           orderId,
-          customerPortalLink: `${window.location.origin}/portal/orders`
+          customerPortalLink: getMainUrl('/portal/orders')
         }
       }
     });
@@ -260,7 +262,7 @@ export class NotificationService {
           orderNumber,
           orderId,
           reason,
-          customerPortalLink: `${window.location.origin}/portal/orders`
+          customerPortalLink: getMainUrl('/portal/orders')
         }
       }
     });
@@ -313,7 +315,7 @@ export class NotificationService {
         data: {
           quoteNumber,
           quoteId,
-          customerPortalLink: `${window.location.origin}/portal/quotes`
+          customerPortalLink: getMainUrl('/portal/quotes')
         }
       }
     });
@@ -326,7 +328,7 @@ export class NotificationService {
     // Send email to admin
     await supabase.functions.invoke('send-email', {
       body: {
-        to: 'trustlventuresghana_a01@yahoo.com',
+        to: EMAIL_CONFIG.ADMIN,
         subject: `Quote ${quoteNumber} Accepted`,
         type: 'quote_accepted',
         data: {
@@ -362,7 +364,7 @@ export class NotificationService {
         data: {
           orderNumber,
           orderId,
-          trackingLink: `${window.location.origin}/portal/orders`
+          trackingLink: getMainUrl('/portal/orders')
         }
       }
     });
@@ -436,7 +438,7 @@ export class NotificationService {
           orderNumber,
           orderId,
           hasPOD,
-          viewOrderLink: `${window.location.origin}/portal/orders`
+          viewOrderLink: getMainUrl('/portal/orders')
         }
       }
     });
@@ -506,7 +508,7 @@ export class NotificationService {
         data: {
           orderNumber,
           issueId,
-          customerPortalLink: `${window.location.origin}/portal/order-issues/${issueId}`
+          customerPortalLink: getMainUrl(`/portal/order-issues/${issueId}`)
         }
       }
     });
@@ -545,7 +547,7 @@ export class NotificationService {
           orderNumber,
           issueId,
           newStatus,
-          customerPortalLink: `${window.location.origin}/portal/order-issues/${issueId}`
+          customerPortalLink: getMainUrl(`/portal/order-issues/${issueId}`)
         }
       }
     });
@@ -581,7 +583,7 @@ export class NotificationService {
         data: {
           orderNumber,
           orderId,
-          customerPortalLink: `${window.location.origin}/portal/orders`
+          customerPortalLink: getMainUrl('/portal/orders')
         }
       }
     });
