@@ -406,6 +406,31 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             console.error('Error updating customer record:', updateError);
           } else {
             console.log('✅ Updated existing customer record');
+            
+            // Ensure customer_users mapping exists for existing customers
+            if (data.user?.id) {
+              const { data: existingMapping } = await supabase
+                .from('customer_users')
+                .select('id')
+                .eq('customer_id', existingCustomer.id)
+                .eq('user_id', data.user.id)
+                .maybeSingle();
+
+              if (!existingMapping) {
+                const { error: mappingError } = await supabase
+                  .from('customer_users')
+                  .insert([{
+                    customer_id: existingCustomer.id,
+                    user_id: data.user.id
+                  }]);
+                
+                if (mappingError && !mappingError.message?.includes('duplicate')) {
+                  console.error('Error creating customer_users mapping:', mappingError);
+                } else {
+                  console.log('✅ Created customer_users mapping for existing customer');
+                }
+              }
+            }
           }
         } else {
           console.log('Creating new customer record');
@@ -429,6 +454,22 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             console.error('Error creating customer record:', customerError);
           } else {
             console.log('✅ Created new customer record');
+            
+            // Create customer_users mapping for RLS (fallback if trigger doesn't fire)
+            if (newCustomer?.id && data.user?.id) {
+              const { error: mappingError } = await supabase
+                .from('customer_users')
+                .insert([{
+                  customer_id: newCustomer.id,
+                  user_id: data.user.id
+                }]);
+              
+              if (mappingError && !mappingError.message?.includes('duplicate')) {
+                console.error('Error creating customer_users mapping:', mappingError);
+              } else {
+                console.log('✅ Created customer_users mapping');
+              }
+            }
             
             // Create a default placeholder address for the new customer
             if (newCustomer?.id) {
