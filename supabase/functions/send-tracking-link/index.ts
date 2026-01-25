@@ -79,7 +79,7 @@ serve(async (req) => {
       trackingToken = newToken.token;
     }
 
-    const trackingUrl = `https://747d7655-6061-4215-adc7-0c8134db2cfc.lovableproject.com/track?token=${trackingToken}`;
+    const trackingUrl = `https://trustlinkcompany.com/track?token=${trackingToken}`;
     
     const customerEmail = (order.customers as any)?.email;
     const customerName = (order.customers as any)?.contact_name || (order.customers as any)?.company_name || 'Valued Customer';
