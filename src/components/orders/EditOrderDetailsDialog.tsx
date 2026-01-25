@@ -10,7 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Lock, AlertTriangle, User, FileText, Receipt, Package } from 'lucide-react';
+import { Lock, AlertTriangle } from 'lucide-react';
+import { AdminProofOfDeliverySection } from './AdminProofOfDeliverySection';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { QuoteOriginInfo } from '@/components/quotes/QuoteOriginInfo';
 import { RelatedEntitiesPanel } from '@/components/shared/RelatedEntitiesPanel';
@@ -253,6 +254,21 @@ export const EditOrderDetailsDialog = ({
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   />
                 </div>
+
+                {/* Proof of Delivery Section - shown for shipped/delivered orders */}
+                {(order?.status === 'shipped' || order?.status === 'delivered') && (
+                  <AdminProofOfDeliverySection
+                    orderId={order.id}
+                    orderNumber={order.order_number}
+                    proofOfDeliveryUrl={order.proof_of_delivery_url}
+                    deliveryProofUrl={order.delivery_proof_url}
+                    deliverySignature={order.delivery_signature}
+                    deliveredAt={order.delivered_at}
+                    deliveredBy={order.delivered_by}
+                    deliveryNotes={order.delivery_notes}
+                    onUpdate={onSuccess}
+                  />
+                )}
 
                 {/* Related Entities Panel */}
                 <RelatedEntitiesPanel
