@@ -619,6 +619,28 @@ const UnifiedQuoteManagement = () => {
     }
 
     try {
+      // Get customer email
+      let customerEmail = quote.customer_email || quote.customers?.email;
+      
+      if (!customerEmail && quote.customer_id) {
+        const { data: customerData } = await supabase
+          .from('customers')
+          .select('email')
+          .eq('id', quote.customer_id)
+          .single();
+        customerEmail = customerData?.email;
+      }
+      
+      if (!customerEmail) {
+        toast({
+          title: 'Cannot approve',
+          description: 'Customer email not found. Please add customer email before sending.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Update quote status
       const { error } = await supabase
         .from('quotes')
         .update({ 
@@ -631,10 +653,34 @@ const UnifiedQuoteManagement = () => {
 
       if (error) throw error;
 
+      // Send quote email to customer
       toast({
-        title: 'Quote approved',
-        description: 'Quote status updated to sent'
+        title: 'Sending quote email...',
+        description: 'Sending quote to customer with PDF attachment.'
       });
+
+      const { error: emailError } = await supabase.functions.invoke('send-quote-email', {
+        body: {
+          quoteId: quote.id,
+          customerEmail: customerEmail,
+          customerName: quote.customers?.contact_name,
+          companyName: quote.customers?.company_name
+        }
+      });
+
+      if (emailError) {
+        console.error('Email sending error:', emailError);
+        toast({
+          title: 'Quote approved but email failed',
+          description: `Quote marked as sent, but email failed: ${emailError.message}. Use "Send Quote" to retry.`,
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: 'Quote approved and sent',
+          description: `Quote sent to ${customerEmail} with PDF attachment.`
+        });
+      }
 
       fetchQuotes();
     } catch (error: any) {
