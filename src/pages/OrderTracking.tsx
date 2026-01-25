@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +40,7 @@ interface Invoice {
 
 const OrderTracking = () => {
   const [searchParams] = useSearchParams();
+  const { orderId } = useParams<{ orderId: string }>();
   const token = searchParams.get('token');
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -47,15 +48,129 @@ const OrderTracking = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Support both token-based (public) and orderId-based (authenticated) access
     if (token) {
-      fetchOrderDetails();
+      fetchOrderByToken();
+    } else if (orderId) {
+      fetchOrderById(orderId);
     } else {
-      setError('No tracking token provided');
+      setError('No tracking token or order ID provided');
       setLoading(false);
     }
-  }, [token]);
+  }, [token, orderId]);
 
-  const fetchOrderDetails = async () => {
+  // Fetch order by direct order ID (for authenticated users from customer portal)
+  const fetchOrderById = async (id: string) => {
+    try {
+      console.log('🔍 [OrderTracking] Fetching order by ID:', id);
+
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          order_number,
+          status,
+          tracking_number,
+          carrier,
+          carrier_name,
+          estimated_delivery_date,
+          actual_delivery_date,
+          created_at,
+          shipped_at,
+          delivered_at,
+          delivery_notes,
+          delivery_window,
+          delivery_proof_url,
+          proof_of_delivery_url,
+          delivery_signature,
+          customer_id,
+          delivery_address_id
+        `)
+        .eq('id', id)
+        .single();
+
+      if (orderError) {
+        console.error('❌ [OrderTracking] Order fetch error:', orderError);
+        setError('Unable to load order. You may need to log in to view this order.');
+        setLoading(false);
+        return;
+      }
+
+      if (!orderData) {
+        setError('Order not found');
+        setLoading(false);
+        return;
+      }
+
+      console.log('📦 [OrderTracking] Order data loaded:', orderData);
+
+      // Fetch customer info
+      const { data: customerData } = await supabase
+        .from('customers')
+        .select('company_name, contact_name')
+        .eq('id', orderData.customer_id)
+        .single();
+
+      // Fetch delivery address
+      let deliveryAddress = 'Address not available';
+      if (orderData.delivery_address_id) {
+        const { data: addressData } = await supabase
+          .from('customer_addresses')
+          .select('*')
+          .eq('id', orderData.delivery_address_id)
+          .single();
+
+        if (addressData) {
+          deliveryAddress = `${addressData.street_address}, ${addressData.area ? addressData.area + ', ' : ''}${addressData.city}, ${addressData.region} - ${addressData.ghana_digital_address}`;
+        }
+      }
+
+      // Format order data
+      const formattedOrder: OrderDetails = {
+        order_id: orderData.id,
+        order_number: orderData.order_number,
+        status: orderData.status,
+        tracking_number: orderData.tracking_number,
+        carrier: orderData.carrier || orderData.carrier_name,
+        estimated_delivery_date: orderData.estimated_delivery_date,
+        actual_delivery_date: orderData.actual_delivery_date,
+        created_at: orderData.created_at,
+        shipped_at: orderData.shipped_at,
+        delivered_at: orderData.delivered_at,
+        delivery_notes: orderData.delivery_notes,
+        delivery_window: orderData.delivery_window,
+        delivery_proof_url: orderData.delivery_proof_url,
+        proof_of_delivery_url: orderData.proof_of_delivery_url,
+        delivery_signature: orderData.delivery_signature,
+        customer_name: customerData?.company_name || customerData?.contact_name || 'Customer',
+        delivery_address: deliveryAddress
+      };
+
+      setOrder(formattedOrder);
+
+      // Fetch invoices for this order
+      const { data: invoicesData } = await supabase
+        .from('invoices')
+        .select('id, invoice_number, invoice_type, file_url, status')
+        .eq('order_id', id)
+        .in('invoice_type', ['commercial', 'packing_list'])
+        .not('file_url', 'is', null);
+
+      if (invoicesData) {
+        setInvoices(invoicesData);
+      }
+
+      console.log('✅ [OrderTracking] Order loaded successfully via ID');
+    } catch (err: any) {
+      console.error('🔴 [OrderTracking] Fatal error:', err);
+      setError(`Failed to load order details: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch order by tracking token (for public access via email links)
+  const fetchOrderByToken = async () => {
     try {
       console.log('🔍 [OrderTracking] Fetching order with token:', token);
 
@@ -109,6 +224,9 @@ const OrderTracking = () => {
               delivered_at,
               delivery_notes,
               delivery_window,
+              delivery_proof_url,
+              proof_of_delivery_url,
+              delivery_signature,
               customer_id,
               delivery_address_id
             `)
@@ -139,7 +257,7 @@ const OrderTracking = () => {
             }
 
             // Format as RPC return structure
-            const formattedOrder = {
+            const formattedOrder: OrderDetails = {
               order_id: orderData.id,
               order_number: orderData.order_number,
               status: orderData.status,
@@ -152,6 +270,9 @@ const OrderTracking = () => {
               delivered_at: orderData.delivered_at,
               delivery_notes: orderData.delivery_notes,
               delivery_window: orderData.delivery_window,
+              delivery_proof_url: orderData.delivery_proof_url,
+              proof_of_delivery_url: orderData.proof_of_delivery_url,
+              delivery_signature: orderData.delivery_signature,
               customer_name: customerData?.company_name || 'Customer',
               delivery_address: deliveryAddress
             };
@@ -247,29 +368,58 @@ const OrderTracking = () => {
   }
 
   if (error || !order) {
+    const showLoginOption = !token && orderId;
+    
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-destructive" />
-              Tracking Error
+              {showLoginOption ? 'Login Required' : 'Tracking Error'}
             </CardTitle>
             <CardDescription className="mt-2">
-              {error || 'Unable to load order information'}
+              {showLoginOption 
+                ? 'Please log in to view your order details.'
+                : error || 'Unable to load order information'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              If you continue to experience issues, please contact our support team with your tracking link.
-            </p>
-            <Button
-              onClick={() => window.location.href = 'mailto:support@trustlinkcompany.com?subject=Tracking%20Issue'}
-              variant="outline"
-              className="w-full"
-            >
-              Contact Support
-            </Button>
+            {showLoginOption ? (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  This order page requires authentication. Please log in to your customer portal to view the full order details.
+                </p>
+                <div className="space-y-2">
+                  <Button
+                    onClick={() => window.location.href = `/portal-auth?redirect=/portal/orders/${orderId}`}
+                    className="w-full"
+                  >
+                    Log In to Customer Portal
+                  </Button>
+                  <Button
+                    onClick={() => window.location.href = 'mailto:support@trustlinkcompany.com?subject=Order%20Access%20Help'}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Contact Support
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  If you continue to experience issues, please contact our support team with your tracking link.
+                </p>
+                <Button
+                  onClick={() => window.location.href = 'mailto:support@trustlinkcompany.com?subject=Tracking%20Issue'}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Contact Support
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
