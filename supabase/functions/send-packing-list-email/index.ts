@@ -74,6 +74,7 @@ serve(async (req) => {
 
     // Prepare email content
     const order = invoice.orders || {};
+    const portalBaseUrl = 'https://trustlinkcompany.com';
     const emailHtml = `
       <!DOCTYPE html>
       <html>
@@ -107,12 +108,12 @@ serve(async (req) => {
               </div>
 
               <p style="text-align: center;">
-                <a href="https://ppyfrftmexvgnsxlhdbz.supabase.co/customer/orders/${orderId}" class="button">
+                <a href="${portalBaseUrl}/portal/orders/${orderId}" class="button">
                   View Order Details
                 </a>
               </p>
 
-              <p>Your packing list is attached to this email. You will receive tracking information once the shipment is picked up by the carrier.</p>
+              <p>Your packing list and other order documents are available in your customer portal. You will receive tracking information once the shipment is picked up by the carrier.</p>
 
               <p>If you have any questions, please don't hesitate to contact us.</p>
               
