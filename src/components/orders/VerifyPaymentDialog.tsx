@@ -52,6 +52,7 @@ interface VerifyPaymentDialogProps {
     customer_id: string;
     total_amount: number;
     currency: string;
+    delivery_address_id?: string;
     customers?: {
       email?: string;
       company_name?: string;
@@ -237,8 +238,9 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
           orderId: order.id,
           orderNumber: order.order_number,
           customerEmail: order.customers?.email,
-          amountConfirmed: parsedAmount,
-          currency: order.currency,
+          paymentReference: paymentReference || order.payment_reference || 'N/A',
+          paymentProofUrl: order.payment_proof_url,
+          hasDeliveryAddress: !!order.delivery_address_id,
         },
       }).catch(err => {
         console.error('Email notification error (non-blocking):', err);
