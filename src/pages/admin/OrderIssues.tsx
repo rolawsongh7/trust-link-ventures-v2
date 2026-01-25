@@ -203,6 +203,17 @@ const OrderIssues = () => {
   const handleUpdateStatus = async () => {
     if (!selectedIssue || !newStatus) return;
 
+    // Validate session before attempting update
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      toast({
+        title: "Session Expired",
+        description: "Please refresh the page and log in again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setIsUpdating(true);
       const updateData: any = {
@@ -251,10 +262,28 @@ const OrderIssues = () => {
       setAdminNotes('');
       fetchIssues();
     } catch (err: any) {
-      console.error('Error updating issue:', err);
+      console.error('Error updating issue:', {
+        error: err,
+        code: err?.code,
+        message: err?.message,
+        details: err?.details,
+        hint: err?.hint
+      });
+      
+      // Provide specific error message based on error type
+      let errorMessage = 'Failed to update issue status. Please try again.';
+      
+      if (err?.code === '42501') {
+        errorMessage = 'Permission denied. Your session may have expired - please refresh the page.';
+      } else if (err?.code === 'PGRST301' || err?.message?.includes('JWT')) {
+        errorMessage = 'Session expired. Please log in again.';
+      } else if (err?.message) {
+        errorMessage = `Error: ${err.message}`;
+      }
+      
       toast({
-        title: "Error",
-        description: "Failed to update issue status",
+        title: "Update Failed",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
