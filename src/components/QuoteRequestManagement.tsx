@@ -215,35 +215,34 @@ const QuoteRequestManagement = () => {
 
   const handlePreviewClick = async (request: QuoteRequest) => {
     setLoadingItems(true);
+    setShowDetailsDialog(true);
     
-    // Re-fetch full details if items are missing
-    if (!request.quote_request_items || request.quote_request_items.length === 0) {
-      try {
-        const { data, error } = await supabase
-          .from('quote_requests')
-          .select(`
-            *,
-            customer:customers(company_name, contact_name, email),
-            quote_request_items(*)
-          `)
-          .eq('id', request.id)
-          .single();
-        
-        if (error) throw error;
-        
-        if (data) {
-          setSelectedRequest(data);
-        }
-      } catch (error) {
-        console.error('Error fetching request details:', error);
-        toast.error('Failed to load request details');
+    // Always re-fetch full details to ensure items are loaded
+    try {
+      const { data, error } = await supabase
+        .from('quote_requests')
+        .select(`
+          *,
+          customer:customers(company_name, contact_name, email),
+          quote_request_items(*)
+        `)
+        .eq('id', request.id)
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        console.log('Fetched quote request with items:', data.quote_request_items?.length || 0);
+        setSelectedRequest(data);
       }
-    } else {
+    } catch (error) {
+      console.error('Error fetching request details:', error);
+      toast.error('Failed to load request details');
+      // Fall back to the original request data
       setSelectedRequest(request);
     }
     
     setLoadingItems(false);
-    setShowDetailsDialog(true);
   };
 
   const handleDownloadPDF = async (request: QuoteRequest) => {
