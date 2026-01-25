@@ -88,6 +88,33 @@ export const OrderTracking: React.FC = () => {
     }
   }, [orderId, token]);
 
+  // Subscribe to real-time updates for the order
+  useEffect(() => {
+    if (!order?.id) return;
+
+    const channel = supabase
+      .channel(`order-tracking-${order.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${order.id}`,
+        },
+        (payload) => {
+          console.log('[OrderTracking] Order updated:', payload);
+          // Refresh the order data when it's updated
+          fetchOrderDetails(order.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [order?.id]);
+
   const fetchOrderByToken = async () => {
     try {
       setLoading(true);
