@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trust-link-v1';
+const CACHE_NAME = 'trust-link-v2';
 const OFFLINE_URL = '/';
 
 // Assets to cache on install

@@ -41,6 +41,9 @@ export default defineConfig(({ mode }) => ({
     // Optimize chunk splitting - vendor packages only
     rollupOptions: {
       output: {
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
         manualChunks: (id) => {
           // Only split vendor packages, not routes
           if (id.includes('node_modules')) {
