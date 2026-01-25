@@ -102,6 +102,27 @@ export const useOrderTracking = () => {
               customerEmail,
               order.tracking_number || undefined
             );
+            
+            // Send shipped email notification
+            try {
+              await supabase.functions.invoke('send-email', {
+                body: {
+                  to: customerEmail,
+                  subject: `Your Order #${orderNumber} Has Been Shipped`,
+                  type: 'order_shipped',
+                  data: {
+                    orderNumber,
+                    customerName: customerName || companyName || 'Valued Customer',
+                    orderId,
+                    trackingNumber: order.tracking_number || null,
+                    trackingLink: `https://trustlinkcompany.com/portal/orders/${orderId}`
+                  }
+                }
+              });
+              console.log('[Order Tracking] Shipped email sent successfully');
+            } catch (emailError) {
+              console.error('Failed to send shipped email:', emailError);
+            }
             break;
           case 'delivered':
             await NotificationService.sendOrderDeliveredNotification(
