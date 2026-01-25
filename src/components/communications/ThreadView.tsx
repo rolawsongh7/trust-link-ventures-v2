@@ -97,7 +97,7 @@ export const ThreadView: React.FC<ThreadViewProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0">
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b bg-gradient-to-r from-primary/10 via-primary/5 to-accent/5 flex-shrink-0">
           <div className="flex items-center gap-4 mb-3">
             <Avatar className="h-14 w-14 shadow-lg">

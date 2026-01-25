@@ -249,8 +249,8 @@ export const OrderIssueReportDialog: React.FC<OrderIssueReportDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-orange-500" />
             Report a Problem
@@ -260,6 +260,7 @@ export const OrderIssueReportDialog: React.FC<OrderIssueReportDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="space-y-4 py-4">
           {/* Offline Warning */}
           {!isOnline && (
@@ -365,8 +366,9 @@ export const OrderIssueReportDialog: React.FC<OrderIssueReportDialogProps> = ({
             )}
           </div>
         </div>
+        </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
             Cancel
           </Button>

@@ -87,7 +87,7 @@ export function DeleteAccountDialog({ open, onOpenChange, userEmail }: DeleteAcc
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col overflow-hidden">
         {step === 1 && (
           <>
             <DialogHeader>

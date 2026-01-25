@@ -816,8 +816,8 @@ const QuoteRequestManagement = () => {
 
       {/* Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden bg-white/95 backdrop-blur-xl border-2 border-white/20 shadow-2xl">
-          <DialogHeader className="bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] -m-6 mb-6 p-6 rounded-t-lg">
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col bg-white/95 backdrop-blur-xl border-2 border-white/20 shadow-2xl p-0">
+          <DialogHeader className="flex-shrink-0 bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] p-6 rounded-t-lg">
             <DialogTitle className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-2xl font-bold text-white">Quote Request Details</span>
@@ -861,9 +861,9 @@ const QuoteRequestManagement = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <ScrollArea className="h-[calc(90vh-180px)] pr-4">
+          <ScrollArea className="flex-1 min-h-0">
             {selectedRequest && (
-              <div className="space-y-6 pb-4">
+              <div className="space-y-6 p-6 pb-4">
                 {/* Status & Urgency Bar */}
                 <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#F8FAFC] to-[#F1F5F9] rounded-xl border border-[#E2E8F0]">
                   <div className="flex-1">
@@ -1002,52 +1002,54 @@ const QuoteRequestManagement = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Action Buttons in Dialog */}
-                <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-[#E2E8F0] p-4 -mx-4 -mb-4 rounded-b-xl flex flex-wrap gap-3 justify-between items-center">
-                  <div className="flex items-center gap-2 text-sm text-[#64748B]">
-                    <Info className="h-4 w-4" />
-                    <span>Follow the workflow to create a quote</span>
-                  </div>
-                  <div className="flex gap-3">
-                    {selectedRequest.request_type === 'lead' && !selectedRequest.customer_id && (
-                      <Button 
-                        onClick={() => {
-                          convertQuoteRequestToLead(selectedRequest);
-                          setShowDetailsDialog(false);
-                        }}
-                        className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md"
-                      >
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Step 1: Convert to Lead
-                      </Button>
-                    )}
-                    
-                    {selectedRequest.customer_id && selectedRequest.status !== 'quoted' && (
-                      <Button 
-                        onClick={() => {
-                          setShowDetailsDialog(false);
-                          createQuoteFromRequest(selectedRequest);
-                        }}
-                        className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-md"
-                      >
-                        <FileText className="mr-2 h-4 w-4" />
-                        {selectedRequest.request_type === 'lead' ? 'Step 2: Create Quote' : 'Create Quote'}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    )}
-                    
-                    {selectedRequest.status === 'quoted' && (
-                      <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-lg">
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="font-medium">Quote already created</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
               </div>
             )}
           </ScrollArea>
+          
+          {/* Action Buttons Footer - Outside ScrollArea */}
+          {selectedRequest && (
+            <div className="flex-shrink-0 bg-white/95 backdrop-blur-sm border-t border-[#E2E8F0] p-4 rounded-b-xl flex flex-wrap gap-3 justify-between items-center">
+              <div className="flex items-center gap-2 text-sm text-[#64748B]">
+                <Info className="h-4 w-4" />
+                <span>Follow the workflow to create a quote</span>
+              </div>
+              <div className="flex gap-3">
+                {selectedRequest.request_type === 'lead' && !selectedRequest.customer_id && (
+                  <Button 
+                    onClick={() => {
+                      convertQuoteRequestToLead(selectedRequest);
+                      setShowDetailsDialog(false);
+                    }}
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md"
+                  >
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Step 1: Convert to Lead
+                  </Button>
+                )}
+                
+                {selectedRequest.customer_id && selectedRequest.status !== 'quoted' && (
+                  <Button 
+                    onClick={() => {
+                      setShowDetailsDialog(false);
+                      createQuoteFromRequest(selectedRequest);
+                    }}
+                    className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-md"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    {selectedRequest.request_type === 'lead' ? 'Step 2: Create Quote' : 'Create Quote'}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                )}
+                
+                {selectedRequest.status === 'quoted' && (
+                  <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-lg">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="font-medium">Quote already created</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

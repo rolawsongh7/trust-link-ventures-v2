@@ -94,8 +94,8 @@ export const SecurityAlertsDialog: React.FC<SecurityAlertsDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
             Security Alerts
@@ -105,6 +105,7 @@ export const SecurityAlertsDialog: React.FC<SecurityAlertsDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="space-y-4 mt-4">
           {alerts.map((alert) => {
             const Icon = alert.icon;
@@ -138,8 +139,9 @@ export const SecurityAlertsDialog: React.FC<SecurityAlertsDialogProps> = ({
             );
           })}
         </div>
+        </div>
 
-        <div className="flex justify-between items-center mt-6 pt-4 border-t">
+        <div className="flex-shrink-0 flex justify-between items-center mt-6 pt-4 border-t">
           <p className="text-sm text-muted-foreground">
             {alerts.filter((a) => a.enabled).length} of {alerts.length} alerts
             enabled
