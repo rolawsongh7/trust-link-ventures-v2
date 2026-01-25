@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Package, Truck, AlertTriangle } from 'lucide-react';
 import { ProofOfDeliveryUpload } from './ProofOfDeliveryUpload';
+import { getOrCreateTrackingToken, buildTrackingUrl } from '@/utils/trackingToken';
 
 interface DeliveryManagementDialogProps {
   order: any;
@@ -199,8 +200,11 @@ export const DeliveryManagementDialog = ({
                   formData.tracking_number || undefined
                 );
                 
-                // Send shipped email notification
+                // Send shipped email notification with public tracking link
                 try {
+                  const trackingToken = await getOrCreateTrackingToken(order.id);
+                  const trackingLink = buildTrackingUrl(trackingToken, order.id);
+                  
                   await supabase.functions.invoke('send-email', {
                     body: {
                       to: orderData.customers.email,
@@ -211,11 +215,11 @@ export const DeliveryManagementDialog = ({
                         customerName: orderData.customers.contact_name || orderData.customers.company_name || 'Valued Customer',
                         orderId: order.id,
                         trackingNumber: formData.tracking_number || null,
-                        trackingLink: `https://trustlinkcompany.com/portal/orders/${order.id}`
+                        trackingLink
                       }
                     }
                   });
-                  console.log('[DeliveryManagement] Shipped email sent successfully');
+                  console.log('[DeliveryManagement] Shipped email sent successfully with tracking link:', trackingLink);
                 } catch (emailError) {
                   console.error('Failed to send shipped email:', emailError);
                 }

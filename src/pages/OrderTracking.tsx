@@ -40,8 +40,12 @@ interface Invoice {
 
 const OrderTracking = () => {
   const [searchParams] = useSearchParams();
-  const { orderId } = useParams<{ orderId: string }>();
+  const { orderId: routeOrderId } = useParams<{ orderId: string }>();
   const token = searchParams.get('token');
+  // Also support orderId as query param for fallback/public access
+  const queryOrderId = searchParams.get('orderId');
+  const orderId = routeOrderId || queryOrderId;
+  
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { NotificationService } from '@/services/notificationService';
+import { getOrCreateTrackingToken, buildTrackingUrl } from '@/utils/trackingToken';
 
 interface OrderStatusUpdate {
   orderId: string;
@@ -103,8 +104,11 @@ export const useOrderTracking = () => {
               order.tracking_number || undefined
             );
             
-            // Send shipped email notification
+            // Send shipped email notification with public tracking link
             try {
+              const trackingToken = await getOrCreateTrackingToken(orderId);
+              const trackingLink = buildTrackingUrl(trackingToken, orderId);
+              
               await supabase.functions.invoke('send-email', {
                 body: {
                   to: customerEmail,
@@ -115,11 +119,11 @@ export const useOrderTracking = () => {
                     customerName: customerName || companyName || 'Valued Customer',
                     orderId,
                     trackingNumber: order.tracking_number || null,
-                    trackingLink: `https://trustlinkcompany.com/portal/orders/${orderId}`
+                    trackingLink
                   }
                 }
               });
-              console.log('[Order Tracking] Shipped email sent successfully');
+              console.log('[Order Tracking] Shipped email sent successfully with tracking link:', trackingLink);
             } catch (emailError) {
               console.error('Failed to send shipped email:', emailError);
             }

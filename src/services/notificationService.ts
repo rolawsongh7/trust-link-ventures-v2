@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { getMainUrl } from '@/utils/domainUtils';
 import { EMAIL_CONFIG } from '@/lib/emailConfig';
+import { getOrCreateTrackingToken, buildTrackingUrl } from '@/utils/trackingToken';
 
 type NotificationType = 
   | 'quote_ready' 
@@ -574,8 +575,11 @@ export class NotificationService {
       metadata: { orderId, orderNumber }
     });
 
-    // Send email notification - use hardcoded production URL to avoid admin subdomain issues
-    const customerPortalBaseUrl = 'https://trustlinkcompany.com';
+    // Get or create tracking token for public access
+    const trackingToken = await getOrCreateTrackingToken(orderId);
+    const customerPortalLink = buildTrackingUrl(trackingToken, orderId);
+    
+    // Send email notification with public tracking link
     await supabase.functions.invoke('send-email', {
       body: {
         to: customerEmail,
@@ -584,7 +588,7 @@ export class NotificationService {
         data: {
           orderNumber,
           orderId,
-          customerPortalLink: `${customerPortalBaseUrl}/portal/orders/${orderId}`
+          customerPortalLink
         }
       }
     });
