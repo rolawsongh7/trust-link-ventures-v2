@@ -565,7 +565,7 @@ export const CustomerCommunications: React.FC = () => {
               </div>
               <div>
                 <p className="font-semibold text-foreground">Email Support</p>
-                <p className="text-sm text-muted-foreground">support@trustlinkcompany.com</p>
+                <p className="text-sm text-muted-foreground">info@trustlinkcompany.com</p>
               </div>
             </div>
             <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-green-50/50 to-background rounded-xl border-2 border-green-200/50 hover:shadow-lg transition-all">
