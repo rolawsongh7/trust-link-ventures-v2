@@ -101,10 +101,17 @@ export const AddressStep: React.FC<AddressStepProps> = ({ onNext, onBack, onAddr
       onNext();
     } catch (error: any) {
       console.error('Error saving address:', error);
+      
+      // Check for RLS violation specifically
+      const isRlsError = error?.message?.includes('row-level security') || 
+                         error?.code === '42501';
+      
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error?.message || 'Failed to save address. Please try again.',
+        title: isRlsError ? 'Permission Error' : 'Error',
+        description: isRlsError 
+          ? 'Unable to save address. Please try signing out and back in, then retry.'
+          : (error?.message || 'Failed to save address. Please try again.'),
       });
     } finally {
       setSaving(false);

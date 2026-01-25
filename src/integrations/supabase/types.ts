@@ -3965,6 +3965,7 @@ export type Database = {
         Args: { keep_id: string; remove_id: string }
         Returns: undefined
       }
+      repair_customer_user_mappings: { Args: never; Returns: number }
       user_can_access_customer: {
         Args: { p_customer_id: string; p_user_id: string }
         Returns: boolean
