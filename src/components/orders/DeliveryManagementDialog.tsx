@@ -198,6 +198,27 @@ export const DeliveryManagementDialog = ({
                   orderData.customers.email,
                   formData.tracking_number || undefined
                 );
+                
+                // Send shipped email notification
+                try {
+                  await supabase.functions.invoke('send-email', {
+                    body: {
+                      to: orderData.customers.email,
+                      subject: `Your Order #${orderData.order_number} Has Been Shipped`,
+                      type: 'order_shipped',
+                      data: {
+                        orderNumber: orderData.order_number,
+                        customerName: orderData.customers.contact_name || orderData.customers.company_name || 'Valued Customer',
+                        orderId: order.id,
+                        trackingNumber: formData.tracking_number || null,
+                        trackingLink: `https://trustlinkcompany.com/portal/orders/${order.id}`
+                      }
+                    }
+                  });
+                  console.log('[DeliveryManagement] Shipped email sent successfully');
+                } catch (emailError) {
+                  console.error('Failed to send shipped email:', emailError);
+                }
                 break;
               case 'delivered':
                 await NotificationService.sendOrderDeliveredNotification(
