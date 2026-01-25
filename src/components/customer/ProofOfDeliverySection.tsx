@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Camera, CheckCircle2, FileSignature, Calendar, Download } from 'lucide-react';
+import { Camera, CheckCircle2, FileSignature, Calendar, Download, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ensureSignedUrl } from '@/lib/storageHelpers';
 import { toast } from 'sonner';
@@ -23,15 +23,38 @@ export const ProofOfDeliverySection: React.FC<ProofOfDeliverySectionProps> = ({
 }) => {
   const hasProof = deliveryProofUrl || proofOfDeliveryUrl || deliverySignature;
   const [isDownloading, setIsDownloading] = useState(false);
+  const [signedPhotoUrl, setSignedPhotoUrl] = useState<string | null>(null);
+  const [isLoadingUrl, setIsLoadingUrl] = useState(false);
   
-  const photoUrl = deliveryProofUrl || proofOfDeliveryUrl;
+  const rawPhotoUrl = deliveryProofUrl || proofOfDeliveryUrl;
+
+  // Get fresh signed URL on mount
+  useEffect(() => {
+    const loadSignedUrl = async () => {
+      if (!rawPhotoUrl) return;
+      
+      setIsLoadingUrl(true);
+      try {
+        const freshUrl = await ensureSignedUrl(rawPhotoUrl);
+        setSignedPhotoUrl(freshUrl);
+      } catch (error) {
+        console.error('Failed to get signed URL for POD:', error);
+        // Fall back to raw URL
+        setSignedPhotoUrl(rawPhotoUrl);
+      } finally {
+        setIsLoadingUrl(false);
+      }
+    };
+
+    loadSignedUrl();
+  }, [rawPhotoUrl]);
 
   const handleDownload = async () => {
-    if (!photoUrl) return;
+    if (!rawPhotoUrl) return;
     
     setIsDownloading(true);
     try {
-      const signedUrl = await ensureSignedUrl(photoUrl);
+      const signedUrl = await ensureSignedUrl(rawPhotoUrl);
       window.open(signedUrl, '_blank');
     } catch (error) {
       console.error('Download error:', error);
@@ -43,6 +66,8 @@ export const ProofOfDeliverySection: React.FC<ProofOfDeliverySectionProps> = ({
 
   if (!hasProof) return null;
 
+  const photoUrl = signedPhotoUrl || rawPhotoUrl;
+
   if (compact) {
     return (
       <div className="border rounded-lg p-3 bg-[hsl(var(--tl-success-bg))] dark:bg-[hsl(var(--tl-success))]/10 space-y-2">
@@ -52,18 +77,28 @@ export const ProofOfDeliverySection: React.FC<ProofOfDeliverySectionProps> = ({
         </div>
         <div className="flex items-center gap-3">
           {photoUrl && (
-            <a 
-              href={photoUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="block w-16 h-16 rounded-lg overflow-hidden border hover:opacity-80 transition-opacity"
-            >
-              <img 
-                src={photoUrl} 
-                alt="Delivery proof" 
-                className="w-full h-full object-cover"
-              />
-            </a>
+            isLoadingUrl ? (
+              <div className="w-16 h-16 rounded-lg border flex items-center justify-center bg-muted">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <a 
+                href={photoUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block w-16 h-16 rounded-lg overflow-hidden border hover:opacity-80 transition-opacity"
+              >
+                <img 
+                  src={photoUrl} 
+                  alt="Delivery proof" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error('Image failed to load:', photoUrl);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </a>
+            )
           )}
           {deliverySignature && (
             <div className="flex-1">
@@ -101,23 +136,33 @@ export const ProofOfDeliverySection: React.FC<ProofOfDeliverySectionProps> = ({
               <span>Delivery Photo</span>
             </div>
             <div className="flex items-start gap-4">
-              <a 
-                href={photoUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="block rounded-lg overflow-hidden border bg-background hover:opacity-90 transition-opacity max-w-sm"
-              >
-                <img 
-                  src={photoUrl} 
-                  alt="Delivery proof" 
-                  className="w-full max-h-64 object-cover"
-                />
-              </a>
+              {isLoadingUrl ? (
+                <div className="w-64 h-48 rounded-lg border flex items-center justify-center bg-muted">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <a 
+                  href={photoUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block rounded-lg overflow-hidden border bg-background hover:opacity-90 transition-opacity max-w-sm"
+                >
+                  <img 
+                    src={photoUrl} 
+                    alt="Delivery proof" 
+                    className="w-full max-h-64 object-cover"
+                    onError={(e) => {
+                      console.error('Image failed to load:', photoUrl);
+                      e.currentTarget.parentElement!.innerHTML = '<div class="p-4 text-sm text-muted-foreground">Failed to load image</div>';
+                    }}
+                  />
+                </a>
+              )}
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={handleDownload}
-                disabled={isDownloading}
+                disabled={isDownloading || isLoadingUrl}
               >
                 <Download className="h-4 w-4 mr-2" />
                 {isDownloading ? 'Opening...' : 'Download'}

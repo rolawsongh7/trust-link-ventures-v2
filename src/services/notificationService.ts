@@ -570,11 +570,12 @@ export class NotificationService {
       title: 'Proof of Delivery Uploaded',
       message: `Delivery proof for order ${orderNumber} has been uploaded. View it in your order details.`,
       type: 'pod_uploaded',
-      link: `/portal/orders`,
+      link: `/portal/orders/${orderId}`,
       metadata: { orderId, orderNumber }
     });
 
-    // Send email notification
+    // Send email notification - use hardcoded production URL to avoid admin subdomain issues
+    const customerPortalBaseUrl = 'https://trustlinkcompany.com';
     await supabase.functions.invoke('send-email', {
       body: {
         to: customerEmail,
@@ -583,7 +584,7 @@ export class NotificationService {
         data: {
           orderNumber,
           orderId,
-          customerPortalLink: getMainUrl('/portal/orders')
+          customerPortalLink: `${customerPortalBaseUrl}/portal/orders/${orderId}`
         }
       }
     });
