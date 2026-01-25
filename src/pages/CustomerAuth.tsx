@@ -93,9 +93,20 @@ const CustomerAuth = () => {
     const isReset = params.get('reset') === 'true';
     
     if (params.get('confirmed') === 'true') {
-      toast({
-        title: "Email Confirmed! ✅",
-        description: "Your account is now active. Please sign in to continue.",
+      // Verify actual session state before showing success
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user?.email_confirmed_at) {
+          toast({
+            title: "Email Confirmed! ✅",
+            description: "Your account is now active. Please sign in to continue.",
+          });
+        } else {
+          toast({
+            title: "Confirmation Pending",
+            description: "Please check your email and click the confirmation link again. If issues persist, try signing in and requesting a new confirmation email.",
+            variant: "default"
+          });
+        }
       });
       setActiveTab('signin');
     }
