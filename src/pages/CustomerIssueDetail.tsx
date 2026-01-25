@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { format } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
+import { NotificationService } from '@/services/notificationService';
 
 interface OrderIssue {
   id: string;
@@ -183,6 +184,14 @@ export default function CustomerIssueDetail() {
         });
 
       if (error) throw error;
+
+      // Notify admins about customer reply
+      const customerName = profile.full_name || profile.company_name || 'Customer';
+      await NotificationService.notifyAdminCustomerReply(
+        issue.orders?.order_number || '',
+        customerName,
+        issue.id
+      ).catch(err => console.error('Notification error (non-blocking):', err));
 
       setReplyContent('');
       toast({
