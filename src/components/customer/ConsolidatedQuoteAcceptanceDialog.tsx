@@ -413,13 +413,15 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
       onOpenChange(open);
       if (!open) resetForm();
     }}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-xl">Accept Quote & Complete Order</DialogTitle>
           <DialogDescription>
             Quote {quote?.quote_number || 'N/A'} • {quote?.currency || 'GHS'} {quote?.total_amount?.toLocaleString() || 'N/A'}
           </DialogDescription>
         </DialogHeader>
+        
+        <div className="flex-1 min-h-0 overflow-y-auto">
 
         {/* Progress Indicator */}
         <div className="flex items-center gap-2 mb-6">
@@ -746,6 +748,7 @@ export const ConsolidatedQuoteAcceptanceDialog: React.FC<ConsolidatedQuoteAccept
             </div>
           </div>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );

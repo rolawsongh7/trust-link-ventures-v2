@@ -123,14 +123,15 @@ export const ActiveSessionsDialog: React.FC<ActiveSessionsDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Recent Login History</DialogTitle>
           <DialogDescription>
             View your recent successful login attempts across different devices
           </DialogDescription>
         </DialogHeader>
 
+        <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="space-y-4 mt-4">
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -194,8 +195,9 @@ export const ActiveSessionsDialog: React.FC<ActiveSessionsDialogProps> = ({
             ))
           )}
         </div>
+        </div>
 
-        <div className="flex justify-between items-center mt-6 pt-4 border-t">
+        <div className="flex-shrink-0 flex justify-between items-center mt-6 pt-4 border-t">
           <p className="text-sm text-muted-foreground">
             {sessions.length} recent login{sessions.length !== 1 ? 's' : ''}
           </p>

@@ -18,11 +18,11 @@ interface LegalDialogProps {
 const LegalDialog = ({ trigger, title, children }: LegalDialogProps) => (
   <Dialog>
     <DialogTrigger asChild>{trigger}</DialogTrigger>
-    <DialogContent className="max-w-4xl max-h-[80vh]">
-      <DialogHeader>
+    <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+      <DialogHeader className="flex-shrink-0">
         <DialogTitle>{title}</DialogTitle>
       </DialogHeader>
-      <ScrollArea className="max-h-[60vh] pr-4">
+      <ScrollArea className="flex-1 min-h-0 pr-4">
         {children}
       </ScrollArea>
     </DialogContent>

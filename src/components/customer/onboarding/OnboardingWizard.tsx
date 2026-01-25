@@ -117,14 +117,16 @@ export const OnboardingWizard: React.FC = () => {
       }
     }}>
       <DialogContent 
-        className="sm:max-w-md p-0 gap-0 max-h-[70vh] md:max-h-[65vh] overflow-hidden"
+        className="sm:max-w-md p-0 gap-0 max-h-[85vh] flex flex-col overflow-hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         {/* Progress indicator */}
-        <OnboardingProgress currentStep={step} totalSteps={TOTAL_STEPS} />
+        <div className="flex-shrink-0">
+          <OnboardingProgress currentStep={step} totalSteps={TOTAL_STEPS} />
+        </div>
         
         {/* Step content */}
-        <div className="min-h-[280px] max-h-[55vh] overflow-y-auto pb-4">
+        <div className="flex-1 min-h-0 overflow-y-auto pb-4">
           <AnimatePresence mode="wait">
             {step === 0 && (
               <WelcomeStep
