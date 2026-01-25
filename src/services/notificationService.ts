@@ -462,6 +462,23 @@ export class NotificationService {
   }
 
   /**
+   * Notify admins when a customer replies to an issue
+   */
+  static async notifyAdminCustomerReply(
+    orderNumber: string,
+    customerName: string,
+    issueId: string
+  ): Promise<void> {
+    await this.notifyAllAdmins({
+      type: 'order_issue_reply',
+      title: 'Customer Replied to Issue',
+      message: `${customerName} replied to their issue for order ${orderNumber}`,
+      link: '/admin/orders/issues',
+      metadata: { orderNumber, customerName, issueId }
+    });
+  }
+
+  /**
    * Notify customer when admin replies to their issue
    */
   static async notifyIssueReply(

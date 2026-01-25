@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +46,7 @@ import {
 } from '@/components/ui/table';
 import { MobileIssueCard } from '@/components/admin/MobileIssueCard';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
+import { NotificationService } from '@/services/notificationService';
 
 interface OrderIssue {
   id: string;
@@ -114,10 +115,51 @@ const OrderIssues = () => {
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   
   const showMobileCards = isMobile || isTablet;
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Helper: Get customer's auth user_id from customer_id
+  const getCustomerUserId = useCallback(async (customerId: string): Promise<string | null> => {
+    const { data } = await supabase
+      .from('customer_users')
+      .select('user_id')
+      .eq('customer_id', customerId)
+      .single();
+    return data?.user_id || null;
+  }, []);
 
   useEffect(() => {
     fetchIssues();
   }, []);
+
+  // Auto-scroll messages when they update
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [issueMessages]);
+
+  // Real-time subscription for messages when detail panel is open
+  useEffect(() => {
+    if (!selectedIssue) return;
+
+    const channel = supabase
+      .channel(`admin-issue-messages-${selectedIssue.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'communications',
+          filter: `issue_id=eq.${selectedIssue.id}`
+        },
+        () => {
+          fetchIssueMessages(selectedIssue.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedIssue?.id]);
 
   const fetchIssues = async () => {
     try {
@@ -182,6 +224,22 @@ const OrderIssues = () => {
 
       if (error) throw error;
 
+      // Notify customer about status change (if status actually changed)
+      if (newStatus !== selectedIssue.status) {
+        const customerUserId = await getCustomerUserId(selectedIssue.customer_id);
+        const customerEmail = selectedIssue.orders?.customers?.email;
+        
+        if (customerUserId && customerEmail) {
+          await NotificationService.notifyIssueStatusChange(
+            customerUserId,
+            selectedIssue.orders?.order_number || '',
+            selectedIssue.id,
+            newStatus,
+            customerEmail
+          ).catch(err => console.error('Notification error (non-blocking):', err));
+        }
+      }
+
       toast({
         title: "Success",
         description: `Issue status updated to ${statusLabels[newStatus]}`
@@ -241,8 +299,21 @@ const OrderIssues = () => {
 
       if (error) throw error;
 
+      // Notify customer about admin reply
+      const customerUserId = await getCustomerUserId(selectedIssue.customer_id);
+      const customerEmail = selectedIssue.orders?.customers?.email;
+      
+      if (customerUserId && customerEmail) {
+        await NotificationService.notifyIssueReply(
+          customerUserId,
+          selectedIssue.orders?.order_number || '',
+          selectedIssue.id,
+          customerEmail
+        ).catch(err => console.error('Notification error (non-blocking):', err));
+      }
+
       setReplyContent('');
-      fetchIssueMessages(selectedIssue.id);
+      // Real-time subscription will handle the refresh
 
       toast({
         title: "Reply sent",
@@ -676,17 +747,20 @@ const OrderIssues = () => {
                   {issueMessages.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-4">No messages yet</p>
                   ) : (
-                    issueMessages.map((msg) => (
-                      <div 
-                        key={msg.id} 
-                        className={`mb-3 p-2 rounded ${msg.direction === 'inbound' ? 'bg-primary/10 ml-4' : 'bg-muted mr-4'}`}
-                      >
-                        <p className="text-sm">{msg.content}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {msg.direction === 'inbound' ? 'Support Team' : 'Customer'} • {format(new Date(msg.communication_date), 'PPp')}
-                        </p>
-                      </div>
-                    ))
+                    <>
+                      {issueMessages.map((msg) => (
+                        <div 
+                          key={msg.id} 
+                          className={`mb-3 p-2 rounded ${msg.direction === 'inbound' ? 'bg-primary/10 ml-4' : 'bg-muted mr-4'}`}
+                        >
+                          <p className="text-sm">{msg.content}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {msg.direction === 'inbound' ? 'Support Team' : 'Customer'} • {format(new Date(msg.communication_date), 'PPp')}
+                          </p>
+                        </div>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </>
                   )}
                 </ScrollArea>
                 <div className="flex gap-2">

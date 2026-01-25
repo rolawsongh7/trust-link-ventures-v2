@@ -11,7 +11,7 @@ const corsHeaders = {
 interface EmailRequest {
   to: string;
   subject: string;
-  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification' | 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered' | 'new_quote_request_admin' | 'account_deleted' | 'support_reply' | 'payment_verified' | 'payment_rejected' | 'payment_clarification_needed';
+  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification' | 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered' | 'new_quote_request_admin' | 'account_deleted' | 'support_reply' | 'payment_verified' | 'payment_rejected' | 'payment_clarification_needed' | 'order_issue_reply' | 'order_issue_status_change' | 'pod_uploaded';
   data?: Record<string, any>;
 }
 
@@ -75,6 +75,17 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'payment_clarification_needed':
         html = generatePaymentClarificationEmail(data);
+        break;
+      case 'order_issue_reply':
+        html = generateOrderIssueReplyEmail(data);
+        from = "Trust Link Support <support@trustlinkcompany.com>";
+        break;
+      case 'order_issue_status_change':
+        html = generateOrderIssueStatusChangeEmail(data);
+        from = "Trust Link Support <support@trustlinkcompany.com>";
+        break;
+      case 'pod_uploaded':
+        html = generatePODUploadedEmail(data);
         break;
       default:
         throw new Error('Invalid email type');
@@ -916,6 +927,148 @@ function generatePaymentClarificationEmail(data: any): string {
         <div class="footer">
           <p>Thank you for your patience!</p>
           <p><strong>Trust Link Ventures Team</strong></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateOrderIssueReplyEmail(data: any): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #0ea5e9; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+        .button { display: inline-block; background: #0ea5e9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .order-box { background: #f0f9ff; border: 1px solid #bae6fd; padding: 15px; border-radius: 6px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>💬 New Reply to Your Issue</h1>
+        </div>
+        <div class="content">
+          <p>Hello,</p>
+          <p>Our support team has responded to your issue report for <strong>Order #${data?.orderNumber || 'N/A'}</strong>.</p>
+          
+          <div class="order-box">
+            <p><strong>Order:</strong> #${data?.orderNumber || 'N/A'}</p>
+            <p><strong>Issue ID:</strong> ${data?.issueId || 'N/A'}</p>
+          </div>
+
+          <p>Please log in to your customer portal to view the full response and reply if needed.</p>
+          
+          <a href="${data?.customerPortalLink || '#'}" class="button">View Response</a>
+        </div>
+        <div class="footer">
+          <p>Best regards,<br><strong>Trust Link Ventures Support Team</strong></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateOrderIssueStatusChangeEmail(data: any): string {
+  const statusMessages: Record<string, { color: string; icon: string; message: string }> = {
+    'reviewing': { color: '#eab308', icon: '🔍', message: 'Your issue is now under review by our team.' },
+    'resolved': { color: '#22c55e', icon: '✅', message: 'Great news! Your issue has been resolved.' },
+    'rejected': { color: '#ef4444', icon: '❌', message: 'Your issue report has been reviewed and closed.' },
+    'submitted': { color: '#3b82f6', icon: '📋', message: 'Your issue has been submitted and is awaiting review.' }
+  };
+  
+  const status = data?.newStatus || 'submitted';
+  const statusInfo = statusMessages[status] || statusMessages['submitted'];
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: ${statusInfo.color}; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+        .button { display: inline-block; background: ${statusInfo.color}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .status-box { background: #f8f9fa; border-left: 4px solid ${statusInfo.color}; padding: 15px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>${statusInfo.icon} Issue Status Updated</h1>
+        </div>
+        <div class="content">
+          <p>Hello,</p>
+          <p>The status of your issue report for <strong>Order #${data?.orderNumber || 'N/A'}</strong> has been updated.</p>
+          
+          <div class="status-box">
+            <p style="margin: 0;"><strong>New Status:</strong> ${status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}</p>
+            <p style="margin: 10px 0 0 0; color: #666;">${statusInfo.message}</p>
+          </div>
+
+          <p>Log in to your customer portal to view full details and any messages from our team.</p>
+          
+          <a href="${data?.customerPortalLink || '#'}" class="button">View Issue Details</a>
+          
+          ${status === 'resolved' ? `
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">
+              If you have any further concerns, please don't hesitate to submit a new issue report.
+            </p>
+          ` : ''}
+        </div>
+        <div class="footer">
+          <p>Best regards,<br><strong>Trust Link Ventures Support Team</strong></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generatePODUploadedEmail(data: any): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #22c55e; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; }
+        .button { display: inline-block; background: #22c55e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .order-box { background: #f0fdf4; border: 1px solid #86efac; padding: 15px; border-radius: 6px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📷 Proof of Delivery Available</h1>
+        </div>
+        <div class="content">
+          <p>Hello,</p>
+          <p>Proof of delivery has been uploaded for your <strong>Order #${data?.orderNumber || 'N/A'}</strong>.</p>
+          
+          <div class="order-box">
+            <p><strong>Order:</strong> #${data?.orderNumber || 'N/A'}</p>
+            <p><strong>Order ID:</strong> ${data?.orderId || 'N/A'}</p>
+          </div>
+
+          <p>You can now view the delivery proof (photo and/or signature) in your order details.</p>
+          
+          <a href="${data?.customerPortalLink || '#'}" class="button">View Delivery Proof</a>
+        </div>
+        <div class="footer">
+          <p>Best regards,<br><strong>Trust Link Ventures Team</strong></p>
         </div>
       </div>
     </body>
