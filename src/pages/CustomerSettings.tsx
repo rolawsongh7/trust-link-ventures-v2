@@ -5,7 +5,7 @@ import { SecurityScore } from "@/components/customer/SecurityScore";
 import { ChangePasswordDialog } from "@/components/customer/ChangePasswordDialog";
 import { DeleteAccountDialog } from "@/components/customer/DeleteAccountDialog";
 import { MobileThemeSelector } from "@/components/customer/settings/MobileThemeSelector";
-import { Shield, Key, Fingerprint, Bell, Palette, ChevronRight, HelpCircle, FileText, Info, Trash2 } from "lucide-react";
+import { Shield, Key, Fingerprint, Bell, Palette, ChevronRight, HelpCircle, FileText, Info, Trash2, Scale, Cookie } from "lucide-react";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,7 +63,7 @@ export default function CustomerSettings() {
 
         {/* Settings Tabs */}
         <Tabs defaultValue="appearance" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
             <TabsTrigger value="appearance" className="gap-2">
               <Palette className="h-4 w-4" />
               <span className="hidden sm:inline">Appearance</span>
@@ -83,6 +83,10 @@ export default function CustomerSettings() {
             <TabsTrigger value="notifications" className="gap-2">
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">Alerts</span>
+            </TabsTrigger>
+            <TabsTrigger value="legal" className="gap-2">
+              <Scale className="h-4 w-4" />
+              <span className="hidden sm:inline">Legal</span>
             </TabsTrigger>
           </TabsList>
 
@@ -227,6 +231,65 @@ export default function CustomerSettings() {
             
             {/* Support Contact */}
             <SupportContactCard />
+          </TabsContent>
+
+          {/* Legal Tab */}
+          <TabsContent value="legal" className="space-y-6">
+            <Card className="p-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-white/30 dark:border-slate-800/30">
+              <h2 className="text-xl font-semibold mb-2">Legal Documents</h2>
+              <p className="text-muted-foreground mb-6">
+                Review our terms, policies, and legal information
+              </p>
+              <div className="space-y-2">
+                <motion.div whileTap={{ scale: 0.98 }}>
+                  <Link
+                    to="/terms"
+                    className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors group"
+                  >
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                      <FileText className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-foreground">Terms of Service</div>
+                      <div className="text-sm text-muted-foreground">Our terms of use agreement</div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </Link>
+                </motion.div>
+
+                <motion.div whileTap={{ scale: 0.98 }}>
+                  <Link
+                    to="/privacy"
+                    className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors group"
+                  >
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                      <Shield className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-foreground">Privacy Policy</div>
+                      <div className="text-sm text-muted-foreground">How we protect your data</div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </Link>
+                </motion.div>
+
+                <motion.div whileTap={{ scale: 0.98 }}>
+                  <Link
+                    to="/cookies"
+                    className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors group"
+                  >
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                      <Cookie className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-foreground">Cookie Policy</div>
+                      <div className="text-sm text-muted-foreground">How we use cookies</div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </Link>
+                </motion.div>
+              </div>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
