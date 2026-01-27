@@ -67,6 +67,8 @@ interface Order {
   payment_proof_uploaded_at?: string;
   payment_verified_by?: string;
   payment_verified_at?: string;
+  payment_amount_confirmed?: number;
+  payment_status_reason?: string;
   notes?: string;
   order_items: any[];
   customers: {
@@ -99,6 +101,8 @@ interface OrdersDataTableProps {
   onQuickStatusChange: (order: Order, newStatus: 'processing' | 'ready_to_ship' | 'delivered') => void;
   onVerifyPayment: (order: Order) => void;
   getStatusColor: (status: string) => string;
+  onRequestBalancePayment?: (order: Order) => void;
+  onMoveToProcessingPartial?: (order: Order) => void;
 }
 
 // Professional icon-based origin indicator
@@ -201,6 +205,31 @@ const getPaymentIndicator = (order: Order) => {
     );
   }
 
+  // Check for verified PARTIAL payment
+  if (order.payment_verified_at && order.payment_status_reason?.toLowerCase().includes('partial')) {
+    const confirmed = order.payment_amount_confirmed || 0;
+    const balance = order.total_amount - confirmed;
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="secondary" className="bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 gap-1">
+              <DollarSign className="h-3 w-3" />
+              Partial ({order.currency} {balance.toLocaleString()} due)
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="space-y-1">
+              <div>Received: {order.currency} {confirmed.toLocaleString()}</div>
+              <div className="font-semibold">Balance: {order.currency} {balance.toLocaleString()}</div>
+              {order.payment_reference && <div className="font-mono text-xs">{order.payment_reference}</div>}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
   if (order.payment_verified_at) {
     return (
       <TooltipProvider>
@@ -251,6 +280,19 @@ const canTransitionToProcessing = (order: Order): { allowed: boolean; reason?: s
   return { allowed: true };
 };
 
+// Check if order has verified partial payment
+const hasVerifiedPartialPayment = (order: Order): boolean => {
+  if (!order.payment_verified_at) return false;
+  const confirmedAmount = order.payment_amount_confirmed || 0;
+  return confirmedAmount > 0 && confirmedAmount < order.total_amount;
+};
+
+// Get remaining balance for partial payments
+const getRemainingBalance = (order: Order): number => {
+  const confirmedAmount = order.payment_amount_confirmed || 0;
+  return order.total_amount - confirmedAmount;
+};
+
 export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
   orders,
   onEditDetails,
@@ -263,6 +305,8 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
   onQuickStatusChange,
   onVerifyPayment,
   getStatusColor,
+  onRequestBalancePayment,
+  onMoveToProcessingPartial,
 }) => {
   const [isExporting, setIsExporting] = useState(false);
   const { isMobile, isTablet } = useMobileDetection();
@@ -601,6 +645,26 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
               </DropdownMenuItem>
             )}
             
+            {/* Partial Payment Actions */}
+            {hasVerifiedPartialPayment(row) && row.status === 'pending_payment' && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-amber-600 text-xs">Partial Payment Actions</DropdownMenuLabel>
+                {onRequestBalancePayment && (
+                  <DropdownMenuItem onClick={() => onRequestBalancePayment(row)}>
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    Request Balance Payment
+                  </DropdownMenuItem>
+                )}
+                {onMoveToProcessingPartial && (
+                  <DropdownMenuItem onClick={() => onMoveToProcessingPartial(row)}>
+                    <Package className="mr-2 h-4 w-4" />
+                    Move to Processing (Partial)
+                  </DropdownMenuItem>
+                )}
+              </>
+            )}
+            
             <DropdownMenuSeparator />
             
             {/* Quick Status Actions - Block processing without verified payment */}
@@ -632,11 +696,28 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
               </TooltipProvider>
             )}
             
+            {/* Block shipping for partial payments */}
             {row.status === 'processing' && (
-              <DropdownMenuItem onClick={() => onQuickStatusChange(row, 'ready_to_ship')}>
-                <Package className="mr-2 h-4 w-4" />
-                Mark Ready to Ship
-              </DropdownMenuItem>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuItem 
+                      onClick={() => !hasVerifiedPartialPayment(row) && onQuickStatusChange(row, 'ready_to_ship')}
+                      disabled={hasVerifiedPartialPayment(row)}
+                      className={hasVerifiedPartialPayment(row) ? 'opacity-50 cursor-not-allowed' : ''}
+                    >
+                      <Package className="mr-2 h-4 w-4" />
+                      Mark Ready to Ship
+                      {hasVerifiedPartialPayment(row) && (
+                        <Lock className="ml-auto h-3 w-3 text-amber-500" />
+                      )}
+                    </DropdownMenuItem>
+                  </TooltipTrigger>
+                  {hasVerifiedPartialPayment(row) && (
+                    <TooltipContent>Full payment required before shipping ({row.currency} {getRemainingBalance(row).toLocaleString()} outstanding)</TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             )}
             
             {row.status === 'shipped' && (

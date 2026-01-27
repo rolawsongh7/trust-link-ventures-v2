@@ -112,3 +112,6 @@ verify_jwt = false
 
 [functions.delete-customer-account]
 verify_jwt = false
+
+[functions.send-balance-payment-request]
+verify_jwt = false

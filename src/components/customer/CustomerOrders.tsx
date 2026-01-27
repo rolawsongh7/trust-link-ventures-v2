@@ -43,6 +43,7 @@ interface Order {
   payment_verified_at?: string;
   payment_rejected_at?: string;
   payment_status_reason?: string;
+  payment_amount_confirmed?: number;
   order_items?: any[];
   quotes?: {
     quote_number: string;
@@ -54,6 +55,19 @@ interface Order {
   // Added for issue tracking
   has_active_issue?: boolean;
 }
+
+// Helper to check if order has partial payment
+const hasPartialPayment = (order: Order): boolean => {
+  if (!order.payment_verified_at) return false;
+  const confirmedAmount = order.payment_amount_confirmed || 0;
+  return confirmedAmount > 0 && confirmedAmount < order.total_amount;
+};
+
+// Get remaining balance
+const getBalanceRemaining = (order: Order): number => {
+  const confirmedAmount = order.payment_amount_confirmed || 0;
+  return order.total_amount - confirmedAmount;
+};
 
 export const CustomerOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -764,6 +778,40 @@ export const CustomerOrders: React.FC = () => {
                         <div>
                           <span className="font-medium text-amber-700 dark:text-amber-400">Payment Under Review</span>
                           <p className="text-sm text-amber-600 dark:text-amber-300">We're verifying your payment. This usually takes 1-2 business hours.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Partial Payment Balance Alert */}
+                  {hasPartialPayment(order) && (
+                    <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <DollarSign className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-amber-700 dark:text-amber-400">Balance Payment Required</h4>
+                          <div className="mt-2 space-y-1 text-sm">
+                            <p className="text-amber-600 dark:text-amber-300">
+                              <span className="font-medium">Amount Received:</span> {order.currency} {(order.payment_amount_confirmed || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                            <p className="text-amber-700 dark:text-amber-300 font-semibold">
+                              <span className="font-medium">Balance Remaining:</span> {order.currency} {getBalanceRemaining(order).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                          </div>
+                          <p className="text-sm text-amber-600 dark:text-amber-300 mt-2">
+                            Please complete the remaining payment to proceed with shipping.
+                          </p>
+                          <Button
+                            size="sm"
+                            className="mt-3 bg-amber-600 hover:bg-amber-700 text-white"
+                            onClick={() => {
+                              setSelectedOrderForPayment(order);
+                              setPaymentProofDialogOpen(true);
+                            }}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Balance Payment
+                          </Button>
                         </div>
                       </div>
                     </div>
