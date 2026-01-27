@@ -362,15 +362,16 @@ const handler = async (req: Request): Promise<Response> => {
 
     // If no action specified, show choice page with both buttons
     if (!action) {
-      // First verify token exists
+      // First verify token exists (separate query - no FK join)
       const { data: tokenData, error: tokenError } = await supabase
         .from('magic_link_tokens')
-        .select('*, quotes(*)')
+        .select('*')
         .eq('token', token)
         .eq('token_type', 'quote_approval')
         .single();
 
       if (tokenError || !tokenData) {
+        console.error('Token lookup error:', tokenError);
         return new Response(generateSuccessPage(
           'Link Expired',
           'This quote approval link has expired or is invalid. Please contact us if you need assistance.',
@@ -405,7 +406,26 @@ const handler = async (req: Request): Promise<Response> => {
         });
       }
 
-      return new Response(generateChoicePage(tokenData.quotes, token), {
+      // Fetch quote data separately (no FK relationship exists)
+      const { data: quote, error: quoteError } = await supabase
+        .from('quotes')
+        .select('*')
+        .eq('id', tokenData.quote_id)
+        .single();
+
+      if (quoteError || !quote) {
+        console.error('Quote lookup error:', quoteError);
+        return new Response(generateSuccessPage(
+          'Quote Not Found',
+          'The quote associated with this link could not be found. Please contact us for assistance.',
+          false
+        ), {
+          headers: { 'Content-Type': 'text/html' },
+          status: 400
+        });
+      }
+
+      return new Response(generateChoicePage(quote, token), {
         headers: { 'Content-Type': 'text/html' },
         status: 200
       });
@@ -415,22 +435,10 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response('Invalid action', { status: 400 });
     }
 
-    // Verify token
+    // Verify token (separate query - no FK join)
     const { data: tokenData, error: tokenError } = await supabase
       .from('magic_link_tokens')
-      .select(`
-        *,
-        quotes (
-          id,
-          quote_number,
-          title,
-          total_amount,
-          currency,
-          valid_until,
-          customer_email,
-          customers(company_name, contact_name)
-        )
-      `)
+      .select('*')
       .eq('token', token)
       .eq('token_type', 'quote_approval')
       .gt('expires_at', new Date().toISOString())
@@ -438,6 +446,7 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (tokenError || !tokenData) {
+      console.error('Token verification error:', tokenError);
       return new Response(generateSuccessPage(
         'Link Expired',
         'This approval link has expired or is no longer valid. Please contact us for a new approval link.',
@@ -448,9 +457,28 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    // Fetch quote data separately with customer info
+    const { data: quote, error: quoteError } = await supabase
+      .from('quotes')
+      .select('id, quote_number, title, total_amount, currency, valid_until, customer_email, customers(company_name, contact_name)')
+      .eq('id', tokenData.quote_id)
+      .single();
+
+    if (quoteError || !quote) {
+      console.error('Quote fetch error:', quoteError);
+      return new Response(generateSuccessPage(
+        'Quote Not Found',
+        'The quote associated with this link could not be found. Please contact us for assistance.',
+        false
+      ), {
+        headers: { 'Content-Type': 'text/html' },
+        status: 400
+      });
+    }
+
     if (req.method === 'GET') {
       // Show confirmation form
-      return new Response(generateFormPage(tokenData.quotes, token, action), {
+      return new Response(generateFormPage(quote, token, action), {
         headers: { 'Content-Type': 'text/html' },
         status: 200
       });
