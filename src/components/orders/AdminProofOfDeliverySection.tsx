@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -9,7 +9,8 @@ import {
   Download, 
   RefreshCw,
   User,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ProofOfDeliveryUpload } from './ProofOfDeliveryUpload';
@@ -44,9 +45,34 @@ export const AdminProofOfDeliverySection: React.FC<AdminProofOfDeliverySectionPr
   const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [signedPhotoUrl, setSignedPhotoUrl] = useState<string | null>(null);
+  const [isLoadingUrl, setIsLoadingUrl] = useState(false);
 
-  const photoUrl = proofOfDeliveryUrl || deliveryProofUrl;
-  const hasPod = photoUrl || deliverySignature;
+  const rawPhotoUrl = proofOfDeliveryUrl || deliveryProofUrl;
+  const hasPod = rawPhotoUrl || deliverySignature;
+
+  // Get fresh signed URL on mount
+  useEffect(() => {
+    const loadSignedUrl = async () => {
+      if (!rawPhotoUrl) return;
+      
+      setIsLoadingUrl(true);
+      try {
+        const freshUrl = await ensureSignedUrl(rawPhotoUrl);
+        setSignedPhotoUrl(freshUrl);
+      } catch (error) {
+        console.error('Failed to get signed URL for POD:', error);
+        // Fall back to raw URL
+        setSignedPhotoUrl(rawPhotoUrl);
+      } finally {
+        setIsLoadingUrl(false);
+      }
+    };
+
+    loadSignedUrl();
+  }, [rawPhotoUrl]);
+
+  const photoUrl = signedPhotoUrl || rawPhotoUrl;
 
   const handleDownload = async () => {
     if (!photoUrl) return;
@@ -157,31 +183,41 @@ export const AdminProofOfDeliverySection: React.FC<AdminProofOfDeliverySectionPr
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Photo Preview */}
-          {photoUrl && (
+          {rawPhotoUrl && (
             <div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                 <Camera className="h-4 w-4" />
                 <span>Delivery Photo</span>
               </div>
               <div className="flex items-start gap-4">
-                <a 
-                  href={photoUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="block w-24 h-24 rounded-lg overflow-hidden border bg-white hover:opacity-90 transition-opacity flex-shrink-0"
-                >
-                  <img 
-                    src={photoUrl} 
-                    alt="Delivery proof" 
-                    className="w-full h-full object-cover"
-                  />
-                </a>
+                {isLoadingUrl ? (
+                  <div className="w-24 h-24 rounded-lg border flex items-center justify-center bg-muted flex-shrink-0">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <a 
+                    href={photoUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="block w-24 h-24 rounded-lg overflow-hidden border bg-white hover:opacity-90 transition-opacity flex-shrink-0"
+                  >
+                    <img 
+                      src={photoUrl} 
+                      alt="Delivery proof" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error('POD image failed to load:', photoUrl);
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </a>
+                )}
                 <div className="flex flex-col gap-2">
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={handleDownload}
-                    disabled={isDownloading}
+                    disabled={isDownloading || isLoadingUrl}
                   >
                     <Download className="h-4 w-4 mr-2" />
                     {isDownloading ? 'Opening...' : 'Download'}
