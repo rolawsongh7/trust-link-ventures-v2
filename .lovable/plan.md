@@ -1,95 +1,266 @@
 
-# Plan: Fix Quote Approval Magic Link
+# Plan: Fix Order Progression After Partial Payment Verification
 
-## Problem
-When customers click "Approve Quote" or "Reject Quote" buttons in the email, they see a "Link Expired" error page, even when the token is valid and hasn't expired.
+## Problem Summary
 
-## Root Cause
-The `quote-approval` Edge Function uses Supabase's relation syntax (`quotes(*)`) to join data:
+When an admin verifies a partial payment, the order gets "stuck" with no available actions because:
+
+1. Status is set to `pending_payment` (not `payment_received`)
+2. "Start Processing" action only appears for `payment_received` status
+3. "Verify Payment Proof" action disappears once `payment_verified_at` is set
+4. No dedicated actions exist for partial payment orders
+
+**Current Database State (verified):**
+- Order `ORD-202511-8528`: status=`pending_payment`, payment_verified_at=SET, payment_amount_confirmed=1500, total_amount=1841
+
+---
+
+## Root Cause Analysis
+
+| Component | Current Logic | Problem |
+|-----------|--------------|---------|
+| `OrdersDataTable.tsx` Line 590-595 | Show "Verify Payment" only if `!payment_verified_at` | Verified partial payments have no verify action |
+| `OrdersDataTable.tsx` Line 607-633 | Show "Start Processing" only for `status === 'payment_received'` | Partial payments have status `pending_payment` |
+| `getPaymentIndicator()` Line 204-220 | Shows "Verified" if `payment_verified_at` exists | No distinction for partial vs full verification |
+| `VerifyPaymentDialog.tsx` Line 149 | Sets status to `pending_payment` for partial | Correct, but no subsequent actions available |
+
+---
+
+## Solution Overview
+
+### 1. Extend Order Interface
+Add fields to track partial payment state:
+- `payment_amount_confirmed`: Already exists in DB
+- `payment_status_reason`: Already exists in DB
+- Create helper function to detect partial payment
+
+### 2. Update Payment Indicator
+Show "Partial" badge with balance remaining for verified partial payments.
+
+### 3. Add New Admin Actions
+For orders with verified partial payments (`status='pending_payment' && payment_verified_at && payment_amount_confirmed < total_amount`):
+- **Request Balance Payment** - Send email to customer requesting remaining balance
+- **Move to Processing (Partial)** - Allow order to proceed with partial payment acknowledgment
+
+### 4. Update Status Transition Guards
+- Allow `pending_payment` -> `processing` for verified partial payments
+- Block `processing` -> `shipped` unless fully paid
+- Block `ready_to_ship` -> `shipped` for partial payments
+
+### 5. Enhance Customer Notifications
+- Update `send-payment-confirmation` to include balance remaining for partial payments
+- Add customer-facing "Balance Remaining" display in portal
+
+---
+
+## Implementation Details
+
+### File: `src/components/orders/OrdersDataTable.tsx`
+
+**Change 1: Extend Order interface (lines 54-88)**
+Add missing payment fields:
 ```typescript
-.select('*, quotes(*)')
+interface Order {
+  // ... existing fields ...
+  payment_amount_confirmed?: number;
+  payment_status_reason?: string;
+}
 ```
 
-However, the `magic_link_tokens.quote_id` column has **no foreign key constraint** to `quotes.id`. Without this FK relationship, Supabase's PostgREST API cannot perform the join, causing the query to fail.
+**Change 2: Add helper function (after line 252)**
+```typescript
+// Check if order has verified partial payment
+const hasVerifiedPartialPayment = (order: Order): boolean => {
+  if (!order.payment_verified_at) return false;
+  const confirmedAmount = (order as any).payment_amount_confirmed || 0;
+  return confirmedAmount > 0 && confirmedAmount < order.total_amount;
+};
 
-Database verification confirms:
-- Token exists: `e182c01a-b7c2-44d1-ae51-6373362b3b0e`
-- Quote exists: `QT-20260127-455` (status: sent)
-- Token not expired: valid until Feb 3, 2026
-- Token not used: `used_at` is null
-- No foreign key relationship between `magic_link_tokens.quote_id` and `quotes.id`
+// Get remaining balance
+const getRemainingBalance = (order: Order): number => {
+  const confirmedAmount = (order as any).payment_amount_confirmed || 0;
+  return order.total_amount - confirmedAmount;
+};
+```
 
-## Solution
-Modify the `quote-approval` Edge Function to use **separate queries** instead of relying on the join syntax:
-1. First query `magic_link_tokens` to get the token and `quote_id`
-2. Then query `quotes` using the `quote_id` to get quote details
+**Change 3: Update getPaymentIndicator (lines 204-220)**
+Add partial payment state before "Verified" check:
+```typescript
+// Check for verified PARTIAL payment
+if (order.payment_verified_at && (order as any).payment_status_reason?.includes('Partial')) {
+  const confirmed = (order as any).payment_amount_confirmed || 0;
+  const balance = order.total_amount - confirmed;
+  return (
+    <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 gap-1">
+      <DollarSign className="h-3 w-3" />
+      Partial ({order.currency} {balance.toLocaleString()} due)
+    </Badge>
+  );
+}
+```
 
-This approach works without requiring a database migration.
+**Change 4: Update Actions Menu (lines 588-675)**
+Add actions for partial payment orders:
 
----
+```typescript
+{/* Partial Payment Actions */}
+{hasVerifiedPartialPayment(row) && row.status === 'pending_payment' && (
+  <>
+    <DropdownMenuItem onClick={() => onRequestBalancePayment(row)}>
+      <DollarSign className="mr-2 h-4 w-4" />
+      Request Balance Payment
+    </DropdownMenuItem>
+    <DropdownMenuItem onClick={() => onMoveToProcessingPartial(row)}>
+      <Package className="mr-2 h-4 w-4" />
+      Move to Processing (Partial)
+    </DropdownMenuItem>
+  </>
+)}
+```
 
-## Implementation
-
-### File to Modify
-`supabase/functions/quote-approval/index.ts`
-
-### Changes
-
-**1. First Query Block (Lines 364-411)** - Token validation without action:
-- Change the query from `select('*, quotes(*)')` to `select('*')`  
-- Add a separate query to fetch the quote using `tokenData.quote_id`
-- Pass the quote data to `generateChoicePage()`
-
-**2. Second Query Block (Lines 418-449)** - Token validation with action:
-- Change the query from the complex join to `select('*')`
-- Add a separate query to fetch quote with customer data
-- Update references from `tokenData.quotes` to the separately fetched quote
-
-### Code Changes Summary
-
-```text
-For the "no action" block (lines 364-411):
-  1. Query magic_link_tokens with select('*') only
-  2. After token validation, query quotes separately:
-     supabase.from('quotes').select('*').eq('id', tokenData.quote_id).single()
-  3. Pass quote data to generateChoicePage(quote, token)
-
-For the "with action" block (lines 418-449):
-  1. Query magic_link_tokens with select('*') only
-  2. After token validation, query quotes with customer relation:
-     supabase.from('quotes')
-       .select('id, quote_number, title, total_amount, currency, valid_until, customer_email, customers(company_name, contact_name)')
-       .eq('id', tokenData.quote_id)
-       .single()
-  3. Update generateFormPage() and POST handler to use the separate quote data
+**Change 5: Block shipping for partial payments**
+Add guard in "Mark Ready to Ship" action (line 635-640):
+```typescript
+{row.status === 'processing' && (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <DropdownMenuItem 
+          onClick={() => !hasVerifiedPartialPayment(row) && onQuickStatusChange(row, 'ready_to_ship')}
+          disabled={hasVerifiedPartialPayment(row)}
+          className={hasVerifiedPartialPayment(row) ? 'opacity-50 cursor-not-allowed' : ''}
+        >
+          <Package className="mr-2 h-4 w-4" />
+          Mark Ready to Ship
+          {hasVerifiedPartialPayment(row) && <Lock className="ml-auto h-3 w-3" />}
+        </DropdownMenuItem>
+      </TooltipTrigger>
+      {hasVerifiedPartialPayment(row) && (
+        <TooltipContent>Full payment required before shipping</TooltipContent>
+      )}
+    </Tooltip>
+  </TooltipProvider>
+)}
 ```
 
 ---
 
-## Technical Details
+### File: `src/components/orders/UnifiedOrdersManagement.tsx`
 
-The edge function has three locations where the join query is used:
-1. **Line 368**: Initial token validation (show choice page)
-2. **Line 421-432**: Token validation with action (show form page)
-3. **Line 453**: Form display uses `tokenData.quotes`
+**Add new handler functions:**
+```typescript
+const handleRequestBalancePayment = async (order: Order) => {
+  // Invoke edge function to send balance payment request email
+  await supabase.functions.invoke('send-balance-payment-request', {
+    body: { orderId: order.id }
+  });
+  toast({ title: 'Balance payment request sent' });
+};
 
-All instances will be updated to use separate queries.
+const handleMoveToProcessingPartial = async (order: Order) => {
+  await supabase.from('orders').update({
+    status: 'processing',
+    processing_started_at: new Date().toISOString(),
+    notes: `${order.notes || ''}\n[PARTIAL PAYMENT]: Processing started with partial payment. Balance pending.`
+  }).eq('id', order.id);
+  toast({ title: 'Order moved to processing' });
+  refetch();
+};
+```
+
+**Pass handlers to OrdersDataTable:**
+```typescript
+<OrdersDataTable
+  // ... existing props ...
+  onRequestBalancePayment={handleRequestBalancePayment}
+  onMoveToProcessingPartial={handleMoveToProcessingPartial}
+/>
+```
 
 ---
 
-## Testing After Implementation
+### New Edge Function: `supabase/functions/send-balance-payment-request/index.ts`
 
-1. Admin creates a manual quote and sends with magic link
-2. Customer receives email with "Approve Quote" / "Reject Quote" buttons
-3. Clicking either button shows the quote choice/confirmation page
-4. Customer can approve or reject and see success message
+Create new function to send balance payment request email:
+- Fetch order details with customer info
+- Calculate remaining balance
+- Send email with payment instructions and portal link
+- Create customer notification
 
 ---
 
-## Alternative Considered
+### File: `supabase/functions/send-payment-confirmation/index.ts`
 
-Adding a foreign key constraint via database migration was considered, but the separate query approach:
-- Requires no database changes
-- Is equally performant (2 small queries vs 1 join)
-- Is more explicit and easier to debug
-- Works immediately without migration coordination
+**Update to handle partial payments:**
+- Add `isPartialPayment` and `balanceRemaining` parameters
+- Update email template to show balance when partial:
+
+```typescript
+${isPartialPayment ? `
+<div class="info-box" style="background: #fef3c7; border-left: 4px solid #f59e0b;">
+  <h3>Partial Payment Received</h3>
+  <p><strong>Amount Received:</strong> ${currency} ${amountReceived}</p>
+  <p><strong>Balance Remaining:</strong> ${currency} ${balanceRemaining}</p>
+  <p>Please complete your payment to proceed with shipping.</p>
+  <a href="https://trustlinkcompany.com/portal/orders">Upload Balance Payment</a>
+</div>
+` : ''}
+```
+
+---
+
+### File: `src/components/customer/CustomerOrders.tsx`
+
+**Add balance display for customers:**
+Show remaining balance on orders with partial payment status.
+
+---
+
+## Status Transition Matrix
+
+| Current Status | Payment State | Available Actions |
+|---------------|---------------|-------------------|
+| `pending_payment` | Unverified | Verify Payment Proof |
+| `pending_payment` | Partial Verified | Request Balance, Move to Processing |
+| `payment_received` | Full Verified | Start Processing |
+| `processing` | Partial | Block "Ready to Ship" |
+| `processing` | Full | Mark Ready to Ship |
+| `ready_to_ship` | Partial | Block "Mark as Shipped" |
+| `ready_to_ship` | Full | Mark as Shipped |
+
+---
+
+## Files to Modify
+
+1. `src/components/orders/OrdersDataTable.tsx` - Add partial payment helpers, update indicator, add actions
+2. `src/components/orders/UnifiedOrdersManagement.tsx` - Add handler functions
+3. `src/components/orders/OrdersDataTable.tsx` props interface - Add new handler props
+4. `supabase/functions/send-payment-confirmation/index.ts` - Update for partial payment emails
+5. `src/components/customer/CustomerOrders.tsx` - Show balance remaining to customers
+
+## New Files to Create
+
+1. `supabase/functions/send-balance-payment-request/index.ts` - New edge function for balance requests
+
+---
+
+## Testing Scenarios
+
+1. Verify partial payment -> order shows "Partial" badge with balance
+2. Admin sees "Request Balance Payment" and "Move to Processing" actions
+3. Admin can move partial payment order to processing
+4. Admin CANNOT mark partial payment order as ready to ship
+5. Customer receives email with balance remaining
+6. Customer sees balance in portal
+7. After full payment, normal flow resumes
+8. Shipping is unlocked after full payment verification
+
+---
+
+## Non-Breaking Changes
+
+- Existing orders unaffected
+- Invoice calculations unchanged
+- POD enforcement unchanged
+- Audit logs preserved
+- No database migrations required (fields already exist)
