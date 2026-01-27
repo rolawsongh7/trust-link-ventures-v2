@@ -304,6 +304,48 @@ const UnifiedOrdersManagement = () => {
     setVerifyPaymentDialogOpen(true);
   };
 
+  // Handler for requesting balance payment email for partial payments
+  const handleRequestBalancePayment = async (order: Order) => {
+    try {
+      const { error } = await supabase.functions.invoke('send-balance-payment-request', {
+        body: { orderId: order.id }
+      });
+
+      if (error) throw error;
+
+      toast.success('Balance payment request sent to customer');
+      refetch();
+    } catch (error) {
+      console.error('Error requesting balance payment:', error);
+      toast.error('Failed to send balance payment request');
+    }
+  };
+
+  // Handler for moving partial payment order to processing
+  const handleMoveToProcessingPartial = async (order: Order) => {
+    try {
+      const confirmedAmount = (order as any).payment_amount_confirmed || 0;
+      const balance = order.total_amount - confirmedAmount;
+      
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          status: 'processing',
+          processing_started_at: new Date().toISOString(),
+          notes: `${order.notes || ''}\n[PARTIAL PAYMENT]: Processing started with partial payment. Balance of ${order.currency} ${balance.toLocaleString()} pending.`.trim()
+        })
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      toast.success('Order moved to processing with partial payment');
+      refetch();
+    } catch (error) {
+      console.error('Error moving order to processing:', error);
+      toast.error('Failed to update order status');
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'order_confirmed': return 'bg-cyan-100 dark:bg-cyan-950/50 text-cyan-800 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800';
@@ -427,10 +469,11 @@ const UnifiedOrdersManagement = () => {
               onSendTracking={handleSendTracking}
               onViewQuote={handleViewQuote}
               onRefresh={refetch}
-              
               onQuickStatusChange={handleQuickStatusChange}
               onVerifyPayment={handleVerifyPayment}
               getStatusColor={getStatusColor}
+              onRequestBalancePayment={handleRequestBalancePayment}
+              onMoveToProcessingPartial={handleMoveToProcessingPartial}
             />
           )}
         </TabsContent>
