@@ -39,7 +39,8 @@ import {
   XCircle,
   AlertTriangle,
   Clock,
-  Receipt
+  Receipt,
+  RefreshCw
 } from 'lucide-react';
 import { Column } from '@/components/ui/data-table';
 import { DataExporter } from '@/lib/exportHelpers';
@@ -696,28 +697,41 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
               </TooltipProvider>
             )}
             
-            {/* Block shipping for partial payments */}
+            {/* Block shipping for partial payments + Resend Balance Request for processing orders */}
             {row.status === 'processing' && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuItem 
-                      onClick={() => !hasVerifiedPartialPayment(row) && onQuickStatusChange(row, 'ready_to_ship')}
-                      disabled={hasVerifiedPartialPayment(row)}
-                      className={hasVerifiedPartialPayment(row) ? 'opacity-50 cursor-not-allowed' : ''}
-                    >
-                      <Package className="mr-2 h-4 w-4" />
-                      Mark Ready to Ship
-                      {hasVerifiedPartialPayment(row) && (
-                        <Lock className="ml-auto h-3 w-3 text-amber-500" />
-                      )}
+              <>
+                {/* Resend Balance Request for partial payments in processing */}
+                {hasVerifiedPartialPayment(row) && onRequestBalancePayment && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-amber-600 text-xs">Balance Outstanding</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => onRequestBalancePayment(row)}>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Resend Balance Request
                     </DropdownMenuItem>
-                  </TooltipTrigger>
-                  {hasVerifiedPartialPayment(row) && (
-                    <TooltipContent>Full payment required before shipping ({row.currency} {getRemainingBalance(row).toLocaleString()} outstanding)</TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+                  </>
+                )}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuItem 
+                        onClick={() => !hasVerifiedPartialPayment(row) && onQuickStatusChange(row, 'ready_to_ship')}
+                        disabled={hasVerifiedPartialPayment(row)}
+                        className={hasVerifiedPartialPayment(row) ? 'opacity-50 cursor-not-allowed' : ''}
+                      >
+                        <Package className="mr-2 h-4 w-4" />
+                        Mark Ready to Ship
+                        {hasVerifiedPartialPayment(row) && (
+                          <Lock className="ml-auto h-3 w-3 text-amber-500" />
+                        )}
+                      </DropdownMenuItem>
+                    </TooltipTrigger>
+                    {hasVerifiedPartialPayment(row) && (
+                      <TooltipContent>Full payment required before shipping ({row.currency} {getRemainingBalance(row).toLocaleString()} outstanding)</TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              </>
             )}
             
             {row.status === 'shipped' && (
