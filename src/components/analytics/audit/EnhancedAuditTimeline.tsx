@@ -17,11 +17,15 @@ import {
   Filter,
   AlertTriangle,
   Activity,
-  RefreshCw
+  RefreshCw,
+  Download
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { ExportDialog, type ExportOption } from '@/components/analytics/ExportDialog';
+import { exportToCSV, type ExportColumn } from '@/utils/analyticsExport';
+import { useToast } from '@/hooks/use-toast';
 
 interface Activity {
   id: string;
@@ -46,6 +50,8 @@ export const EnhancedAuditTimeline: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [anomalies, setAnomalies] = useState<AnomalyAlert[]>([]);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchActivities();
@@ -197,6 +203,39 @@ export const EnhancedAuditTimeline: React.FC = () => {
     return groups;
   }, [filteredActivities]);
 
+  const handleExport = async (options: ExportOption[]) => {
+    try {
+      const columns: ExportColumn[] = [
+        { key: 'event_type', label: 'Event Type' },
+        { key: 'created_at', label: 'Timestamp', formatter: (v) => format(new Date(v), 'yyyy-MM-dd HH:mm:ss') },
+        { key: 'severity', label: 'Severity' },
+        { key: 'event_data', label: 'Details', formatter: (v) => JSON.stringify(v || {}).substring(0, 200) }
+      ];
+      
+      exportToCSV(
+        filteredActivities.map(a => ({
+          event_type: a.event_type,
+          created_at: a.created_at,
+          severity: a.severity || 'low',
+          event_data: a.event_data
+        })),
+        `audit_timeline_${format(new Date(), 'yyyy-MM-dd')}`,
+        columns
+      );
+      
+      toast({
+        title: "Export Complete",
+        description: "Audit timeline exported successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "There was an error exporting data",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Anomaly Alerts */}
@@ -243,10 +282,20 @@ export const EnhancedAuditTimeline: React.FC = () => {
                 {filteredActivities.length} events · Showing recent activity
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={fetchActivities}>
-              <RefreshCw className={cn('h-4 w-4 mr-2', loading && 'animate-spin')} />
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setExportDialogOpen(true)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+              <Button variant="outline" size="sm" onClick={fetchActivities}>
+                <RefreshCw className={cn('h-4 w-4 mr-2', loading && 'animate-spin')} />
+                Refresh
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -382,6 +431,16 @@ export const EnhancedAuditTimeline: React.FC = () => {
           </ScrollArea>
         </CardContent>
       </Card>
+
+      {/* Export Dialog */}
+      <ExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        onExport={handleExport}
+        availableOptions={['operations_report']}
+        title="Export Audit Timeline"
+        description="Download activity history and events"
+      />
     </div>
   );
 };

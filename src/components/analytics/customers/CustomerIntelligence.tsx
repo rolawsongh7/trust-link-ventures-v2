@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,10 +11,14 @@ import {
   Building2,
   DollarSign,
   ShoppingCart,
-  Clock
+  Clock,
+  Download
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { ExportDialog, type ExportOption } from '@/components/analytics/ExportDialog';
+import { exportCustomerHealthReport, type CustomerHealthData } from '@/utils/analyticsExport';
+import { useToast } from '@/hooks/use-toast';
 import type { Order } from '@/hooks/useOrdersQuery';
 import type { Customer } from '@/hooks/useCustomersQuery';
 
@@ -42,6 +46,9 @@ export const CustomerIntelligence: React.FC<CustomerIntelligenceProps> = ({
   orders,
   customers
 }) => {
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const { toast } = useToast();
+
   const customerMetrics = React.useMemo(() => {
     const now = new Date();
     const ninetyDaysAgo = new Date();
@@ -203,8 +210,53 @@ export const CustomerIntelligence: React.FC<CustomerIntelligenceProps> = ({
   const atRiskCustomers = customerMetrics.filter(c => c.health === 'red' || c.health === 'yellow');
   const growingCustomers = customerMetrics.filter(c => c.orderTrend === 'growing');
 
+  const handleExport = async (options: ExportOption[]) => {
+    try {
+      for (const option of options) {
+        if (option === 'customer_health') {
+          const exportData: CustomerHealthData[] = customerMetrics.map(c => ({
+            customerId: c.customerId,
+            customerName: c.customerName,
+            health: c.health,
+            score: c.score,
+            totalRevenue: c.totalRevenue,
+            orderCount: c.orderCount,
+            avgOrderValue: c.avgOrderValue,
+            daysSinceLastOrder: c.daysSinceLastOrder === Infinity ? 9999 : c.daysSinceLastOrder,
+            paymentBehavior: c.paymentBehavior,
+            orderTrend: c.orderTrend,
+            explanation: c.explanation
+          }));
+          exportCustomerHealthReport(exportData);
+        }
+      }
+      toast({
+        title: "Export Complete",
+        description: "Customer health data exported successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "There was an error exporting data",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header with Export */}
+      <div className="flex items-center justify-end">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setExportDialogOpen(true)}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export
+        </Button>
+      </div>
+
       {/* Summary Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
@@ -406,6 +458,16 @@ export const CustomerIntelligence: React.FC<CustomerIntelligenceProps> = ({
           )}
         </CardContent>
       </Card>
+
+      {/* Export Dialog */}
+      <ExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        onExport={handleExport}
+        availableOptions={['customer_health']}
+        title="Export Customer Data"
+        description="Download customer health scores and metrics"
+      />
     </div>
   );
 };
