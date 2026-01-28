@@ -1,146 +1,232 @@
 
-# Plan: Fix Balance Payment Notification Delivery to Customer Portal
 
-## Problem Summary
+# Plan: AI Insights Engine Enhancement & Analytics Polish
 
-The balance payment notification created by the `send-balance-payment-request` edge function is **not visible to customers** because:
+## Overview
 
-1. **Wrong Table**: The function inserts into `notifications` table instead of `user_notifications`
-2. **Missing Fields**: The notification is missing critical fields like `link`, `requires_action`, and action event tracking fields
-
-**Evidence**:
-- Notification exists in `notifications` table with ID `76a36219-2a1b-426d-9d0a-b129e0111bc1`
-- No corresponding entry in `user_notifications` table
-- Customer portal's `useCustomerNotifications` hook only queries `user_notifications`
+This plan covers three categories of improvements to the Advanced Analytics system:
+1. Alert fatigue prevention (throttling and grouping)
+2. Export functionality (CSV + summary PDF)
+3. AI Insights Engine refinement (structured prescriptive output)
 
 ---
 
-## Current State Analysis
+## Phase 1: Alert Fatigue Prevention
 
-### Database Tables
+### 1.1 Create Alert Throttling System
 
-| Table | Purpose | Used By |
-|-------|---------|---------|
-| `notifications` | Legacy/unused table | Nothing reads from this |
-| `user_notifications` | Primary notification system | Customer portal, Admin portal |
+**New File: `src/hooks/useAlertThrottling.ts`**
 
-### CustomerOrders Balance Display - Already Working
+Create a hook to manage alert frequency and prevent notification fatigue:
 
-The UI already correctly displays partial payment balance:
-- Lines 60-70: `hasPartialPayment()` and `getBalanceRemaining()` helpers
-- Lines 786-818: Amber "Balance Payment Required" alert with payment summary
-- Lines 804-814: "Upload Balance Payment" CTA button
-- Lines 149-192: Auto-open payment dialog via `uploadPayment` query parameter
+- Store last alert timestamps per category in localStorage
+- Configurable cooldown periods (default: 24 hours)
+- Group related insights by category before displaying
+- Track dismissed alerts to avoid re-showing
 
----
-
-## Solution
-
-### File to Modify
-
-`supabase/functions/send-balance-payment-request/index.ts`
-
-### Changes Required
-
-**Lines 158-176**: Change the notification insert from `notifications` to `user_notifications` with proper fields:
-
-```typescript
-// Current (broken):
-const { error: notifError } = await supabase
-  .from("notifications")
-  .insert({
-    user_id: order.customers.id,
-    type: "balance_payment_request",
-    title: "Balance Payment Required",
-    message: `Please complete the balance payment...`,
-    data: { ... }
-  });
-
-// Fixed:
-const { error: notifError } = await supabase
-  .from("user_notifications")
-  .insert({
-    user_id: order.customers.id,
-    type: "balance_payment_request",
-    title: "Balance Payment Required",
-    message: `Please complete the balance payment of ${currency} ${balanceRemaining.toLocaleString()} for Order #${orderNumber}`,
-    link: `/portal/orders?uploadPayment=${orderId}`,
-    requires_action: true,
-    entity_type: "order",
-    entity_id: orderId,
-    metadata: {
-      order_id: orderId,
-      order_number: orderNumber,
-      balance_remaining: balanceRemaining,
-      currency: currency
-    }
-  });
+**Key Logic:**
+```text
+Alert Throttling Rules:
+- Same insight type: 24h cooldown
+- Same customer-related insight: 12h cooldown
+- Critical alerts (cash at risk > threshold): No throttle
+- Group up to 3 similar insights into one summary card
 ```
 
-### Key Changes
+### 1.2 Update EnhancedAIInsights Component
 
-1. **Table**: `notifications` -> `user_notifications`
-2. **Add `link`**: `/portal/orders?uploadPayment={orderId}` - enables click-to-navigate
-3. **Add `requires_action: true`**: Marks as actionable event
-4. **Add `entity_type`/`entity_id`**: Links to order for resolution tracking
-5. **Rename `data`** -> `metadata`: Match `user_notifications` column name
+**File: `src/components/analytics/executive/EnhancedAIInsights.tsx`**
+
+Changes:
+- Add `useAlertThrottling` hook integration
+- Implement insight grouping logic (e.g., "3 customers at churn risk" instead of 3 separate cards)
+- Add "Snooze for 24h" action to each insight card
+- Show "X insights snoozed" indicator in header
 
 ---
 
-## Additional Enhancement: Update CustomerNotifications Icon
+## Phase 2: Export Functionality
 
-### File to Modify
+### 2.1 Create Export Utilities
 
-`src/pages/CustomerNotifications.tsx`
+**New File: `src/utils/analyticsExport.ts`**
 
-### Change Required
+Functions:
+- `exportToCSV(data, filename, columns)` - Generic CSV export
+- `generateSummaryPDF(insights, metrics, dateRange)` - PDF with executive summary
+- `exportCustomerHealthReport(customers)` - Customer-specific export
+- `exportOperationsReport(orders)` - Operations metrics export
 
-Add icon mapping for `balance_payment_request` notification type in `getNotificationIcon()`:
+### 2.2 Create Export UI Components
+
+**New File: `src/components/analytics/ExportDialog.tsx`**
+
+Features:
+- Modal dialog with export options
+- Checkboxes for specific data slices:
+  - Executive Summary (PDF)
+  - Customer Health Scores (CSV)
+  - At-Risk Orders (CSV)
+  - AI Insights (PDF with recommendations)
+- Date range selector
+- Preview of export contents
+
+### 2.3 Add Export Buttons to Each Tab
+
+**Files to Update:**
+- `src/components/analytics/executive/ExecutiveInsightsTab.tsx`
+- `src/components/analytics/customers/CustomerIntelligence.tsx`
+- `src/components/analytics/operations/OperationsIntelligence.tsx`
+- `src/components/analytics/audit/EnhancedAuditTimeline.tsx`
+
+Add export button with contextual options per tab.
+
+---
+
+## Phase 3: AI Insights Engine Enhancement
+
+### 3.1 Upgrade Edge Function Output Schema
+
+**File: `supabase/functions/ai-analytics/index.ts`**
+
+Update the tool schema to enforce the strict output format:
+
+```json
+{
+  "type": "risk | opportunity | optimization | prediction",
+  "title": "Short, human-readable insight title",
+  "summary": "Plain-language explanation of what is happening",
+  "why_it_matters": "Business impact explanation",
+  "estimated_financial_impact": {
+    "amount": 12500,
+    "currency": "GHS",
+    "confidence": "low | medium | high"
+  },
+  "recommended_action": "Specific, realistic action the user can take",
+  "urgency": "immediate | soon | monitor",
+  "confidence_score": 0.82,
+  "data_sources": ["orders", "payments", "customers"],
+  "time_horizon": "short_term | medium_term"
+}
+```
+
+### 3.2 Enhance System Prompt
+
+**File: `supabase/functions/ai-analytics/index.ts`**
+
+New system prompt with strict rules:
+- No generic advice (enforce specificity)
+- Every insight must tie to money, risk, or growth
+- Conservative confidence scoring
+- Limit to 6-8 insights per run, prioritized by impact x urgency
+- Safety guardrails (no aggressive recommendations)
+
+### 3.3 Add Data Pre-Processing
+
+**File: `supabase/functions/ai-analytics/index.ts`**
+
+Enhance input data aggregation:
+- Payment aging analysis (0-30, 31-60, 60+ days)
+- Order cycle time statistics
+- Customer activity decay analysis
+- Issue frequency patterns
+- Quote-to-order conversion timing
+
+### 3.4 Update Frontend Insight Display
+
+**File: `src/components/analytics/executive/EnhancedAIInsights.tsx`**
+
+Update to display new structured fields:
+- Financial impact badge with confidence indicator
+- "Why it matters" expandable section
+- Urgency color coding (immediate=red, soon=amber, monitor=blue)
+- Data sources indicator
+- Time horizon label
+
+---
+
+## Implementation Files Summary
+
+| File | Action | Description |
+|------|--------|-------------|
+| `src/hooks/useAlertThrottling.ts` | Create | Alert throttling and grouping logic |
+| `src/utils/analyticsExport.ts` | Create | CSV/PDF export utilities |
+| `src/components/analytics/ExportDialog.tsx` | Create | Export options modal |
+| `supabase/functions/ai-analytics/index.ts` | Update | Enhanced schema, prompt, and data processing |
+| `src/components/analytics/executive/EnhancedAIInsights.tsx` | Update | New insight format display, throttling |
+| `src/components/analytics/executive/ExecutiveInsightsTab.tsx` | Update | Add export button |
+| `src/components/analytics/customers/CustomerIntelligence.tsx` | Update | Add export button |
+| `src/components/analytics/operations/OperationsIntelligence.tsx` | Update | Add export button |
+| `src/components/analytics/audit/EnhancedAuditTimeline.tsx` | Update | Add export button |
+
+---
+
+## Technical Details
+
+### Alert Throttling Storage Schema
 
 ```typescript
-const getNotificationIcon = (type: string) => {
-  switch (type) {
-    case 'success':
-      return <CheckCircle className="h-5 w-5 text-green-600" />;
-    case 'error':
-      return <XCircle className="h-5 w-5 text-red-600" />;
-    case 'warning':
-    case 'balance_payment_request':  // Add this case
-      return <AlertCircle className="h-5 w-5 text-[#F4B400]" />;
-    default:
-      return <Info className="h-5 w-5 text-[#0077B6]" />;
+interface ThrottleState {
+  [insightType: string]: {
+    lastShown: string; // ISO timestamp
+    snoozedUntil?: string;
+    showCount: number;
   }
-};
+}
 ```
 
-Also update `getNotificationStyle()` for consistent amber styling.
+### Export PDF Structure
+
+```text
+Executive Analytics Report
+--------------------------
+Generated: [Date]
+Period: [Date Range]
+
+1. Key Metrics Summary
+   - Cash at Risk: GHS X
+   - Orders at Risk: X
+   - Customer Health: X green, Y yellow, Z red
+
+2. AI Insights (Top 5)
+   - [Insight 1 with recommendation]
+   - [Insight 2 with recommendation]
+   ...
+
+3. Recommended Actions (Prioritized)
+   - [Action 1] - Expected Impact: GHS X
+   - [Action 2] - Expected Impact: GHS Y
+```
+
+### AI System Prompt Guardrails
+
+```text
+Safety Rules:
+- Never suggest legal actions against customers
+- Never recommend terminating customer relationships
+- Phrase recommendations as "Consider..." or "We recommend reviewing..."
+- When confidence is below 70%, explicitly state uncertainty
+- Default tone: calm, professional, advisory
+```
 
 ---
 
-## Testing Plan
+## Dependencies
+
+No new packages required. Uses existing:
+- `papaparse` for CSV generation
+- `@react-pdf/renderer` or native browser print for PDF (recommend browser print-to-PDF for simplicity)
+
+---
+
+## Testing Checklist
 
 After implementation:
+1. Verify alert throttling prevents duplicate notifications within 24h
+2. Test insight grouping with 5+ similar insights
+3. Export CSV and verify column headers and data accuracy
+4. Generate PDF and verify formatting
+5. Call AI analytics endpoint and verify new structured output format
+6. Test urgency color coding matches specification
+7. Verify financial impact displays with confidence indicator
 
-1. **Admin**: Click "Request Balance Payment" for order ORD-202511-8528
-2. **Verify**: Check `user_notifications` table has new entry
-3. **Customer Portal**: Navigate to `/portal/notifications` as customer
-4. **Verify**: Notification appears with amber styling
-5. **Click**: Notification navigates to `/portal/orders?uploadPayment=...`
-6. **Verify**: Payment proof dialog auto-opens
-7. **Upload**: Customer uploads balance payment proof
-
----
-
-## Files to Modify
-
-1. `supabase/functions/send-balance-payment-request/index.ts` - Fix table name and add fields
-2. `src/pages/CustomerNotifications.tsx` - Add icon/style for balance_payment_request type
-
----
-
-## Non-Breaking Changes
-
-- No database migrations required
-- Existing notifications in `notifications` table remain (can be cleaned up later)
-- Order display logic unchanged
-- Payment upload flow unchanged
