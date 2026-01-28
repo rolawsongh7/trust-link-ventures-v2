@@ -155,15 +155,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Balance payment request email sent:", emailResponse);
 
-    // Create a notification for the customer
+    // Create a notification for the customer in user_notifications table
     const { error: notifError } = await supabase
-      .from("notifications")
+      .from("user_notifications")
       .insert({
         user_id: order.customers.id,
         type: "balance_payment_request",
         title: "Balance Payment Required",
         message: `Please complete the balance payment of ${currency} ${balanceRemaining.toLocaleString()} for Order #${orderNumber}`,
-        data: {
+        link: `/portal/orders?uploadPayment=${orderId}`,
+        requires_action: true,
+        entity_type: "order",
+        entity_id: orderId,
+        metadata: {
           order_id: orderId,
           order_number: orderNumber,
           balance_remaining: balanceRemaining,
