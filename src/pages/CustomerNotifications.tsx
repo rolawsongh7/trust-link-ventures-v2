@@ -18,6 +18,7 @@ export default function CustomerNotifications() {
       case 'error':
         return <XCircle className="h-5 w-5 text-red-600" />;
       case 'warning':
+      case 'balance_payment_request':
         return <AlertCircle className="h-5 w-5 text-[#F4B400]" />;
       default:
         return <Info className="h-5 w-5 text-[#0077B6]" />;
@@ -31,6 +32,7 @@ export default function CustomerNotifications() {
       case 'error':
         return 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200';
       case 'warning':
+      case 'balance_payment_request':
         return 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200';
       default:
         return 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200';
