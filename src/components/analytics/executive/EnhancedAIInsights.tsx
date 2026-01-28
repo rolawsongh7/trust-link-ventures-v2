@@ -5,42 +5,49 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Sparkles, 
   TrendingUp, 
   AlertTriangle, 
   Lightbulb, 
   Target,
-  ArrowRight,
   RefreshCw,
   DollarSign,
   Clock,
-  ChevronRight
+  ChevronRight,
+  ChevronDown,
+  BellOff,
+  Database,
+  Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useAlertThrottling } from '@/hooks/useAlertThrottling';
 import type { Order } from '@/hooks/useOrdersQuery';
 import type { Quote } from '@/hooks/useQuotesQuery';
 import type { Customer } from '@/hooks/useCustomersQuery';
 
 interface StructuredInsight {
   id: string;
-  category: 'risk' | 'opportunity' | 'optimization' | 'prediction';
+  type: 'risk' | 'opportunity' | 'optimization' | 'prediction';
   title: string;
-  what: string;
-  why: string;
-  impact: {
-    value: string;
-    type: 'revenue' | 'cost' | 'time' | 'risk';
+  summary: string;
+  why_it_matters: string;
+  estimated_financial_impact?: {
+    amount: number;
+    currency: string;
+    confidence: 'low' | 'medium' | 'high';
   };
-  action: {
-    label: string;
-    link?: string;
-  };
-  confidence: number;
+  recommended_action: string;
   urgency: 'immediate' | 'soon' | 'monitor';
+  confidence_score: number;
+  data_sources?: string[];
+  time_horizon?: 'short_term' | 'medium_term';
+  // Legacy fields for backward compatibility
+  category?: 'risk' | 'opportunity' | 'optimization' | 'prediction';
 }
 
 interface EnhancedAIInsightsProps {
@@ -55,10 +62,18 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
   customers
 }) => {
   const [insights, setInsights] = useState<StructuredInsight[]>([]);
+  const [executiveSummary, setExecutiveSummary] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  const { 
+    snoozeInsight, 
+    getSnoozedCount,
+    clearAllSnoozes 
+  } = useAlertThrottling<StructuredInsight>();
 
   const fetchAIInsights = async (refresh = false) => {
     if (refresh) setIsRefreshing(true);
@@ -74,7 +89,9 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
             created_at: o.created_at,
             customer_id: o.customer_id,
             payment_verified_at: o.payment_verified_at,
-            estimated_delivery_date: o.estimated_delivery_date
+            estimated_delivery_date: o.estimated_delivery_date,
+            delivered_at: o.delivered_at,
+            failed_delivery_count: o.failed_delivery_count
           })),
           quotes: quotes.map(q => ({
             id: q.id,
@@ -95,9 +112,21 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
 
       if (error) throw error;
 
-      if (data?.success && data?.insights) {
-        const formattedInsights = formatStructuredInsights(data.insights);
+      if (data?.success) {
+        // Handle new format (array of insights) or legacy format
+        const rawInsights = Array.isArray(data.insights) 
+          ? data.insights 
+          : formatLegacyInsights(data.insights);
+        
+        const formattedInsights = rawInsights.map((insight: any, idx: number) => ({
+          ...insight,
+          id: insight.id || `insight-${idx}`,
+          type: insight.type || insight.category || 'optimization',
+          category: insight.type || insight.category || 'optimization'
+        }));
+        
         setInsights(formattedInsights);
+        setExecutiveSummary(data.executive_summary || '');
         
         if (refresh) {
           toast({
@@ -108,13 +137,47 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
       }
     } catch (error) {
       console.error('Error fetching AI insights:', error);
-      // Generate fallback insights from local data
       const fallbackInsights = generateLocalInsights(orders, quotes, customers);
       setInsights(fallbackInsights);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
+  };
+
+  // Format legacy API response to new structure
+  const formatLegacyInsights = (legacyData: any): StructuredInsight[] => {
+    const insights: StructuredInsight[] = [];
+    
+    // Process risks
+    legacyData?.risks?.forEach((risk: any, idx: number) => {
+      insights.push({
+        id: `risk-${idx}`,
+        type: 'risk',
+        title: risk.risk_type || 'Risk Detected',
+        summary: risk.description || '',
+        why_it_matters: 'Addressing risks early prevents revenue loss.',
+        recommended_action: risk.recommendation || 'Review and mitigate',
+        urgency: risk.severity === 'high' ? 'immediate' : 'soon',
+        confidence_score: 0.8
+      });
+    });
+
+    // Process recommendations
+    legacyData?.recommendations?.forEach((rec: any, idx: number) => {
+      insights.push({
+        id: `rec-${idx}`,
+        type: 'optimization',
+        title: rec.action || 'Optimization',
+        summary: rec.expected_impact || '',
+        why_it_matters: 'Operational improvements reduce costs.',
+        recommended_action: rec.action || 'Implement improvement',
+        urgency: rec.priority === 'high' ? 'soon' : 'monitor',
+        confidence_score: 0.7
+      });
+    });
+
+    return insights;
   };
 
   useEffect(() => {
@@ -124,113 +187,6 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
       setIsLoading(false);
     }
   }, [orders.length, quotes.length, customers.length]);
-
-  const formatStructuredInsights = (rawInsights: any): StructuredInsight[] => {
-    const formatted: StructuredInsight[] = [];
-
-    // Process profitability drivers
-    rawInsights.profitability_drivers?.top_customers?.forEach((customer: any, idx: number) => {
-      formatted.push({
-        id: `profit-${idx}`,
-        category: 'opportunity',
-        title: `Top Performer: ${customer.customer}`,
-        what: customer.insight || `This customer contributes ${customer.revenue_contribution} of your revenue.`,
-        why: 'Protecting and expanding relationships with top customers directly impacts bottom line.',
-        impact: {
-          value: customer.revenue_contribution || 'High Revenue',
-          type: 'revenue'
-        },
-        action: {
-          label: 'View customer profile',
-          link: '/customers'
-        },
-        confidence: 95,
-        urgency: 'monitor'
-      });
-    });
-
-    rawInsights.profitability_drivers?.growth_opportunities?.forEach((opp: any, idx: number) => {
-      formatted.push({
-        id: `growth-${idx}`,
-        category: 'opportunity',
-        title: opp.opportunity || 'Growth Opportunity',
-        what: opp.description || opp.potential_impact || 'Potential for revenue expansion identified.',
-        why: 'Capturing growth opportunities increases market share and revenue.',
-        impact: {
-          value: opp.potential_impact || 'Revenue Growth',
-          type: 'revenue'
-        },
-        action: {
-          label: 'Explore opportunity'
-        },
-        confidence: 75,
-        urgency: 'soon'
-      });
-    });
-
-    // Process risks
-    rawInsights.risks?.forEach((risk: any, idx: number) => {
-      formatted.push({
-        id: `risk-${idx}`,
-        category: 'risk',
-        title: risk.risk_type || 'Risk Detected',
-        what: risk.description || 'A potential risk has been identified.',
-        why: 'Addressing risks early prevents revenue loss and operational disruption.',
-        impact: {
-          value: risk.potential_loss || 'Potential Loss',
-          type: 'risk'
-        },
-        action: {
-          label: risk.recommendation || 'Review and mitigate'
-        },
-        confidence: 80,
-        urgency: risk.severity === 'high' ? 'immediate' : 'soon'
-      });
-    });
-
-    // Process churn predictions
-    rawInsights.predictions?.churn_risk_customers?.forEach((customer: any, idx: number) => {
-      formatted.push({
-        id: `churn-${idx}`,
-        category: 'prediction',
-        title: `Churn Risk: ${customer.customer}`,
-        what: customer.reason || 'Customer showing signs of disengagement.',
-        why: 'Retaining existing customers costs 5x less than acquiring new ones.',
-        impact: {
-          value: `Risk Score: ${customer.risk_score || 'High'}`,
-          type: 'risk'
-        },
-        action: {
-          label: 'Schedule check-in',
-          link: '/customers'
-        },
-        confidence: customer.risk_score ? 90 - customer.risk_score : 70,
-        urgency: 'immediate'
-      });
-    });
-
-    // Process recommendations
-    rawInsights.recommendations?.forEach((rec: any, idx: number) => {
-      formatted.push({
-        id: `rec-${idx}`,
-        category: 'optimization',
-        title: rec.action || 'Process Improvement',
-        what: rec.description || rec.expected_impact || 'Efficiency improvement identified.',
-        why: 'Operational optimizations reduce costs and improve customer satisfaction.',
-        impact: {
-          value: rec.expected_impact || 'Efficiency Gain',
-          type: 'cost'
-        },
-        action: {
-          label: 'Implement'
-        },
-        confidence: 70,
-        urgency: rec.priority === 'high' ? 'soon' : 'monitor'
-      });
-    });
-
-    return formatted.slice(0, 12);
-  };
 
   const generateLocalInsights = (
     orders: Order[], 
@@ -245,14 +201,20 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
     if (pendingTotal > 0) {
       insights.push({
         id: 'local-pending',
-        category: 'risk',
+        type: 'risk',
         title: 'Outstanding Payments',
-        what: `${pendingOrders.length} orders worth GHS ${(pendingTotal/1000).toFixed(0)}K are awaiting payment.`,
-        why: 'Delayed payments impact cash flow and working capital.',
-        impact: { value: `GHS ${(pendingTotal/1000).toFixed(0)}K`, type: 'revenue' },
-        action: { label: 'Review pending orders', link: '/orders?filter=pending_payment' },
-        confidence: 100,
-        urgency: pendingOrders.length > 5 ? 'immediate' : 'soon'
+        summary: `${pendingOrders.length} orders worth GHS ${(pendingTotal/1000).toFixed(0)}K are awaiting payment.`,
+        why_it_matters: 'Delayed payments impact cash flow and working capital.',
+        estimated_financial_impact: {
+          amount: pendingTotal,
+          currency: 'GHS',
+          confidence: 'high'
+        },
+        recommended_action: 'Review pending orders and send payment reminders',
+        urgency: pendingOrders.length > 5 ? 'immediate' : 'soon',
+        confidence_score: 1,
+        data_sources: ['orders', 'payments'],
+        time_horizon: 'short_term'
       });
     }
 
@@ -266,22 +228,28 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
       const quoteValue = oldQuotes.reduce((sum, q) => sum + (q.total_amount || 0), 0);
       insights.push({
         id: 'local-quotes',
-        category: 'opportunity',
+        type: 'opportunity',
         title: 'Stale Quotes Need Attention',
-        what: `${oldQuotes.length} quotes sent over a week ago have not received a response.`,
-        why: 'Timely follow-up increases quote-to-order conversion by up to 50%.',
-        impact: { value: `GHS ${(quoteValue/1000).toFixed(0)}K potential`, type: 'revenue' },
-        action: { label: 'Follow up on quotes', link: '/quotes?filter=sent' },
-        confidence: 90,
-        urgency: 'soon'
+        summary: `${oldQuotes.length} quotes sent over a week ago have not received a response.`,
+        why_it_matters: 'Timely follow-up increases quote-to-order conversion by up to 50%.',
+        estimated_financial_impact: {
+          amount: quoteValue * 0.25,
+          currency: 'GHS',
+          confidence: 'medium'
+        },
+        recommended_action: 'Follow up with phone calls or personalized emails',
+        urgency: 'soon',
+        confidence_score: 0.9,
+        data_sources: ['quotes'],
+        time_horizon: 'short_term'
       });
     }
 
     return insights;
   };
 
-  const getCategoryIcon = (category: StructuredInsight['category']) => {
-    switch (category) {
+  const getCategoryIcon = (type: StructuredInsight['type']) => {
+    switch (type) {
       case 'opportunity': return <TrendingUp className="h-4 w-4" />;
       case 'risk': return <AlertTriangle className="h-4 w-4" />;
       case 'optimization': return <Lightbulb className="h-4 w-4" />;
@@ -289,8 +257,8 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
     }
   };
 
-  const getCategoryStyles = (category: StructuredInsight['category']) => {
-    switch (category) {
+  const getCategoryStyles = (type: StructuredInsight['type']) => {
+    switch (type) {
       case 'opportunity':
         return {
           border: 'border-l-green-500',
@@ -323,32 +291,51 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
       case 'immediate':
         return <Badge variant="destructive" className="text-xs">Urgent</Badge>;
       case 'soon':
-        return <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30">Soon</Badge>;
+        return <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30">This Week</Badge>;
       default:
         return <Badge variant="outline" className="text-xs">Monitor</Badge>;
     }
   };
 
-  const getImpactIcon = (type: StructuredInsight['impact']['type']) => {
-    switch (type) {
-      case 'revenue': return <DollarSign className="h-3 w-3" />;
-      case 'cost': return <TrendingUp className="h-3 w-3" />;
-      case 'time': return <Clock className="h-3 w-3" />;
-      case 'risk': return <AlertTriangle className="h-3 w-3" />;
+  const getConfidenceBadge = (confidence: 'low' | 'medium' | 'high') => {
+    switch (confidence) {
+      case 'high':
+        return <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">High confidence</Badge>;
+      case 'medium':
+        return <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">Medium confidence</Badge>;
+      case 'low':
+        return <Badge variant="outline" className="text-xs bg-gray-50 text-gray-600 border-gray-200">Low confidence</Badge>;
     }
+  };
+
+  const formatCurrency = (amount: number): string => {
+    if (amount >= 1000000) return `GHS ${(amount / 1000000).toFixed(1)}M`;
+    if (amount >= 1000) return `GHS ${(amount / 1000).toFixed(0)}K`;
+    return `GHS ${amount.toFixed(0)}`;
+  };
+
+  const handleSnooze = (insightId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    snoozeInsight(insightId, 24);
+    toast({
+      title: "Insight Snoozed",
+      description: "This insight won't appear for the next 24 hours",
+    });
   };
 
   const filteredInsights = activeCategory === 'all' 
     ? insights 
-    : insights.filter(i => i.category === activeCategory);
+    : insights.filter(i => i.type === activeCategory);
 
   const categoryCounts = {
     all: insights.length,
-    risk: insights.filter(i => i.category === 'risk').length,
-    opportunity: insights.filter(i => i.category === 'opportunity').length,
-    optimization: insights.filter(i => i.category === 'optimization').length,
-    prediction: insights.filter(i => i.category === 'prediction').length
+    risk: insights.filter(i => i.type === 'risk').length,
+    opportunity: insights.filter(i => i.type === 'opportunity').length,
+    optimization: insights.filter(i => i.type === 'optimization').length,
+    prediction: insights.filter(i => i.type === 'prediction').length
   };
+
+  const snoozedCount = getSnoozedCount();
 
   if (isLoading) {
     return (
@@ -381,19 +368,48 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
               AI-Powered Insights
             </CardTitle>
             <CardDescription className="mt-1">
-              {insights.length} actionable recommendations based on your data
+              {insights.length} actionable recommendations
+              {snoozedCount > 0 && (
+                <span className="ml-2 text-muted-foreground">
+                  · {snoozedCount} snoozed
+                </span>
+              )}
             </CardDescription>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => fetchAIInsights(true)}
-            disabled={isRefreshing}
-          >
-            <RefreshCw className={cn('h-4 w-4 mr-2', isRefreshing && 'animate-spin')} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            {snoozedCount > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  clearAllSnoozes();
+                  toast({ title: "Snoozes Cleared", description: "All insights are now visible" });
+                }}
+              >
+                <BellOff className="h-4 w-4 mr-1" />
+                Clear snoozes
+              </Button>
+            )}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => fetchAIInsights(true)}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={cn('h-4 w-4 mr-2', isRefreshing && 'animate-spin')} />
+              Refresh
+            </Button>
+          </div>
         </div>
+
+        {/* Executive Summary */}
+        {executiveSummary && (
+          <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+            <p className="text-sm text-muted-foreground">
+              <strong className="text-foreground">Summary:</strong> {executiveSummary}
+            </p>
+          </div>
+        )}
       </CardHeader>
 
       <CardContent>
@@ -427,7 +443,8 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
               {filteredInsights.map((insight, index) => {
-                const styles = getCategoryStyles(insight.category);
+                const styles = getCategoryStyles(insight.type);
+                const isExpanded = expandedInsight === insight.id;
                 
                 return (
                   <motion.div
@@ -438,46 +455,112 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <Card className={cn('border-l-4 hover:shadow-md transition-all', styles.border)}>
-                      <CardContent className="p-4">
-                        {/* Header */}
-                        <div className="flex items-start justify-between gap-2 mb-3">
-                          <div className="flex items-center gap-2">
-                            <Badge className={cn('text-xs', styles.badge)}>
-                              <span className={styles.icon}>{getCategoryIcon(insight.category)}</span>
-                              <span className="ml-1 capitalize">{insight.category}</span>
-                            </Badge>
-                            {getUrgencyBadge(insight.urgency)}
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <span>{insight.confidence}% confidence</span>
-                          </div>
-                        </div>
+                    <Collapsible 
+                      open={isExpanded} 
+                      onOpenChange={() => setExpandedInsight(isExpanded ? null : insight.id)}
+                    >
+                      <Card className={cn('border-l-4 hover:shadow-md transition-all', styles.border)}>
+                        <CollapsibleTrigger asChild>
+                          <CardContent className="p-4 cursor-pointer">
+                            {/* Header */}
+                            <div className="flex items-start justify-between gap-2 mb-3">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge className={cn('text-xs', styles.badge)}>
+                                  <span className={styles.icon}>{getCategoryIcon(insight.type)}</span>
+                                  <span className="ml-1 capitalize">{insight.type}</span>
+                                </Badge>
+                                {getUrgencyBadge(insight.urgency)}
+                                {insight.time_horizon && (
+                                  <Badge variant="outline" className="text-xs">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    {insight.time_horizon === 'short_term' ? '1-2 weeks' : '1-3 months'}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">
+                                  {Math.round(insight.confidence_score * 100)}%
+                                </span>
+                                {isExpanded ? (
+                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </div>
+                            </div>
 
-                        {/* Title */}
-                        <h4 className="font-semibold text-sm mb-2">{insight.title}</h4>
+                            {/* Title */}
+                            <h4 className="font-semibold text-sm mb-2">{insight.title}</h4>
 
-                        {/* What's happening */}
-                        <div className="space-y-2 mb-3">
-                          <p className="text-sm text-muted-foreground">{insight.what}</p>
-                          <p className="text-xs text-muted-foreground/80 italic">
-                            Why it matters: {insight.why}
-                          </p>
-                        </div>
+                            {/* Summary */}
+                            <p className="text-sm text-muted-foreground mb-3">{insight.summary}</p>
 
-                        {/* Impact & Action */}
-                        <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                          <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
-                            {getImpactIcon(insight.impact.type)}
-                            <span>Impact: {insight.impact.value}</span>
+                            {/* Financial Impact Badge */}
+                            {insight.estimated_financial_impact && (
+                              <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                                <DollarSign className="h-4 w-4 text-primary" />
+                                <span className="text-sm font-medium text-primary">
+                                  {formatCurrency(insight.estimated_financial_impact.amount)}
+                                </span>
+                                {getConfidenceBadge(insight.estimated_financial_impact.confidence)}
+                              </div>
+                            )}
+                          </CardContent>
+                        </CollapsibleTrigger>
+
+                        <CollapsibleContent>
+                          <div className="px-4 pb-4 space-y-3 border-t border-border/50 pt-3">
+                            {/* Why it matters */}
+                            <div>
+                              <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground mb-1">
+                                <Info className="h-3 w-3" />
+                                Why it matters
+                              </div>
+                              <p className="text-sm">{insight.why_it_matters}</p>
+                            </div>
+
+                            {/* Recommended Action */}
+                            <div>
+                              <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground mb-1">
+                                <Target className="h-3 w-3" />
+                                Recommended Action
+                              </div>
+                              <p className="text-sm font-medium text-primary">{insight.recommended_action}</p>
+                            </div>
+
+                            {/* Data Sources */}
+                            {insight.data_sources && insight.data_sources.length > 0 && (
+                              <div className="flex items-center gap-2 pt-2">
+                                <Database className="h-3 w-3 text-muted-foreground" />
+                                <div className="flex gap-1">
+                                  {insight.data_sources.map(source => (
+                                    <Badge key={source} variant="outline" className="text-xs">
+                                      {source}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-2 pt-2">
+                              <Button size="sm" className="flex-1">
+                                Take Action
+                                <ChevronRight className="h-3 w-3 ml-1" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={(e) => handleSnooze(insight.id, e)}
+                              >
+                                <BellOff className="h-4 w-4 mr-1" />
+                                Snooze 24h
+                              </Button>
+                            </div>
                           </div>
-                          <Button variant="ghost" size="sm" className="h-7 text-xs">
-                            {insight.action.label}
-                            <ChevronRight className="h-3 w-3 ml-1" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CollapsibleContent>
+                      </Card>
+                    </Collapsible>
                   </motion.div>
                 );
               })}
@@ -485,9 +568,9 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
 
             {filteredInsights.length === 0 && (
               <div className="text-center py-12">
-                <Sparkles className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">
-                  No {activeCategory !== 'all' ? activeCategory : ''} insights available.
+                <Sparkles className="h-10 w-10 mx-auto text-muted-foreground/30 mb-3" />
+                <p className="text-muted-foreground text-sm">
+                  No {activeCategory !== 'all' ? activeCategory : ''} insights available
                 </p>
               </div>
             )}

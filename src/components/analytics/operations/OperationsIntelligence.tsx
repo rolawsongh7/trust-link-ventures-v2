@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
@@ -12,10 +13,14 @@ import {
   CheckCircle,
   XCircle,
   Timer,
-  BarChart3
+  BarChart3,
+  Download
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { ExportDialog, type ExportOption } from '@/components/analytics/ExportDialog';
+import { exportOperationsReport } from '@/utils/analyticsExport';
+import { useToast } from '@/hooks/use-toast';
 import type { Order } from '@/hooks/useOrdersQuery';
 
 interface OperationsIntelligenceProps {
@@ -39,6 +44,9 @@ interface IssuePattern {
 export const OperationsIntelligence: React.FC<OperationsIntelligenceProps> = ({
   orders
 }) => {
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const { toast } = useToast();
+
   // Calculate order cycle time metrics
   const cycleMetrics = React.useMemo(() => {
     const completedOrders = orders.filter(o => 
@@ -222,8 +230,44 @@ export const OperationsIntelligence: React.FC<OperationsIntelligenceProps> = ({
     }
   };
 
+  const handleExport = async (options: ExportOption[]) => {
+    try {
+      for (const option of options) {
+        if (option === 'operations_report') {
+          exportOperationsReport(orders);
+        }
+        if (option === 'at_risk_orders' && ordersAtRisk.length > 0) {
+          const { exportAtRiskOrders } = await import('@/utils/analyticsExport');
+          exportAtRiskOrders(ordersAtRisk);
+        }
+      }
+      toast({
+        title: "Export Complete",
+        description: "Operations data exported successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "There was an error exporting data",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header with Export */}
+      <div className="flex items-center justify-end">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setExportDialogOpen(true)}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export
+        </Button>
+      </div>
+
       {/* Key Metrics */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -440,6 +484,16 @@ export const OperationsIntelligence: React.FC<OperationsIntelligenceProps> = ({
           </CardContent>
         </Card>
       )}
+
+      {/* Export Dialog */}
+      <ExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        onExport={handleExport}
+        availableOptions={['operations_report', 'at_risk_orders']}
+        title="Export Operations Data"
+        description="Download cycle times, bottleneck analysis, and at-risk orders"
+      />
     </div>
   );
 };
