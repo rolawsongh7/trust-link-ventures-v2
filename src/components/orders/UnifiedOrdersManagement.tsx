@@ -327,18 +327,42 @@ const UnifiedOrdersManagement = () => {
       const confirmedAmount = (order as any).payment_amount_confirmed || 0;
       const balance = order.total_amount - confirmedAmount;
       
+      // Validation: ensure there's actually a partial payment
+      if (confirmedAmount <= 0) {
+        toast.error('Cannot process without verified payment', {
+          description: 'Please verify at least a deposit payment first.'
+        });
+        return;
+      }
+      
       const { error } = await supabase
         .from('orders')
         .update({
           status: 'processing',
           processing_started_at: new Date().toISOString(),
-          notes: `${order.notes || ''}\n[PARTIAL PAYMENT]: Processing started with partial payment. Balance of ${order.currency} ${balance.toLocaleString()} pending.`.trim()
+          notes: `${order.notes || ''}\n[PARTIAL PAYMENT]: Processing started with deposit. Balance: ${order.currency} ${balance.toLocaleString()} pending.`.trim()
         })
         .eq('id', order.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Failed to update order status:', error);
+        if (error.message.includes('payment') || error.message.includes('deposit')) {
+          toast.error('Payment verification required', {
+            description: 'A deposit must be verified before processing can begin.'
+          });
+        } else if (error.message.includes('transition')) {
+          toast.error('Invalid status transition', {
+            description: error.message
+          });
+        } else {
+          throw error;
+        }
+        return;
+      }
 
-      toast.success('Order moved to processing with partial payment');
+      toast.success('Order moved to processing', {
+        description: `Balance of ${order.currency} ${balance.toLocaleString()} will be collected before shipping.`
+      });
       refetch();
     } catch (error) {
       console.error('Error moving order to processing:', error);
