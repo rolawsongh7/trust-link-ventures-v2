@@ -59,7 +59,7 @@ import QuoteRequest from "./pages/QuoteRequest";
 import QuoteSystem from "./pages/QuoteSystem";
 import QuoteRequestManagement from "@/components/QuoteRequestManagement";
 import Terms from "./pages/Terms";
-import AdvancedAnalytics from "./pages/AdvancedAnalytics";
+import AdvancedAnalytics from "./pages/AdvancedAnalytics"; // Enterprise BI
 import CustomersPage from "./pages/CustomersPage";
 import LeadsPage from "./pages/LeadsPage";
 import QuotesPage from "./pages/QuotesPage";
