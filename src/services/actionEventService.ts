@@ -9,6 +9,13 @@ export type ActionEventType =
   | 'quote_pending'
   | 'quote_expiring'
   | 'issue_response_needed'
+  // New payment-specific events (partial payment workflow)
+  | 'deposit_received'       // Customer: "Deposit of X received, balance Y remaining"
+  | 'deposit_verified'       // Customer: "Deposit verified, order proceeding"
+  | 'balance_requested'      // Customer: "Balance payment of X required for shipping"
+  | 'balance_received'       // Admin: "Balance payment uploaded for order X"
+  | 'balance_verified'       // Customer: "Balance verified, order cleared for shipping"
+  | 'order_fully_paid'       // Both: System event for analytics/triggers
   // Admin action types
   | 'new_quote_request'
   | 'payment_uploaded'
@@ -383,6 +390,145 @@ export class ActionEventService {
       entityType: 'issue',
       entityId: issueId,
       deepLink: `/admin/orders/issues?highlight=${issueId}`
+    });
+  }
+
+  // ============ PARTIAL PAYMENT WORKFLOW EVENTS ============
+
+  /**
+   * Emit deposit verified notification to customer
+   * Shows balance remaining and confirms deposit was received
+   */
+  static async emitDepositVerified(
+    userId: string,
+    orderId: string,
+    orderNumber: string,
+    depositAmount: number,
+    balanceRemaining: number,
+    currency: string,
+    customerEmail?: string
+  ): Promise<boolean> {
+    return this.emit({
+      userId,
+      role: 'customer',
+      type: 'deposit_verified',
+      title: 'Deposit Received',
+      message: `Your deposit of ${currency} ${depositAmount.toLocaleString()} for order ${orderNumber} has been verified. Balance remaining: ${currency} ${balanceRemaining.toLocaleString()}`,
+      entityType: 'order',
+      entityId: orderId,
+      deepLink: `/portal/orders?highlight=${orderId}`,
+      sendPush: true,
+      sendEmail: !!customerEmail,
+      emailData: customerEmail ? {
+        to: customerEmail,
+        subject: `Deposit Received - Order ${orderNumber}`,
+        type: 'deposit_verified',
+        data: { orderNumber, orderId, depositAmount, balanceRemaining, currency }
+      } : undefined
+    });
+  }
+
+  /**
+   * Emit balance payment request to customer
+   */
+  static async emitBalanceRequested(
+    userId: string,
+    orderId: string,
+    orderNumber: string,
+    balanceAmount: number,
+    currency: string,
+    customerEmail?: string
+  ): Promise<boolean> {
+    return this.emit({
+      userId,
+      role: 'customer',
+      type: 'balance_requested',
+      title: 'Balance Payment Required',
+      message: `Please pay the remaining ${currency} ${balanceAmount.toLocaleString()} for order ${orderNumber} to proceed with shipping.`,
+      entityType: 'order',
+      entityId: orderId,
+      deepLink: `/portal/orders?uploadPayment=${orderId}`,
+      sendPush: true,
+      sendEmail: !!customerEmail,
+      emailData: customerEmail ? {
+        to: customerEmail,
+        subject: `Balance Payment Required - Order ${orderNumber}`,
+        type: 'balance_requested',
+        data: { orderNumber, orderId, balanceAmount, currency }
+      } : undefined
+    });
+  }
+
+  /**
+   * Emit balance payment received notification to admins
+   */
+  static async emitBalanceReceived(
+    orderId: string,
+    orderNumber: string,
+    customerName: string,
+    balanceAmount: number,
+    currency: string
+  ): Promise<boolean> {
+    return this.emitToAdmins({
+      type: 'balance_received',
+      title: 'Balance Payment Uploaded',
+      message: `${customerName} uploaded balance payment of ${currency} ${balanceAmount.toLocaleString()} for order ${orderNumber}`,
+      entityType: 'order',
+      entityId: orderId,
+      deepLink: `/admin/orders?filter=pending_verification&highlight=${orderId}`
+    });
+  }
+
+  /**
+   * Emit balance verified notification to customer
+   * Confirms order is now fully paid and cleared for shipping
+   */
+  static async emitBalanceVerified(
+    userId: string,
+    orderId: string,
+    orderNumber: string,
+    totalAmount: number,
+    currency: string,
+    customerEmail?: string
+  ): Promise<boolean> {
+    return this.emit({
+      userId,
+      role: 'customer',
+      type: 'balance_verified',
+      title: 'Full Payment Confirmed',
+      message: `Your order ${orderNumber} (${currency} ${totalAmount.toLocaleString()}) is now fully paid and cleared for shipping.`,
+      entityType: 'order',
+      entityId: orderId,
+      deepLink: `/portal/orders?highlight=${orderId}`,
+      sendPush: true,
+      sendEmail: !!customerEmail,
+      emailData: customerEmail ? {
+        to: customerEmail,
+        subject: `Payment Complete - Order ${orderNumber}`,
+        type: 'balance_verified',
+        data: { orderNumber, orderId, totalAmount, currency }
+      } : undefined
+    });
+  }
+
+  /**
+   * Emit order fully paid system event
+   * Used for analytics, triggers, and admin notifications
+   */
+  static async emitOrderFullyPaid(
+    orderId: string,
+    orderNumber: string,
+    totalAmount: number,
+    currency: string,
+    customerName: string
+  ): Promise<boolean> {
+    return this.emitToAdmins({
+      type: 'order_fully_paid',
+      title: 'Order Fully Paid',
+      message: `Order ${orderNumber} from ${customerName} is now fully paid (${currency} ${totalAmount.toLocaleString()}). Ready for shipping.`,
+      entityType: 'order',
+      entityId: orderId,
+      deepLink: `/admin/orders?highlight=${orderId}`
     });
   }
 }

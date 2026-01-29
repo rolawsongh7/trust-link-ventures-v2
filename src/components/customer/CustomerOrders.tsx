@@ -44,6 +44,8 @@ interface Order {
   payment_rejected_at?: string;
   payment_status_reason?: string;
   payment_amount_confirmed?: number;
+  payment_status?: 'unpaid' | 'partially_paid' | 'fully_paid' | 'overpaid';
+  balance_remaining?: number;
   order_items?: any[];
   quotes?: {
     quote_number: string;
@@ -56,15 +58,24 @@ interface Order {
   has_active_issue?: boolean;
 }
 
-// Helper to check if order has partial payment
+// Helper to check if order has partial payment using payment_status enum
 const hasPartialPayment = (order: Order): boolean => {
+  // Primary check: use payment_status enum
+  if (order.payment_status === 'partially_paid') return true;
+  // Fallback for backward compatibility
   if (!order.payment_verified_at) return false;
   const confirmedAmount = order.payment_amount_confirmed || 0;
   return confirmedAmount > 0 && confirmedAmount < order.total_amount;
 };
 
-// Get remaining balance
+// Check if order is fully paid
+const isFullyPaid = (order: Order): boolean => {
+  return order.payment_status === 'fully_paid' || order.payment_status === 'overpaid';
+};
+
+// Get remaining balance using balance_remaining column or calculate
 const getBalanceRemaining = (order: Order): number => {
+  if (order.balance_remaining !== undefined) return order.balance_remaining;
   const confirmedAmount = order.payment_amount_confirmed || 0;
   return order.total_amount - confirmedAmount;
 };

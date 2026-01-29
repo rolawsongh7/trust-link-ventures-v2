@@ -144,25 +144,39 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Step 1: Mark payment as received with all verification details
+      // Calculate payment status based on amount (auto-detect partial payment)
+      const existingConfirmed = (order as any).payment_amount_confirmed || 0;
+      const totalPaid = existingConfirmed + parsedAmount;
+      const isThisBalancePayment = existingConfirmed > 0;
+      const paymentType = isThisBalancePayment ? 'balance' : 'deposit';
+      
+      // Determine if this makes the order fully paid
+      const isNowFullyPaid = totalPaid >= invoiceTotal;
+      const balanceAfterPayment = Math.max(0, invoiceTotal - totalPaid);
+
+      // Step 1: Mark payment as received with correct payment_status
+      // Note: The database trigger will auto-set payment_status based on payment_amount_confirmed
       const orderUpdateData: Record<string, any> = {
-        status: isPartialPayment ? 'pending_payment' : 'payment_received',
+        // For partial payments, allow order to progress to processing
+        // For full payments, move to payment_received then processing
+        status: isNowFullyPaid ? 'payment_received' : (isPartialPayment ? 'pending_payment' : 'payment_received'),
         payment_verified_by: user.id,
         payment_verified_at: new Date().toISOString(),
         payment_reference: paymentReference.trim(),
-        payment_amount_confirmed: parsedAmount,
+        payment_amount_confirmed: totalPaid,
         payment_method: paymentMethod,
         payment_date: paymentDate ? format(paymentDate, 'yyyy-MM-dd') : null,
         payment_verification_notes: hasMismatch && !isPartialPayment
           ? `${verificationNotes}\n\n[MISMATCH JUSTIFICATION]: ${mismatchJustification}`
           : isPartialPayment 
-            ? `${verificationNotes}\n\n[PARTIAL PAYMENT]: ${formatCurrency(parsedAmount)} of ${formatCurrency(invoiceTotal)} received. Balance: ${formatCurrency(invoiceTotal - parsedAmount)}`
+            ? `${verificationNotes}\n\n[${paymentType.toUpperCase()} PAYMENT]: ${formatCurrency(parsedAmount)} received. ${isNowFullyPaid ? 'Order fully paid.' : `Balance: ${formatCurrency(balanceAfterPayment)}`}`
             : verificationNotes,
         payment_mismatch_acknowledged: (hasMismatch && !isPartialPayment) ? mismatchAcknowledged : false,
         // Clear any previous rejection
         payment_rejected_at: null,
         payment_rejected_by: null,
-        payment_status_reason: isPartialPayment ? 'Partial payment received' : null,
+        // Clear old-style payment_status_reason (now using payment_status enum)
+        payment_status_reason: null,
       };
 
       const { error: paymentReceivedError } = await supabase
@@ -175,20 +189,24 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
         throw new Error(`Failed to confirm payment: ${paymentReceivedError.message}`);
       }
 
-      // Create payment record for tracking (non-blocking)
+      // Create payment record as ledger entry with payment_type
       supabase.from('payment_records').insert({
         order_id: order.id,
         amount: parsedAmount,
+        payment_type: paymentType,
         payment_date: paymentDate ? format(paymentDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
         payment_method: paymentMethod,
         payment_reference: paymentReference.trim(),
-        notes: verificationNotes || (isPartialPayment ? 'Partial payment' : 'Full payment'),
+        notes: isNowFullyPaid ? (isThisBalancePayment ? 'Balance payment - Order fully paid' : 'Full payment') : 'Deposit payment',
         recorded_by: user.id,
+        verified_at: new Date().toISOString(),
+        verified_by: user.id,
+        proof_url: order.payment_proof_url,
       }).then(({ error }) => {
         if (error) {
           console.error('Failed to create payment record (non-blocking):', error);
         } else {
-          console.log('Payment record created');
+          console.log('Payment record created with type:', paymentType);
         }
       });
 
@@ -211,8 +229,8 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
           .eq('id', invoices[0].id);
       }
 
-      // Step 2: Move to processing (only if not partial payment)
-      if (!isPartialPayment) {
+      // Step 2: Move to processing (only if fully paid OR explicitly not partial)
+      if (isNowFullyPaid && !isPartialPayment) {
         const { error: processingError } = await supabase
           .from('orders')
           .update({
@@ -232,7 +250,7 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
         }
       }
 
-      // Send payment confirmation email (non-blocking)
+      // Send payment confirmation email with payment type awareness
       await supabase.functions.invoke('send-payment-confirmation', {
         body: {
           orderId: order.id,
@@ -241,21 +259,39 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
           paymentReference: paymentReference || order.payment_reference || 'N/A',
           paymentProofUrl: order.payment_proof_url,
           hasDeliveryAddress: !!order.delivery_address_id,
+          // New fields for partial payment workflow
+          paymentType: isNowFullyPaid ? (isThisBalancePayment ? 'balance' : 'full') : 'deposit',
+          amountReceived: parsedAmount,
+          totalPaid: totalPaid,
+          balanceRemaining: balanceAfterPayment,
+          isOrderFullyPaid: isNowFullyPaid,
         },
       }).catch(err => {
         console.error('Email notification error (non-blocking):', err);
       });
 
-      // Notify customer with system notification (non-blocking)
+      // Notify customer with correct message based on payment type
       if (order.customer_id) {
+        const notificationTitle = isNowFullyPaid 
+          ? (isThisBalancePayment ? 'Balance Verified - Order Fully Paid' : 'Payment Verified - Order Processing')
+          : 'Deposit Received - Balance Required';
+        
+        const notificationMessage = isNowFullyPaid
+          ? `Great news! Your ${isThisBalancePayment ? 'balance payment' : 'payment'} for order ${order.order_number} has been verified. Your order is now fully paid and cleared for shipping.`
+          : `Your deposit of ${order.currency} ${parsedAmount.toLocaleString()} for order ${order.order_number} has been verified. Balance remaining: ${order.currency} ${balanceAfterPayment.toLocaleString()}`;
+
         supabase.from('user_notifications').insert({
           user_id: order.customer_id,
-          type: 'system',
-          title: 'Payment Verified - Order Processing',
-          message: `Great news! Your payment of ${order.currency} ${parsedAmount.toLocaleString()} for order ${order.order_number} has been verified and your order is now being processed.`,
+          type: isNowFullyPaid ? (isThisBalancePayment ? 'balance_verified' : 'system') : 'deposit_verified',
+          title: notificationTitle,
+          message: notificationMessage,
           link: '/portal/orders',
+          requires_action: !isNowFullyPaid,
+          entity_type: 'order',
+          entity_id: order.id,
+          deep_link: isNowFullyPaid ? `/portal/orders?highlight=${order.id}` : `/portal/orders?uploadPayment=${order.id}`,
         }).then(() => {
-          console.log('Customer notification sent');
+          console.log('Customer notification sent:', isNowFullyPaid ? 'full payment' : 'deposit');
         });
       }
 
@@ -272,9 +308,18 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
         });
       }
 
+      // Success toast with correct messaging
+      const toastTitle = isNowFullyPaid
+        ? (isThisBalancePayment ? 'Balance Verified - Order Fully Paid' : 'Payment Verified & Processing Started')
+        : 'Deposit Verified';
+      
+      const toastDescription = isNowFullyPaid
+        ? `Order ${order.order_number} is now fully paid (${order.currency} ${totalPaid.toLocaleString()}) and cleared for shipping.`
+        : `Deposit of ${order.currency} ${parsedAmount.toLocaleString()} verified. Balance remaining: ${order.currency} ${balanceAfterPayment.toLocaleString()}`;
+
       toast({
-        title: 'Payment Verified & Processing Started',
-        description: `Order ${order.order_number} payment confirmed (${order.currency} ${parsedAmount.toLocaleString()}) and moved to processing.`,
+        title: toastTitle,
+        description: toastDescription,
       });
 
       onSuccess();
