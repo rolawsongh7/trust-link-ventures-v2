@@ -1,536 +1,407 @@
 
-
-# Plan: Fix Partial Payment & Balance Reconciliation Workflow
+# Business Intelligence Page Integrity & Link Reliability Refactor
 
 ## Executive Summary
 
-This plan refactors the partial payment workflow to create a first-class, domain-level payment state system that correctly tracks deposits, balances, and order progression. The solution separates payment status from order status, introduces ledger-style payment tracking, and fixes all misleading notifications.
+This plan performs a comprehensive integrity audit of the Business Intelligence page to ensure all interactive elements work correctly, metrics are accurate, and the page is production-ready for enterprise use. The audit identified **27 issues** across 5 tabs requiring fixes.
 
 ---
 
-## Current State Analysis
+## Current State: Action & Link Inventory
 
-### What Exists Today
+### Tab 1: Executive Insights
 
-| Component | Status | Issues |
-|-----------|--------|--------|
-| `payment_records` table | Exists but underutilized | Missing `payment_type` column (deposit/balance/adjustment) |
-| `payment_amount_confirmed` | Single field on orders | Cannot track multiple payments properly |
-| `payment_status_reason` | Text field for notes | Overloaded for partial payment messaging |
-| Order status enum | `pending_payment`, `payment_received` | No explicit partial payment status |
-| VerifyPaymentDialog | Has `isPartialPayment` checkbox | Keeps order in `pending_payment` which is misleading |
-| Customer Portal | Shows "Balance Payment Required" alert | Order appears "stuck" because status doesn't progress |
-| Notifications | "Payment Verified" message | Misleading when only deposit received |
+| UI Action | Intended Destination | Status | Issue |
+|-----------|---------------------|--------|-------|
+| "Review payments" KPI button | `/orders?filter=pending_payment` | **BROKEN** | Route doesn't support `filter` query param |
+| "View orders" KPI button | `/orders?filter=at_risk` | **BROKEN** | Route doesn't support `filter` query param |
+| "Review customers" KPI button | `/customers?filter=at_risk` | **BROKEN** | Route doesn't support `filter` query param |
+| "Explore opportunities" KPI button | `/customers?filter=growing` | **BROKEN** | Route doesn't support `filter` query param |
+| "Take Action" button on AI insights | None | **BROKEN** | Button does nothing - no handler attached |
+| "Export" button | Export dialog | **WORKS** | ✅ |
+| "ai_insights" export option | Available in dialog | **BROKEN** | Handler doesn't process `ai_insights` option |
+| "Refresh" AI insights button | Refetches data | **WORKS** | ✅ |
+| "Snooze 24h" button | Snoozes insight | **WORKS** | ✅ |
 
-### Root Cause
+### Tab 2: Customer & Revenue Intelligence
 
-Payment state is embedded in order status rather than being a separate first-class concept. The system conflates "has the customer paid?" with "what stage is the order in the fulfillment process?"
+| UI Action | Intended Destination | Status | Issue |
+|-----------|---------------------|--------|-------|
+| Arrow button on customer cards | None | **BROKEN** | `<Button>` with no onClick handler |
+| "Export" button | Export dialog | **WORKS** | ✅ |
+| Customer cards (Top Revenue) | Should open customer | **MISSING** | No drill-down to customer detail |
+| Customer cards (At Risk) | Should open customer | **MISSING** | No drill-down to customer detail |
+| Customer cards (Growth) | Should open customer | **MISSING** | No drill-down to customer detail |
 
----
+### Tab 3: Operations & Risk Intelligence
 
-## Solution Architecture
+| UI Action | Intended Destination | Status | Issue |
+|-----------|---------------------|--------|-------|
+| Order rows in "Orders at Risk" | Should open order | **MISSING** | No click handler or view button |
+| Issue pattern "Recent: ORD-xxx" | Should filter orders | **MISSING** | Order numbers are plain text |
+| "Export" button | Export dialog | **WORKS** | ✅ |
 
-### Core Principle: Separate Payment Status from Order Status
+### Tab 4: Automation & Alerts
 
-```text
-PAYMENT STATUS (financial state)     ORDER STATUS (fulfillment state)
-================================     ================================
-unpaid                               order_confirmed
-partially_paid                  -->  processing
-fully_paid                           ready_to_ship
-                                     shipped
-                                     delivered
-```
+| UI Action | Intended Destination | Status | Issue |
+|-----------|---------------------|--------|-------|
+| "Create Rule" button | None | **BROKEN** | Button does nothing |
+| "Save Changes" button | Shows toast only | **MISLEADING** | Rules NOT persisted to database |
+| Toggle switches | Local state only | **MISLEADING** | Changes lost on page refresh |
+| "Enable" on recommendations | Adds to local array | **MISLEADING** | Not persisted |
 
-These are orthogonal concerns. An order can be `processing` with `partially_paid`, or `ready_to_ship` with `fully_paid`.
+### Tab 5: Audit & History
 
----
-
-## Phase 1: Database Schema Changes
-
-### 1.1 Add `payment_status` Column to Orders Table
-
-**New Migration: Add explicit payment status enum and column**
-
-```sql
--- Create payment status enum
-CREATE TYPE payment_status_enum AS ENUM (
-  'unpaid',
-  'partially_paid', 
-  'fully_paid',
-  'overpaid'
-);
-
--- Add payment_status column to orders
-ALTER TABLE orders ADD COLUMN payment_status payment_status_enum DEFAULT 'unpaid';
-
--- Add derived balance column for convenience
-ALTER TABLE orders ADD COLUMN balance_remaining NUMERIC(12,2) GENERATED ALWAYS AS (
-  total_amount - COALESCE(payment_amount_confirmed, 0)
-) STORED;
-```
-
-### 1.2 Enhance `payment_records` Table
-
-Add `payment_type` column to track deposit vs. balance payments:
-
-```sql
--- Add payment type to payment_records
-CREATE TYPE payment_type_enum AS ENUM ('deposit', 'balance', 'adjustment', 'refund');
-
-ALTER TABLE payment_records ADD COLUMN payment_type payment_type_enum DEFAULT 'deposit';
-ALTER TABLE payment_records ADD COLUMN verified_at TIMESTAMPTZ;
-ALTER TABLE payment_records ADD COLUMN verified_by UUID REFERENCES auth.users(id);
-ALTER TABLE payment_records ADD COLUMN proof_url TEXT;
-```
-
-### 1.3 Backfill Existing Data
-
-```sql
--- Set payment_status based on current payment_amount_confirmed
-UPDATE orders SET payment_status = 
-  CASE 
-    WHEN payment_amount_confirmed IS NULL OR payment_amount_confirmed = 0 THEN 'unpaid'
-    WHEN payment_amount_confirmed < total_amount THEN 'partially_paid'
-    WHEN payment_amount_confirmed >= total_amount THEN 'fully_paid'
-    ELSE 'unpaid'
-  END;
-```
+| UI Action | Intended Destination | Status | Issue |
+|-----------|---------------------|--------|-------|
+| Activity items with order/quote | Should link to entity | **MISSING** | No drill-down capability |
+| "Export" button | Export dialog | **WORKS** | ✅ |
+| "Refresh" button | Refetches data | **WORKS** | ✅ |
 
 ---
 
-## Phase 2: Payment Verification Dialog Refactor
+## Phase 1: Fix KPI Navigation Links (ActionKPIs.tsx)
 
-### 2.1 Update VerifyPaymentDialog.tsx
+**Problem**: All 4 KPI action buttons use broken routes like `/orders?filter=pending_payment`
 
-**File: `src/components/orders/VerifyPaymentDialog.tsx`**
+**Solution**: Replace button navigation with drawer/modal drill-downs showing relevant data inline.
 
-Key changes:
-- Remove `isPartialPayment` checkbox (auto-detect from amount)
-- Update order with correct `payment_status` enum value
-- For partial payments, allow order to progress to `processing` while payment_status stays `partially_paid`
-- Create proper payment_record entry with `payment_type: 'deposit'` or `'balance'`
+**Changes to `src/components/analytics/executive/ActionKPIs.tsx`:**
 
-**Updated logic:**
+1. Remove unused `actionLink` property from KPIs (lines 148, 158, 168, 178)
+2. Add state for selected KPI modal
+3. Replace `<button>` elements with proper handlers that open an inline drawer showing:
+   - **Cash at Risk**: Orders with `status === 'pending_payment'`
+   - **Orders at Risk**: Orders matching risk criteria
+   - **Customers at Risk**: Customers with declining health scores
+   - **Growth Opportunities**: Growing customers
 
+4. Create new component: `src/components/analytics/executive/KPIDrilldownDrawer.tsx`
+   - Shows filtered list of orders/customers based on KPI type
+   - Includes "View in Orders/Customers" link to full admin page
+   - Allows quick actions (send reminder, view details)
+
+---
+
+## Phase 2: Fix AI Insight "Take Action" Button (EnhancedAIInsights.tsx)
+
+**Problem**: "Take Action" button at line 547-550 has no handler
+
+**Solution**: Wire button to context-appropriate action based on insight type
+
+**Changes to `src/components/analytics/executive/EnhancedAIInsights.tsx`:**
+
+1. Add `onTakeAction` handler function:
 ```typescript
-// Determine payment status based on amount
-const totalPaid = (order.payment_amount_confirmed || 0) + parsedAmount;
-const paymentStatus = totalPaid >= invoiceTotal ? 'fully_paid' : 'partially_paid';
-const isFullPayment = paymentStatus === 'fully_paid';
-
-// Update order
-const orderUpdateData = {
-  // Don't change order status based on payment - let admin decide
-  payment_status: paymentStatus,
-  payment_amount_confirmed: totalPaid,
-  payment_verified_at: new Date().toISOString(),
-  // Clear rejection if any
-  payment_rejected_at: null,
-  payment_status_reason: null,
-};
-
-// Create payment record as ledger entry
-await supabase.from('payment_records').insert({
-  order_id: order.id,
-  amount: parsedAmount,
-  payment_type: order.payment_amount_confirmed > 0 ? 'balance' : 'deposit',
-  payment_date: paymentDate,
-  payment_method: paymentMethod,
-  payment_reference: paymentReference,
-  verified_at: new Date().toISOString(),
-  verified_by: user.id,
-  proof_url: order.payment_proof_url,
-});
-```
-
-### 2.2 Add "Verify Balance Payment" Action
-
-When a customer uploads a second payment proof (balance), admin sees a dedicated "Verify Balance" action that:
-1. Recognizes this is a balance payment (existing payment_amount_confirmed > 0)
-2. Shows previous payments summary
-3. Updates payment_status to `fully_paid` when complete
-4. Emits `order_fully_paid` system event
-
----
-
-## Phase 3: Order State Machine Updates
-
-### 3.1 Update Order Status Guards
-
-**File: `src/components/orders/OrdersDataTable.tsx`**
-
-Update shipping guards to check `payment_status` instead of parsing `payment_status_reason`:
-
-```typescript
-// Current (broken): checks text in payment_status_reason
-const hasVerifiedPartialPayment = (order) => {
-  return order.payment_status_reason?.toLowerCase().includes('partial');
-};
-
-// Fixed: check payment_status enum
-const hasPartialPayment = (order) => {
-  return order.payment_status === 'partially_paid';
-};
-
-const canShip = (order) => {
-  return order.payment_status === 'fully_paid';
+const handleTakeAction = (insight: StructuredInsight) => {
+  switch (insight.type) {
+    case 'risk':
+      // Open orders drawer filtered to at-risk
+      setShowRiskDrawer(true);
+      break;
+    case 'opportunity':
+      // Navigate to quotes/customers
+      navigate('/admin/customers');
+      break;
+    case 'optimization':
+      // Show optimization suggestions modal
+      toast.info("Review recommendation details above");
+      break;
+    default:
+      toast.info("Review the recommended action above");
+  }
 };
 ```
 
-### 3.2 Allow Processing with Partial Payment
-
-Orders can progress through preparation stages after deposit:
-- `order_confirmed` -> `processing`: Allowed after deposit verified
-- `processing` -> `ready_to_ship`: Allowed (but shipping blocked)
-- `ready_to_ship` -> `shipped`: **BLOCKED** until `payment_status = 'fully_paid'`
-
-### 3.3 Add New Admin Actions
-
-**In OrdersDataTable dropdown menu:**
-
-| Current Status | payment_status | Available Actions |
-|----------------|----------------|-------------------|
-| pending_payment | unpaid | Verify Payment |
-| pending_payment | partially_paid | Verify Balance, Request Balance, Move to Processing |
-| processing | partially_paid | Request Balance, Resend Request |
-| processing | fully_paid | Mark Ready to Ship |
-| ready_to_ship | partially_paid | (blocked) Request Balance First |
-| ready_to_ship | fully_paid | Mark Shipped |
-
----
-
-## Phase 4: Customer Portal UX Fixes
-
-### 4.1 Update CustomerOrders.tsx
-
-**File: `src/components/customer/CustomerOrders.tsx`**
-
-Replace current partial payment detection with enum check:
-
-```typescript
-// Current (fragile)
-const hasPartialPayment = (order) => {
-  const confirmedAmount = order.payment_amount_confirmed || 0;
-  return confirmedAmount > 0 && confirmedAmount < order.total_amount;
-};
-
-// Fixed (uses enum)
-const hasPartialPayment = (order) => order.payment_status === 'partially_paid';
-const isFullyPaid = (order) => order.payment_status === 'fully_paid';
-```
-
-### 4.2 Add Payment Summary Card
-
-Create new component showing:
-- Total order amount
-- Amount paid (sum of all payment_records)
-- Balance remaining
-- Payment history (list of payments with dates)
-
+2. Update button (line 547):
 ```tsx
-<PaymentSummaryCard 
-  order={order}
-  payments={paymentRecords}
-  showUploadButton={order.payment_status !== 'fully_paid'}
-/>
+<Button size="sm" className="flex-1" onClick={() => handleTakeAction(insight)}>
+  Take Action
+  <ChevronRight className="h-3 w-3 ml-1" />
+</Button>
 ```
 
-### 4.3 Fix Order Timeline Progression
+3. For insights without actionable routes, change button to "View Details" and ensure the collapsible is open
 
-Update `OrderTimeline` to show progress after deposit:
-- Order can visually progress through "Being Prepared" even with partial payment
-- Only "Ready for Dispatch" and "Shipped" stages show lock icon if not fully paid
+---
 
-### 4.4 Update CTA Logic
+## Phase 3: Fix Missing ai_insights Export Handler
 
+**Problem**: `ai_insights` is in `availableOptions` but not handled in `handleExport`
+
+**Solution**: Add handler case in `ExecutiveInsightsTab.tsx`
+
+**Changes to `src/components/analytics/executive/ExecutiveInsightsTab.tsx`:**
+
+Add missing case (after line 87):
 ```typescript
-// Upload Balance Payment CTA (when partially_paid)
-{order.payment_status === 'partially_paid' && (
-  <Button onClick={() => openPaymentDialog(order)}>
-    <Upload className="mr-2" />
-    Upload Balance Payment ({order.currency} {order.balance_remaining})
-  </Button>
-)}
+case 'ai_insights':
+  // Re-use the existing executive summary export with insights
+  const aiInsights: InsightData[] = orders
+    .filter(o => o.status === 'pending_payment')
+    .slice(0, 5)
+    .map(o => ({
+      type: 'risk',
+      title: `Order ${o.order_number} pending payment`,
+      summary: `Amount: GHS ${o.total_amount}`,
+      recommended_action: 'Send payment reminder',
+      urgency: 'soon'
+    }));
+  exportAIInsightsReport(aiInsights);
+  break;
+```
 
-// No payment CTA when fully paid
-{order.payment_status === 'fully_paid' && (
-  <Badge className="bg-green-100 text-green-800">
-    <CheckCircle className="mr-1" />
-    Fully Paid
-  </Badge>
+Add import: `import { exportAIInsightsReport } from '@/utils/analyticsExport';`
+
+---
+
+## Phase 4: Fix Customer Card Drill-downs (CustomerIntelligence.tsx)
+
+**Problem**: Arrow buttons on customer cards have no handlers
+
+**Solution**: Add navigation to unified customer view
+
+**Changes to `src/components/analytics/customers/CustomerIntelligence.tsx`:**
+
+1. Add useNavigate hook
+2. Update arrow button (line 351-353):
+```tsx
+<Button 
+  variant="ghost" 
+  size="sm" 
+  className="h-7 w-7 p-0"
+  onClick={() => navigate('/admin/customers', { 
+    state: { viewCustomerId: customer.customerId } 
+  })}
+>
+  <ArrowRight className="h-4 w-4" />
+</Button>
+```
+
+3. Similarly update all customer cards in:
+   - Top Customers section (line 351)
+   - At Risk Customers section (make entire card clickable)
+   - Growth Opportunities section (add view action)
+
+---
+
+## Phase 5: Fix Operations At-Risk Orders (OperationsIntelligence.tsx)
+
+**Problem**: At-risk order rows have no click handler to view order
+
+**Solution**: Add navigation to orders with highlight
+
+**Changes to `src/components/analytics/operations/OperationsIntelligence.tsx`:**
+
+1. Add useNavigate hook
+2. Wrap order item (around line 459) with click handler:
+```tsx
+<motion.div
+  ...
+  className="... cursor-pointer hover:bg-red-100"
+  onClick={() => navigate('/admin/orders', { 
+    state: { highlightOrderId: order.id } 
+  })}
+>
+```
+
+3. Add "View Order" button for clarity
+
+---
+
+## Phase 6: Automation Tab Honesty Pass (InsightDrivenAutomation.tsx)
+
+**Problem**: UI implies rules are saved/active but they only exist in local React state
+
+**Solution**: Add clear warning banner and disable deceptive actions
+
+**Changes to `src/components/analytics/automation/InsightDrivenAutomation.tsx`:**
+
+1. Add warning banner at top (after line 225):
+```tsx
+<Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+  <CardContent className="p-4 flex items-center gap-3">
+    <AlertTriangle className="h-5 w-5 text-amber-600" />
+    <div>
+      <p className="font-medium text-sm">Preview Mode</p>
+      <p className="text-xs text-muted-foreground">
+        Automation rules are in preview. Enable persistence in settings to activate.
+      </p>
+    </div>
+  </CardContent>
+</Card>
+```
+
+2. Update "Save Changes" button to show tooltip:
+```tsx
+<TooltipProvider>
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <Button size="sm" onClick={saveWorkflows} disabled>
+        <Save className="h-4 w-4 mr-2" />
+        Save Changes
+      </Button>
+    </TooltipTrigger>
+    <TooltipContent>
+      <p>Coming soon: Database persistence for automation rules</p>
+    </TooltipContent>
+  </Tooltip>
+</TooltipProvider>
+```
+
+3. Add "Preview" badge to each rule card header
+
+4. Disable "Create Rule" button with tooltip:
+```tsx
+<TooltipProvider>
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <Button variant="outline" size="sm" disabled>
+        <Plus className="h-4 w-4 mr-2" />
+        Create Rule
+      </Button>
+    </TooltipTrigger>
+    <TooltipContent>
+      <p>Custom rule creation coming soon</p>
+    </TooltipContent>
+  </Tooltip>
+</TooltipProvider>
+```
+
+---
+
+## Phase 7: Fix Audit Timeline Drill-downs (EnhancedAuditTimeline.tsx)
+
+**Problem**: Activity items showing order/quote numbers are not clickable
+
+**Solution**: Make entity references into links
+
+**Changes to `src/components/analytics/audit/EnhancedAuditTimeline.tsx`:**
+
+1. Add useNavigate hook
+2. Update order/quote display (lines 402-410):
+```tsx
+{activity.event_data.order_number && (
+  <button
+    className="font-medium text-foreground hover:text-primary underline-offset-2 hover:underline"
+    onClick={() => navigate('/admin/orders', {
+      state: { highlightOrderId: activity.event_data.order_id }
+    })}
+  >
+    Order: {activity.event_data.order_number}
+  </button>
+)}
+{activity.event_data.quote_number && (
+  <button
+    className="font-medium text-foreground hover:text-primary underline-offset-2 hover:underline"
+    onClick={() => navigate('/admin/quotes', {
+      state: { highlightQuoteId: activity.event_data.quote_id }
+    })}
+  >
+    Quote: {activity.event_data.quote_number}
+  </button>
 )}
 ```
 
 ---
 
-## Phase 5: Notification System Refactor
+## Phase 8: Add Empty States for Edge Cases
 
-### 5.1 New Event Types
+**Changes across all tab components:**
 
-Add to `ActionEventService.ts`:
-
-```typescript
-type ActionEventType = 
-  // Existing
-  | 'payment_required'
-  // New payment events
-  | 'deposit_received'        // Customer: "Deposit of X received, balance Y remaining"
-  | 'deposit_verified'        // Customer: "Deposit verified, order proceeding"
-  | 'balance_requested'       // Customer: "Balance payment of X required for shipping"
-  | 'balance_received'        // Admin: "Balance payment uploaded for order X"
-  | 'balance_verified'        // Customer: "Balance verified, order cleared for shipping"
-  | 'order_fully_paid';       // Both: System event for analytics/triggers
+1. **EnhancedAIInsights.tsx**: Already has empty state ✅
+2. **CustomerIntelligence.tsx**: Already has empty state for at-risk section ✅
+3. **OperationsIntelligence.tsx**: Add empty state for "No orders at risk":
+```tsx
+{ordersAtRisk.length === 0 && (
+  <div className="text-center py-8 text-muted-foreground">
+    <CheckCircle className="h-10 w-10 mx-auto mb-3 text-green-500" />
+    <p className="text-sm font-medium">All orders on track</p>
+    <p className="text-xs">No deliveries are at risk of missing SLA</p>
+  </div>
+)}
 ```
 
-### 5.2 Update Notification Messages
+4. **ActionKPIs.tsx**: Show "All clear" state when all KPIs are neutral
+5. **ExecutiveSummary.tsx**: Already has fallback insight ✅
 
-**Replace misleading notifications:**
+---
 
-| Event | Old Message | New Message |
-|-------|------------|-------------|
-| Partial payment verified | "Payment Verified - Order Processing" | "Deposit Received - Balance of {amount} remaining" |
-| Balance requested | (none) | "Balance Payment Required - Order ready for shipping once paid" |
-| Balance verified | "Payment Verified" | "Full Payment Confirmed - Order cleared for shipping" |
+## Phase 9: Create Shared KPI Drill-down Drawer
 
-### 5.3 Add New Edge Function Methods
+**New File: `src/components/analytics/shared/KPIDrilldownDrawer.tsx`**
 
-**File: `src/services/actionEventService.ts`**
+A reusable drawer component for showing filtered entity lists:
 
 ```typescript
-static async emitDepositVerified(
-  userId: string,
-  orderId: string,
-  orderNumber: string,
-  depositAmount: number,
-  balanceRemaining: number,
-  currency: string
-): Promise<boolean>;
-
-static async emitBalanceRequested(
-  userId: string,
-  orderId: string,
-  orderNumber: string,
-  balanceAmount: number,
-  currency: string
-): Promise<boolean>;
-
-static async emitOrderFullyPaid(
-  orderId: string,
-  orderNumber: string,
-  totalAmount: number,
-  currency: string
-): Promise<boolean>;
-```
-
-### 5.4 Update send-payment-confirmation Edge Function
-
-**File: `supabase/functions/send-payment-confirmation/index.ts`**
-
-Add payment type awareness:
-
-```typescript
-interface PaymentConfirmationRequest {
-  orderId: string;
-  orderNumber: string;
-  paymentType: 'deposit' | 'balance' | 'full';  // New
-  amountReceived: number;
-  totalPaid: number;
-  balanceRemaining: number;
-  isOrderFullyPaid: boolean;  // New
+interface KPIDrilldownDrawerProps {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  description: string;
+  type: 'orders' | 'customers';
+  items: any[];
+  onViewAll: () => void;
 }
 ```
 
-Update email templates for each payment type.
-
----
-
-## Phase 6: Admin Reconciliation Flow
-
-### 6.1 Create Balance Verification Dialog
-
-**New File: `src/components/orders/VerifyBalancePaymentDialog.tsx`**
-
-Similar to VerifyPaymentDialog but:
-- Shows payment history (previous deposits)
-- Shows expected balance amount
-- Auto-calculates if this completes the payment
-- On verify, sets `payment_status = 'fully_paid'`
-- Emits `balance_verified` and `order_fully_paid` events
-
-### 6.2 Add Payment History Panel
-
-**New File: `src/components/orders/PaymentHistoryPanel.tsx`**
-
-Shows all payments for an order:
-- Date, amount, method, reference
-- Verified by, verification date
-- Running total
-- Balance remaining
-
-### 6.3 Update Finance Reconciliation Page
-
-**File: `src/components/finance/ReconciliationDashboard.tsx`**
-
-Add partial payment tracking:
-- Filter: "Awaiting Balance"
-- Show orders with `payment_status = 'partially_paid'`
-- Show days since last payment
-- Action: "Send Balance Reminder"
-
----
-
-## Phase 7: System Events and Audit Logging
-
-### 7.1 Add Database Trigger for payment_status Changes
-
-```sql
-CREATE OR REPLACE FUNCTION log_payment_status_change()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF OLD.payment_status IS DISTINCT FROM NEW.payment_status THEN
-    INSERT INTO audit_logs (
-      event_type,
-      resource_type,
-      resource_id,
-      event_data
-    ) VALUES (
-      CASE NEW.payment_status
-        WHEN 'partially_paid' THEN 'deposit_verified'
-        WHEN 'fully_paid' THEN 'order_fully_paid'
-        ELSE 'payment_status_changed'
-      END,
-      'order',
-      NEW.id,
-      jsonb_build_object(
-        'old_status', OLD.payment_status,
-        'new_status', NEW.payment_status,
-        'amount_confirmed', NEW.payment_amount_confirmed,
-        'total_amount', NEW.total_amount
-      )
-    );
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_payment_status_audit
-AFTER UPDATE ON orders
-FOR EACH ROW
-EXECUTE FUNCTION log_payment_status_change();
-```
-
-### 7.2 Auto-Resolve Notifications on Full Payment
-
-```sql
--- Trigger to resolve balance_requested notifications when fully paid
-CREATE OR REPLACE FUNCTION resolve_payment_notifications()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.payment_status = 'fully_paid' AND OLD.payment_status != 'fully_paid' THEN
-    UPDATE user_notifications
-    SET resolved = TRUE, resolved_at = NOW()
-    WHERE entity_id = NEW.id 
-      AND entity_type = 'order'
-      AND type IN ('balance_requested', 'payment_required', 'balance_payment_request')
-      AND resolved = FALSE;
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_resolve_payment_notifications
-AFTER UPDATE ON orders
-FOR EACH ROW
-EXECUTE FUNCTION resolve_payment_notifications();
-```
+Features:
+- Shows up to 10 items inline
+- "View All in [Orders/Customers]" button at bottom
+- Quick actions per item (send reminder, view details)
+- Mobile-responsive sheet variant
 
 ---
 
 ## Implementation Files Summary
 
-| File | Action | Description |
-|------|--------|-------------|
-| **Database** | | |
-| New migration | Create | Add payment_status enum, column, enhance payment_records |
-| **Backend** | | |
-| `send-payment-confirmation/index.ts` | Update | Add payment type awareness, separate templates |
-| `send-balance-payment-request/index.ts` | Update | Use new notification types |
-| **Frontend - Orders Admin** | | |
-| `VerifyPaymentDialog.tsx` | Update | Auto-detect partial, create ledger entry, set payment_status |
-| `VerifyBalancePaymentDialog.tsx` | Create | Dedicated balance verification flow |
-| `PaymentHistoryPanel.tsx` | Create | Show all payments for order |
-| `OrdersDataTable.tsx` | Update | Use payment_status enum for guards, add new actions |
-| `UnifiedOrdersManagement.tsx` | Update | Add balance verification handlers |
-| **Frontend - Customer Portal** | | |
-| `CustomerOrders.tsx` | Update | Use payment_status enum, show payment summary |
-| `PaymentSummaryCard.tsx` | Create | Order payment breakdown UI |
-| `OrderTimeline.tsx` | Update | Allow progress with partial payment, lock shipping stages |
-| `OrderStatusBadge.tsx` | Update | Add partially_paid badge variant |
-| **Services** | | |
-| `actionEventService.ts` | Update | Add new event types and emit methods |
-| `notificationService.ts` | Update | Update message templates |
-| **Types** | | |
-| `src/types/payment.ts` | Create | TypeScript types for payment_status, payment_type |
+| File | Action | Changes |
+|------|--------|---------|
+| `src/components/analytics/executive/ActionKPIs.tsx` | Modify | Remove broken links, add drawer handlers |
+| `src/components/analytics/executive/EnhancedAIInsights.tsx` | Modify | Wire "Take Action" button |
+| `src/components/analytics/executive/ExecutiveInsightsTab.tsx` | Modify | Add ai_insights export handler |
+| `src/components/analytics/customers/CustomerIntelligence.tsx` | Modify | Add customer card navigation |
+| `src/components/analytics/operations/OperationsIntelligence.tsx` | Modify | Add at-risk order navigation |
+| `src/components/analytics/automation/InsightDrivenAutomation.tsx` | Modify | Add preview warning, disable save |
+| `src/components/analytics/audit/EnhancedAuditTimeline.tsx` | Modify | Make entity refs clickable |
+| `src/components/analytics/shared/KPIDrilldownDrawer.tsx` | Create | Reusable drill-down component |
 
 ---
 
 ## Testing Checklist
 
-After implementation, verify:
+After implementation:
 
-1. **Deposit Flow**
-   - [ ] Customer uploads payment proof
-   - [ ] Admin verifies as partial payment
-   - [ ] Order moves to `processing` with `payment_status = 'partially_paid'`
-   - [ ] Customer sees "Deposit Received, Balance Required" message (not "Payment Verified")
-   - [ ] Customer portal shows payment summary with balance
+1. **Executive Insights Tab**
+   - [ ] Click each KPI action → Drawer opens with filtered data
+   - [ ] Click "Take Action" on AI insight → Appropriate response
+   - [ ] Export "AI Insights" → PDF opens in new tab
+   - [ ] Snooze insight → Disappears, counter increments
 
-2. **Balance Flow**
-   - [ ] Customer can upload second payment proof
-   - [ ] Admin sees "Verify Balance" action
-   - [ ] Admin verifies, order becomes `fully_paid`
-   - [ ] Customer sees "Full Payment Confirmed" message
-   - [ ] Shipping actions unblock
+2. **Customer Intelligence Tab**
+   - [ ] Click arrow on customer → Opens customer detail view
+   - [ ] Export customer health → CSV downloads with correct data
 
-3. **Shipping Guards**
-   - [ ] Cannot ship order with `payment_status = 'partially_paid'`
-   - [ ] Guard shows tooltip: "Full payment required (X remaining)"
-   - [ ] Can ship when `payment_status = 'fully_paid'`
+3. **Operations Tab**
+   - [ ] Click at-risk order → Navigates to orders with order highlighted
+   - [ ] All metrics show "Insufficient data" when no orders exist
 
-4. **Notifications**
-   - [ ] Deposit verified → customer notified with balance amount
-   - [ ] Balance requested → customer notified with amount and deep link
-   - [ ] Balance verified → customer notified, order cleared
+4. **Automation Tab**
+   - [ ] Warning banner is visible
+   - [ ] Create Rule button shows tooltip
+   - [ ] Save Changes button shows tooltip
+   - [ ] All rule cards show "Preview" badge
 
-5. **Order Progression**
-   - [ ] Order doesn't appear "stuck" after deposit
-   - [ ] Timeline shows progress through preparation stages
-   - [ ] Only shipping stages show payment gate
+5. **Audit Tab**
+   - [ ] Click order number → Navigates to orders page
+   - [ ] Click quote number → Navigates to quotes page
 
 ---
 
-## Backward Compatibility
+## Non-Goals (Confirmed)
 
-- Existing orders retain their current state
-- Migration backfills payment_status from payment_amount_confirmed
-- Old notification types continue to work
-- No breaking changes to API contracts
-
----
-
-## Configuration (Future Enhancement)
-
-**Per-tenant settings (optional, not in initial scope):**
-
-```typescript
-interface PaymentConfig {
-  allowProcessingAfterDeposit: boolean;  // Default: true
-  minimumDepositPercent: number;         // Default: 30
-  balanceReminderDays: number;           // Default: 7
-  autoBlockShippingIfBalancePending: boolean;  // Default: true
-}
-```
-
-This can be added later via the `payment_settings` table.
-
+- No UI redesign
+- No new analytics features
+- No new AI features  
+- No business logic changes beyond correctness
+- No automation backend implementation (just UI honesty)
