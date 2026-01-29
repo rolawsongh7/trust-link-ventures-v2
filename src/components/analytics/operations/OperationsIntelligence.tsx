@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,8 @@ import {
   XCircle,
   Timer,
   BarChart3,
-  Download
+  Download,
+  ExternalLink
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -44,8 +46,13 @@ interface IssuePattern {
 export const OperationsIntelligence: React.FC<OperationsIntelligenceProps> = ({
   orders
 }) => {
+  const navigate = useNavigate();
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  const handleViewOrder = (orderId: string) => {
+    navigate('/admin/orders', { state: { highlightOrderId: orderId } });
+  };
 
   // Calculate order cycle time metrics
   const cycleMetrics = React.useMemo(() => {
@@ -456,10 +463,25 @@ export const OperationsIntelligence: React.FC<OperationsIntelligenceProps> = ({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: index * 0.05 }}
-                      className="flex items-center justify-between p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800"
+                      className="flex items-center justify-between p-3 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/15 transition-colors"
+                      onClick={() => handleViewOrder(order.id)}
                     >
                       <div>
-                        <span className="font-medium text-sm">{order.order_number}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">{order.order_number}</span>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 px-2 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewOrder(order.id);
+                            }}
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                           <Badge variant="outline" className="text-xs">
                             {order.status.replace(/_/g, ' ')}

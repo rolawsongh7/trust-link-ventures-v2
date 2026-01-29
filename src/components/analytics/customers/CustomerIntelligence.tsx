@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,8 @@ import {
   DollarSign,
   ShoppingCart,
   Clock,
-  Download
+  Download,
+  ExternalLink
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -46,8 +48,13 @@ export const CustomerIntelligence: React.FC<CustomerIntelligenceProps> = ({
   orders,
   customers
 }) => {
+  const navigate = useNavigate();
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  const handleViewCustomer = (customerId: string) => {
+    navigate('/admin/customers', { state: { viewCustomerId: customerId } });
+  };
 
   const customerMetrics = React.useMemo(() => {
     const now = new Date();
@@ -348,7 +355,12 @@ export const CustomerIntelligence: React.FC<CustomerIntelligenceProps> = ({
                             </span>
                           </div>
                         </div>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 w-7 p-0"
+                          onClick={() => handleViewCustomer(customer.customerId)}
+                        >
                           <ArrowRight className="h-4 w-4" />
                         </Button>
                       </div>
@@ -387,9 +399,10 @@ export const CustomerIntelligence: React.FC<CustomerIntelligenceProps> = ({
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05 }}
                         className={cn(
-                          'p-3 rounded-lg border border-l-4',
+                          'p-3 rounded-lg border border-l-4 cursor-pointer hover:bg-muted/50 transition-colors',
                           styles.border
                         )}
+                        onClick={() => handleViewCustomer(customer.customerId)}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <span className="font-medium text-sm">{customer.customerName}</span>
@@ -442,7 +455,8 @@ export const CustomerIntelligence: React.FC<CustomerIntelligenceProps> = ({
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.05 }}
-                  className="p-3 rounded-lg border border-l-4 border-l-green-500 bg-green-50/50 dark:bg-green-950/10"
+                  className="p-3 rounded-lg border border-l-4 border-l-primary bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors"
+                  onClick={() => handleViewCustomer(customer.customerId)}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-sm truncate">{customer.customerName}</span>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
@@ -11,11 +11,12 @@ import {
   Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { KPIDrilldownDrawer, type KPIType } from '../shared/KPIDrilldownDrawer';
 import type { Order } from '@/hooks/useOrdersQuery';
 import type { Customer } from '@/hooks/useCustomersQuery';
 
 interface ActionKPI {
-  id: string;
+  id: KPIType;
   label: string;
   value: string | number;
   subValue?: string;
@@ -23,7 +24,6 @@ interface ActionKPI {
   urgency: 'critical' | 'warning' | 'opportunity' | 'neutral';
   trend?: 'up' | 'down' | 'stable';
   action?: string;
-  actionLink?: string;
 }
 
 interface ActionKPIsProps {
@@ -32,6 +32,7 @@ interface ActionKPIsProps {
 }
 
 export const ActionKPIs: React.FC<ActionKPIsProps> = ({ orders, customers }) => {
+  const [selectedKPI, setSelectedKPI] = useState<KPIType | null>(null);
   // Calculate Cash at Risk (overdue + delayed payments)
   const cashAtRisk = React.useMemo(() => {
     const pendingPaymentOrders = orders.filter(o => 
@@ -144,8 +145,7 @@ export const ActionKPIs: React.FC<ActionKPIsProps> = ({ orders, customers }) => 
       subValue: `${cashAtRisk.count} orders · ${cashAtRisk.overdueCount} overdue`,
       icon: DollarSign,
       urgency: cashAtRisk.overdueCount > 0 ? 'critical' : cashAtRisk.count > 0 ? 'warning' : 'neutral',
-      action: 'Review payments',
-      actionLink: '/orders?filter=pending_payment'
+      action: 'Review payments'
     },
     {
       id: 'orders-at-risk',
@@ -154,8 +154,7 @@ export const ActionKPIs: React.FC<ActionKPIsProps> = ({ orders, customers }) => 
       subValue: 'Delays, issues, or stuck',
       icon: AlertTriangle,
       urgency: ordersAtRisk > 5 ? 'critical' : ordersAtRisk > 0 ? 'warning' : 'neutral',
-      action: 'View orders',
-      actionLink: '/orders?filter=at_risk'
+      action: 'View orders'
     },
     {
       id: 'customer-risk',
@@ -164,8 +163,7 @@ export const ActionKPIs: React.FC<ActionKPIsProps> = ({ orders, customers }) => 
       subValue: 'Declining or inactive',
       icon: Users,
       urgency: customerRisk > 3 ? 'warning' : 'neutral',
-      action: 'Review customers',
-      actionLink: '/customers?filter=at_risk'
+      action: 'Review customers'
     },
     {
       id: 'growth-opportunities',
@@ -174,8 +172,7 @@ export const ActionKPIs: React.FC<ActionKPIsProps> = ({ orders, customers }) => 
       subValue: 'Customers scaling up',
       icon: TrendingUp,
       urgency: 'opportunity',
-      action: 'Explore opportunities',
-      actionLink: '/customers?filter=growing'
+      action: 'Explore opportunities'
     }
   ];
 
@@ -248,7 +245,10 @@ export const ActionKPIs: React.FC<ActionKPIsProps> = ({ orders, customers }) => 
                 </div>
 
                 {kpi.action && (
-                  <button className="flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                  <button 
+                    className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                    onClick={() => setSelectedKPI(kpi.id)}
+                  >
                     {kpi.action}
                     <ArrowRight className="h-3 w-3" />
                   </button>
@@ -258,6 +258,15 @@ export const ActionKPIs: React.FC<ActionKPIsProps> = ({ orders, customers }) => 
           </motion.div>
         );
       })}
+
+      {/* KPI Drilldown Drawer */}
+      <KPIDrilldownDrawer
+        open={selectedKPI !== null}
+        onClose={() => setSelectedKPI(null)}
+        type={selectedKPI || 'cash-at-risk'}
+        orders={orders}
+        customers={customers}
+      />
     </div>
   );
 };

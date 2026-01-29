@@ -7,6 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { 
   Save, 
@@ -20,7 +26,8 @@ import {
   AlertTriangle,
   TrendingUp,
   ChevronRight,
-  Settings2
+  Settings2,
+  Info
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -222,6 +229,19 @@ export const InsightDrivenAutomation: React.FC<InsightDrivenAutomationProps> = (
 
   return (
     <div className="space-y-6">
+      {/* Preview Mode Warning Banner */}
+      <Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+        <CardContent className="p-4 flex items-center gap-3">
+          <Info className="h-5 w-5 text-amber-600 flex-shrink-0" />
+          <div>
+            <p className="font-medium text-sm text-amber-900 dark:text-amber-100">Preview Mode</p>
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              Automation rules are in preview. Changes are not persisted to the database yet.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -230,18 +250,36 @@ export const InsightDrivenAutomation: React.FC<InsightDrivenAutomationProps> = (
             Insight-Driven Automation
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {enabledCount} of {rules.length} automations active
+            {enabledCount} of {rules.length} automations active (preview only)
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Rule
-          </Button>
-          <Button size="sm" onClick={saveWorkflows}>
-            <Save className="h-4 w-4 mr-2" />
-            Save Changes
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" disabled>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Rule
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Custom rule creation coming soon</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" disabled>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Database persistence coming soon</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -331,6 +369,9 @@ export const InsightDrivenAutomation: React.FC<InsightDrivenAutomationProps> = (
                             <Badge variant="outline" className="text-xs">
                               {getActionIcon(rule.action.type)}
                               <span className="ml-1 capitalize">{rule.action.type.replace('_', ' ')}</span>
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                              Preview
                             </Badge>
                           </div>
                           
