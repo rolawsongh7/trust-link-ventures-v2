@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +19,8 @@ import {
   AlertTriangle,
   Activity,
   RefreshCw,
-  Download
+  Download,
+  ExternalLink
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -44,6 +46,7 @@ interface AnomalyAlert {
 }
 
 export const EnhancedAuditTimeline: React.FC = () => {
+  const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +55,14 @@ export const EnhancedAuditTimeline: React.FC = () => {
   const [anomalies, setAnomalies] = useState<AnomalyAlert[]>([]);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  const handleViewOrder = (orderId: string) => {
+    navigate('/admin/orders', { state: { highlightOrderId: orderId } });
+  };
+
+  const handleViewQuote = (quoteId: string) => {
+    navigate('/admin/quotes', { state: { highlightQuoteId: quoteId } });
+  };
 
   useEffect(() => {
     fetchActivities();
@@ -398,13 +409,31 @@ export const EnhancedAuditTimeline: React.FC = () => {
                                 </span>
                               </div>
                               {activity.event_data && (
-                                <div className="text-sm text-muted-foreground">
-                                  {activity.event_data.order_number && (
+                                <div className="text-sm text-muted-foreground flex flex-wrap gap-2">
+                                  {activity.event_data.order_number && activity.event_data.order_id && (
+                                    <button
+                                      className="font-medium text-foreground hover:text-primary underline-offset-2 hover:underline inline-flex items-center gap-1"
+                                      onClick={() => handleViewOrder(activity.event_data.order_id)}
+                                    >
+                                      Order: {activity.event_data.order_number}
+                                      <ExternalLink className="h-3 w-3" />
+                                    </button>
+                                  )}
+                                  {activity.event_data.order_number && !activity.event_data.order_id && (
                                     <span className="font-medium text-foreground">
                                       Order: {activity.event_data.order_number}
                                     </span>
                                   )}
-                                  {activity.event_data.quote_number && (
+                                  {activity.event_data.quote_number && activity.event_data.quote_id && (
+                                    <button
+                                      className="font-medium text-foreground hover:text-primary underline-offset-2 hover:underline inline-flex items-center gap-1"
+                                      onClick={() => handleViewQuote(activity.event_data.quote_id)}
+                                    >
+                                      Quote: {activity.event_data.quote_number}
+                                      <ExternalLink className="h-3 w-3" />
+                                    </button>
+                                  )}
+                                  {activity.event_data.quote_number && !activity.event_data.quote_id && (
                                     <span className="font-medium text-foreground">
                                       Quote: {activity.event_data.quote_number}
                                     </span>

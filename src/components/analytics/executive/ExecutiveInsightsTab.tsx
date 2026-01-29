@@ -8,6 +8,7 @@ import { ExportDialog, type ExportOption } from '@/components/analytics/ExportDi
 import { 
   printExecutiveSummary,
   exportAtRiskOrders,
+  exportAIInsightsReport,
   type MetricsSummary,
   type InsightData
 } from '@/utils/analyticsExport';
@@ -83,6 +84,37 @@ export const ExecutiveInsightsTab: React.FC<ExecutiveInsightsTabProps> = ({
               exportAtRiskOrders(ordersAtRisk);
             } else {
               toast({ title: "No at-risk orders", description: "All orders are on track" });
+            }
+            break;
+          
+          case 'ai_insights':
+            // Generate AI insights export from current order data
+            const aiExportInsights: InsightData[] = [];
+            
+            if (cashAtRisk > 0) {
+              aiExportInsights.push({
+                type: 'risk',
+                title: 'Outstanding Payments',
+                summary: `${pendingOrders.length} orders worth GHS ${(cashAtRisk/1000).toFixed(0)}K are awaiting payment.`,
+                recommended_action: 'Review pending orders and send payment reminders',
+                urgency: pendingOrders.length > 5 ? 'immediate' : 'soon'
+              });
+            }
+            
+            if (ordersAtRisk.length > 0) {
+              aiExportInsights.push({
+                type: 'risk',
+                title: 'Orders at Delivery Risk',
+                summary: `${ordersAtRisk.length} orders may miss their SLA.`,
+                recommended_action: 'Review operations and expedite processing',
+                urgency: 'immediate'
+              });
+            }
+            
+            if (aiExportInsights.length > 0) {
+              exportAIInsightsReport(aiExportInsights);
+            } else {
+              toast({ title: "No insights to export", description: "Business metrics are healthy" });
             }
             break;
         }

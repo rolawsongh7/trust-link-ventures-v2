@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,8 @@ import {
   ChevronDown,
   BellOff,
   Database,
-  Info
+  Info,
+  ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,6 +63,7 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
   quotes,
   customers
 }) => {
+  const navigate = useNavigate();
   const [insights, setInsights] = useState<StructuredInsight[]>([]);
   const [executiveSummary, setExecutiveSummary] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -74,6 +77,38 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
     getSnoozedCount,
     clearAllSnoozes 
   } = useAlertThrottling<StructuredInsight>();
+
+  // Handle take action for insights
+  const handleTakeAction = (insight: StructuredInsight) => {
+    switch (insight.type) {
+      case 'risk':
+        // Navigate to orders page for risk-related insights
+        navigate('/admin/orders');
+        toast({
+          title: "Navigating to Orders",
+          description: "Review at-risk orders to take action"
+        });
+        break;
+      case 'opportunity':
+        // Navigate to customers for opportunity insights
+        navigate('/admin/customers');
+        toast({
+          title: "Navigating to Customers", 
+          description: "Review customer opportunities"
+        });
+        break;
+      case 'optimization':
+      case 'prediction':
+      default:
+        // For other types, expand the insight and show a toast
+        setExpandedInsight(insight.id);
+        toast({
+          title: "Review Recommendation",
+          description: insight.recommended_action
+        });
+        break;
+    }
+  };
 
   const fetchAIInsights = async (refresh = false) => {
     if (refresh) setIsRefreshing(true);
@@ -544,9 +579,15 @@ export const EnhancedAIInsights: React.FC<EnhancedAIInsightsProps> = ({
 
                             {/* Action Buttons */}
                             <div className="flex items-center gap-2 pt-2">
-                              <Button size="sm" className="flex-1">
-                                Take Action
-                                <ChevronRight className="h-3 w-3 ml-1" />
+                              <Button 
+                                size="sm" 
+                                className="flex-1"
+                                onClick={() => handleTakeAction(insight)}
+                              >
+                                {insight.type === 'risk' ? 'Review Orders' : 
+                                 insight.type === 'opportunity' ? 'View Customers' : 
+                                 'View Details'}
+                                <ExternalLink className="h-3 w-3 ml-1" />
                               </Button>
                               <Button 
                                 variant="ghost" 
