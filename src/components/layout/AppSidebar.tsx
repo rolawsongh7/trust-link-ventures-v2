@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  BarChart3,
+  Brain,
   Users,
   Target,
   ShoppingCart,
@@ -42,7 +42,7 @@ import {
 } from '@/components/ui/sidebar';
 
 const navigationItems = [
-  { title: 'Analytics', url: '/admin/analytics', icon: BarChart3, badge: 'analytics' as const },
+  { title: 'Business Intelligence', url: '/admin/analytics', icon: Brain, badge: 'analytics' as const },
   { title: 'Customers', url: '/admin/customers', icon: Users, badge: null },
   { title: 'Leads', url: '/admin/leads', icon: Target, badge: 'leads' as const },
   { title: 'Orders', url: '/admin/orders', icon: ShoppingCart, badge: 'orders' as const },

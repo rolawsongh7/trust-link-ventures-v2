@@ -59,7 +59,7 @@ import QuoteRequest from "./pages/QuoteRequest";
 import QuoteSystem from "./pages/QuoteSystem";
 import QuoteRequestManagement from "@/components/QuoteRequestManagement";
 import Terms from "./pages/Terms";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import AdvancedAnalytics from "./pages/AdvancedAnalytics";
 import CustomersPage from "./pages/CustomersPage";
 import LeadsPage from "./pages/LeadsPage";
 import QuotesPage from "./pages/QuotesPage";
@@ -196,7 +196,7 @@ const App = () => {
                         <Route path="orders" element={<UnifiedOrdersManagement />} />
                         <Route path="invoices" element={<InvoicesPage />} />
                         <Route path="price-management" element={<PriceManagement />} />
-                        <Route path="analytics" element={<AnalyticsPage />} />
+                        <Route path="analytics" element={<AdvancedAnalytics />} />
                         <Route path="crm" element={<CRM />} />
                         <Route path="quote-inquiries" element={<QuoteRequestManagement />} />
                         <Route path="communication" element={<CommunicationPage />} />
@@ -290,7 +290,7 @@ const App = () => {
                         <Route path="orders" element={<UnifiedOrdersManagement />} />
                         <Route path="invoices" element={<InvoicesPage />} />
                         <Route path="price-management" element={<PriceManagement />} />
-                        <Route path="analytics" element={<AnalyticsPage />} />
+                        <Route path="analytics" element={<AdvancedAnalytics />} />
                         <Route path="crm" element={<CRM />} />
                         <Route path="quote-inquiries" element={<QuoteRequestManagement />} />
                         <Route path="communication" element={<CommunicationPage />} />
@@ -397,7 +397,7 @@ const App = () => {
                         <Route path="orders" element={<UnifiedOrdersManagement />} />
                         <Route path="invoices" element={<InvoicesPage />} />
                         <Route path="price-management" element={<PriceManagement />} />
-                        <Route path="analytics" element={<AnalyticsPage />} />
+                        <Route path="analytics" element={<AdvancedAnalytics />} />
                         <Route path="crm" element={<CRM />} />
                         <Route path="quote-inquiries" element={<QuoteRequestManagement />} />
                         <Route path="communication" element={<CommunicationPage />} />
@@ -489,7 +489,7 @@ const App = () => {
                         <Route path="orders" element={<UnifiedOrdersManagement />} />
                         <Route path="invoices" element={<InvoicesPage />} />
                         <Route path="price-management" element={<PriceManagement />} />
-                        <Route path="analytics" element={<AnalyticsPage />} />
+                        <Route path="analytics" element={<AdvancedAnalytics />} />
                         <Route path="crm" element={<CRM />} />
                         <Route path="quote-inquiries" element={<QuoteRequestManagement />} />
                         <Route path="communication" element={<CommunicationPage />} />
