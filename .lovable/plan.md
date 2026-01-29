@@ -1,407 +1,193 @@
 
-# Business Intelligence Page Integrity & Link Reliability Refactor
+# Fix Quote Request Modal Scrolling & Content Visibility
 
-## Executive Summary
+## Problem Analysis
 
-This plan performs a comprehensive integrity audit of the Business Intelligence page to ensure all interactive elements work correctly, metrics are accurate, and the page is production-ready for enterprise use. The audit identified **27 issues** across 5 tabs requiring fixes.
+The Quote Request Details modal in the admin portal has a scrolling issue where users cannot scroll to view line items and full request details. The screenshot shows the content is clipped after the "Customer Information" section.
 
----
+### Root Cause
 
-## Current State: Action & Link Inventory
+The modal uses `ScrollArea` from Radix UI, which requires specific height constraints to function properly. The current implementation has:
 
-### Tab 1: Executive Insights
+1. `DialogContent` with `max-h-[90vh] flex flex-col p-0`
+2. `DialogHeader` with `flex-shrink-0` (correct)
+3. `ScrollArea` with `flex-1 min-h-0` (insufficient)
+4. Footer with `flex-shrink-0` (correct)
 
-| UI Action | Intended Destination | Status | Issue |
-|-----------|---------------------|--------|-------|
-| "Review payments" KPI button | `/orders?filter=pending_payment` | **BROKEN** | Route doesn't support `filter` query param |
-| "View orders" KPI button | `/orders?filter=at_risk` | **BROKEN** | Route doesn't support `filter` query param |
-| "Review customers" KPI button | `/customers?filter=at_risk` | **BROKEN** | Route doesn't support `filter` query param |
-| "Explore opportunities" KPI button | `/customers?filter=growing` | **BROKEN** | Route doesn't support `filter` query param |
-| "Take Action" button on AI insights | None | **BROKEN** | Button does nothing - no handler attached |
-| "Export" button | Export dialog | **WORKS** | ✅ |
-| "ai_insights" export option | Available in dialog | **BROKEN** | Handler doesn't process `ai_insights` option |
-| "Refresh" AI insights button | Refetches data | **WORKS** | ✅ |
-| "Snooze 24h" button | Snoozes insight | **WORKS** | ✅ |
-
-### Tab 2: Customer & Revenue Intelligence
-
-| UI Action | Intended Destination | Status | Issue |
-|-----------|---------------------|--------|-------|
-| Arrow button on customer cards | None | **BROKEN** | `<Button>` with no onClick handler |
-| "Export" button | Export dialog | **WORKS** | ✅ |
-| Customer cards (Top Revenue) | Should open customer | **MISSING** | No drill-down to customer detail |
-| Customer cards (At Risk) | Should open customer | **MISSING** | No drill-down to customer detail |
-| Customer cards (Growth) | Should open customer | **MISSING** | No drill-down to customer detail |
-
-### Tab 3: Operations & Risk Intelligence
-
-| UI Action | Intended Destination | Status | Issue |
-|-----------|---------------------|--------|-------|
-| Order rows in "Orders at Risk" | Should open order | **MISSING** | No click handler or view button |
-| Issue pattern "Recent: ORD-xxx" | Should filter orders | **MISSING** | Order numbers are plain text |
-| "Export" button | Export dialog | **WORKS** | ✅ |
-
-### Tab 4: Automation & Alerts
-
-| UI Action | Intended Destination | Status | Issue |
-|-----------|---------------------|--------|-------|
-| "Create Rule" button | None | **BROKEN** | Button does nothing |
-| "Save Changes" button | Shows toast only | **MISLEADING** | Rules NOT persisted to database |
-| Toggle switches | Local state only | **MISLEADING** | Changes lost on page refresh |
-| "Enable" on recommendations | Adds to local array | **MISLEADING** | Not persisted |
-
-### Tab 5: Audit & History
-
-| UI Action | Intended Destination | Status | Issue |
-|-----------|---------------------|--------|-------|
-| Activity items with order/quote | Should link to entity | **MISSING** | No drill-down capability |
-| "Export" button | Export dialog | **WORKS** | ✅ |
-| "Refresh" button | Refetches data | **WORKS** | ✅ |
+The issue is that Radix's `ScrollAreaPrimitive.Viewport` has `h-full w-full`, which doesn't properly inherit height from a flexbox parent. The viewport needs an explicit `!h-auto` override or the ScrollArea needs a fixed `max-h` calculation.
 
 ---
 
-## Phase 1: Fix KPI Navigation Links (ActionKPIs.tsx)
+## Solution Architecture
 
-**Problem**: All 4 KPI action buttons use broken routes like `/orders?filter=pending_payment`
-
-**Solution**: Replace button navigation with drawer/modal drill-downs showing relevant data inline.
-
-**Changes to `src/components/analytics/executive/ActionKPIs.tsx`:**
-
-1. Remove unused `actionLink` property from KPIs (lines 148, 158, 168, 178)
-2. Add state for selected KPI modal
-3. Replace `<button>` elements with proper handlers that open an inline drawer showing:
-   - **Cash at Risk**: Orders with `status === 'pending_payment'`
-   - **Orders at Risk**: Orders matching risk criteria
-   - **Customers at Risk**: Customers with declining health scores
-   - **Growth Opportunities**: Growing customers
-
-4. Create new component: `src/components/analytics/executive/KPIDrilldownDrawer.tsx`
-   - Shows filtered list of orders/customers based on KPI type
-   - Includes "View in Orders/Customers" link to full admin page
-   - Allows quick actions (send reminder, view details)
-
----
-
-## Phase 2: Fix AI Insight "Take Action" Button (EnhancedAIInsights.tsx)
-
-**Problem**: "Take Action" button at line 547-550 has no handler
-
-**Solution**: Wire button to context-appropriate action based on insight type
-
-**Changes to `src/components/analytics/executive/EnhancedAIInsights.tsx`:**
-
-1. Add `onTakeAction` handler function:
-```typescript
-const handleTakeAction = (insight: StructuredInsight) => {
-  switch (insight.type) {
-    case 'risk':
-      // Open orders drawer filtered to at-risk
-      setShowRiskDrawer(true);
-      break;
-    case 'opportunity':
-      // Navigate to quotes/customers
-      navigate('/admin/customers');
-      break;
-    case 'optimization':
-      // Show optimization suggestions modal
-      toast.info("Review recommendation details above");
-      break;
-    default:
-      toast.info("Review the recommended action above");
-  }
-};
+```text
++--------------------------------------------------+
+|  DialogContent (max-h-[90vh] flex flex-col)      |
++--------------------------------------------------+
+|  DialogHeader (flex-shrink-0)                    |
+|  - Title, buttons, badge                         |
++--------------------------------------------------+
+|  ScrollArea (flex-1 min-h-0 overflow-hidden)     |
+|  +--------------------------------------------+  |
+|  | Viewport (overflow-y-auto)  <-- FIX HERE  |  |
+|  | - Status bar                              |  |
+|  | - Customer info                           |  |
+|  | - Message card                            |  |
+|  | - Admin notes                             |  |
+|  | - Line items table                        |  |
+|  +--------------------------------------------+  |
++--------------------------------------------------+
+|  Footer (flex-shrink-0)                          |
+|  - Hint text, action buttons                     |
++--------------------------------------------------+
 ```
 
-2. Update button (line 547):
+---
+
+## Implementation Changes
+
+### Option A: Fix ScrollArea Viewport Height (Recommended)
+
+**File: `src/components/ui/scroll-area.tsx`**
+
+The Viewport needs to properly fill its flex container. Add explicit height handling:
+
 ```tsx
-<Button size="sm" className="flex-1" onClick={() => handleTakeAction(insight)}>
-  Take Action
-  <ChevronRight className="h-3 w-3 ml-1" />
-</Button>
+<ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit] [&>div]:!block">
 ```
 
-3. For insights without actionable routes, change button to "View Details" and ensure the collapsible is open
+This won't fully fix it. Instead, we need to apply the fix at the component level.
 
----
+### Option B: Replace ScrollArea with Native Scroll (Simpler)
 
-## Phase 3: Fix Missing ai_insights Export Handler
+Since the `ScrollArea` from Radix has viewport issues in flex containers, replace it with a simple `div` with `overflow-y-auto`:
 
-**Problem**: `ai_insights` is in `availableOptions` but not handled in `handleExport`
+**File: `src/components/QuoteRequestManagement.tsx`**
 
-**Solution**: Add handler case in `ExecutiveInsightsTab.tsx`
-
-**Changes to `src/components/analytics/executive/ExecutiveInsightsTab.tsx`:**
-
-Add missing case (after line 87):
-```typescript
-case 'ai_insights':
-  // Re-use the existing executive summary export with insights
-  const aiInsights: InsightData[] = orders
-    .filter(o => o.status === 'pending_payment')
-    .slice(0, 5)
-    .map(o => ({
-      type: 'risk',
-      title: `Order ${o.order_number} pending payment`,
-      summary: `Amount: GHS ${o.total_amount}`,
-      recommended_action: 'Send payment reminder',
-      urgency: 'soon'
-    }));
-  exportAIInsightsReport(aiInsights);
-  break;
-```
-
-Add import: `import { exportAIInsightsReport } from '@/utils/analyticsExport';`
-
----
-
-## Phase 4: Fix Customer Card Drill-downs (CustomerIntelligence.tsx)
-
-**Problem**: Arrow buttons on customer cards have no handlers
-
-**Solution**: Add navigation to unified customer view
-
-**Changes to `src/components/analytics/customers/CustomerIntelligence.tsx`:**
-
-1. Add useNavigate hook
-2. Update arrow button (line 351-353):
+Change:
 ```tsx
-<Button 
-  variant="ghost" 
-  size="sm" 
-  className="h-7 w-7 p-0"
-  onClick={() => navigate('/admin/customers', { 
-    state: { viewCustomerId: customer.customerId } 
-  })}
->
-  <ArrowRight className="h-4 w-4" />
-</Button>
+<ScrollArea className="flex-1 min-h-0">
+  {selectedRequest && (
+    <div className="space-y-6 p-6 pb-4">
 ```
 
-3. Similarly update all customer cards in:
-   - Top Customers section (line 351)
-   - At Risk Customers section (make entire card clickable)
-   - Growth Opportunities section (add view action)
+To:
+```tsx
+<div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+  {selectedRequest && (
+    <div className="space-y-6 p-6 pb-4">
+```
+
+This is the **recommended fix** as it:
+- Avoids Radix viewport height inheritance issues
+- Provides native smooth scrolling
+- Works correctly with flexbox layouts
+- Supports touch/trackpad/keyboard scrolling
 
 ---
 
-## Phase 5: Fix Operations At-Risk Orders (OperationsIntelligence.tsx)
+## Detailed Changes
 
-**Problem**: At-risk order rows have no click handler to view order
+### Change 1: Replace ScrollArea with Native Scroll Container
 
-**Solution**: Add navigation to orders with highlight
+**File: `src/components/QuoteRequestManagement.tsx`**
 
-**Changes to `src/components/analytics/operations/OperationsIntelligence.tsx`:**
-
-1. Add useNavigate hook
-2. Wrap order item (around line 459) with click handler:
+At line 863, replace:
 ```tsx
-<motion.div
-  ...
-  className="... cursor-pointer hover:bg-red-100"
-  onClick={() => navigate('/admin/orders', { 
-    state: { highlightOrderId: order.id } 
-  })}
->
+<ScrollArea className="flex-1 min-h-0">
 ```
 
-3. Add "View Order" button for clarity
-
----
-
-## Phase 6: Automation Tab Honesty Pass (InsightDrivenAutomation.tsx)
-
-**Problem**: UI implies rules are saved/active but they only exist in local React state
-
-**Solution**: Add clear warning banner and disable deceptive actions
-
-**Changes to `src/components/analytics/automation/InsightDrivenAutomation.tsx`:**
-
-1. Add warning banner at top (after line 225):
+With:
 ```tsx
-<Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/20">
-  <CardContent className="p-4 flex items-center gap-3">
-    <AlertTriangle className="h-5 w-5 text-amber-600" />
-    <div>
-      <p className="font-medium text-sm">Preview Mode</p>
-      <p className="text-xs text-muted-foreground">
-        Automation rules are in preview. Enable persistence in settings to activate.
-      </p>
-    </div>
-  </CardContent>
-</Card>
+<div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-smooth">
 ```
 
-2. Update "Save Changes" button to show tooltip:
+At line 1006, replace:
 ```tsx
-<TooltipProvider>
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <Button size="sm" onClick={saveWorkflows} disabled>
-        <Save className="h-4 w-4 mr-2" />
-        Save Changes
-      </Button>
-    </TooltipTrigger>
-    <TooltipContent>
-      <p>Coming soon: Database persistence for automation rules</p>
-    </TooltipContent>
-  </Tooltip>
-</TooltipProvider>
+</ScrollArea>
 ```
 
-3. Add "Preview" badge to each rule card header
-
-4. Disable "Create Rule" button with tooltip:
+With:
 ```tsx
-<TooltipProvider>
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <Button variant="outline" size="sm" disabled>
-        <Plus className="h-4 w-4 mr-2" />
-        Create Rule
-      </Button>
-    </TooltipTrigger>
-    <TooltipContent>
-      <p>Custom rule creation coming soon</p>
-    </TooltipContent>
-  </Tooltip>
-</TooltipProvider>
+</div>
 ```
 
----
+### Change 2: Remove Unused ScrollArea Import
 
-## Phase 7: Fix Audit Timeline Drill-downs (EnhancedAuditTimeline.tsx)
+Remove the `ScrollArea` import if no longer used elsewhere in the file.
 
-**Problem**: Activity items showing order/quote numbers are not clickable
+### Change 3: Ensure Proper Height Calculation
 
-**Solution**: Make entity references into links
+The `DialogContent` already has `max-h-[90vh]`, but we should verify the footer spacing doesn't cause overflow. Add padding-bottom to the scroll container content:
 
-**Changes to `src/components/analytics/audit/EnhancedAuditTimeline.tsx`:**
-
-1. Add useNavigate hook
-2. Update order/quote display (lines 402-410):
+At line 865, change:
 ```tsx
-{activity.event_data.order_number && (
-  <button
-    className="font-medium text-foreground hover:text-primary underline-offset-2 hover:underline"
-    onClick={() => navigate('/admin/orders', {
-      state: { highlightOrderId: activity.event_data.order_id }
-    })}
-  >
-    Order: {activity.event_data.order_number}
-  </button>
-)}
-{activity.event_data.quote_number && (
-  <button
-    className="font-medium text-foreground hover:text-primary underline-offset-2 hover:underline"
-    onClick={() => navigate('/admin/quotes', {
-      state: { highlightQuoteId: activity.event_data.quote_id }
-    })}
-  >
-    Quote: {activity.event_data.quote_number}
-  </button>
-)}
+<div className="space-y-6 p-6 pb-4">
 ```
 
----
-
-## Phase 8: Add Empty States for Edge Cases
-
-**Changes across all tab components:**
-
-1. **EnhancedAIInsights.tsx**: Already has empty state ✅
-2. **CustomerIntelligence.tsx**: Already has empty state for at-risk section ✅
-3. **OperationsIntelligence.tsx**: Add empty state for "No orders at risk":
+To:
 ```tsx
-{ordersAtRisk.length === 0 && (
-  <div className="text-center py-8 text-muted-foreground">
-    <CheckCircle className="h-10 w-10 mx-auto mb-3 text-green-500" />
-    <p className="text-sm font-medium">All orders on track</p>
-    <p className="text-xs">No deliveries are at risk of missing SLA</p>
-  </div>
-)}
+<div className="space-y-6 p-6 pb-6">
 ```
 
-4. **ActionKPIs.tsx**: Show "All clear" state when all KPIs are neutral
-5. **ExecutiveSummary.tsx**: Already has fallback insight ✅
-
----
-
-## Phase 9: Create Shared KPI Drill-down Drawer
-
-**New File: `src/components/analytics/shared/KPIDrilldownDrawer.tsx`**
-
-A reusable drawer component for showing filtered entity lists:
-
-```typescript
-interface KPIDrilldownDrawerProps {
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  description: string;
-  type: 'orders' | 'customers';
-  items: any[];
-  onViewAll: () => void;
-}
-```
-
-Features:
-- Shows up to 10 items inline
-- "View All in [Orders/Customers]" button at bottom
-- Quick actions per item (send reminder, view details)
-- Mobile-responsive sheet variant
-
----
-
-## Implementation Files Summary
-
-| File | Action | Changes |
-|------|--------|---------|
-| `src/components/analytics/executive/ActionKPIs.tsx` | Modify | Remove broken links, add drawer handlers |
-| `src/components/analytics/executive/EnhancedAIInsights.tsx` | Modify | Wire "Take Action" button |
-| `src/components/analytics/executive/ExecutiveInsightsTab.tsx` | Modify | Add ai_insights export handler |
-| `src/components/analytics/customers/CustomerIntelligence.tsx` | Modify | Add customer card navigation |
-| `src/components/analytics/operations/OperationsIntelligence.tsx` | Modify | Add at-risk order navigation |
-| `src/components/analytics/automation/InsightDrivenAutomation.tsx` | Modify | Add preview warning, disable save |
-| `src/components/analytics/audit/EnhancedAuditTimeline.tsx` | Modify | Make entity refs clickable |
-| `src/components/analytics/shared/KPIDrilldownDrawer.tsx` | Create | Reusable drill-down component |
+This ensures content doesn't get clipped at the bottom.
 
 ---
 
 ## Testing Checklist
 
-After implementation:
+After implementation, verify:
 
-1. **Executive Insights Tab**
-   - [ ] Click each KPI action → Drawer opens with filtered data
-   - [ ] Click "Take Action" on AI insight → Appropriate response
-   - [ ] Export "AI Insights" → PDF opens in new tab
-   - [ ] Snooze insight → Disappears, counter increments
+1. **Scroll Functionality**
+   - [ ] Mouse wheel scrolling works
+   - [ ] Trackpad scrolling works
+   - [ ] Keyboard scrolling (arrow keys, space, page up/down) works
+   - [ ] Touch scrolling works on mobile
 
-2. **Customer Intelligence Tab**
-   - [ ] Click arrow on customer → Opens customer detail view
-   - [ ] Export customer health → CSV downloads with correct data
+2. **Content Visibility**
+   - [ ] Status/Urgency/Type bar is visible
+   - [ ] Customer Information card is fully visible
+   - [ ] Customer Message card is visible
+   - [ ] Admin Notes (if present) is visible
+   - [ ] Requested Items table is visible with all rows
+   - [ ] Table scrolls within modal on long item lists
 
-3. **Operations Tab**
-   - [ ] Click at-risk order → Navigates to orders with order highlighted
-   - [ ] All metrics show "Insufficient data" when no orders exist
+3. **Fixed Sections**
+   - [ ] Header (title, buttons) stays fixed at top
+   - [ ] Footer (action buttons) stays fixed at bottom
+   - [ ] Only the content area scrolls
 
-4. **Automation Tab**
-   - [ ] Warning banner is visible
-   - [ ] Create Rule button shows tooltip
-   - [ ] Save Changes button shows tooltip
-   - [ ] All rule cards show "Preview" badge
+4. **Edge Cases**
+   - [ ] Modal works on small viewports (mobile)
+   - [ ] Modal works on tall viewports (desktop)
+   - [ ] Empty items state renders correctly
+   - [ ] Loading state renders correctly
 
-5. **Audit Tab**
-   - [ ] Click order number → Navigates to orders page
-   - [ ] Click quote number → Navigates to quotes page
+5. **Accessibility**
+   - [ ] Focus trap works correctly
+   - [ ] ESC closes the modal
+   - [ ] Click outside closes the modal
 
 ---
 
-## Non-Goals (Confirmed)
+## Files Modified
+
+| File | Action | Description |
+|------|--------|-------------|
+| `src/components/QuoteRequestManagement.tsx` | Modify | Replace ScrollArea with native scroll div |
+
+---
+
+## Technical Notes
+
+- The Radix `ScrollArea` component is designed for custom scrollbar styling, but has known issues with flexbox containers where the viewport doesn't properly inherit height
+- Using native `overflow-y-auto` is the standard solution for flex-based modal layouts
+- The `overscroll-contain` class prevents scroll chaining to the background page
+- The `scroll-smooth` class provides smooth scrolling experience
+
+## Non-Goals
 
 - No UI redesign
-- No new analytics features
-- No new AI features  
-- No business logic changes beyond correctness
-- No automation backend implementation (just UI honesty)
+- No changes to the data displayed
+- No changes to action buttons or workflow
+- No changes to styling beyond scroll behavior
