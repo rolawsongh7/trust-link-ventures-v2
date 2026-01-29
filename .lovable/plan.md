@@ -1,136 +1,357 @@
 
-# Fix Quote Request Modal Scrolling & Content Visibility
+# Fix "Failed to Update Order Status" for Partial Payments
 
-## Problem Analysis
+## Problem Diagnosis
 
-The Quote Request Details modal in the admin portal has a scrolling issue where users cannot scroll to view line items and full request details. The screenshot shows the content is clipped after the "Customer Information" section.
+### Root Cause Identified
 
-### Root Cause
+The database trigger `validate_order_status_transition` blocks the status update. The current transition rules are:
 
-The modal uses `ScrollArea` from Radix UI, which requires specific height constraints to function properly. The current implementation has:
+```sql
+"pending_payment": ["payment_received", "cancelled"]
+```
 
-1. `DialogContent` with `max-h-[90vh] flex flex-col p-0`
-2. `DialogHeader` with `flex-shrink-0` (correct)
-3. `ScrollArea` with `flex-1 min-h-0` (insufficient)
-4. Footer with `flex-shrink-0` (correct)
+When an admin clicks **"Move to Processing (Partial)"**, the system attempts:
+- `pending_payment` → `processing`
 
-The issue is that Radix's `ScrollAreaPrimitive.Viewport` has `h-full w-full`, which doesn't properly inherit height from a flexbox parent. The viewport needs an explicit `!h-auto` override or the ScrollArea needs a fixed `max-h` calculation.
+**This transition is blocked** because `processing` is not in the allowed list for `pending_payment`.
+
+### Current Order State (from DB query)
+
+```
+ORD-202601-4928: status=pending_payment, payment_status=partially_paid
+ORD-202511-8528: status=pending_payment, payment_status=partially_paid
+```
+
+These orders are stuck because they cannot transition to `processing` even though they have verified partial payments.
 
 ---
 
 ## Solution Architecture
 
-```text
-+--------------------------------------------------+
-|  DialogContent (max-h-[90vh] flex flex-col)      |
-+--------------------------------------------------+
-|  DialogHeader (flex-shrink-0)                    |
-|  - Title, buttons, badge                         |
-+--------------------------------------------------+
-|  ScrollArea (flex-1 min-h-0 overflow-hidden)     |
-|  +--------------------------------------------+  |
-|  | Viewport (overflow-y-auto)  <-- FIX HERE  |  |
-|  | - Status bar                              |  |
-|  | - Customer info                           |  |
-|  | - Message card                            |  |
-|  | - Admin notes                             |  |
-|  | - Line items table                        |  |
-|  +--------------------------------------------+  |
-+--------------------------------------------------+
-|  Footer (flex-shrink-0)                          |
-|  - Hint text, action buttons                     |
-+--------------------------------------------------+
+### Domain Model (Already Exists)
+
+The database already has the correct `payment_status_enum`:
+- `unpaid`
+- `partially_paid`
+- `fully_paid`
+- `overpaid`
+
+### Required Status Transition Rules
+
+| Order Status      | Allowed Next Statuses                         | Condition                          |
+|-------------------|-----------------------------------------------|-----------------------------------|
+| `pending_payment` | `payment_received`, `processing`, `cancelled` | `processing` only if `partially_paid` or `fully_paid` |
+| `payment_received`| `processing`, `cancelled`                     | Standard flow                     |
+| `processing`      | `ready_to_ship`, `cancelled`                  | Standard flow                     |
+| `ready_to_ship`   | `shipped`, `cancelled`                        | Only if `fully_paid`              |
+| `shipped`         | `delivered`, `delivery_failed`                | Only if `fully_paid`              |
+
+---
+
+## Implementation Plan
+
+### Phase 1: Update Status Transition Trigger
+
+**File: SQL Migration**
+
+Update the `validate_order_status_transition` function to:
+
+1. Add `processing` as valid transition from `pending_payment`
+2. Add payment status check for partial payment flow
+3. Add strict payment guard for shipping statuses
+
+**New transition rules:**
+```sql
+{
+  "pending_payment": ["payment_received", "processing", "cancelled"],
+  "payment_received": ["processing", "cancelled"],
+  "processing": ["ready_to_ship", "cancelled"],
+  "ready_to_ship": ["shipped", "cancelled"],
+  "shipped": ["delivered", "delivery_failed"],
+  "delivered": [],
+  "cancelled": [],
+  "delivery_failed": ["shipped"]
+}
+```
+
+**Additional validation logic:**
+```sql
+-- Allow pending_payment → processing ONLY if payment_status is partially_paid or fully_paid
+IF OLD.status = 'pending_payment' AND NEW.status = 'processing' THEN
+  IF NEW.payment_status NOT IN ('partially_paid', 'fully_paid', 'overpaid') THEN
+    RAISE EXCEPTION 'Cannot start processing without at least a deposit payment. Current payment status: %', NEW.payment_status;
+  END IF;
+END IF;
+
+-- Shipping guard: Block ready_to_ship and shipped unless fully_paid
+IF NEW.status IN ('ready_to_ship', 'shipped') THEN
+  IF NEW.payment_status NOT IN ('fully_paid', 'overpaid') THEN
+    RAISE EXCEPTION 'Cannot ship order until fully paid. Current payment status: %. Balance remaining: %', 
+      NEW.payment_status, NEW.balance_remaining;
+  END IF;
+END IF;
 ```
 
 ---
 
-## Implementation Changes
+### Phase 2: Add Shipping Guard to Existing Trigger
 
-### Option A: Fix ScrollArea Viewport Height (Recommended)
+**File: SQL Migration**
 
-**File: `src/components/ui/scroll-area.tsx`**
+The `validate_delivery_address_before_shipping` trigger already exists. We need to ensure payment checks are in place.
 
-The Viewport needs to properly fill its flex container. Add explicit height handling:
-
-```tsx
-<ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit] [&>div]:!block">
+Add to the `validate_order_status_transition` function:
+```sql
+-- Enforce full payment before shipping
+IF NEW.status IN ('ready_to_ship', 'shipped') 
+   AND (OLD.status IS NULL OR OLD.status NOT IN ('ready_to_ship', 'shipped')) THEN
+  IF NEW.payment_status IS NULL OR NEW.payment_status NOT IN ('fully_paid', 'overpaid') THEN
+    RAISE EXCEPTION 'Cannot mark order as % without full payment. Balance remaining: %', 
+      NEW.status, 
+      COALESCE(NEW.balance_remaining, NEW.total_amount);
+  END IF;
+END IF;
 ```
-
-This won't fully fix it. Instead, we need to apply the fix at the component level.
-
-### Option B: Replace ScrollArea with Native Scroll (Simpler)
-
-Since the `ScrollArea` from Radix has viewport issues in flex containers, replace it with a simple `div` with `overflow-y-auto`:
-
-**File: `src/components/QuoteRequestManagement.tsx`**
-
-Change:
-```tsx
-<ScrollArea className="flex-1 min-h-0">
-  {selectedRequest && (
-    <div className="space-y-6 p-6 pb-4">
-```
-
-To:
-```tsx
-<div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
-  {selectedRequest && (
-    <div className="space-y-6 p-6 pb-4">
-```
-
-This is the **recommended fix** as it:
-- Avoids Radix viewport height inheritance issues
-- Provides native smooth scrolling
-- Works correctly with flexbox layouts
-- Supports touch/trackpad/keyboard scrolling
 
 ---
 
-## Detailed Changes
+### Phase 3: Update Frontend Handler
 
-### Change 1: Replace ScrollArea with Native Scroll Container
+**File: `src/components/orders/UnifiedOrdersManagement.tsx`**
 
-**File: `src/components/QuoteRequestManagement.tsx`**
+The current handler is correct but needs better error handling:
 
-At line 863, replace:
-```tsx
-<ScrollArea className="flex-1 min-h-0">
+```typescript
+const handleMoveToProcessingPartial = async (order: Order) => {
+  try {
+    const confirmedAmount = (order as any).payment_amount_confirmed || 0;
+    const balance = order.total_amount - confirmedAmount;
+    
+    // Validation: ensure there's actually a partial payment
+    if (confirmedAmount <= 0) {
+      toast.error('Cannot process without verified payment', {
+        description: 'Please verify at least a deposit payment first.'
+      });
+      return;
+    }
+    
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        status: 'processing',
+        processing_started_at: new Date().toISOString(),
+        notes: `${order.notes || ''}\n[PARTIAL PAYMENT]: Processing started with deposit. Balance: ${order.currency} ${balance.toLocaleString()} pending.`.trim()
+      })
+      .eq('id', order.id);
+
+    if (error) {
+      console.error('Failed to update order status:', error);
+      if (error.message.includes('payment')) {
+        toast.error('Payment verification required', {
+          description: 'A deposit must be verified before processing can begin.'
+        });
+      } else if (error.message.includes('transition')) {
+        toast.error('Invalid status transition', {
+          description: error.message
+        });
+      } else {
+        throw error;
+      }
+      return;
+    }
+
+    toast.success('Order moved to processing', {
+      description: `Balance of ${order.currency} ${balance.toLocaleString()} will be collected before shipping.`
+    });
+    refetch();
+  } catch (error) {
+    console.error('Error moving order to processing:', error);
+    toast.error('Failed to update order status');
+  }
+};
 ```
 
-With:
-```tsx
-<div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-smooth">
+---
+
+### Phase 4: Add Shipping Guard to UI
+
+**File: `src/components/orders/OrdersDataTable.tsx`**
+
+Update the "Ready to Ship" action to show tooltip when payment is incomplete:
+
+```typescript
+{row.status === 'processing' && (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <DropdownMenuItem 
+          onClick={() => {
+            if (row.payment_status === 'fully_paid' || row.payment_status === 'overpaid') {
+              onQuickStatusChange(row, 'ready_to_ship');
+            }
+          }}
+          disabled={row.payment_status !== 'fully_paid' && row.payment_status !== 'overpaid'}
+          className={row.payment_status !== 'fully_paid' && row.payment_status !== 'overpaid' ? 'opacity-50 cursor-not-allowed' : ''}
+        >
+          <Package className="mr-2 h-4 w-4" />
+          Mark Ready to Ship
+          {row.payment_status !== 'fully_paid' && row.payment_status !== 'overpaid' && (
+            <Lock className="ml-auto h-3 w-3 text-amber-500" />
+          )}
+        </DropdownMenuItem>
+      </TooltipTrigger>
+      {row.payment_status !== 'fully_paid' && row.payment_status !== 'overpaid' && (
+        <TooltipContent>
+          <p>Full payment required before shipping.</p>
+          <p className="text-xs text-muted-foreground">Balance: {row.currency} {row.balance_remaining?.toLocaleString()}</p>
+        </TooltipContent>
+      )}
+    </Tooltip>
+  </TooltipProvider>
+)}
 ```
 
-At line 1006, replace:
-```tsx
-</ScrollArea>
+---
+
+## SQL Migration Script
+
+Create migration file: `supabase/migrations/20260129_fix_partial_payment_transitions.sql`
+
+```sql
+-- Fix order status transitions to support partial payment workflow
+-- This allows orders with partial payments to move to processing
+-- while blocking shipping until fully paid
+
+CREATE OR REPLACE FUNCTION public.validate_order_status_transition()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+  valid_transitions jsonb := '{
+    "order_confirmed": ["pending_payment", "cancelled"],
+    "pending_payment": ["payment_received", "processing", "cancelled"],
+    "payment_received": ["processing", "cancelled"],
+    "processing": ["ready_to_ship", "cancelled"],
+    "ready_to_ship": ["shipped", "cancelled"],
+    "shipped": ["delivered", "delivery_failed"],
+    "delivered": [],
+    "cancelled": [],
+    "delivery_failed": ["shipped"]
+  }'::jsonb;
+  allowed_next_statuses text[];
+BEGIN
+  -- Initial status validation
+  IF OLD.status IS NULL THEN
+    IF NEW.status NOT IN ('order_confirmed', 'pending_payment', 'payment_received') THEN
+      RAISE EXCEPTION 'Invalid initial order status: %. Must be one of: order_confirmed, pending_payment, payment_received', NEW.status
+        USING HINT = 'New orders should start with order_confirmed, pending_payment, or payment_received';
+    END IF;
+    RETURN NEW;
+  END IF;
+  
+  -- No change = no validation needed
+  IF OLD.status = NEW.status THEN
+    RETURN NEW;
+  END IF;
+  
+  -- Get allowed transitions
+  allowed_next_statuses := ARRAY(
+    SELECT jsonb_array_elements_text(valid_transitions->OLD.status::text)
+  );
+
+  -- Check if transition is valid
+  IF NOT (NEW.status::text = ANY(allowed_next_statuses)) THEN
+    RAISE EXCEPTION 'Invalid order status transition: % → %. Allowed: %',
+      OLD.status, NEW.status, array_to_string(allowed_next_statuses, ', ')
+      USING HINT = format('Contact support if you need to force a status change.');
+  END IF;
+  
+  -- PARTIAL PAYMENT GUARD: pending_payment → processing requires at least deposit
+  IF OLD.status = 'pending_payment' AND NEW.status = 'processing' THEN
+    IF NEW.payment_status IS NULL OR NEW.payment_status::text = 'unpaid' THEN
+      RAISE EXCEPTION 'Cannot start processing without verified payment. Verify at least a deposit first.'
+        USING HINT = 'Use "Verify Payment" to confirm the deposit before processing.';
+    END IF;
+  END IF;
+  
+  -- SHIPPING GUARD: Block shipping without full payment
+  IF NEW.status IN ('ready_to_ship', 'shipped') 
+     AND (OLD.status IS NULL OR OLD.status NOT IN ('ready_to_ship', 'shipped')) THEN
+    
+    -- Check payment status
+    IF NEW.payment_status IS NULL OR NEW.payment_status::text NOT IN ('fully_paid', 'overpaid') THEN
+      RAISE EXCEPTION 'Cannot ship until fully paid. Current: %, Balance: %', 
+        COALESCE(NEW.payment_status::text, 'unpaid'),
+        COALESCE(NEW.balance_remaining, NEW.total_amount)
+        USING HINT = 'Collect the remaining balance before marking as ready to ship.';
+    END IF;
+    
+    -- Check delivery address
+    IF NEW.delivery_address_id IS NULL THEN
+      RAISE EXCEPTION 'Cannot ship without delivery address. Request address first.'
+        USING HINT = 'Use "Request Delivery Address" to get the customer address.';
+    END IF;
+  END IF;
+  
+  -- SHIPPED validation: carrier and tracking required
+  IF NEW.status = 'shipped' THEN
+    IF NEW.carrier IS NULL OR trim(NEW.carrier) = '' THEN
+      RAISE EXCEPTION 'Cannot ship without carrier information.'
+        USING HINT = 'Set carrier (e.g., DHL, FedEx) before marking as shipped.';
+    END IF;
+    
+    IF NEW.tracking_number IS NULL OR trim(NEW.tracking_number) = '' THEN
+      RAISE EXCEPTION 'Cannot ship without tracking number.'
+        USING HINT = 'Set tracking number before marking as shipped.';
+    END IF;
+    
+    IF NEW.estimated_delivery_date IS NULL THEN
+      RAISE EXCEPTION 'Cannot ship without estimated delivery date.'
+        USING HINT = 'Set estimated delivery date before marking as shipped.';
+    END IF;
+  END IF;
+
+  -- Log the transition
+  PERFORM log_security_event(
+    'order_status_transition',
+    auth.uid(),
+    jsonb_build_object(
+      'order_id', NEW.id,
+      'order_number', NEW.order_number,
+      'old_status', OLD.status,
+      'new_status', NEW.status,
+      'payment_status', NEW.payment_status,
+      'transition_valid', true
+    ),
+    NULL,
+    NULL,
+    'low'
+  );
+  
+  RETURN NEW;
+END;
+$function$;
+
+-- Add comment for documentation
+COMMENT ON FUNCTION public.validate_order_status_transition() IS 
+'Validates order status transitions with payment-aware guards:
+- pending_payment → processing: requires at least partial payment
+- ready_to_ship/shipped: requires full payment and delivery address
+- shipped: requires carrier, tracking, and estimated delivery';
 ```
 
-With:
-```tsx
-</div>
-```
+---
 
-### Change 2: Remove Unused ScrollArea Import
+## Files to Modify
 
-Remove the `ScrollArea` import if no longer used elsewhere in the file.
-
-### Change 3: Ensure Proper Height Calculation
-
-The `DialogContent` already has `max-h-[90vh]`, but we should verify the footer spacing doesn't cause overflow. Add padding-bottom to the scroll container content:
-
-At line 865, change:
-```tsx
-<div className="space-y-6 p-6 pb-4">
-```
-
-To:
-```tsx
-<div className="space-y-6 p-6 pb-6">
-```
-
-This ensures content doesn't get clipped at the bottom.
+| File | Action | Changes |
+|------|--------|---------|
+| `supabase/migrations/20260129_fix_partial_payment_transitions.sql` | Create | New migration with updated trigger function |
+| `src/components/orders/UnifiedOrdersManagement.tsx` | Modify | Improve error handling in `handleMoveToProcessingPartial` |
+| `src/components/orders/OrdersDataTable.tsx` | Modify | Add shipping guard tooltip when payment incomplete |
 
 ---
 
@@ -138,56 +359,30 @@ This ensures content doesn't get clipped at the bottom.
 
 After implementation, verify:
 
-1. **Scroll Functionality**
-   - [ ] Mouse wheel scrolling works
-   - [ ] Trackpad scrolling works
-   - [ ] Keyboard scrolling (arrow keys, space, page up/down) works
-   - [ ] Touch scrolling works on mobile
+1. **Partial Payment Flow**
+   - [ ] Verify deposit on order → order stays at `pending_payment`, `payment_status = partially_paid`
+   - [ ] Click "Move to Processing (Partial)" → order moves to `processing` ✅
+   - [ ] Toast shows "Balance of X pending"
 
-2. **Content Visibility**
-   - [ ] Status/Urgency/Type bar is visible
-   - [ ] Customer Information card is fully visible
-   - [ ] Customer Message card is visible
-   - [ ] Admin Notes (if present) is visible
-   - [ ] Requested Items table is visible with all rows
-   - [ ] Table scrolls within modal on long item lists
+2. **Shipping Block**
+   - [ ] Order at `processing` with `partially_paid` → "Ready to Ship" is disabled
+   - [ ] Tooltip shows "Full payment required"
+   - [ ] Verify balance payment → `payment_status = fully_paid`
+   - [ ] "Ready to Ship" becomes enabled ✅
 
-3. **Fixed Sections**
-   - [ ] Header (title, buttons) stays fixed at top
-   - [ ] Footer (action buttons) stays fixed at bottom
-   - [ ] Only the content area scrolls
+3. **Full Payment Flow**
+   - [ ] Verify full payment → order moves to `payment_received` then `processing`
+   - [ ] "Ready to Ship" is immediately available ✅
 
-4. **Edge Cases**
-   - [ ] Modal works on small viewports (mobile)
-   - [ ] Modal works on tall viewports (desktop)
-   - [ ] Empty items state renders correctly
-   - [ ] Loading state renders correctly
-
-5. **Accessibility**
-   - [ ] Focus trap works correctly
-   - [ ] ESC closes the modal
-   - [ ] Click outside closes the modal
+4. **Error Messages**
+   - [ ] Attempt to ship without payment → clear error message
+   - [ ] Attempt to process without deposit → clear error message
 
 ---
-
-## Files Modified
-
-| File | Action | Description |
-|------|--------|-------------|
-| `src/components/QuoteRequestManagement.tsx` | Modify | Replace ScrollArea with native scroll div |
-
----
-
-## Technical Notes
-
-- The Radix `ScrollArea` component is designed for custom scrollbar styling, but has known issues with flexbox containers where the viewport doesn't properly inherit height
-- Using native `overflow-y-auto` is the standard solution for flex-based modal layouts
-- The `overscroll-contain` class prevents scroll chaining to the background page
-- The `scroll-smooth` class provides smooth scrolling experience
 
 ## Non-Goals
 
-- No UI redesign
-- No changes to the data displayed
-- No changes to action buttons or workflow
-- No changes to styling beyond scroll behavior
+- No changes to payment verification dialog (already correct)
+- No changes to payment_status enum (already exists)
+- No bypassing RLS policies
+- No client-side workarounds
