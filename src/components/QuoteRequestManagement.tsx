@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { Search, Eye, Edit, FileText, UserPlus, X, CheckCircle, Clock, AlertCircle, Download, Building, Package, Calendar, MessageSquare, Filter, CircleDot, RefreshCw, Mail, MoreHorizontal, Info, Lightbulb, ArrowRight } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { InviteUserDialog } from '@/components/admin/InviteUserDialog';
@@ -860,9 +860,9 @@ const QuoteRequestManagement = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-smooth">
             {selectedRequest && (
-              <div className="space-y-6 p-6 pb-4">
+              <div className="space-y-6 p-6 pb-6">
                 {/* Status & Urgency Bar */}
                 <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#F8FAFC] to-[#F1F5F9] rounded-xl border border-[#E2E8F0]">
                   <div className="flex-1">
@@ -1003,7 +1003,7 @@ const QuoteRequestManagement = () => {
                 </div>
               </div>
             )}
-          </ScrollArea>
+          </div>
           
           {/* Action Buttons Footer - Outside ScrollArea */}
           {selectedRequest && (
