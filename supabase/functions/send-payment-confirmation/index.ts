@@ -16,9 +16,14 @@ interface PaymentConfirmationRequest {
   paymentReference: string;
   paymentProofUrl?: string;
   hasDeliveryAddress: boolean;
-  isPartialPayment?: boolean;
+  // New fields for partial payment workflow
+  paymentType?: 'deposit' | 'balance' | 'full';
   amountReceived?: number;
+  totalPaid?: number;
   balanceRemaining?: number;
+  isOrderFullyPaid?: boolean;
+  // Legacy partial payment fields (kept for backward compatibility)
+  isPartialPayment?: boolean;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -43,12 +48,19 @@ const handler = async (req: Request): Promise<Response> => {
       paymentReference,
       paymentProofUrl,
       hasDeliveryAddress,
-      isPartialPayment = false,
+      paymentType = 'full',
       amountReceived = 0,
+      totalPaid = 0,
       balanceRemaining = 0,
+      isOrderFullyPaid = true,
+      isPartialPayment = false, // Legacy field
     }: PaymentConfirmationRequest = await req.json();
 
-    console.log("Processing payment confirmation for order:", orderNumber);
+    // Determine effective payment type from new or legacy fields
+    const effectivePaymentType = paymentType !== 'full' ? paymentType : (isPartialPayment ? 'deposit' : 'full');
+    const effectiveIsFullyPaid = isOrderFullyPaid && !isPartialPayment;
+
+    console.log("Processing payment confirmation for order:", orderNumber, "type:", effectivePaymentType);
 
     // Fetch order details
     const { data: order, error: orderError } = await supabase
@@ -150,15 +162,36 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // Customer email - with partial payment support
-    const partialPaymentSection = isPartialPayment ? `
+    // Customer email - with payment type awareness (deposit/balance/full)
+    const getPaymentTypeSection = () => {
+      if (effectivePaymentType === 'deposit') {
+        return `
             <div class="warning-box" style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-              <h3 style="margin: 0 0 10px 0; color: #92400e;">⚠️ Partial Payment Received</h3>
-              <p style="margin: 0;"><strong>Amount Received:</strong> ${order.currency} ${amountReceived.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <h3 style="margin: 0 0 10px 0; color: #92400e;">⚡ Deposit Received</h3>
+              <p style="margin: 0;"><strong>Deposit Amount:</strong> ${order.currency} ${amountReceived.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               <p style="margin: 10px 0 0 0;"><strong>Balance Remaining:</strong> ${order.currency} ${balanceRemaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              <p style="margin: 15px 0 0 0; font-size: 14px;">Please complete your payment to proceed with shipping. <a href="https://trustlinkcompany.com/portal/orders" style="color: #047857;">Upload Balance Payment</a></p>
+              <p style="margin: 15px 0 0 0; font-size: 14px;">Your order is being processed. Please complete the balance payment to proceed with shipping. <a href="https://trustlinkcompany.com/portal/orders" style="color: #047857;">Upload Balance Payment</a></p>
             </div>
-    ` : '';
+        `;
+      } else if (effectivePaymentType === 'balance') {
+        return `
+            <div class="success-box" style="background: #ecfdf5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #047857;">
+              <h3 style="margin: 0 0 10px 0; color: #047857;">✓ Balance Payment Received - Order Fully Paid</h3>
+              <p style="margin: 0;"><strong>Balance Amount:</strong> ${order.currency} ${amountReceived.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p style="margin: 10px 0 0 0;"><strong>Total Paid:</strong> ${order.currency} ${totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p style="margin: 15px 0 0 0; font-size: 14px;">Your order is now fully paid and cleared for shipping. We'll notify you when it ships.</p>
+            </div>
+        `;
+      }
+      return '';
+    };
+
+    const paymentTypeSection = getPaymentTypeSection();
+    const isDepositOrBalance = effectivePaymentType === 'deposit' || effectivePaymentType === 'balance';
+    const headerColor = effectivePaymentType === 'deposit' ? '#d97706' : '#047857';
+    const headerTitle = effectivePaymentType === 'deposit' 
+      ? '⚡ Deposit Received' 
+      : (effectivePaymentType === 'balance' ? '✓ Balance Verified - Order Fully Paid' : '✓ Payment Confirmed');
 
     const customerEmailHtml = `
       <!DOCTYPE html>
@@ -167,7 +200,7 @@ const handler = async (req: Request): Promise<Response> => {
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: ${isPartialPayment ? '#d97706' : '#047857'}; color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+          .header { background: ${headerColor}; color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
           .content { background: white; padding: 30px; border: 1px solid #e5e7eb; }
           .highlight-box { background: #ecfdf5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #047857; }
           .info-box { background: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0; }
@@ -177,18 +210,24 @@ const handler = async (req: Request): Promise<Response> => {
       <body>
         <div class="container">
           <div class="header">
-            <h1 style="margin: 0;">${isPartialPayment ? '⚡ Partial Payment Received' : '✓ Payment Confirmed'}</h1>
+            <h1 style="margin: 0;">${headerTitle}</h1>
             <p style="margin: 10px 0 0 0; font-size: 18px; opacity: 0.9;">Order #${orderNumber}</p>
           </div>
           
           <div class="content">
             <p>Dear ${contactName},</p>
             
-            <p>Thank you! We have ${isPartialPayment ? 'received a partial payment' : 'successfully confirmed your payment'} for <strong>Order #${orderNumber}</strong>.</p>
+            <p>Thank you! ${
+              effectivePaymentType === 'deposit' 
+                ? `We have received your deposit for <strong>Order #${orderNumber}</strong>.`
+                : effectivePaymentType === 'balance'
+                  ? `We have verified your balance payment for <strong>Order #${orderNumber}</strong>. Your order is now fully paid!`
+                  : `We have successfully confirmed your payment for <strong>Order #${orderNumber}</strong>.`
+            }</p>
             
-            ${partialPaymentSection}
+            ${paymentTypeSection}
 
-            ${!isPartialPayment ? `
+            ${!isDepositOrBalance ? `
             <div class="highlight-box">
               <p style="margin: 0;"><strong>Payment Reference:</strong> ${paymentReference}</p>
               <p style="margin: 10px 0 0 0;"><strong>Amount:</strong> ${order.currency} ${parseFloat(order.total_amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
@@ -207,7 +246,13 @@ const handler = async (req: Request): Promise<Response> => {
             ` : `
             <div class="info-box">
               <h3 style="margin: 0 0 10px 0; color: #0369a1;">📦 What's Next?</h3>
-              <p style="margin: 0;">${isPartialPayment ? 'Once you complete the remaining balance, your order will be processed and shipped.' : 'Your invoice has been generated and sent to you. Our team will begin processing your order and keep you updated on the progress.'}</p>
+              <p style="margin: 0;">${
+                effectivePaymentType === 'deposit' 
+                  ? 'We will continue preparing your order. Once you complete the balance payment, your order will be shipped.'
+                  : effectivePaymentType === 'balance'
+                    ? 'Your order is now cleared for shipping. We will notify you as soon as it ships!'
+                    : 'Your invoice has been generated and sent to you. Our team will begin processing your order and keep you updated on the progress.'
+              }</p>
             </div>
             `}
 

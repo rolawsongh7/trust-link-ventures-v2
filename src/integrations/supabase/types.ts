@@ -1645,6 +1645,7 @@ export type Database = {
       orders: {
         Row: {
           actual_delivery_date: string | null
+          balance_remaining: number | null
           cancellation_reason: string | null
           cancelled_at: string | null
           carrier: string | null
@@ -1692,6 +1693,9 @@ export type Database = {
           payment_reference: string | null
           payment_rejected_at: string | null
           payment_rejected_by: string | null
+          payment_status:
+            | Database["public"]["Enums"]["payment_status_enum"]
+            | null
           payment_status_reason: string | null
           payment_verification_notes: string | null
           payment_verified_at: string | null
@@ -1710,6 +1714,7 @@ export type Database = {
         }
         Insert: {
           actual_delivery_date?: string | null
+          balance_remaining?: number | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
           carrier?: string | null
@@ -1757,6 +1762,9 @@ export type Database = {
           payment_reference?: string | null
           payment_rejected_at?: string | null
           payment_rejected_by?: string | null
+          payment_status?:
+            | Database["public"]["Enums"]["payment_status_enum"]
+            | null
           payment_status_reason?: string | null
           payment_verification_notes?: string | null
           payment_verified_at?: string | null
@@ -1775,6 +1783,7 @@ export type Database = {
         }
         Update: {
           actual_delivery_date?: string | null
+          balance_remaining?: number | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
           carrier?: string | null
@@ -1822,6 +1831,9 @@ export type Database = {
           payment_reference?: string | null
           payment_rejected_at?: string | null
           payment_rejected_by?: string | null
+          payment_status?:
+            | Database["public"]["Enums"]["payment_status_enum"]
+            | null
           payment_status_reason?: string | null
           payment_verification_notes?: string | null
           payment_verified_at?: string | null
@@ -1943,7 +1955,11 @@ export type Database = {
           payment_date: string
           payment_method: string | null
           payment_reference: string | null
+          payment_type: Database["public"]["Enums"]["payment_type_enum"] | null
+          proof_url: string | null
           recorded_by: string | null
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           amount: number
@@ -1955,7 +1971,11 @@ export type Database = {
           payment_date: string
           payment_method?: string | null
           payment_reference?: string | null
+          payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
+          proof_url?: string | null
           recorded_by?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           amount?: number
@@ -1967,7 +1987,11 @@ export type Database = {
           payment_date?: string
           payment_method?: string | null
           payment_reference?: string | null
+          payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
+          proof_url?: string | null
           recorded_by?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {
@@ -4051,6 +4075,12 @@ export type Database = {
         | "delivered"
         | "cancelled"
         | "delivery_failed"
+      payment_status_enum:
+        | "unpaid"
+        | "partially_paid"
+        | "fully_paid"
+        | "overpaid"
+      payment_type_enum: "deposit" | "balance" | "adjustment" | "refund"
       responsibility_status:
         | "active"
         | "inactive"
@@ -4244,6 +4274,13 @@ export const Constants = {
         "cancelled",
         "delivery_failed",
       ],
+      payment_status_enum: [
+        "unpaid",
+        "partially_paid",
+        "fully_paid",
+        "overpaid",
+      ],
+      payment_type_enum: ["deposit", "balance", "adjustment", "refund"],
       responsibility_status: [
         "active",
         "inactive",

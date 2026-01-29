@@ -70,6 +70,8 @@ interface Order {
   payment_verified_at?: string;
   payment_amount_confirmed?: number;
   payment_status_reason?: string;
+  payment_status?: 'unpaid' | 'partially_paid' | 'fully_paid' | 'overpaid';
+  balance_remaining?: number;
   notes?: string;
   order_items: any[];
   customers: {
@@ -184,7 +186,7 @@ const getAddressIndicator = (order: Order) => {
   );
 };
 
-// Payment status indicator (simplified)
+// Payment status indicator (using payment_status enum)
 const getPaymentIndicator = (order: Order) => {
   // Check if payment was rejected
   if ((order as any).payment_rejected_at) {
@@ -206,10 +208,9 @@ const getPaymentIndicator = (order: Order) => {
     );
   }
 
-  // Check for verified PARTIAL payment
-  if (order.payment_verified_at && order.payment_status_reason?.toLowerCase().includes('partial')) {
-    const confirmed = order.payment_amount_confirmed || 0;
-    const balance = order.total_amount - confirmed;
+  // Use payment_status enum for verified partial payment check
+  if (order.payment_status === 'partially_paid') {
+    const balance = order.balance_remaining ?? (order.total_amount - (order.payment_amount_confirmed || 0));
     return (
       <TooltipProvider>
         <Tooltip>
@@ -221,7 +222,7 @@ const getPaymentIndicator = (order: Order) => {
           </TooltipTrigger>
           <TooltipContent>
             <div className="space-y-1">
-              <div>Received: {order.currency} {confirmed.toLocaleString()}</div>
+              <div>Received: {order.currency} {(order.payment_amount_confirmed || 0).toLocaleString()}</div>
               <div className="font-semibold">Balance: {order.currency} {balance.toLocaleString()}</div>
               {order.payment_reference && <div className="font-mono text-xs">{order.payment_reference}</div>}
             </div>
@@ -231,6 +232,27 @@ const getPaymentIndicator = (order: Order) => {
     );
   }
 
+  // Fully paid
+  if (order.payment_status === 'fully_paid' || order.payment_status === 'overpaid') {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="secondary" className="bg-green-50 dark:bg-green-950/50 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800 gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              {order.payment_status === 'overpaid' ? 'Overpaid' : 'Fully Paid'}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            {order.payment_reference && <div className="font-mono text-xs">{order.payment_reference}</div>}
+            Payment verified - Order cleared for shipping
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  // Legacy: Check old verified state for backward compatibility
   if (order.payment_verified_at) {
     return (
       <TooltipProvider>
@@ -281,15 +303,24 @@ const canTransitionToProcessing = (order: Order): { allowed: boolean; reason?: s
   return { allowed: true };
 };
 
-// Check if order has verified partial payment
+// Check if order has partial payment using payment_status enum
 const hasVerifiedPartialPayment = (order: Order): boolean => {
+  // Primary check: use payment_status enum
+  if (order.payment_status === 'partially_paid') return true;
+  // Fallback for backward compatibility
   if (!order.payment_verified_at) return false;
   const confirmedAmount = order.payment_amount_confirmed || 0;
   return confirmedAmount > 0 && confirmedAmount < order.total_amount;
 };
 
+// Check if order can ship (requires full payment)
+const canShipOrder = (order: Order): boolean => {
+  return order.payment_status === 'fully_paid' || order.payment_status === 'overpaid';
+};
+
 // Get remaining balance for partial payments
 const getRemainingBalance = (order: Order): number => {
+  if (order.balance_remaining !== undefined) return order.balance_remaining;
   const confirmedAmount = order.payment_amount_confirmed || 0;
   return order.total_amount - confirmedAmount;
 };
@@ -704,29 +735,36 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
                 {hasVerifiedPartialPayment(row) && onRequestBalancePayment && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="text-amber-600 text-xs">Balance Outstanding</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-amber-600 text-xs">Balance Outstanding ({row.currency} {getRemainingBalance(row).toLocaleString()})</DropdownMenuLabel>
                     <DropdownMenuItem onClick={() => onRequestBalancePayment(row)}>
                       <RefreshCw className="mr-2 h-4 w-4" />
                       Resend Balance Request
                     </DropdownMenuItem>
+                    {/* Verify Balance Payment action if new proof uploaded */}
+                    {row.payment_proof_url && row.payment_proof_uploaded_at && (
+                      <DropdownMenuItem onClick={() => onVerifyPayment(row)} className="text-green-600">
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Verify Balance Payment
+                      </DropdownMenuItem>
+                    )}
                   </>
                 )}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <DropdownMenuItem 
-                        onClick={() => !hasVerifiedPartialPayment(row) && onQuickStatusChange(row, 'ready_to_ship')}
-                        disabled={hasVerifiedPartialPayment(row)}
-                        className={hasVerifiedPartialPayment(row) ? 'opacity-50 cursor-not-allowed' : ''}
+                        onClick={() => canShipOrder(row) && onQuickStatusChange(row, 'ready_to_ship')}
+                        disabled={!canShipOrder(row)}
+                        className={!canShipOrder(row) ? 'opacity-50 cursor-not-allowed' : ''}
                       >
                         <Package className="mr-2 h-4 w-4" />
                         Mark Ready to Ship
-                        {hasVerifiedPartialPayment(row) && (
+                        {!canShipOrder(row) && (
                           <Lock className="ml-auto h-3 w-3 text-amber-500" />
                         )}
                       </DropdownMenuItem>
                     </TooltipTrigger>
-                    {hasVerifiedPartialPayment(row) && (
+                    {!canShipOrder(row) && (
                       <TooltipContent>Full payment required before shipping ({row.currency} {getRemainingBalance(row).toLocaleString()} outstanding)</TooltipContent>
                     )}
                   </Tooltip>
