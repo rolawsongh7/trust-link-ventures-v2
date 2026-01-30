@@ -1,264 +1,305 @@
 
 
-# Phase 2.2 — Safe Bulk Operations Implementation Plan
+# Phase 2.3 — Operational Dashboards Implementation Plan
 
-## Overview
+## Executive Summary
 
-Phase 2.1 (Staff Ownership) is complete. This phase implements a **reusable bulk action framework** with low-risk operations only: bulk assign, bulk payment reminders, and bulk export.
+Phase 2.1 (Staff Ownership) and Phase 2.2 (Safe Bulk Operations) are complete. Phase 2.3 introduces **queue-style operational dashboards** that allow staff to run daily operations without needing BI charts or founder oversight.
 
 ---
 
-## Current State
+## Current State Assessment
 
 ### Existing Infrastructure
 | Component | Status | Notes |
 |-----------|--------|-------|
-| `BulkOrderActions.tsx` | Exists | Status updates with preview + confirmation pattern |
-| `useBulkSelect` hook | Exists | Selection state management |
-| `BulkSelectHeader/Cell` | Exists | Checkbox components |
-| `DataExporter` class | Exists | CSV/Excel export utilities |
-| `send-balance-payment-request` | Exists | Edge function for payment reminders |
-| `useStaffMembers` hook | Exists | Fetch admin/sales_rep users |
+| `OperationsIntelligence.tsx` | Exists | Analytics-focused, has bottleneck + at-risk detection |
+| `useOrdersQuery` hook | Exists | Fetches all orders with relationships |
+| `useNavigationCounts` hook | Exists | Badge counts for sidebar |
+| `AssignmentFilters` | Exists (Phase 2.1) | My Queue / Unassigned filter logic |
+| `useStaffMembers` hook | Exists (Phase 2.1) | Fetches admin staff list |
+| `AppSidebar.tsx` | Exists | Navigation with badge support |
+| Order timestamp fields | Exists | `created_at`, `shipped_at`, `delivered_at`, `ready_to_ship_at`, etc. |
 
 ### Gap Analysis
 | Gap | Resolution |
 |-----|------------|
-| No generic bulk dialog framework | Create `BulkActionDialog.tsx` |
-| No bulk assignment | Create `BulkAssignDialog.tsx` |
-| No bulk payment reminders | Create `BulkPaymentReminderDialog.tsx` |
-| Export exists but not in bulk toolbar | Integrate existing `DataExporter` |
-| No row selection in orders table | Add checkboxes column |
+| No queue-style ops dashboard | Create `OperationsHub.tsx` page |
+| No dedicated SLA helpers | Create `src/utils/slaHelpers.ts` |
+| No SLA badge component | Create `SLABadge.tsx` component |
+| No staff workload visibility | Create `WorkloadSummary.tsx` component |
+| No sidebar link to Operations | Add to `AppSidebar.tsx` |
+| No route for /admin/operations | Add to `App.tsx` |
 
 ---
 
 ## Implementation
 
-### 2.2.1 Bulk Action Dialog Framework
+### 2.3.1 SLA Helpers Utility
 
-**New File: `src/components/bulk/BulkActionDialog.tsx`**
+**New File: `src/utils/slaHelpers.ts`**
 
-A reusable dialog pattern for all bulk actions:
+Core utility for calculating SLA status based on order state and timestamps:
 
 ```typescript
-interface BulkActionDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  description: string;
-  selectedItems: Array<{ id: string; identifier: string }>;
-  onExecute: () => Promise<{ success: string[]; failed: { id: string; error: string }[] }>;
-  onComplete: () => void;
-  children?: React.ReactNode; // Configuration form
-  confirmLabel?: string;
-  destructive?: boolean;
+type SLAStatus = 'on_track' | 'at_risk' | 'breached';
+
+interface SLAResult {
+  status: SLAStatus;
+  reason: string;
+  daysInStage: number;
+  expectedDays: number;
 }
+
+// SLA thresholds per status
+const SLA_THRESHOLDS = {
+  pending_payment: 3,     // 3 days to receive payment
+  payment_received: 1,    // 1 day to start processing
+  processing: 2,          // 2 days to complete processing
+  ready_to_ship: 1,       // 1 day to dispatch
+  shipped: 7,             // 7 days to deliver
+};
+
+export function calculateSLA(order: Order): SLAResult;
+export function getStageEntryDate(order: Order): Date | null;
+export function getDaysInCurrentStage(order: Order): number;
 ```
 
-**Features:**
-- Shows selected item count and identifiers
-- Requires explicit confirmation before execution
-- Per-item success/failure reporting
-- Logs batch audit event after completion
-- Reusable across all bulk operations
+**Key Design:**
+- Calculate time in current stage using status-specific timestamps
+- Compare against thresholds to determine on_track/at_risk/breached
+- Return human-readable reason for status
 
 ---
 
-### 2.2.2 Bulk Assign Dialog
+### 2.3.2 SLA Badge Component
 
-**New File: `src/components/bulk/BulkAssignDialog.tsx`**
+**New File: `src/components/operations/SLABadge.tsx`**
 
-Assign multiple orders to a staff member:
+Visual indicator for SLA status:
 
 ```typescript
-interface BulkAssignDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedOrders: Array<{ id: string; order_number: string; assigned_to?: string }>;
-  onComplete: () => void;
+interface SLABadgeProps {
+  order: Order;
+  showReason?: boolean;
 }
 ```
 
-**Flow:**
-1. Show preview: "Assign 5 orders to..."
-2. Select staff member from `useStaffMembers()` dropdown
-3. Confirm action
-4. Execute per-order updates
-5. Log `bulk_assignment` audit event
-6. Show results summary
-
-**Audit Log Entry:**
-```typescript
-{
-  event_type: 'bulk_assignment',
-  action: 'UPDATE',
-  resource_type: 'orders',
-  event_data: {
-    total_orders: 5,
-    assignee_id: 'uuid',
-    assignee_name: 'John Doe',
-    success_count: 4,
-    failed_count: 1,
-    order_numbers: ['ORD-001', 'ORD-002', ...]
-  }
-}
-```
+**Visual States:**
+- **Green (On Track)**: Within expected time
+- **Amber (At Risk)**: Approaching threshold (>75% of expected time)
+- **Red (Breached)**: Past threshold
 
 ---
 
-### 2.2.3 Bulk Payment Reminder Dialog
+### 2.3.3 Operations Hub Page
 
-**New File: `src/components/bulk/BulkPaymentReminderDialog.tsx`**
+**New File: `src/pages/admin/OperationsHub.tsx`**
 
-Send payment reminder emails to multiple unpaid orders:
+A queue-style dashboard with tabbed views:
 
-```typescript
-interface BulkPaymentReminderDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedOrders: Array<{ 
-    id: string; 
-    order_number: string; 
-    payment_status?: string;
-    balance_remaining?: number;
-    customers?: { email?: string };
-  }>;
-  onComplete: () => void;
-}
-```
+| Tab | Query Logic | Sort Order |
+|-----|-------------|------------|
+| Awaiting Payment | `status = 'pending_payment'` | Oldest first |
+| Awaiting Processing | `status IN ('payment_received', 'order_confirmed')` | Oldest first |
+| At Risk | SLA status = at_risk OR breached | Urgency score |
+| Unassigned | `assigned_to IS NULL` AND status not terminal | Created date |
+| My Queue | `assigned_to = current_user` | SLA urgency |
 
-**Validation (Before Execution):**
-- Filter out orders that are already `fully_paid`
-- Filter out orders without customer email
-- Show validation warnings in preview
+**Each Row Displays:**
+- Order number + Customer
+- Status badge
+- SLA badge
+- Assignee badge (or "Unassigned")
+- Days in stage
+- Primary action button (context-sensitive)
+- Blocker reason (if applicable)
 
-**Flow:**
-1. Validate eligible orders (has balance, has email)
-2. Show preview with eligible vs. ineligible counts
-3. Confirm action
-4. Call `send-balance-payment-request` for each order
-5. Log `bulk_payment_reminder` audit event
-6. Show results
+**Header KPIs (4 cards):**
+1. Total Active Orders (not delivered/cancelled)
+2. At Risk Count (red if > 0)
+3. Unassigned Count (amber if > 5)
+4. Avg Days to Complete
 
 ---
 
-### 2.2.4 Bulk Export Integration
+### 2.3.4 Queue Row Component
 
-**New File: `src/components/bulk/BulkExportDialog.tsx`**
+**New File: `src/components/operations/OperationsQueueRow.tsx`**
 
-Export selected orders to CSV or Excel:
+Reusable row for queue views:
 
 ```typescript
-interface BulkExportDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedOrders: Order[];
-  onComplete: () => void;
+interface OperationsQueueRowProps {
+  order: Order;
+  onAction: (order: Order, action: string) => void;
 }
 ```
 
-**Features:**
-- Format selection: CSV or Excel
-- Uses existing `DataExporter.exportOrders()`
-- No confirmation needed (read-only operation)
-- Instant download on click
+**Row Structure:**
+```text
+| [Checkbox] | Order # | Customer | Status | SLA | Assignee | Days | [Action] |
+```
+
+**Action Buttons (context-sensitive):**
+- Pending Payment → "Verify Payment"
+- Payment Received → "Start Processing"
+- Ready to Ship → "Mark Shipped"
+- Unassigned → "Assign"
 
 ---
 
-### 2.2.5 Bulk Actions Toolbar
+### 2.3.5 Staff Workload Summary
 
-**Modified File: `src/components/orders/OrdersDataTable.tsx`**
+**New File: `src/components/operations/WorkloadSummary.tsx`**
 
-Add row selection and bulk action toolbar:
+Admin-only component showing order distribution across staff:
 
-**Changes:**
-1. Add checkbox column as first column
-2. Integrate `useBulkSelect` hook for selection state
-3. Add floating toolbar when items selected showing:
-   - Selection count
-   - "Assign" button → opens `BulkAssignDialog`
-   - "Send Reminders" button → opens `BulkPaymentReminderDialog`
-   - "Export" button → opens `BulkExportDialog`
-   - "Clear" button
+```typescript
+interface WorkloadSummaryProps {
+  orders: Order[];
+  staffMembers: StaffMember[];
+}
+```
 
-**Toolbar Design:**
-```tsx
-{selectedIds.length > 0 && (
-  <div className="sticky top-0 z-10 flex items-center gap-2 p-3 bg-primary/10 border-b">
-    <span className="font-medium">{selectedIds.length} selected</span>
-    <div className="flex-1" />
-    <Button variant="outline" size="sm">
-      <UserPlus className="h-4 w-4 mr-2" />
-      Assign
-    </Button>
-    <Button variant="outline" size="sm">
-      <Mail className="h-4 w-4 mr-2" />
-      Send Reminders
-    </Button>
-    <Button variant="outline" size="sm">
-      <Download className="h-4 w-4 mr-2" />
-      Export
-    </Button>
-    <Button variant="ghost" size="sm" onClick={clearSelection}>
-      Clear
-    </Button>
-  </div>
-)}
+**Display:**
+- List of staff members with assigned order counts
+- Visual indicator: Overloaded (>10) / Balanced (5-10) / Light (<5)
+- Unassigned count prominently displayed
+- Purely informational, no actions
+
+---
+
+### 2.3.6 Navigation Updates
+
+**Modified File: `src/components/layout/AppSidebar.tsx`**
+
+Add "Operations" link to navigation:
+
+```typescript
+// Add to navigationItems array (after Orders)
+{ 
+  title: 'Operations', 
+  url: '/admin/operations', 
+  icon: Activity, 
+  badge: 'atRisk' as const 
+},
+```
+
+**Modified File: `src/hooks/useNavigationCounts.tsx`**
+
+Add at-risk count:
+
+```typescript
+interface NavigationCounts {
+  // ... existing
+  atRisk: number;
+}
+
+// Query for at-risk orders
+const atRiskCount = orders.filter(o => 
+  calculateSLA(o).status !== 'on_track' && 
+  !['delivered', 'cancelled'].includes(o.status)
+).length;
+```
+
+**Modified File: `src/App.tsx`**
+
+Add route for Operations Hub:
+
+```typescript
+<Route path="operations" element={<OperationsHub />} />
 ```
 
 ---
 
 ## Files Summary
 
-### New Files (4)
+### New Files (5)
 
 | File | Lines (est.) | Purpose |
 |------|--------------|---------|
-| `src/components/bulk/BulkActionDialog.tsx` | ~180 | Reusable bulk action framework |
-| `src/components/bulk/BulkAssignDialog.tsx` | ~150 | Bulk assign orders to staff |
-| `src/components/bulk/BulkPaymentReminderDialog.tsx` | ~160 | Bulk send payment reminders |
-| `src/components/bulk/BulkExportDialog.tsx` | ~80 | Bulk export with format selection |
+| `src/utils/slaHelpers.ts` | ~100 | SLA calculation utilities |
+| `src/components/operations/SLABadge.tsx` | ~50 | SLA status badge component |
+| `src/components/operations/OperationsQueueRow.tsx` | ~120 | Queue row with actions |
+| `src/components/operations/WorkloadSummary.tsx` | ~100 | Staff workload visibility |
+| `src/pages/admin/OperationsHub.tsx` | ~400 | Main operations dashboard |
 
-### Modified Files (2)
+### Modified Files (3)
 
 | File | Changes |
 |------|---------|
-| `src/components/orders/OrdersDataTable.tsx` | Add checkbox column, selection state, bulk toolbar |
-| `src/components/orders/UnifiedOrdersManagement.tsx` | Pass bulk action handlers to data table |
+| `src/components/layout/AppSidebar.tsx` | Add "Operations" nav item |
+| `src/hooks/useNavigationCounts.tsx` | Add atRisk count |
+| `src/App.tsx` | Add /admin/operations route (3 locations) |
 
 ---
 
-## What This Implementation Does NOT Do
+## Design Decisions
 
-- Bulk delete (explicitly excluded)
-- Bulk status override (risky - keep existing single-item flow)
-- Bulk financial mutations
-- Modify existing BulkOrderActions.tsx (keep it for status updates)
+### Queue vs Chart Philosophy
+The Operations Hub deliberately avoids charts. Each view is a **work queue** showing:
+- What needs attention NOW
+- Why it needs attention
+- Who owns it
+- What the next action is
+
+Staff should be able to clear queues without interpreting analytics.
+
+### SLA Is Read-Only
+SLA indicators are purely informational:
+- No penalties
+- No automated escalation
+- No notifications (yet)
+
+This builds awareness before introducing automation in Phase 3.
+
+### Relationship to Existing OperationsIntelligence
+The existing `OperationsIntelligence.tsx` component in Advanced Analytics is **strategic** (bottleneck patterns, cycle times). The new `OperationsHub.tsx` is **tactical** (what to do right now). They complement each other:
+- OperationsHub → Daily staff work
+- OperationsIntelligence → Management review
+
+---
+
+## Implementation Order
+
+| Step | Scope | Dependencies |
+|------|-------|--------------|
+| 1 | Create `slaHelpers.ts` | None |
+| 2 | Create `SLABadge.tsx` | Step 1 |
+| 3 | Create `OperationsQueueRow.tsx` | Steps 1-2 |
+| 4 | Create `WorkloadSummary.tsx` | useStaffMembers |
+| 5 | Create `OperationsHub.tsx` | Steps 1-4 |
+| 6 | Update sidebar + routing | Step 5 |
+| 7 | Update useNavigationCounts | Step 1 |
 
 ---
 
 ## Testing Checklist
 
-- [ ] Checkbox column appears and toggles correctly
-- [ ] Select all toggles all visible rows
-- [ ] Bulk toolbar appears only when items selected
-- [ ] Bulk assign shows staff selector and previews affected orders
-- [ ] Bulk assign logs to audit_logs with correct metadata
-- [ ] Bulk reminder filters out ineligible orders (fully paid, no email)
-- [ ] Bulk reminder calls edge function for each order
-- [ ] Bulk export downloads CSV/Excel with selected orders
-- [ ] Per-item failures are reported clearly
-- [ ] Clear selection resets state
+- [ ] SLA calculation returns correct status for each order stage
+- [ ] SLA badge displays correct color (green/amber/red)
+- [ ] Operations Hub loads with all tabs
+- [ ] "Awaiting Payment" tab shows correct orders
+- [ ] "At Risk" tab surfaces orders past SLA threshold
+- [ ] "My Queue" tab shows only assigned orders
+- [ ] "Unassigned" tab shows orders without assignee
+- [ ] Primary action buttons are context-appropriate
+- [ ] Workload summary shows staff distribution
+- [ ] Sidebar "Operations" link appears with badge
+- [ ] Badge count updates when at-risk orders change
+- [ ] Clicking row navigates to order detail
 
 ---
 
 ## Success Criteria
 
-Phase 2.2 is complete when:
+Phase 2.3 is complete when:
 
-1. Staff can select multiple orders via checkboxes
-2. Bulk assign works with preview + confirmation
-3. Bulk reminders validate and send correctly
-4. Export works for selected subset
-5. All bulk actions log to audit_logs
-6. Failures are explicit and actionable
+1. Staff can work from queues (not charts)
+2. At-risk orders surface automatically
+3. SLA status is visible on every order
+4. Workload distribution is transparent
+5. No BI/analytics knowledge needed for daily ops
+6. Problems surface themselves through badge counts
 
