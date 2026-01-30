@@ -18,6 +18,7 @@ import { PaymentConfirmationDialog } from './PaymentConfirmationDialog';
 import { ViewRelatedQuoteDialog } from './ViewRelatedQuoteDialog';
 import { VerifyPaymentDialog } from './VerifyPaymentDialog';
 import { OrdersKPISummary } from './OrdersKPISummary';
+import { parseStatusTransitionError } from '@/utils/orderStatusErrors';
 
 interface Order {
   id: string;
@@ -235,12 +236,17 @@ const UnifiedOrdersManagement = () => {
         .eq('id', order.id);
 
       if (error) {
+        // Use the error parser to get actionable messages
+        const parsed = parseStatusTransitionError(error);
+        
         if (error.message.includes('Invalid order status transition')) {
-          toast.error('Invalid status transition');
+          toast.error(parsed.title, { description: parsed.description });
         } else if (error.message.includes('delivery address')) {
-          toast.error('Delivery address required');
+          toast.error(parsed.title, { description: parsed.description });
+        } else if (error.message.includes('payment') || error.message.includes('fully paid')) {
+          toast.error(parsed.title, { description: parsed.description });
         } else {
-          throw error;
+          toast.error(parsed.title, { description: parsed.description });
         }
         return;
       }
@@ -346,17 +352,20 @@ const UnifiedOrdersManagement = () => {
 
       if (error) {
         console.error('Failed to update order status:', error);
-        if (error.message.includes('payment') || error.message.includes('deposit')) {
-          toast.error('Payment verification required', {
-            description: 'A deposit must be verified before processing can begin.'
-          });
-        } else if (error.message.includes('transition')) {
-          toast.error('Invalid status transition', {
-            description: error.message
-          });
-        } else {
-          throw error;
-        }
+        // Use error parser for actionable messages
+        const parsed = parseStatusTransitionError(error);
+        toast.error(parsed.title, { 
+          description: parsed.description,
+          action: parsed.actionLabel ? {
+            label: parsed.actionLabel,
+            onClick: () => {
+              // Handle action based on type
+              if (parsed.action === 'verify-payment') {
+                handleVerifyPayment(order);
+              }
+            }
+          } : undefined
+        });
         return;
       }
 

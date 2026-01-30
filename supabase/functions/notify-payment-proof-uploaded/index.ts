@@ -12,19 +12,27 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, orderNumber, paymentMethod, paymentReference } = await req.json();
+    const { 
+      orderId, 
+      orderNumber, 
+      paymentMethod, 
+      paymentReference,
+      paymentProofType = 'deposit',
+      balanceRemaining = 0,
+      currency = 'GHS'
+    } = await req.json();
 
-    console.log('Payment proof upload notification:', { orderId, orderNumber, paymentMethod, paymentReference });
+    console.log('Payment proof upload notification:', { orderId, orderNumber, paymentMethod, paymentReference, paymentProofType, balanceRemaining });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get admin users
+    // Get admin users (both admin and super_admin)
     const { data: adminRoles } = await supabase
       .from('user_roles')
       .select('user_id')
-      .eq('role', 'admin');
+      .in('role', ['admin', 'super_admin']);
 
     if (!adminRoles || adminRoles.length === 0) {
       console.log('No admin users found to notify');
@@ -34,18 +42,31 @@ serve(async (req) => {
       );
     }
 
+    // Build notification message with explicit amounts based on payment type
+    const isBalancePayment = paymentProofType === 'balance';
+    const notificationTitle = isBalancePayment 
+      ? 'Balance Payment Proof Uploaded' 
+      : 'New Deposit Proof Uploaded';
+    
+    const notificationMessage = isBalancePayment
+      ? `Customer uploaded balance payment proof for order ${orderNumber}. Reference: ${paymentReference}. This should complete the ${currency} ${balanceRemaining.toLocaleString()} balance.`
+      : `Customer uploaded deposit proof for order ${orderNumber}. Reference: ${paymentReference}. Please verify to begin processing.`;
+
     // Create notifications for all admins
     const notifications = adminRoles.map(admin => ({
       user_id: admin.user_id,
       type: 'payment_proof_uploaded',
-      title: 'New Payment Proof Uploaded',
-      message: `Customer uploaded payment proof for order ${orderNumber}. Reference: ${paymentReference}`,
+      title: notificationTitle,
+      message: notificationMessage,
       link: `/admin/orders`,
       metadata: {
         order_id: orderId,
         order_number: orderNumber,
         payment_method: paymentMethod,
         payment_reference: paymentReference,
+        payment_proof_type: paymentProofType,
+        balance_remaining: balanceRemaining,
+        currency: currency,
       },
     }));
 

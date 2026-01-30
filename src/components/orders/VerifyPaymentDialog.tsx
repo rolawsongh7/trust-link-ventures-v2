@@ -308,6 +308,32 @@ export const VerifyPaymentDialog: React.FC<VerifyPaymentDialogProps> = ({
         });
       }
 
+      // Phase 1.5: Add comprehensive audit logging for payment verification
+      supabase.from('audit_logs').insert({
+        user_id: user.id,
+        event_type: 'payment_verified',
+        action: isNowFullyPaid ? 'full_payment_verified' : 'deposit_verified',
+        resource_type: 'order',
+        resource_id: order.id,
+        severity: 'info',
+        event_data: {
+          order_id: order.id,
+          order_number: order.order_number,
+          amount_verified: parsedAmount,
+          total_paid: totalPaid,
+          balance_remaining: balanceAfterPayment,
+          payment_type: paymentType,
+          payment_method: paymentMethod,
+          payment_reference: paymentReference,
+          previous_status: (order as any).payment_status || 'unpaid',
+          new_status: isNowFullyPaid ? 'fully_paid' : 'partially_paid',
+          is_balance_payment: isThisBalancePayment,
+          mismatch_override: hasMismatch && mismatchAcknowledged,
+        }
+      }).then(() => {
+        console.log('Payment verification audit logged');
+      });
+
       // Success toast with correct messaging
       const toastTitle = isNowFullyPaid
         ? (isThisBalancePayment ? 'Balance Verified - Order Fully Paid' : 'Payment Verified & Processing Started')
