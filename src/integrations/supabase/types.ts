@@ -1489,6 +1489,7 @@ export type Database = {
         Row: {
           admin_notes: string | null
           affected_items: Json | null
+          assigned_to: string | null
           created_at: string
           customer_id: string
           description: string
@@ -1505,6 +1506,7 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           affected_items?: Json | null
+          assigned_to?: string | null
           created_at?: string
           customer_id: string
           description: string
@@ -1521,6 +1523,7 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           affected_items?: Json | null
+          assigned_to?: string | null
           created_at?: string
           customer_id?: string
           description?: string
@@ -1645,6 +1648,7 @@ export type Database = {
       orders: {
         Row: {
           actual_delivery_date: string | null
+          assigned_to: string | null
           balance_remaining: number | null
           cancellation_reason: string | null
           cancelled_at: string | null
@@ -1714,6 +1718,7 @@ export type Database = {
         }
         Insert: {
           actual_delivery_date?: string | null
+          assigned_to?: string | null
           balance_remaining?: number | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -1783,6 +1788,7 @@ export type Database = {
         }
         Update: {
           actual_delivery_date?: string | null
+          assigned_to?: string | null
           balance_remaining?: number | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -2689,6 +2695,7 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          assigned_to: string | null
           conversion_method: string | null
           conversion_notes: string | null
           conversion_type: string | null
@@ -2727,6 +2734,7 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          assigned_to?: string | null
           conversion_method?: string | null
           conversion_notes?: string | null
           conversion_type?: string | null
@@ -2765,6 +2773,7 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          assigned_to?: string | null
           conversion_method?: string | null
           conversion_notes?: string | null
           conversion_type?: string | null
