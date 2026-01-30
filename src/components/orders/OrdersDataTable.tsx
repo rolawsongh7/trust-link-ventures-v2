@@ -41,7 +41,9 @@ import {
   Clock,
   Receipt,
   RefreshCw,
-  UserCircle
+  UserCircle,
+  UserPlus,
+  X
 } from 'lucide-react';
 import { Column } from '@/components/ui/data-table';
 import { DataExporter } from '@/lib/exportHelpers';
@@ -54,6 +56,10 @@ import { PaymentReceiptPreviewDialog } from './PaymentReceiptPreviewDialog';
 import { OrderStatusProgress } from './OrderStatusProgress';
 import { AssigneeSelector } from '@/components/assignment/AssigneeSelector';
 import { useStaffMembers } from '@/hooks/useStaffMembers';
+import { useBulkSelect, BulkSelectHeader, BulkSelectCell } from '@/components/bulk/BulkSelect';
+import { BulkAssignDialog } from '@/components/bulk/BulkAssignDialog';
+import { BulkPaymentReminderDialog } from '@/components/bulk/BulkPaymentReminderDialog';
+import { BulkExportDialog } from '@/components/bulk/BulkExportDialog';
 
 interface Order {
   id: string;
@@ -370,6 +376,22 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
     paymentStatus: 'all'
   });
 
+  // Bulk selection state
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
+  const [bulkReminderOpen, setBulkReminderOpen] = useState(false);
+  const [bulkExportOpen, setBulkExportOpen] = useState(false);
+
+  // Bulk selection hook (uses filteredOrders)
+  const {
+    selectedIds,
+    toggleSelectAll,
+    toggleSelectItem,
+    clearSelection,
+    isSelected,
+    isAllSelected,
+    isSomeSelected,
+  } = useBulkSelect(orders);
+
   // Apply filters to orders
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
@@ -438,6 +460,11 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
     });
   }, [orders, filters]);
 
+  // Get selected orders for bulk actions
+  const selectedOrders = useMemo(() => {
+    return orders.filter(order => selectedIds.includes(order.id));
+  }, [orders, selectedIds]);
+
   const handleClearFilters = () => {
     setFilters({
       customer: '',
@@ -462,7 +489,23 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
     }
   };
 
-  const columns: Column<Order>[] = [
+  // Build checkbox column - we'll use label slot for header checkbox
+  const checkboxColumn: Column<Order> = {
+    key: 'id' as keyof Order,
+    label: '',
+    sortable: false,
+    width: '40px',
+    render: (value: string, row: Order) => (
+      <div onClick={(e) => e.stopPropagation()}>
+        <BulkSelectCell
+          checked={isSelected(row.id)}
+          onCheckedChange={() => toggleSelectItem(row.id)}
+        />
+      </div>
+    ),
+  };
+
+  const dataColumns: Column<Order>[] = [
     {
       key: 'order_number' as keyof Order,
       label: 'Order',
@@ -833,6 +876,9 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
     },
   ];
 
+  // Combine checkbox column with data columns
+  const columns: Column<Order>[] = [checkboxColumn, ...dataColumns];
+
   // Mobile view
   if (isMobile) {
     return (
@@ -934,6 +980,39 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Bulk Actions Toolbar */}
+      {selectedIds.length > 0 && (
+        <div className="sticky top-0 z-10 flex items-center gap-2 p-3 bg-primary/10 border rounded-lg">
+          <div className="flex items-center gap-2">
+            <BulkSelectHeader
+              checked={isAllSelected}
+              indeterminate={isSomeSelected}
+              onCheckedChange={() => toggleSelectAll()}
+            />
+            <span className="font-medium text-sm">
+              {selectedIds.length} selected
+            </span>
+          </div>
+          <div className="flex-1" />
+          <Button variant="outline" size="sm" onClick={() => setBulkAssignOpen(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Assign
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setBulkReminderOpen(true)}>
+            <Mail className="h-4 w-4 mr-2" />
+            Send Reminders
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setBulkExportOpen(true)}>
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          <Button variant="ghost" size="sm" onClick={clearSelection}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
       <DataTable
         data={filteredOrders}
         columns={columns}
@@ -964,6 +1043,36 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
           }
         }}
         order={receiptPreviewDialog.order}
+      />
+
+      {/* Bulk Action Dialogs */}
+      <BulkAssignDialog
+        open={bulkAssignOpen}
+        onOpenChange={setBulkAssignOpen}
+        selectedOrders={selectedOrders}
+        onComplete={() => {
+          clearSelection();
+          onRefresh();
+        }}
+      />
+
+      <BulkPaymentReminderDialog
+        open={bulkReminderOpen}
+        onOpenChange={setBulkReminderOpen}
+        selectedOrders={selectedOrders}
+        onComplete={() => {
+          clearSelection();
+          onRefresh();
+        }}
+      />
+
+      <BulkExportDialog
+        open={bulkExportOpen}
+        onOpenChange={setBulkExportOpen}
+        selectedOrders={selectedOrders}
+        onComplete={() => {
+          clearSelection();
+        }}
       />
     </div>
   );
