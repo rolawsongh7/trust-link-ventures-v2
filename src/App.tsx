@@ -71,6 +71,7 @@ import PriceManagement from "./pages/admin/PriceManagement";
 import Diagnostics from "./pages/admin/Diagnostics";
 import OrderIssues from "./pages/admin/OrderIssues";
 import FinancialReconciliation from "./pages/admin/FinancialReconciliation";
+import OperationsHub from "./pages/admin/OperationsHub";
 import CustomerIssueDetail from "./pages/CustomerIssueDetail";
 import CustomerIssues from "./pages/CustomerIssues";
 
@@ -194,6 +195,7 @@ const App = () => {
                         <Route path="leads" element={<LeadsPage />} />
                         <Route path="quotes" element={<QuotesPage />} />
                         <Route path="orders" element={<UnifiedOrdersManagement />} />
+                        <Route path="operations" element={<OperationsHub />} />
                         <Route path="invoices" element={<InvoicesPage />} />
                         <Route path="price-management" element={<PriceManagement />} />
                         <Route path="analytics" element={<AdvancedAnalytics />} />
@@ -288,6 +290,7 @@ const App = () => {
                         <Route path="leads" element={<LeadsPage />} />
                         <Route path="quotes" element={<QuotesPage />} />
                         <Route path="orders" element={<UnifiedOrdersManagement />} />
+                        <Route path="operations" element={<OperationsHub />} />
                         <Route path="invoices" element={<InvoicesPage />} />
                         <Route path="price-management" element={<PriceManagement />} />
                         <Route path="analytics" element={<AdvancedAnalytics />} />
@@ -487,6 +490,7 @@ const App = () => {
                         <Route path="leads" element={<LeadsPage />} />
                         <Route path="quotes" element={<QuotesPage />} />
                         <Route path="orders" element={<UnifiedOrdersManagement />} />
+                        <Route path="operations" element={<OperationsHub />} />
                         <Route path="invoices" element={<InvoicesPage />} />
                         <Route path="price-management" element={<PriceManagement />} />
                         <Route path="analytics" element={<AdvancedAnalytics />} />
