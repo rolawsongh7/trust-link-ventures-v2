@@ -1,420 +1,381 @@
 
-# Money Flows & Ops Stabilization Plan (Phase 1.5)
+# Phase 1.5 Verification Test Suite Plan
 
-## Executive Summary
+## Overview
 
-The existing payment and order infrastructure is **fundamentally sound**. This plan focuses on **hardening, gap-filling, and UX clarity** - not rewriting existing logic.
-
----
-
-## Current State Assessment
-
-### What's Already Working
-| Component | Status | Notes |
-|-----------|--------|-------|
-| `payment_status` enum | Exists | unpaid, partially_paid, fully_paid, overpaid |
-| `balance_remaining` column | Exists | Auto-calculated via trigger |
-| `validate_order_status_transition()` | Exists | Blocks shipping without full payment |
-| `payment_records` ledger | Exists | Tracks deposit, balance, adjustment, refund |
-| PaymentSummaryCard | Exists | Shows customer payment history |
-| VerifyPaymentDialog | Exists | Handles partial payment verification |
-| Balance Request Edge Function | Exists | Sends email + notification to customer |
-
-### Gaps to Close
-| Issue | Impact | Priority |
-|-------|--------|----------|
-| Balance payment uploads don't auto-detect payment type | Customer confusion | High |
-| Status transition errors are generic | Poor admin UX | High |
-| Notifications lack explicit amounts | Customer confusion | Medium |
-| RLS for payment_records needs audit | Security gap | Medium |
-| Audit logs missing some payment events | Compliance gap | Low |
+This plan creates a deterministic test suite to verify the correctness of Phase 1.5 (Money Flows & Ops Stabilization) before proceeding to Phase 2.
 
 ---
 
-## Implementation Phases
+## Prerequisites: Testing Infrastructure Setup
 
-### Phase A: Payment State Model Hardening
+The project does not currently have Vitest configured. We need to add testing infrastructure first.
 
-#### A1. Enforce Derived payment_status (No Manual Overrides)
+### New Files to Create
+| File | Purpose |
+|------|---------|
+| `vitest.config.ts` | Vitest configuration with jsdom environment |
+| `src/test/setup.ts` | Test setup with matchMedia mock |
+| `src/test/testUtils.ts` | Shared test utilities and mocks |
 
-Update `update_order_payment_status()` trigger to ALWAYS recalculate:
+### Package Updates
+Add to `devDependencies`:
+- `@testing-library/jest-dom: ^6.6.0`
+- `@testing-library/react: ^16.0.0`
+- `jsdom: ^20.0.3`
+- `vitest: ^3.2.4`
 
-```sql
--- Ensure payment_status is NEVER manually set incorrectly
--- This runs on EVERY update to payment_amount_confirmed
-CREATE OR REPLACE FUNCTION public.update_order_payment_status()
-RETURNS TRIGGER AS $$
-BEGIN
-  -- Always recalculate, never trust manual input
-  IF NEW.payment_amount_confirmed IS NULL OR NEW.payment_amount_confirmed = 0 THEN
-    NEW.payment_status := 'unpaid'::public.payment_status_enum;
-  ELSIF NEW.payment_amount_confirmed < NEW.total_amount THEN
-    NEW.payment_status := 'partially_paid'::public.payment_status_enum;
-  ELSIF NEW.payment_amount_confirmed = NEW.total_amount THEN
-    NEW.payment_status := 'fully_paid'::public.payment_status_enum;
-  ELSE
-    NEW.payment_status := 'overpaid'::public.payment_status_enum;
-  END IF;
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-```
-
-**Files Modified**: Database migration only
-
-#### A2. Auto-Detect Balance Payment on Upload
-
-Update `CustomerPaymentProofDialog.tsx` to check if order already has a verified deposit:
-
-```typescript
-// Detect if this is a balance payment by checking existing payment_amount_confirmed
-const isBalancePayment = (order.payment_amount_confirmed || 0) > 0;
-const balanceRemaining = order.total_amount - (order.payment_amount_confirmed || 0);
-
-// Pass payment type to backend
-const updateData = {
-  payment_proof_url: publicUrl,
-  payment_reference: paymentReference,
-  payment_method: paymentMethod,
-  payment_proof_uploaded_at: new Date().toISOString(),
-  // New: indicate this is a balance payment
-  payment_proof_type: isBalancePayment ? 'balance' : 'deposit',
-};
-```
-
-**Files Modified**: 
-- `src/components/customer/CustomerPaymentProofDialog.tsx`
-- `supabase/functions/notify-payment-proof-uploaded/index.ts`
-
-#### A3. Auto-Reconcile on Full Payment
-
-Update `VerifyPaymentDialog.tsx` to automatically:
-1. Calculate if new payment completes the balance
-2. Update `payment_status` via the existing trigger
-3. Emit correct notification type
-
-**Current Implementation**: Already handles this correctly. No changes needed.
+### TypeScript Config Update
+Add `"vitest/globals"` to `tsconfig.app.json` types array.
 
 ---
 
-### Phase B: Order State Machine Clarity
+## Test Suite Structure
 
-#### B1. Replace Generic Errors with Actionable Messages
-
-Create a utility to parse database constraint errors:
-
-```typescript
-// src/utils/orderStatusErrors.ts
-export const parseStatusTransitionError = (error: any): {
-  title: string;
-  description: string;
-  action?: string;
-  actionLabel?: string;
-} => {
-  const message = error?.message || '';
+```text
+src/test/
+  setup.ts                          # Global test setup
+  testUtils.ts                      # Shared mocks and helpers
   
-  if (message.includes('Cannot start processing without verified payment')) {
-    return {
-      title: 'Payment Required',
-      description: 'This order needs a verified deposit before processing can begin.',
-      action: 'verify-payment',
-      actionLabel: 'Verify Payment',
-    };
-  }
+src/types/
+  payment.test.ts                   # A1: Payment type unit tests
   
-  if (message.includes('Cannot ship until fully paid')) {
-    const balanceMatch = message.match(/Balance: ([\d,.]+)/);
-    const balance = balanceMatch ? balanceMatch[1] : 'outstanding';
-    return {
-      title: 'Balance Payment Required',
-      description: `Cannot proceed to shipping. Outstanding balance: ${balance}`,
-      action: 'request-balance',
-      actionLabel: 'Request Balance Payment',
-    };
-  }
+src/utils/
+  orderStatusErrors.test.ts         # B1: Error parsing unit tests
   
-  if (message.includes('Cannot ship without delivery address')) {
-    return {
-      title: 'Address Required',
-      description: 'Customer must provide a delivery address before shipping.',
-      action: 'request-address',
-      actionLabel: 'Request Address',
-    };
-  }
+src/test/integration/
+  paymentStateTrigger.test.ts       # A2: DB trigger integration tests
+  orderStateMachine.test.ts         # B2: Status transition tests
+  rlsPolicies.test.ts               # C1: RLS policy verification
   
-  // Default fallback
-  return {
-    title: 'Status Update Failed',
-    description: message || 'Please check order requirements and try again.',
-  };
-};
+supabase/functions/
+  notify-payment-proof-uploaded/
+    index.test.ts                   # D1: Notification accuracy tests
+  send-balance-payment-request/
+    index.test.ts                   # D2: Balance request tests
 ```
-
-**Files Modified**:
-- `src/utils/orderStatusErrors.ts` (new file)
-- `src/components/orders/UnifiedOrdersManagement.tsx`
-- `src/components/orders/OrdersDataTable.tsx`
-
-#### B2. Add "Why is this blocked?" Tooltips
-
-Enhance status badges to explain blockers:
-
-```typescript
-// In OrderStatusBadge or inline where status is displayed
-const getBlockerReason = (order: Order): string | null => {
-  if (order.status === 'processing' && order.payment_status === 'partially_paid') {
-    return `Waiting for balance payment of ${order.currency} ${order.balance_remaining?.toLocaleString()}`;
-  }
-  if (order.status === 'processing' && !order.delivery_address_id) {
-    return 'Waiting for customer to provide delivery address';
-  }
-  if (order.status === 'payment_received' && order.payment_status !== 'fully_paid') {
-    return 'Order cannot proceed until fully paid';
-  }
-  return null;
-};
-```
-
-**Files Modified**:
-- `src/components/customer/OrderStatusBadge.tsx`
-- `src/components/orders/OrdersDataTable.tsx`
 
 ---
 
-### Phase C: Notification Truthfulness
+## A. Money Flow Tests (CRITICAL)
 
-#### C1. Audit and Fix Notification Text
+### A1. Payment State Calculation (Unit Tests)
 
-Update all payment-related notifications to include explicit amounts:
+**File:** `src/types/payment.test.ts`
 
-| Current | Fixed |
-|---------|-------|
-| "Payment received" | "Deposit of GHS 500 received - Balance of GHS 300 remaining" |
-| "Payment verified" | "Balance payment verified - Order fully paid (GHS 800 total)" |
-| "Order processing" | "Order processing - Awaiting balance payment of GHS 300" |
-
-**Files Modified**:
-- `src/components/orders/VerifyPaymentDialog.tsx` (notification text)
-- `supabase/functions/send-payment-confirmation/index.ts` (email templates)
-- `supabase/functions/send-balance-payment-request/index.ts` (email templates)
-- `src/services/notificationService.ts` (in-app notifications)
-
-#### C2. Customer Portal Notification Display
-
-Ensure CustomerOrders displays payment status with amounts:
+Test the canonical payment model utilities:
 
 ```typescript
-// Already exists in CustomerOrders.tsx - just audit for clarity
-{hasPartialPayment(order) && (
-  <Alert variant="warning">
-    <h4>Balance Payment Required</h4>
-    <p>Amount Received: {order.currency} {order.payment_amount_confirmed}</p>
-    <p className="font-bold">Balance: {order.currency} {order.balance_remaining}</p>
-    <p>Please complete the remaining payment to proceed with shipping.</p>
-  </Alert>
-)}
+describe('Payment Status Helpers', () => {
+  test('isUnpaid returns true only for unpaid status')
+  test('isPartiallyPaid returns true only for partially_paid status')
+  test('isFullyPaid returns true only for fully_paid status')
+  test('isOverpaid returns true only for overpaid status')
+  test('canShip returns true only for fully_paid or overpaid')
+  test('getPaymentStatusLabel returns correct labels')
+  test('getPaymentTypeLabel returns correct labels for all types')
+})
 ```
 
-**Files Modified**: Review only - already implemented correctly
+### A2. Payment Status Trigger (Integration Tests)
+
+**File:** `src/test/integration/paymentStateTrigger.test.ts`
+
+Verify database trigger calculates payment_status correctly:
+
+```typescript
+describe('update_order_payment_status trigger', () => {
+  test('No payments → unpaid, balance_remaining = total')
+  test('Partial payment → partially_paid, balance_remaining calculated')
+  test('Multiple partial payments → partially_paid, cumulative')
+  test('Full payment → fully_paid, balance_remaining = 0')
+  test('Overpayment → overpaid, negative balance_remaining')
+  test('Status cannot be manually overridden (trigger recalculates)')
+})
+```
+
+**Test Method:** Use Supabase client to create test orders and verify trigger behavior.
 
 ---
 
-### Phase D: Admin-Customer Parity
+## B. Order State Machine Tests
 
-#### D1. Verify RLS for payment_records
+### B1. Error Parsing (Unit Tests)
 
-Audit and fix RLS policies:
+**File:** `src/utils/orderStatusErrors.test.ts`
 
-```sql
--- Customer can only see their own payment records
-CREATE POLICY "customers_view_own_payment_records" ON public.payment_records
-FOR SELECT USING (
-  EXISTS (
-    SELECT 1 FROM orders o
-    JOIN customer_users cu ON o.customer_id = cu.customer_id
-    WHERE o.id = payment_records.order_id
-    AND cu.user_id = auth.uid()
-  )
-);
-
--- Customer cannot modify payment records
-CREATE POLICY "customers_cannot_modify_payment_records" ON public.payment_records
-FOR INSERT USING (false);
-
-CREATE POLICY "customers_cannot_update_payment_records" ON public.payment_records
-FOR UPDATE USING (false);
-```
-
-**Files Modified**: Database migration
-
-#### D2. Ensure PaymentSummaryCard Shows Consistent Data
-
-Already implemented correctly - no changes needed.
-
----
-
-### Phase E: Audit Completeness
-
-#### E1. Add Payment Event Logging
-
-Create audit entries for all payment events:
+Test the error parser and blocker reason utilities:
 
 ```typescript
-// Add to VerifyPaymentDialog after successful verification
-await supabase.from('audit_logs').insert({
-  user_id: user.id,
-  event_type: 'payment_verified',
-  action: isNowFullyPaid ? 'full_payment_verified' : 'deposit_verified',
-  severity: 'info',
-  event_data: {
-    order_id: order.id,
-    order_number: order.order_number,
-    amount_verified: parsedAmount,
-    total_paid: totalPaid,
-    balance_remaining: balanceAfterPayment,
-    payment_type: paymentType,
-    previous_status: order.payment_status,
-    new_status: isNowFullyPaid ? 'fully_paid' : 'partially_paid',
-  }
-});
+describe('parseStatusTransitionError', () => {
+  test('Parses "Cannot start processing without verified payment"')
+  test('Parses "Cannot ship until fully paid" with balance extraction')
+  test('Parses "Cannot ship without delivery address"')
+  test('Parses "Invalid order status transition"')
+  test('Parses tracking/carrier requirement errors')
+  test('Returns default for unknown errors')
+})
+
+describe('getBlockerReason', () => {
+  test('Returns balance message for processing + partially_paid')
+  test('Returns address message for processing without delivery_address')
+  test('Returns "cannot proceed" for payment_received + not fully paid')
+  test('Returns "waiting for proof" for pending_payment + unpaid')
+  test('Returns null when no blockers')
+})
+
+describe('canProceedToShipping', () => {
+  test('Returns allowed=false without full payment')
+  test('Returns allowed=false without delivery address')
+  test('Returns allowed=true when both conditions met')
+  test('Returns multiple reasons when both missing')
+})
 ```
 
-**Files Modified**:
-- `src/components/orders/VerifyPaymentDialog.tsx`
-- `supabase/functions/send-balance-payment-request/index.ts`
+### B2. Status Transition Validation (Integration Tests)
 
----
+**File:** `src/test/integration/orderStateMachine.test.ts`
 
-### Phase F: Error Handling UX
-
-#### F1. Defensive UI - Disable Buttons for Blocked Actions
-
-Add visual guards to admin actions:
+Verify `validate_order_status_transition` trigger:
 
 ```typescript
-// In OrdersDataTable.tsx
-const ShipButton = ({ order, onClick }) => {
-  const canShip = order.payment_status === 'fully_paid' || order.payment_status === 'overpaid';
-  const hasAddress = !!order.delivery_address_id;
+describe('Order Status Transitions', () => {
+  describe('Valid Transitions', () => {
+    test('pending_payment → processing (with partial payment)')
+    test('payment_received → processing')
+    test('processing → ready_to_ship (with full payment + address)')
+    test('ready_to_ship → shipped (with carrier, tracking, ETA)')
+  })
   
-  if (!canShip || !hasAddress) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button disabled variant="outline" size="sm">
-              <Truck className="h-4 w-4 mr-2" />
-              Mark Ready to Ship
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {!canShip && <p>Requires full payment (Balance: {order.currency} {order.balance_remaining})</p>}
-            {!hasAddress && <p>Requires delivery address</p>}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
+  describe('Invalid Transitions - Payment Guards', () => {
+    test('BLOCKS pending_payment → processing without any payment')
+    test('BLOCKS ready_to_ship without full payment')
+    test('BLOCKS shipped without full payment')
+  })
   
-  return (
-    <Button onClick={onClick} size="sm">
-      <Truck className="h-4 w-4 mr-2" />
-      Mark Ready to Ship
-    </Button>
-  );
-};
+  describe('Invalid Transitions - Address Guards', () => {
+    test('BLOCKS ready_to_ship without delivery address')
+    test('BLOCKS shipped without delivery address')
+  })
+  
+  describe('Invalid Transitions - Shipping Data Guards', () => {
+    test('BLOCKS shipped without carrier')
+    test('BLOCKS shipped without tracking_number')
+    test('BLOCKS shipped without estimated_delivery_date')
+  })
+  
+  describe('Error Message Clarity', () => {
+    test('Payment error includes balance amount')
+    test('Address error includes clear action hint')
+    test('Tracking error includes required fields')
+  })
+})
 ```
 
-**Files Modified**:
-- `src/components/orders/OrdersDataTable.tsx`
-- `src/components/orders/UnifiedOrdersManagement.tsx`
+---
 
-#### F2. Surface Database Errors Gracefully
+## C. Admin ↔ Customer Parity Tests
 
-Wrap status update calls with error parser:
+### C1. RLS Policy Verification
+
+**File:** `src/test/integration/rlsPolicies.test.ts`
+
+Test payment_records RLS policies:
 
 ```typescript
-try {
-  const { error } = await supabase
-    .from('orders')
-    .update({ status: newStatus })
-    .eq('id', orderId);
-    
-  if (error) {
-    const parsed = parseStatusTransitionError(error);
-    toast({
-      title: parsed.title,
-      description: parsed.description,
-      variant: 'destructive',
-      action: parsed.action && (
-        <Button size="sm" onClick={() => handleAction(parsed.action, order)}>
-          {parsed.actionLabel}
-        </Button>
-      ),
-    });
-    return;
-  }
-} catch (err) {
-  // Handle unexpected errors
-}
+describe('payment_records RLS', () => {
+  describe('Customer Access', () => {
+    test('Customer can SELECT own payment records')
+    test('Customer CANNOT SELECT other customers payment records')
+    test('Customer CANNOT INSERT payment records')
+    test('Customer CANNOT UPDATE payment records')
+    test('Customer CANNOT DELETE payment records')
+  })
+  
+  describe('Admin Access', () => {
+    test('Admin can SELECT all payment records')
+    test('Admin can INSERT payment records')
+    test('Admin can UPDATE payment records')
+    test('Admin can DELETE payment records')
+  })
+})
 ```
+
+### C2. Payment Summary Consistency
+
+```typescript
+describe('Payment Summary Consistency', () => {
+  test('PaymentSummaryCard calculates totalPaid from verified records only')
+  test('balanceRemaining = max(0, totalAmount - totalPaid)')
+  test('Customer and Admin see identical payment totals')
+})
+```
+
+---
+
+## D. Notification Accuracy Tests
+
+### D1. Payment Proof Uploaded Notifications
+
+**File:** `supabase/functions/notify-payment-proof-uploaded/index.test.ts`
+
+```typescript
+describe('notify-payment-proof-uploaded', () => {
+  test('Deposit notification includes "Deposit" language')
+  test('Balance notification includes "Balance" language')
+  test('Notification includes correct order number')
+  test('Balance notification shows remaining amount')
+  test('Creates notifications for all admin users')
+})
+```
+
+### D2. Balance Payment Request Notifications
+
+**File:** `supabase/functions/send-balance-payment-request/index.test.ts`
+
+```typescript
+describe('send-balance-payment-request', () => {
+  test('Email includes correct balance amount')
+  test('Email includes payment reference instructions')
+  test('Throws error if no balance remaining')
+  test('Creates user_notifications entry with balance metadata')
+  test('Logs to email_logs table')
+})
+```
+
+---
+
+## E. Audit Log Integrity Tests
+
+```typescript
+describe('Payment Audit Logging', () => {
+  test('payment_verified event logged with amount_verified')
+  test('deposit_verified event includes balance_remaining')
+  test('full_payment_verified event includes total_paid')
+  test('Audit includes previous_status and new_status')
+  test('mismatch_override flag captured when applicable')
+})
+```
+
+---
+
+## F. Regression Tests
+
+```typescript
+describe('Phase 1 Regression', () => {
+  test('Admin can query orders without RLS errors')
+  test('Customer can query own orders')
+  test('Quote conversion still creates orders')
+  test('Invoice generation still works')
+  test('Customer cannot see other customers data')
+})
+```
+
+---
+
+## G. Failure Mode Tests
+
+```typescript
+describe('Failure Modes', () => {
+  test('Duplicate payment proof upload handled gracefully')
+  test('RPC failure during verification shows clear error')
+  test('Network failure during upload shows retry message')
+  test('Invalid file type rejected with clear message')
+})
+```
+
+---
+
+## Implementation Order
+
+1. **Setup Infrastructure** (vitest.config.ts, setup.ts, testUtils.ts, package.json)
+2. **Unit Tests First** (payment.test.ts, orderStatusErrors.test.ts)
+3. **Integration Tests** (paymentStateTrigger.test.ts, orderStateMachine.test.ts, rlsPolicies.test.ts)
+4. **Edge Function Tests** (notify-payment-proof-uploaded, send-balance-payment-request)
+5. **Run Full Suite** and generate verdict
+
+---
+
+## Test Execution Plan
+
+### Run Order
+1. Unit tests (fast, no DB required)
+2. Integration tests (requires DB, uses test data with rollback)
+3. Edge function tests (uses Deno test runner)
+
+### Output Format
+
+```text
+╔════════════════════════════════════════════════════╗
+║         PHASE 1.5 VERIFICATION RESULTS             ║
+╠════════════════════════════════════════════════════╣
+║ Total Tests:     XX                                ║
+║ Passed:          XX  ✓                             ║
+║ Failed:          XX  ✗                             ║
+║ Skipped:         XX  ○                             ║
+╠════════════════════════════════════════════════════╣
+║ VERDICT:  ✅ READY FOR PHASE 2                     ║
+║      OR:  ❌ BLOCKED                               ║
+╚════════════════════════════════════════════════════╝
+```
+
+If blocked, include:
+- Test name
+- Expected vs actual
+- Recommended fix
+
+---
+
+## Technical Notes
+
+### Test Data Strategy
+- Use dedicated test customer ID (will not affect production)
+- Use database transactions with rollback where possible
+- Mock external services (Resend email, PDF generation)
+
+### Mocking Strategy
+- Mock `supabase.functions.invoke` for edge function calls
+- Mock `Resend` in edge function tests
+- Use `vi.mock` for external dependencies
 
 ---
 
 ## Files Summary
 
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/utils/orderStatusErrors.ts` | Parse database constraint errors into user-friendly messages |
+### New Files (8)
+| File | Lines | Purpose |
+|------|-------|---------|
+| `vitest.config.ts` | ~20 | Vitest configuration |
+| `src/test/setup.ts` | ~15 | Global test setup |
+| `src/test/testUtils.ts` | ~50 | Shared mocks and helpers |
+| `src/types/payment.test.ts` | ~80 | Payment utility unit tests |
+| `src/utils/orderStatusErrors.test.ts` | ~120 | Error parser unit tests |
+| `src/test/integration/paymentStateTrigger.test.ts` | ~100 | Trigger integration tests |
+| `src/test/integration/orderStateMachine.test.ts` | ~150 | Status transition tests |
+| `src/test/integration/rlsPolicies.test.ts` | ~100 | RLS verification tests |
 
-### Modified Files
+### Modified Files (2)
 | File | Changes |
 |------|---------|
-| `src/components/customer/CustomerPaymentProofDialog.tsx` | Auto-detect balance payment |
-| `src/components/orders/VerifyPaymentDialog.tsx` | Add audit logging, improve notifications |
-| `src/components/orders/OrdersDataTable.tsx` | Disable blocked actions, add blocker tooltips |
-| `src/components/orders/UnifiedOrdersManagement.tsx` | Use error parser for status changes |
-| `src/components/customer/OrderStatusBadge.tsx` | Add blocker explanations |
-| Database migration | Harden payment_status trigger, verify RLS |
+| `package.json` | Add vitest, testing-library devDependencies |
+| `tsconfig.app.json` | Add "vitest/globals" to types |
 
 ---
 
-## Testing Checklist
+## Success Criteria
 
-### Money Flow Tests
-- [x] Partial payment visible to customer immediately after upload
-- [x] Partial payment visible to admin with correct amounts
-- [x] Balance request shows exact outstanding amount
-- [x] Balance payment auto-detects it's not a new deposit
-- [x] Order unblocks for shipping only when fully paid
+Phase 1.5 is READY FOR PHASE 2 when:
 
-### Regression Tests
-- [x] Admin can still process orders normally
-- [x] Customer cannot see other customers' payment data
-- [x] No RLS policies broken
-- [x] No role logic changed
+1. All unit tests pass (payment helpers, error parsing)
+2. All integration tests pass (triggers, state machine, RLS)
+3. Edge function tests confirm notification accuracy
+4. No regression in existing admin/customer flows
+5. Audit logs contain required payment events
 
-### UX Tests
-- [x] No stuck order states without explanation
-- [x] All payment statuses show amounts
-- [x] Notifications are accurate and specific
-- [x] Blocked actions show why they're blocked
+Phase 1.5 is BLOCKED if:
 
----
-
-## Implementation Status: ✅ COMPLETE
-
----
-
-## What This Plan Does NOT Do
-
-- Does not add new product features
-- Does not change role permissions
-- Does not modify pricing or subscriptions
-- Does not redesign dashboards
-- Does not add new order statuses
-- Does not change the fundamental payment flow
-
-This is purely **stabilization and correctness work**.
+- Any payment state calculation is incorrect
+- Order gets stuck in unexplainable state
+- Admin and customer see different payment totals
+- RLS allows unauthorized data access
+- Notifications contain incorrect amounts
