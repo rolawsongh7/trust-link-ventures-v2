@@ -374,12 +374,12 @@ function trackBulkAction(action: string, count: number) {
 
 ## Testing Checklist
 
-### Phase 2.1 Tests
-- [ ] Can assign order to staff member
-- [ ] Assignment badge displays correctly
-- [ ] "Assigned to me" filter works
-- [ ] "Unassigned" filter works
-- [ ] Reassignment logs to audit
+### Phase 2.1 Tests ✅ COMPLETE
+- [x] Can assign order to staff member
+- [x] Assignment badge displays correctly
+- [x] "Assigned to me" filter works
+- [x] "Unassigned" filter works
+- [x] Reassignment logs to audit
 
 ### Phase 2.2 Tests
 - [ ] Bulk assign shows preview with count

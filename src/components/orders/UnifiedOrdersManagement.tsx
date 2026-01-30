@@ -19,6 +19,8 @@ import { ViewRelatedQuoteDialog } from './ViewRelatedQuoteDialog';
 import { VerifyPaymentDialog } from './VerifyPaymentDialog';
 import { OrdersKPISummary } from './OrdersKPISummary';
 import { parseStatusTransitionError } from '@/utils/orderStatusErrors';
+import { AssignmentFilters, AssignmentFilter, filterByAssignment, countByAssignment } from '@/components/assignment/AssignmentFilters';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Order {
   id: string;
@@ -33,6 +35,7 @@ interface Order {
   payment_reference?: string;
   notes?: string;
   customer_id: string;
+  assigned_to?: string | null;
   customers?: {
     company_name: string;
     contact_name?: string;
@@ -54,6 +57,7 @@ interface Order {
 const UnifiedOrdersManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   // Use React Query ONLY for data fetching with caching
   const { orders, isLoading: loading, refetch } = useOrdersQuery();
@@ -61,6 +65,7 @@ const UnifiedOrdersManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
+  const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
   const [editDetailsDialogOpen, setEditDetailsDialogOpen] = useState(false);
@@ -394,7 +399,8 @@ const UnifiedOrdersManagement = () => {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
+  // First filter by status tab and search
+  const tabFilteredOrders = orders.filter(order => {
     const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.customers?.company_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -411,6 +417,10 @@ const UnifiedOrdersManagement = () => {
     
     return matchesSearch && matchesTab;
   });
+
+  // Then apply assignment filter
+  const filteredOrders = filterByAssignment(tabFilteredOrders as any, assignmentFilter, user?.id);
+  const assignmentCounts = countByAssignment(tabFilteredOrders as any, user?.id);
 
   const autoOrdersCount = orders.filter(o => !!o.quote_id).length;
   const pendingAddressCount = orders.filter(o => !o.delivery_address_id && ['payment_received', 'processing'].includes(o.status)).length;
@@ -454,6 +464,15 @@ const UnifiedOrdersManagement = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Assignment Filters */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <AssignmentFilters
+          value={assignmentFilter}
+          onChange={setAssignmentFilter}
+          counts={assignmentCounts}
+        />
+      </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList className="flex md:grid md:grid-cols-7 w-full overflow-x-auto snap-x snap-mandatory scrollbar-hide">

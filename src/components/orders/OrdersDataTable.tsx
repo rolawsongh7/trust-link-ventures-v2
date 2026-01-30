@@ -40,7 +40,8 @@ import {
   AlertTriangle,
   Clock,
   Receipt,
-  RefreshCw
+  RefreshCw,
+  UserCircle
 } from 'lucide-react';
 import { Column } from '@/components/ui/data-table';
 import { DataExporter } from '@/lib/exportHelpers';
@@ -51,6 +52,8 @@ import { SearchFilters } from '@/types/filters';
 import { AddressLinkDialog } from './AddressLinkDialog';
 import { PaymentReceiptPreviewDialog } from './PaymentReceiptPreviewDialog';
 import { OrderStatusProgress } from './OrderStatusProgress';
+import { AssigneeSelector } from '@/components/assignment/AssigneeSelector';
+import { useStaffMembers } from '@/hooks/useStaffMembers';
 
 interface Order {
   id: string;
@@ -73,6 +76,7 @@ interface Order {
   payment_status?: 'unpaid' | 'partially_paid' | 'fully_paid' | 'overpaid';
   balance_remaining?: number;
   notes?: string;
+  assigned_to?: string | null;
   order_items: any[];
   customers: {
     id: string;
@@ -581,6 +585,22 @@ export const OrdersDataTable: React.FC<OrdersDataTableProps> = ({
           )}
         </div>
       )
+    },
+    {
+      key: 'assigned_to' as keyof Order,
+      label: 'Assigned',
+      sortable: false,
+      width: '130px',
+      render: (value: any, row: Order) => (
+        <AssigneeSelector
+          entityType="orders"
+          entityId={row.id}
+          entityNumber={row.order_number}
+          currentAssigneeId={row.assigned_to}
+          onAssignmentChange={() => onRefresh()}
+          size="sm"
+        />
+      ),
     },
     {
       key: 'created_at' as keyof Order,
