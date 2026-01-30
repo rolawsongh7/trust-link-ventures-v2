@@ -26,6 +26,9 @@ interface CustomerPaymentProofDialogProps {
     id: string;
     order_number: string;
     customer_id: string;
+    total_amount?: number;
+    payment_amount_confirmed?: number;
+    currency?: string;
   };
   onSuccess: () => void;
 }
@@ -156,6 +159,12 @@ export const CustomerPaymentProofDialog: React.FC<CustomerPaymentProofDialogProp
       // Upload file with retry logic
       const publicUrl = await uploadWithRetry(selectedFile);
 
+      // Auto-detect if this is a balance payment by checking existing verified amount
+      const existingConfirmed = order.payment_amount_confirmed || 0;
+      const isBalancePayment = existingConfirmed > 0;
+      const balanceRemaining = (order.total_amount || 0) - existingConfirmed;
+      const paymentProofType = isBalancePayment ? 'balance' : 'deposit';
+
       // Update order with payment proof
       const { error: updateError } = await supabase
         .from('orders')
@@ -169,13 +178,16 @@ export const CustomerPaymentProofDialog: React.FC<CustomerPaymentProofDialogProp
 
       if (updateError) throw updateError;
 
-      // Send notification to admin via edge function
+      // Send notification to admin via edge function with payment type info
       await supabase.functions.invoke('notify-payment-proof-uploaded', {
         body: {
           orderId: order.id,
           orderNumber: order.order_number,
           paymentMethod,
           paymentReference,
+          paymentProofType,
+          balanceRemaining: isBalancePayment ? balanceRemaining : order.total_amount,
+          currency: order.currency || 'GHS',
         },
       }).catch(err => {
         console.error('Admin notification error (non-blocking):', err);
@@ -258,9 +270,20 @@ export const CustomerPaymentProofDialog: React.FC<CustomerPaymentProofDialogProp
     }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Upload Payment Proof</DialogTitle>
+          <DialogTitle>
+            {(order.payment_amount_confirmed || 0) > 0 ? 'Upload Balance Payment Proof' : 'Upload Payment Proof'}
+          </DialogTitle>
           <DialogDescription>
-            Upload your payment receipt for order {order.order_number}
+            {(order.payment_amount_confirmed || 0) > 0 ? (
+              <>
+                Upload your balance payment receipt for order {order.order_number}.
+                <span className="block mt-1 font-medium text-amber-600">
+                  Balance due: {order.currency || 'GHS'} {((order.total_amount || 0) - (order.payment_amount_confirmed || 0)).toLocaleString()}
+                </span>
+              </>
+            ) : (
+              `Upload your payment receipt for order ${order.order_number}`
+            )}
           </DialogDescription>
         </DialogHeader>
 

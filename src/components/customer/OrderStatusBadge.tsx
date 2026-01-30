@@ -2,22 +2,34 @@ import React from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getOrderStatusConfig } from '@/utils/orderStatusConfig';
 import { cn } from '@/lib/utils';
+import { getBlockerReason } from '@/utils/orderStatusErrors';
 
 interface OrderStatusBadgeProps {
   status: string;
   variant?: 'default' | 'compact';
   showTooltip?: boolean;
   className?: string;
+  // Optional order context for blocker reasons
+  order?: {
+    payment_status?: 'unpaid' | 'partially_paid' | 'fully_paid' | 'overpaid' | null;
+    balance_remaining?: number | null;
+    delivery_address_id?: string | null;
+    currency?: string;
+  };
 }
 
 export const OrderStatusBadge: React.FC<OrderStatusBadgeProps> = ({
   status,
   variant = 'default',
   showTooltip = true,
-  className = ''
+  className = '',
+  order
 }) => {
   const config = getOrderStatusConfig(status);
   const Icon = config.icon;
+  
+  // Get blocker reason if order context is provided
+  const blockerReason = order ? getBlockerReason({ status, ...order }) : null;
   
   const badge = (
     <span 
@@ -36,7 +48,8 @@ export const OrderStatusBadge: React.FC<OrderStatusBadgeProps> = ({
     </span>
   );
 
-  if (!showTooltip || !config.customerHint) {
+  // Don't show tooltip if disabled or no hint/blocker
+  if (!showTooltip || (!config.customerHint && !blockerReason)) {
     return badge;
   }
 
@@ -52,6 +65,11 @@ export const OrderStatusBadge: React.FC<OrderStatusBadgeProps> = ({
         >
           <p className="font-medium text-foreground">{config.customerLabel}</p>
           <p className="text-xs text-muted-foreground mt-1">{config.customerHint}</p>
+          {blockerReason && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 font-medium">
+              ⏳ {blockerReason}
+            </p>
+          )}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
