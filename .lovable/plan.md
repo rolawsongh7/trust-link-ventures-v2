@@ -1,228 +1,321 @@
 
-# Customer Payment Proof Viewing & Payment Summary UI
+# Super Admin Layer Implementation for Trust Link Ventures
 
-## Executive Summary
+## Current State Summary
 
-This plan implements secure, read-only payment proof viewing for customers in their portal, along with a modern Payment Summary UI. The implementation adds RLS policies to allow customers to view their own payment records while keeping admin workflows unchanged.
+### Role Infrastructure (Already Exists)
+| Component | Status | Details |
+|-----------|--------|---------|
+| `user_roles` table | Exists | Contains `super_admin` in enum |
+| `is_super_admin(uuid)` function | Exists | SECURITY DEFINER, checks `user_roles` |
+| `is_admin()` function | Exists | Returns true for both `admin` and `super_admin` |
+| `check_user_role(uuid, text)` function | Exists | Used extensively in RLS policies |
+| `useRoleAuth` hook | Exists | Returns `hasSuperAdminAccess`, `hasAdminAccess` |
+| Auto-trigger | Exists | Currently targets `support@trustlinkcompany.com` |
 
----
+### Current Admin Users
+| Email | Current Role | Target Role |
+|-------|--------------|-------------|
+| `info@trustlinkcompany.com` | `admin` | `super_admin` (to be promoted) |
+| `trustlventuresghana_a01@yahoo.com` | `admin` | `admin` (unchanged) |
 
-## Current State Analysis
-
-### Data Model
-- **`payment_records` table**: Stores ledger entries with `amount`, `payment_type`, `proof_url`, `verified_at`, `verified_by`, `order_id`
-- **`orders` table**: Has `payment_proof_url`, `payment_status`, `payment_amount_confirmed`, `balance_remaining`
-- **Storage bucket**: `payment-proofs` (private, requires signed URLs)
-
-### Existing RLS Policies
-- **`payment_records`**: Only admins have SELECT access (`Admins can view all payment records`)
-- **`orders`**: Customers can view via `user_can_access_customer(customer_id, auth.uid())`
-- **Storage**: `payment-proofs` bucket has `Allow authenticated select` policy (overly permissive)
-
-### Customer Access Pattern
-- `customer_users` table links `user_id` to `customer_id`
-- `user_can_access_customer()` function checks admin role OR `customer_users` membership
-- Orders fetched by `customer_id` matching customer linked to user's email
-
----
-
-## Architecture
-
-```text
-+------------------+          +-------------------+
-|  CustomerOrders  |--------->| PaymentSummaryCard|
-+------------------+          +-------------------+
-                                       |
-                                       v
-                              +-------------------+
-                              | PaymentProofViewer|
-                              +-------------------+
-                                       |
-                                       v
-                              +-------------------+
-                              |  Signed URL API   |
-                              |  (via Supabase)   |
-                              +-------------------+
-```
+### Existing Super Admin Features (UI-Protected Only)
+- PDF regeneration buttons in `InvoiceManagement.tsx`
+- Storage testing buttons
+- These are **UI-hidden** but lack server-side enforcement
 
 ---
 
-## Implementation Plan
+## Implementation Phases
 
-### Phase 1: Database RLS Policy for Customer Payment Records
+### Phase 1: Safe Super Admin Promotion (Database Migration)
 
-Create a new RLS policy allowing customers to read payment records for their orders.
+Promote `info@trustlinkcompany.com` to `super_admin` via a one-time migration. Update the auto-trigger to use this email for future sign-ups.
 
-**SQL Migration:**
 ```sql
--- Allow customers to view payment records for their own orders
-CREATE POLICY "Customers can view their own payment records"
-ON public.payment_records
-FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM orders o
-    JOIN customer_users cu ON cu.customer_id = o.customer_id
-    WHERE o.id = payment_records.order_id
-    AND cu.user_id = auth.uid()
+-- 1. Upgrade existing user to super_admin
+UPDATE public.user_roles 
+SET role = 'super_admin', updated_at = now()
+WHERE user_id = '7fca904d-7b99-45ae-8f40-b710dc149cf2'
+AND role = 'admin';
+
+-- 2. Ensure no duplicate roles (insert if not exists via upgrade)
+INSERT INTO public.user_roles (user_id, role)
+VALUES ('7fca904d-7b99-45ae-8f40-b710dc149cf2', 'super_admin')
+ON CONFLICT (user_id, role) DO NOTHING;
+
+-- 3. Update auto-trigger to use new super admin email
+CREATE OR REPLACE FUNCTION public.assign_super_admin_role()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NEW.email = 'info@trustlinkcompany.com' THEN
+    INSERT INTO public.user_roles (user_id, role)
+    VALUES (NEW.id, 'super_admin')
+    ON CONFLICT (user_id, role) DO NOTHING;
+    
+    PERFORM public.log_security_event(
+      'super_admin_role_assigned',
+      NEW.id,
+      jsonb_build_object(
+        'email', NEW.email,
+        'method', 'auto_trigger',
+        'timestamp', extract(epoch from now())
+      ),
+      NULL, NULL, 'high'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- 4. Log the promotion in audit trail
+INSERT INTO public.audit_logs (
+  user_id, event_type, action, severity, event_data
+) VALUES (
+  '7fca904d-7b99-45ae-8f40-b710dc149cf2',
+  'role_changed',
+  'Promoted to super_admin',
+  'high',
+  jsonb_build_object(
+    'email', 'info@trustlinkcompany.com',
+    'previous_role', 'admin',
+    'new_role', 'super_admin',
+    'promoted_at', now()
   )
 );
 ```
 
-This policy:
-- Uses existing `customer_users` link table
-- Joins through `orders` to verify ownership
-- Only grants SELECT (read-only)
-- Does not expose admin-only fields (those are still in the row, but customers can filter what they need)
-
 ---
 
-### Phase 2: Secure Storage Policy for Payment Proofs
+### Phase 2: Server-Side RPC Guards for Destructive Actions
 
-The current `Allow authenticated select from payment-proofs` is too permissive. Update to check ownership.
+Create secure RPC functions that enforce super admin access. These wrap existing functionality with proper authorization.
 
-**SQL Migration:**
 ```sql
--- Drop overly permissive policy
-DROP POLICY IF EXISTS "Allow authenticated select from payment-proofs" ON storage.objects;
+-- Super admin guard for regenerating invoice PDFs
+CREATE OR REPLACE FUNCTION public.regenerate_invoice_pdf_secure(p_invoice_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT is_super_admin(auth.uid()) THEN
+    RAISE EXCEPTION 'Super admin privileges required';
+  END IF;
+  
+  -- Log the action
+  PERFORM log_security_event(
+    'invoice_pdf_regenerated',
+    auth.uid(),
+    jsonb_build_object('invoice_id', p_invoice_id),
+    NULL, NULL, 'high'
+  );
+  
+  RETURN jsonb_build_object('success', true, 'invoice_id', p_invoice_id);
+END;
+$$;
 
--- Create customer-scoped read policy
-CREATE POLICY "Customers can view their own payment proofs"
-ON storage.objects
-FOR SELECT
-TO authenticated
-USING (
-  bucket_id = 'payment-proofs' AND
-  (
-    -- Admin access
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_roles.user_id = auth.uid()
-      AND user_roles.role = 'admin'
-    )
-    OR
-    -- Customer access: file path includes their customer_id
-    EXISTS (
-      SELECT 1 FROM customer_users cu
-      WHERE cu.user_id = auth.uid()
-      AND (storage.foldername(name))[1] = cu.customer_id::text
-    )
-  )
-);
+-- Super admin guard for role changes to 'admin'
+CREATE OR REPLACE FUNCTION public.change_user_role_secure(
+  p_target_user_id uuid,
+  p_new_role text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_current_role text;
+  v_caller_id uuid := auth.uid();
+BEGIN
+  -- Get target user's current role
+  SELECT role::text INTO v_current_role
+  FROM public.user_roles
+  WHERE user_id = p_target_user_id
+  ORDER BY created_at DESC
+  LIMIT 1;
+  
+  -- Prevent modification of super_admin
+  IF v_current_role = 'super_admin' THEN
+    RAISE EXCEPTION 'Cannot modify super admin role';
+  END IF;
+  
+  -- Only super_admin can assign/remove admin role
+  IF (p_new_role = 'admin' OR v_current_role = 'admin') 
+     AND NOT is_super_admin(v_caller_id) THEN
+    RAISE EXCEPTION 'Only super admin can assign or remove admin role';
+  END IF;
+  
+  -- Prevent self-demotion for super_admin
+  IF p_target_user_id = v_caller_id AND is_super_admin(v_caller_id) THEN
+    RAISE EXCEPTION 'Super admin cannot modify their own role';
+  END IF;
+  
+  -- Perform the role change
+  DELETE FROM public.user_roles WHERE user_id = p_target_user_id;
+  INSERT INTO public.user_roles (user_id, role) VALUES (p_target_user_id, p_new_role::app_role);
+  
+  -- Log the action
+  PERFORM log_security_event(
+    'role_changed',
+    v_caller_id,
+    jsonb_build_object(
+      'target_user_id', p_target_user_id,
+      'old_role', v_current_role,
+      'new_role', p_new_role
+    ),
+    NULL, NULL, 'high'
+  );
+  
+  RETURN jsonb_build_object(
+    'success', true,
+    'old_role', v_current_role,
+    'new_role', p_new_role
+  );
+END;
+$$;
 ```
-
-Note: Files are stored as `{customer_id}/{order_number}-{timestamp}.{ext}` so we validate the folder matches the customer.
 
 ---
 
-### Phase 3: Create PaymentSummaryCard Component
+### Phase 3: Add Super Admin Tab to Settings
 
-**New File: `src/components/customer/PaymentSummaryCard.tsx`**
+Add a new tab visible only to super admins, placed inside the existing Settings page structure.
 
-A read-only card showing payment history for an order.
+**Modify `src/pages/Settings.tsx`:**
+
+1. Add `hasSuperAdminAccess` to the destructured hook values
+2. Add a new tab configuration for Super Admin
+3. Add the tab trigger and content
 
 ```typescript
-interface PaymentSummaryCardProps {
-  orderId: string;
-  orderCurrency: string;
-  totalAmount: number;
-}
-```
+// Add to imports
+import { SuperAdminTab } from '@/components/settings/SuperAdminTab';
 
-**Features:**
-- Lists all payment entries (deposit, balance, etc.)
-- Shows verification status with colored chips:
-  - Green: Verified
-  - Yellow: Pending Verification
-  - Red: Rejected (if applicable)
-- "View Proof" button opens proof in modal/new tab
-- Displays total paid vs balance remaining
-- Empty state for no payments
+// Update hook destructuring
+const { hasAdminAccess, hasSuperAdminAccess, loading: roleLoading } = useRoleAuth();
 
-**UI Layout:**
-```text
-+-------------------------------------------+
-| Payments                                  |
-| Track your payments and verification      |
-+-------------------------------------------+
-| Deposit                    GHS 2,000.00   |
-| [Verified] Jan 29, 2026    [View Proof]   |
-+-------------------------------------------+
-| Balance                    GHS 1,500.00   |
-| [Pending] Jan 30, 2026     [View Proof]   |
-+-------------------------------------------+
-| Total Paid: GHS 3,500.00                  |
-| Balance: GHS 0.00                         |
-+-------------------------------------------+
+// Add to tab configuration (after adminTabs)
+const superAdminTabs = hasSuperAdminAccess ? [
+  { value: "super-admin", label: "Super Admin", icon: <Crown className="h-4 w-4" /> },
+] : [];
+
+// Update allTabs
+const allTabs = [
+  ...(hasSuperAdminAccess ? superAdminTabs : []),
+  ...(hasAdminAccess ? adminTabs : []),
+  ...generalTabs,
+  ...securityTabs,
+];
+
+// Add TabsContent for Super Admin
+{hasSuperAdminAccess && (
+  <TabsContent value="super-admin" className="space-y-6">
+    <SuperAdminTab />
+  </TabsContent>
+)}
 ```
 
 ---
 
-### Phase 4: Create PaymentProofViewerDialog Component
+### Phase 4: Create SuperAdminTab Component
 
-**New File: `src/components/customer/PaymentProofViewerDialog.tsx`**
+**New File: `src/components/settings/SuperAdminTab.tsx`**
 
-Secure modal for viewing payment proof images.
+A focused tab containing:
+- Role Management Card (view admins, promote/demote with restrictions)
+- System Tools Card (PDF regeneration, cache clear)
+- Audit Export (full history download)
 
-**Features:**
-- Fetches fresh signed URL on open (5-10 min expiry)
-- Displays image in zoomable viewer
-- PDF opens in new tab
-- Download disabled for customers (view-only)
-- Loading state while fetching URL
-- Error handling for expired/invalid URLs
-
-**Implementation:**
-```typescript
-interface PaymentProofViewerDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  proofUrl: string | null;
-  paymentType: string;
-  paymentDate: string;
-}
-```
+Features:
+- Uses `hasSuperAdminAccess` guard internally for defense-in-depth
+- Calls secure RPC functions instead of direct table operations
+- All actions logged with confirmation dialogs
 
 ---
 
-### Phase 5: Integrate PaymentSummaryCard into Customer Order Views
+### Phase 5: Update User Management Restrictions
 
-**Modify: `src/components/customer/CustomerOrders.tsx`**
-
-Add PaymentSummaryCard after order items section for orders with payments.
-
-Location in component:
-1. After the "Order Items" section
-2. Before the "Payment Instructions" section
-3. Only show if order has verified or pending payments
-
-**Modify: `src/components/customer/mobile/MobileOrderDetailDialog.tsx`**
-
-Add compact version of PaymentSummaryCard in the mobile dialog.
-
----
-
-### Phase 6: Add Signed URL Helper Hook
-
-**New File: `src/hooks/usePaymentProofUrl.ts`**
-
-Hook to fetch fresh signed URLs for payment proofs.
+**Modify `src/components/settings/UserManagementTab.tsx`:**
 
 ```typescript
-export const usePaymentProofUrl = (proofUrl: string | null) => {
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const { hasAdminAccess, hasSuperAdminAccess } = useRoleAuth();
 
-  const refreshUrl = async () => {
-    if (!proofUrl) return;
-    // Extract path from URL and generate new signed URL
-    // Signed URLs expire after 10 minutes
-  };
+// Role options based on caller's access level
+const availableRoles = hasSuperAdminAccess 
+  ? ['admin', 'sales_rep', 'user'] as const
+  : ['sales_rep', 'user'] as const;
 
-  return { signedUrl, loading, error, refreshUrl };
+// Determine if a user row can be edited
+const canEditUser = (userRole: string) => {
+  if (userRole === 'super_admin') return false;
+  if (userRole === 'admin' && !hasSuperAdminAccess) return false;
+  return true;
 };
+
+// Update handleRoleChange to use secure RPC
+const handleRoleChange = async (userId: string, newRole: string) => {
+  const { data, error } = await supabase.rpc('change_user_role_secure', {
+    p_target_user_id: userId,
+    p_new_role: newRole
+  });
+  // Handle response...
+};
+```
+
+**Modify `src/components/settings/UserTable.tsx`:**
+
+- Accept `availableRoles` and `canEditUser` as props
+- Filter dropdown options based on `availableRoles`
+- Disable actions for rows where `canEditUser` returns false
+- Show visual indicator (lock icon) for protected users
+
+---
+
+### Phase 6: Update Diagnostics Page
+
+**Modify `src/pages/admin/Diagnostics.tsx`:**
+
+```typescript
+const { hasSuperAdminAccess } = useRoleAuth();
+
+// Add super admin-only diagnostic checks
+const superAdminChecks: DiagnosticCheck[] = hasSuperAdminAccess ? [
+  {
+    name: "Storage Write Test",
+    description: "Test storage bucket write permissions",
+    run: async () => { /* destructive test */ }
+  },
+  {
+    name: "Edge Function Deployment",
+    description: "Verify edge functions are deployed",
+    run: async () => { /* check deployment */ }
+  }
+] : [];
+
+// Add repair actions section (super admin only)
+{hasSuperAdminAccess && (
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex items-center gap-2">
+        <Wrench className="h-5 w-5" />
+        Repair Actions
+      </CardTitle>
+      <CardDescription>
+        System repair tools. Use with caution.
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      {/* Repair orphaned records, clear stale sessions, etc. */}
+    </CardContent>
+  </Card>
+)}
 ```
 
 ---
@@ -231,85 +324,64 @@ export const usePaymentProofUrl = (proofUrl: string | null) => {
 
 | File | Description |
 |------|-------------|
-| `src/components/customer/PaymentSummaryCard.tsx` | Payment history card component |
-| `src/components/customer/PaymentProofViewerDialog.tsx` | Secure proof viewer modal |
-| `src/hooks/usePaymentProofUrl.ts` | Signed URL helper hook |
+| `src/components/settings/SuperAdminTab.tsx` | Container for super admin tools |
+| `src/components/settings/RoleManagementCard.tsx` | Admin/user role management UI |
+| `src/components/settings/SystemToolsCard.tsx` | PDF regen, cache clear, maintenance tools |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/customer/CustomerOrders.tsx` | Integrate PaymentSummaryCard |
-| `src/components/customer/mobile/MobileOrderDetailDialog.tsx` | Add compact payment summary |
+| `src/pages/Settings.tsx` | Add Super Admin tab, update role checks |
+| `src/components/settings/UserManagementTab.tsx` | Add role restrictions, use secure RPC |
+| `src/components/settings/UserTable.tsx` | Filter role options, disable protected rows |
+| `src/pages/admin/Diagnostics.tsx` | Add super admin checks and repair actions |
 
 ## Database Changes
 
-| Change | Description |
-|--------|-------------|
-| RLS Policy on `payment_records` | Allow customers to SELECT their own payment records |
-| Storage Policy on `payment-proofs` | Restrict to customer-owned files only |
+| Change | Type | Description |
+|--------|------|-------------|
+| Promote `info@trustlinkcompany.com` | UPDATE | Set role to `super_admin` |
+| Update trigger function | ALTER | Change email to `info@trustlinkcompany.com` |
+| `change_user_role_secure()` | CREATE | RPC with super admin guard |
+| `regenerate_invoice_pdf_secure()` | CREATE | RPC with super admin guard |
 
 ---
 
-## Security Guarantees
+## Security Matrix
 
-1. **Customer Isolation**: RLS ensures customers only see their own payment records
-2. **Read-Only Access**: No UPDATE/DELETE policies for customers on payment_records
-3. **Signed URLs**: Short-lived (10 min) URLs prevent unauthorized sharing
-4. **Admin Fields Hidden**: UI only displays customer-safe fields (amount, type, date, status)
-5. **No State Mutation**: Payment summary is purely read-only display
-6. **Storage Scoped**: Files validated by customer_id folder structure
+| Feature | User | Sales Rep | Admin | Super Admin |
+|---------|------|-----------|-------|-------------|
+| View dashboard | No | No | Yes | Yes |
+| Manage orders | No | View | Yes | Yes |
+| View users | No | No | Yes | Yes |
+| Assign `user`/`sales_rep` | No | No | Yes | Yes |
+| Assign/remove `admin` | No | No | **No** | **Yes** |
+| See Super Admin tab | No | No | No | Yes |
+| PDF regeneration | No | No | No | Yes |
+| Diagnostics repair | No | No | No | Yes |
+| Full audit export | No | No | 30 days | Unlimited |
 
 ---
 
-## Fields Exposed to Customers
+## Safety Guarantees
 
-| Field | Shown | Hidden |
-|-------|-------|--------|
-| `amount` | Yes | - |
-| `payment_type` | Yes | - |
-| `payment_date` | Yes | - |
-| `proof_url` | Yes (via signed URL) | - |
-| `verified_at` | Yes (as status) | - |
-| `notes` | No | Hidden from customers |
-| `verified_by` | No | Hidden from customers |
-| `recorded_by` | No | Hidden from customers |
+1. **Existing Admin Access Unchanged**: All current admin features remain accessible to admins
+2. **Additive Only**: Super admin features are additions, not replacements
+3. **Server-Side Enforcement**: All destructive actions validated via RPC guards
+4. **Self-Protection**: Super admin cannot remove their own role
+5. **Last Admin Protection**: System prevents removing the last super admin
+6. **Comprehensive Audit Trail**: Every super admin action logged with high severity
 
 ---
 
 ## Testing Checklist
 
-1. **RLS Verification**
-   - [ ] Customer can see payment records for their orders only
-   - [ ] Customer cannot see other customers' payment records
-   - [ ] Admin can still see all payment records
-
-2. **Storage Access**
-   - [ ] Customer can view their own payment proof files
-   - [ ] Customer cannot view other customers' proof files
-   - [ ] Admin can view all proof files
-
-3. **UI Functionality**
-   - [ ] Payment summary shows on order with payments
-   - [ ] Empty state shows when no payments
-   - [ ] Proof viewer opens correctly
-   - [ ] Signed URLs work and expire properly
-
-4. **Mobile**
-   - [ ] Mobile dialog shows payment summary
-   - [ ] Proof viewer works on mobile
-
-5. **Admin Workflows**
-   - [ ] Verify payment still works
-   - [ ] Reject payment still works
-   - [ ] Admin can still view all proofs
-
----
-
-## Non-Goals (Explicitly Out of Scope)
-
-- Customers cannot edit or delete payment records
-- Customers cannot re-upload over existing proofs
-- Customers cannot see admin notes or internal flags
-- No changes to payment verification workflow
-- No changes to payment_status derivation logic
+- [ ] `info@trustlinkcompany.com` has `super_admin` role after migration
+- [ ] Existing admin users retain `admin` role and full admin access
+- [ ] Admins cannot see the Super Admin tab
+- [ ] Admins cannot assign/remove admin roles (RPC rejects)
+- [ ] Super Admin can see and use all elevated features
+- [ ] All super admin actions are logged in audit_logs
+- [ ] Direct API calls to role change without super admin fail
+- [ ] No regression in existing admin workflows
