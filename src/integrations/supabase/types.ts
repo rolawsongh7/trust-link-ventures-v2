@@ -3156,6 +3156,33 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           color: string | null
@@ -3871,6 +3898,7 @@ export type Database = {
         }
         Returns: string
       }
+      detect_orphaned_data: { Args: never; Returns: Json }
       detect_suspicious_activity: {
         Args: { p_time_window?: number; p_user_id: string }
         Returns: {
@@ -3946,6 +3974,20 @@ export type Database = {
           thread_position: number
         }[]
       }
+      get_diagnostics_history: { Args: { p_limit?: number }; Returns: Json }
+      get_extended_audit_logs: {
+        Args: {
+          p_end_date?: string
+          p_event_type?: string
+          p_limit?: number
+          p_offset?: number
+          p_severity?: string
+          p_start_date?: string
+          p_user_role?: string
+        }
+        Returns: Json
+      }
+      get_maintenance_mode: { Args: never; Returns: Json }
       get_order_by_tracking_token: {
         Args: { p_token: string }
         Returns: {
@@ -3993,7 +4035,19 @@ export type Database = {
         Args: { keep_id: string; remove_id: string }
         Returns: undefined
       }
+      regenerate_invoice_pdfs: {
+        Args: {
+          p_end_date?: string
+          p_invoice_ids?: string[]
+          p_start_date?: string
+        }
+        Returns: Json
+      }
       repair_customer_user_mappings: { Args: never; Returns: number }
+      toggle_maintenance_mode: {
+        Args: { p_enabled: boolean; p_message?: string }
+        Returns: Json
+      }
       user_can_access_customer: {
         Args: { p_customer_id: string; p_user_id: string }
         Returns: boolean
