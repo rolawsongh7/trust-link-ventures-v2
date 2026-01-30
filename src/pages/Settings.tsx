@@ -25,9 +25,10 @@ import { NotificationPreferencesTab } from '@/components/settings/NotificationPr
 import { UserManagementTab } from '@/components/settings/UserManagementTab';
 import { Settings as SettingsIcon, Database, Bell, Users, Shield, FileText, Network, Activity, ShieldAlert, Link2, Crown, Menu } from 'lucide-react';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
+import { SuperAdminTab } from '@/components/settings/SuperAdminTab';
 
 const Settings = () => {
-  const { hasAdminAccess, loading: roleLoading } = useRoleAuth();
+  const { hasAdminAccess, hasSuperAdminAccess, loading: roleLoading } = useRoleAuth();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(() => {
     // Check if navigation state contains a tab
@@ -47,6 +48,10 @@ const Settings = () => {
   }, [location.state]);
 
   // Tab configuration
+  const superAdminTabs = hasSuperAdminAccess ? [
+    { value: "super-admin", label: "Super Admin", icon: <Crown className="h-4 w-4" /> },
+  ] : [];
+
   const adminTabs = [
     { value: "admin-security", label: "Admin Security", icon: <ShieldAlert className="h-4 w-4" /> },
     { value: "quote-linking", label: "Quote Linking", icon: <Link2 className="h-4 w-4" /> },
@@ -67,6 +72,7 @@ const Settings = () => {
   ];
 
   const allTabs = [
+    ...superAdminTabs,
     ...(hasAdminAccess ? adminTabs : []),
     ...generalTabs,
     ...securityTabs,
@@ -122,9 +128,15 @@ const Settings = () => {
                 
                 {/* Quick stats badges */}
                 <div className="flex flex-wrap gap-2">
-                  {hasAdminAccess && (
-                    <Badge variant="outline" className="border-primary/50 text-primary gap-1">
+                  {hasSuperAdminAccess && (
+                    <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 gap-1 border-yellow-500/50">
                       <Crown className="h-3 w-3" />
+                      Super Admin
+                    </Badge>
+                  )}
+                  {hasAdminAccess && !hasSuperAdminAccess && (
+                    <Badge variant="outline" className="border-primary/50 text-primary gap-1">
+                      <Shield className="h-3 w-3" />
                       Admin Access
                     </Badge>
                   )}
@@ -162,6 +174,30 @@ const Settings = () => {
                 </SheetHeader>
                 <ScrollArea className="h-[calc(100vh-8rem)] mt-6">
                   <div className="space-y-4 py-4">
+                    {hasSuperAdminAccess && (
+                      <>
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-sm text-muted-foreground px-2">Super Admin</h4>
+                          <nav className="space-y-1">
+                            {superAdminTabs.map(tab => (
+                              <Button
+                                key={tab.value}
+                                variant={activeTab === tab.value ? "secondary" : "ghost"}
+                                className="w-full justify-start gap-2"
+                                onClick={() => {
+                                  setActiveTab(tab.value);
+                                  setMobileNavOpen(false);
+                                }}
+                              >
+                                {tab.icon}
+                                {tab.label}
+                              </Button>
+                            ))}
+                          </nav>
+                        </div>
+                        <Separator />
+                      </>
+                    )}
                     {hasAdminAccess && (
                       <>
                         <div className="space-y-2">
@@ -233,7 +269,13 @@ const Settings = () => {
 
           {/* Desktop Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className={`hidden lg:inline-flex w-full lg:w-auto ${hasAdminAccess ? "grid-cols-10" : "grid-cols-8"}`}>
+            <TabsList className={`hidden lg:inline-flex w-full lg:w-auto ${hasSuperAdminAccess ? "grid-cols-11" : hasAdminAccess ? "grid-cols-10" : "grid-cols-8"}`}>
+              {hasSuperAdminAccess && (
+                <TabsTrigger value="super-admin" className="flex items-center gap-2">
+                  <Crown className="h-4 w-4" />
+                  <span className="hidden xl:inline">Super Admin</span>
+                </TabsTrigger>
+              )}
               {hasAdminAccess && (
                 <>
                   <TabsTrigger value="admin-security" className="flex items-center gap-2">
@@ -279,6 +321,13 @@ const Settings = () => {
                 <span className="hidden xl:inline">Notifications</span>
               </TabsTrigger>
             </TabsList>
+
+            {/* Super Admin Tab - Only for Super Admins */}
+            {hasSuperAdminAccess && (
+              <TabsContent value="super-admin" className="space-y-6 animate-in fade-in-0 slide-in-from-right-5 duration-300">
+                <SuperAdminTab />
+              </TabsContent>
+            )}
 
             {/* Admin Security Dashboard Tab - Only for Admins */}
             {hasAdminAccess && (

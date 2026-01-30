@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MoreVertical, Shield, UserCog, User as UserIcon } from 'lucide-react';
+import { MoreVertical, Shield, UserCog, User as UserIcon, Lock } from 'lucide-react';
 import { TimeAgo } from '@/components/shared/TimeAgo';
 
 interface User {
@@ -33,15 +33,18 @@ interface User {
 
 interface UserTableProps {
   users: User[];
-  onRoleChange: (userId: string, newRole: 'admin' | 'moderator' | 'user') => void;
+  onRoleChange: (userId: string, newRole: 'admin' | 'sales_rep' | 'user') => void;
   onRefresh: () => void;
+  availableRoles?: ('admin' | 'sales_rep' | 'user')[];
+  canEditUser?: (userRole: string) => boolean;
 }
 
 const getRoleBadge = (role: string) => {
-  const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: any; color: string }> = {
-    admin: { variant: 'destructive', icon: Shield, color: 'text-red-500' },
-    moderator: { variant: 'default', icon: UserCog, color: 'text-green-500' },
-    user: { variant: 'outline', icon: UserIcon, color: 'text-blue-500' },
+  const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: any; label: string }> = {
+    super_admin: { variant: 'default', icon: Shield, label: 'Super Admin' },
+    admin: { variant: 'destructive', icon: Shield, label: 'Admin' },
+    sales_rep: { variant: 'default', icon: UserCog, label: 'Sales Rep' },
+    user: { variant: 'outline', icon: UserIcon, label: 'User' },
   };
 
   const config = variants[role] || variants.user;
@@ -50,7 +53,7 @@ const getRoleBadge = (role: string) => {
   return (
     <Badge variant={config.variant} className="flex items-center gap-1 w-fit">
       <Icon className="h-3 w-3" />
-      {role.replace('_', ' ')}
+      {config.label}
     </Badge>
   );
 };
@@ -67,7 +70,13 @@ const getInitials = (name: string | null, email: string) => {
   return email.slice(0, 2).toUpperCase();
 };
 
-export const UserTable = ({ users, onRoleChange, onRefresh }: UserTableProps) => {
+export const UserTable = ({ 
+  users, 
+  onRoleChange, 
+  onRefresh,
+  availableRoles = ['sales_rep', 'user'],
+  canEditUser = () => true 
+}: UserTableProps) => {
   if (users.length === 0) {
     return (
       <div className="text-center py-12">
@@ -117,29 +126,41 @@ export const UserTable = ({ users, onRoleChange, onRefresh }: UserTableProps) =>
                 <TimeAgo timestamp={user.created_at} />
               </TableCell>
               <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Change Role</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => onRoleChange(user.id, 'admin')}>
-                      <Shield className="mr-2 h-4 w-4" />
-                      Admin
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onRoleChange(user.id, 'moderator')}>
-                      <UserCog className="mr-2 h-4 w-4" />
-                      Moderator
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onRoleChange(user.id, 'user')}>
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      User
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {canEditUser(user.role) ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {availableRoles.includes('admin') && (
+                        <DropdownMenuItem onClick={() => onRoleChange(user.id, 'admin')}>
+                          <Shield className="mr-2 h-4 w-4" />
+                          Admin
+                        </DropdownMenuItem>
+                      )}
+                      {availableRoles.includes('sales_rep') && (
+                        <DropdownMenuItem onClick={() => onRoleChange(user.id, 'sales_rep')}>
+                          <UserCog className="mr-2 h-4 w-4" />
+                          Sales Rep
+                        </DropdownMenuItem>
+                      )}
+                      {availableRoles.includes('user') && (
+                        <DropdownMenuItem onClick={() => onRoleChange(user.id, 'user')}>
+                          <UserIcon className="mr-2 h-4 w-4" />
+                          User
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Button variant="ghost" size="icon" disabled className="opacity-50">
+                    <Lock className="h-4 w-4" />
+                  </Button>
+                )}
               </TableCell>
             </motion.tr>
           ))}

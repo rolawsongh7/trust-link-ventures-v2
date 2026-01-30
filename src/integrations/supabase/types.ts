@@ -3807,6 +3807,10 @@ export type Database = {
       }
     }
     Functions: {
+      change_user_role_secure: {
+        Args: { p_new_role: string; p_target_user_id: string }
+        Returns: Json
+      }
       check_communication_rate_limit: {
         Args: { p_ip_address: unknown }
         Returns: boolean
