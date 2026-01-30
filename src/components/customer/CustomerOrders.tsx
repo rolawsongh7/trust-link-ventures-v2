@@ -24,6 +24,7 @@ import { OrderStatusBadge } from './OrderStatusBadge';
 import { getOrderStatusConfig, orderStatusFilterOptions } from '@/utils/orderStatusConfig';
 import { OrderIssueReportDialog } from './OrderIssueReportDialog';
 import { OrdersEmptyState } from './empty-states';
+import { PaymentSummaryCard } from './PaymentSummaryCard';
 
 
 // Order interface matching database schema
@@ -846,6 +847,17 @@ export const CustomerOrders: React.FC = () => {
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Payment Summary - Read-only view of payment history */}
+                  {['payment_received', 'processing', 'ready_to_ship', 'shipped', 'delivered'].includes(order.status) && (
+                    <div className="mb-4">
+                      <PaymentSummaryCard
+                        orderId={order.id}
+                        orderCurrency={order.currency}
+                        totalAmount={order.total_amount}
+                      />
                     </div>
                   )}
 

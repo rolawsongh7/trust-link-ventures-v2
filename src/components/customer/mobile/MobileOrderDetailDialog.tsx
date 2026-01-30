@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Package, MapPin, Calendar, DollarSign, FileText, RotateCcw, Truck, Upload, AlertTriangle } from 'lucide-react';
 import { ProofOfDeliverySection } from '../ProofOfDeliverySection';
+import { PaymentSummaryCard } from '../PaymentSummaryCard';
 
 interface Order {
   id: string;
@@ -195,6 +196,18 @@ export const MobileOrderDetailDialog = ({
                   <span className="text-muted-foreground">Tracking:</span>
                   <span className="font-mono font-medium">{order.tracking_number}</span>
                 </div>
+              </div>
+            )}
+
+            {/* Payment Summary - Compact view for mobile */}
+            {['payment_received', 'processing', 'ready_to_ship', 'shipped', 'delivered'].includes(order.status) && (
+              <div className="pt-2 border-t">
+                <PaymentSummaryCard
+                  orderId={order.id}
+                  orderCurrency={order.currency}
+                  totalAmount={order.total_amount}
+                  compact
+                />
               </div>
             )}
 
