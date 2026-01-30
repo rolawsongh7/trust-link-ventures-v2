@@ -29,12 +29,24 @@ interface UserData {
 }
 
 export const UserManagementTab = () => {
-  const { hasAdminAccess } = useRoleAuth();
+  const { hasAdminAccess, hasSuperAdminAccess } = useRoleAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
+
+  // Role options based on caller's access level
+  const availableRoles: ('admin' | 'sales_rep' | 'user')[] = hasSuperAdminAccess 
+    ? ['admin', 'sales_rep', 'user']
+    : ['sales_rep', 'user'];
+
+  // Determine if a user row can be edited
+  const canEditUser = (userRole: string) => {
+    if (userRole === 'super_admin') return false;
+    if (userRole === 'admin' && !hasSuperAdminAccess) return false;
+    return true;
+  };
 
   useEffect(() => {
     if (hasAdminAccess) {
@@ -85,18 +97,13 @@ export const UserManagementTab = () => {
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: 'admin' | 'moderator' | 'user') => {
+  const handleRoleChange = async (userId: string, newRole: 'admin' | 'sales_rep' | 'user') => {
     try {
-      // Delete existing role
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId);
-
-      // Insert new role
-      const { error } = await supabase
-        .from('user_roles')
-        .insert([{ user_id: userId, role: newRole }]);
+      // Use secure RPC function instead of direct table operations
+      const { data, error } = await supabase.rpc('change_user_role_secure', {
+        p_target_user_id: userId,
+        p_new_role: newRole
+      });
 
       if (error) throw error;
 
@@ -106,11 +113,11 @@ export const UserManagementTab = () => {
       });
 
       loadUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating role:', error);
       toast({
         title: "Error",
-        description: "Failed to update user role. Please try again.",
+        description: error.message || "Failed to update user role. Please try again.",
         variant: "destructive",
       });
     }
@@ -317,6 +324,8 @@ export const UserManagementTab = () => {
                 users={filteredUsers}
                 onRoleChange={handleRoleChange}
                 onRefresh={loadUsers}
+                availableRoles={availableRoles}
+                canEditUser={canEditUser}
               />
             )}
           </CardContent>
