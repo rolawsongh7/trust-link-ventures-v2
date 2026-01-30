@@ -1,381 +1,433 @@
 
-# Phase 1.5 Verification Test Suite Plan
 
-## Overview
+# Phase 2 — Scale Readiness Implementation Plan
 
-This plan creates a deterministic test suite to verify the correctness of Phase 1.5 (Money Flows & Ops Stabilization) before proceeding to Phase 2.
+## Executive Summary
+
+Phase 1.5 (Money Flows & Ops Stabilization) is verified complete. Phase 2 prepares the system for scaling operations by introducing **staff ownership**, **safe bulk operations**, and **operator-grade dashboards** — without adding new features or changing permissions.
 
 ---
 
-## Prerequisites: Testing Infrastructure Setup
+## Current State Assessment
 
-The project does not currently have Vitest configured. We need to add testing infrastructure first.
+### Existing Infrastructure
+| Component | Status | Notes |
+|-----------|--------|-------|
+| `user_roles` table | Exists | Supports super_admin, admin, sales_rep, user |
+| `useRoleAuth` hook | Exists | Role checking via `check_user_role` RPC |
+| `audit_logs` table | Exists | Comprehensive event logging |
+| `BulkOrderActions` component | Exists | Status updates with preview + confirmation |
+| Order state machine | Hardened | Validated in Phase 1.5 |
+| RLS policies | Secure | Verified in Phase 1.5 |
 
-### New Files to Create
+### Gaps to Fill for Phase 2
+| Gap | Impact | Phase |
+|-----|--------|-------|
+| No `assigned_to` on orders, quotes, order_issues | Cannot track ownership | 2.1 |
+| Bulk actions limited to status updates only | Cannot assign or export in bulk | 2.2 |
+| No operational queue views | Staff need BI charts to work | 2.3 |
+| No SLA tracking | At-risk orders invisible | 2.3 |
+
+---
+
+## Phase 2.1 — Staff Ownership (Foundation)
+
+### 2.1.1 Database: Add Ownership Fields
+
+**Migration: Add `assigned_to` Columns**
+
+```sql
+-- Add assigned_to to orders (nullable, references profiles)
+ALTER TABLE public.orders 
+ADD COLUMN IF NOT EXISTS assigned_to uuid REFERENCES auth.users(id);
+
+-- Add assigned_to to quotes
+ALTER TABLE public.quotes 
+ADD COLUMN IF NOT EXISTS assigned_to uuid REFERENCES auth.users(id);
+
+-- Add assigned_to to order_issues
+ALTER TABLE public.order_issues 
+ADD COLUMN IF NOT EXISTS assigned_to uuid REFERENCES auth.users(id);
+
+-- Create indexes for filtering by assignee
+CREATE INDEX IF NOT EXISTS idx_orders_assigned_to ON public.orders(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_quotes_assigned_to ON public.quotes(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_order_issues_assigned_to ON public.order_issues(assigned_to);
+```
+
+**Key Design Decisions:**
+- Assignment is **informational only** — no permission changes
+- Nullable (unassigned is valid)
+- References `auth.users` for profile lookup
+
+### 2.1.2 UI: Assignment Components
+
+**New Files:**
+
 | File | Purpose |
 |------|---------|
-| `vitest.config.ts` | Vitest configuration with jsdom environment |
-| `src/test/setup.ts` | Test setup with matchMedia mock |
-| `src/test/testUtils.ts` | Shared test utilities and mocks |
+| `src/components/assignment/AssigneeSelector.tsx` | Dropdown to select staff member |
+| `src/components/assignment/AssigneeBadge.tsx` | Display current assignee with avatar |
+| `src/components/assignment/AssignmentFilters.tsx` | "Assigned to me" / "Unassigned" filters |
 
-### Package Updates
-Add to `devDependencies`:
-- `@testing-library/jest-dom: ^6.6.0`
-- `@testing-library/react: ^16.0.0`
-- `jsdom: ^20.0.3`
-- `vitest: ^3.2.4`
+**AssigneeSelector Component:**
+- Fetches admin/sales_rep users from `user_roles` + `profiles`
+- Dropdown with user avatars and names
+- Calls update API on selection
+- Logs to `audit_logs` on change
 
-### TypeScript Config Update
-Add `"vitest/globals"` to `tsconfig.app.json` types array.
+**AssigneeBadge Component:**
+- Shows avatar + name of assignee
+- Tooltip with full name and role
+- "Unassigned" state with different styling
 
----
+### 2.1.3 Integration Points
 
-## Test Suite Structure
+**Modified Files:**
 
-```text
-src/test/
-  setup.ts                          # Global test setup
-  testUtils.ts                      # Shared mocks and helpers
-  
-src/types/
-  payment.test.ts                   # A1: Payment type unit tests
-  
-src/utils/
-  orderStatusErrors.test.ts         # B1: Error parsing unit tests
-  
-src/test/integration/
-  paymentStateTrigger.test.ts       # A2: DB trigger integration tests
-  orderStateMachine.test.ts         # B2: Status transition tests
-  rlsPolicies.test.ts               # C1: RLS policy verification
-  
-supabase/functions/
-  notify-payment-proof-uploaded/
-    index.test.ts                   # D1: Notification accuracy tests
-  send-balance-payment-request/
-    index.test.ts                   # D2: Balance request tests
-```
+| File | Changes |
+|------|---------|
+| `src/components/orders/OrdersDataTable.tsx` | Add "Assigned" column, AssigneeBadge |
+| `src/components/orders/UnifiedOrdersManagement.tsx` | Add assignment filters to tabs |
+| `src/pages/admin/OrderIssues.tsx` | Add AssigneeBadge, assignment action |
+| `src/pages/QuotesPage.tsx` | Add AssigneeBadge to quote list |
 
----
-
-## A. Money Flow Tests (CRITICAL)
-
-### A1. Payment State Calculation (Unit Tests)
-
-**File:** `src/types/payment.test.ts`
-
-Test the canonical payment model utilities:
+### 2.1.4 Audit Logging for Assignments
 
 ```typescript
-describe('Payment Status Helpers', () => {
-  test('isUnpaid returns true only for unpaid status')
-  test('isPartiallyPaid returns true only for partially_paid status')
-  test('isFullyPaid returns true only for fully_paid status')
-  test('isOverpaid returns true only for overpaid status')
-  test('canShip returns true only for fully_paid or overpaid')
-  test('getPaymentStatusLabel returns correct labels')
-  test('getPaymentTypeLabel returns correct labels for all types')
-})
-```
-
-### A2. Payment Status Trigger (Integration Tests)
-
-**File:** `src/test/integration/paymentStateTrigger.test.ts`
-
-Verify database trigger calculates payment_status correctly:
-
-```typescript
-describe('update_order_payment_status trigger', () => {
-  test('No payments → unpaid, balance_remaining = total')
-  test('Partial payment → partially_paid, balance_remaining calculated')
-  test('Multiple partial payments → partially_paid, cumulative')
-  test('Full payment → fully_paid, balance_remaining = 0')
-  test('Overpayment → overpaid, negative balance_remaining')
-  test('Status cannot be manually overridden (trigger recalculates)')
-})
-```
-
-**Test Method:** Use Supabase client to create test orders and verify trigger behavior.
-
----
-
-## B. Order State Machine Tests
-
-### B1. Error Parsing (Unit Tests)
-
-**File:** `src/utils/orderStatusErrors.test.ts`
-
-Test the error parser and blocker reason utilities:
-
-```typescript
-describe('parseStatusTransitionError', () => {
-  test('Parses "Cannot start processing without verified payment"')
-  test('Parses "Cannot ship until fully paid" with balance extraction')
-  test('Parses "Cannot ship without delivery address"')
-  test('Parses "Invalid order status transition"')
-  test('Parses tracking/carrier requirement errors')
-  test('Returns default for unknown errors')
-})
-
-describe('getBlockerReason', () => {
-  test('Returns balance message for processing + partially_paid')
-  test('Returns address message for processing without delivery_address')
-  test('Returns "cannot proceed" for payment_received + not fully paid')
-  test('Returns "waiting for proof" for pending_payment + unpaid')
-  test('Returns null when no blockers')
-})
-
-describe('canProceedToShipping', () => {
-  test('Returns allowed=false without full payment')
-  test('Returns allowed=false without delivery address')
-  test('Returns allowed=true when both conditions met')
-  test('Returns multiple reasons when both missing')
-})
-```
-
-### B2. Status Transition Validation (Integration Tests)
-
-**File:** `src/test/integration/orderStateMachine.test.ts`
-
-Verify `validate_order_status_transition` trigger:
-
-```typescript
-describe('Order Status Transitions', () => {
-  describe('Valid Transitions', () => {
-    test('pending_payment → processing (with partial payment)')
-    test('payment_received → processing')
-    test('processing → ready_to_ship (with full payment + address)')
-    test('ready_to_ship → shipped (with carrier, tracking, ETA)')
-  })
-  
-  describe('Invalid Transitions - Payment Guards', () => {
-    test('BLOCKS pending_payment → processing without any payment')
-    test('BLOCKS ready_to_ship without full payment')
-    test('BLOCKS shipped without full payment')
-  })
-  
-  describe('Invalid Transitions - Address Guards', () => {
-    test('BLOCKS ready_to_ship without delivery address')
-    test('BLOCKS shipped without delivery address')
-  })
-  
-  describe('Invalid Transitions - Shipping Data Guards', () => {
-    test('BLOCKS shipped without carrier')
-    test('BLOCKS shipped without tracking_number')
-    test('BLOCKS shipped without estimated_delivery_date')
-  })
-  
-  describe('Error Message Clarity', () => {
-    test('Payment error includes balance amount')
-    test('Address error includes clear action hint')
-    test('Tracking error includes required fields')
-  })
-})
+// Log assignment changes
+await supabase.from('audit_logs').insert({
+  user_id: currentUser.id,
+  event_type: 'assignment_changed',
+  action: 'UPDATE',
+  resource_type: 'orders', // or 'quotes', 'order_issues'
+  resource_id: entityId,
+  event_data: {
+    previous_assignee: previousAssigneeId,
+    new_assignee: newAssigneeId,
+    entity_type: 'order',
+    entity_number: order.order_number,
+  },
+  severity: 'low',
+});
 ```
 
 ---
 
-## C. Admin ↔ Customer Parity Tests
+## Phase 2.2 — Safe Bulk Operations
 
-### C1. RLS Policy Verification
+### 2.2.1 Bulk Action Framework
 
-**File:** `src/test/integration/rlsPolicies.test.ts`
+**New File: `src/components/bulk/BulkActionDialog.tsx`**
 
-Test payment_records RLS policies:
-
-```typescript
-describe('payment_records RLS', () => {
-  describe('Customer Access', () => {
-    test('Customer can SELECT own payment records')
-    test('Customer CANNOT SELECT other customers payment records')
-    test('Customer CANNOT INSERT payment records')
-    test('Customer CANNOT UPDATE payment records')
-    test('Customer CANNOT DELETE payment records')
-  })
-  
-  describe('Admin Access', () => {
-    test('Admin can SELECT all payment records')
-    test('Admin can INSERT payment records')
-    test('Admin can UPDATE payment records')
-    test('Admin can DELETE payment records')
-  })
-})
-```
-
-### C2. Payment Summary Consistency
+A reusable framework for all bulk actions:
 
 ```typescript
-describe('Payment Summary Consistency', () => {
-  test('PaymentSummaryCard calculates totalPaid from verified records only')
-  test('balanceRemaining = max(0, totalAmount - totalPaid)')
-  test('Customer and Admin see identical payment totals')
-})
+interface BulkActionConfig {
+  title: string;
+  description: string;
+  entityType: 'orders' | 'quotes' | 'order_issues';
+  action: 'assign' | 'export' | 'remind';
+  validator?: (items: any[]) => { valid: any[]; invalid: { id: string; reason: string }[] };
+  executor: (items: any[], params: any) => Promise<BulkResult>;
+}
+
+interface BulkResult {
+  success: string[];
+  failed: { id: string; error: string }[];
+}
 ```
+
+**Flow:**
+1. Select records (checkbox)
+2. Click bulk action button
+3. Show preview dialog with count + identifiers
+4. Configure action (select assignee, etc.)
+5. Require explicit confirmation
+6. Execute with per-item error handling
+7. Log batch audit event
+8. Show success/failure summary
+
+### 2.2.2 Allowed Bulk Actions
+
+**Phase 2.2 Scope (Low-Risk Only):**
+
+| Action | Description | Files |
+|--------|-------------|-------|
+| Bulk Assign | Assign multiple orders/issues to staff | `BulkAssignDialog.tsx` |
+| Bulk Payment Reminder | Send reminder emails for unpaid orders | `BulkPaymentReminderDialog.tsx` |
+| Bulk Export | Export selected records to CSV/Excel | `BulkExportDialog.tsx` |
+
+**Explicitly NOT Included:**
+- Bulk delete
+- Bulk status override
+- Bulk financial mutations
+
+### 2.2.3 New Components
+
+| File | Purpose |
+|------|---------|
+| `src/components/bulk/BulkAssignDialog.tsx` | Assign orders/issues to staff |
+| `src/components/bulk/BulkPaymentReminderDialog.tsx` | Send payment reminders |
+| `src/components/bulk/BulkExportDialog.tsx` | Export with format selection |
+
+### 2.2.4 Integration
+
+**Modified Files:**
+
+| File | Changes |
+|------|---------|
+| `src/components/orders/UnifiedOrdersManagement.tsx` | Add bulk action toolbar |
+| `src/components/orders/OrdersDataTable.tsx` | Add row selection checkboxes |
+| `src/pages/admin/OrderIssues.tsx` | Add bulk assign to issues |
 
 ---
 
-## D. Notification Accuracy Tests
+## Phase 2.3 — Operational Dashboards
 
-### D1. Payment Proof Uploaded Notifications
+### 2.3.1 Ops Queue Views
 
-**File:** `supabase/functions/notify-payment-proof-uploaded/index.test.ts`
+**New File: `src/pages/admin/OperationsHub.tsx`**
+
+A queue-style dashboard with tabs:
+
+| Tab | Shows | Sort |
+|-----|-------|------|
+| Awaiting Payment | Orders in `pending_payment` status | Oldest first |
+| Awaiting Processing | Orders in `payment_received` status | Oldest first |
+| At Risk | Orders flagged for SLA/payment issues | Urgency score |
+| Unassigned | Orders/issues without assignee | Created date |
+| My Queue | Items assigned to current user | Due date |
+
+**Each Row Must Answer:**
+- What is wrong? (Status + blocker)
+- Why? (Reason tooltip)
+- Who owns it? (Assignee badge)
+- What's next? (Primary action button)
+
+### 2.3.2 SLA Indicators (Read-Only)
+
+**New Utility: `src/utils/slaHelpers.ts`**
 
 ```typescript
-describe('notify-payment-proof-uploaded', () => {
-  test('Deposit notification includes "Deposit" language')
-  test('Balance notification includes "Balance" language')
-  test('Notification includes correct order number')
-  test('Balance notification shows remaining amount')
-  test('Creates notifications for all admin users')
-})
+type SLAStatus = 'on_track' | 'at_risk' | 'breached';
+
+interface SLAResult {
+  status: SLAStatus;
+  reason: string;
+  daysRemaining?: number;
+}
+
+// SLA Rules (configurable later)
+const SLA_THRESHOLDS = {
+  payment_pending_max_days: 3,
+  processing_max_days: 2,
+  ready_to_ship_max_days: 1,
+  delivery_max_days: 7,
+};
+
+export function calculateSLA(order: Order): SLAResult {
+  // Calculate based on status and timestamps
+  // Returns on_track, at_risk, or breached
+}
 ```
 
-### D2. Balance Payment Request Notifications
+**SLA Badge Component:**
+- Green: On Track
+- Amber: At Risk (approaching threshold)
+- Red: Breached (past threshold)
 
-**File:** `supabase/functions/send-balance-payment-request/index.test.ts`
+**No Penalties. No Automation. Just Visibility.**
 
-```typescript
-describe('send-balance-payment-request', () => {
-  test('Email includes correct balance amount')
-  test('Email includes payment reference instructions')
-  test('Throws error if no balance remaining')
-  test('Creates user_notifications entry with balance metadata')
-  test('Logs to email_logs table')
-})
-```
+### 2.3.3 Staff Workload Visibility
+
+**New Component: `src/components/admin/WorkloadSummary.tsx`**
+
+Admin-only view showing:
+- Orders per staff member
+- Issues per staff member
+- Visual indicator: Overloaded / Balanced / Idle
+
+**Not a Performance Tracker** — purely operational load balancing.
+
+### 2.3.4 Navigation Updates
+
+**Modified File: `src/App.tsx` or routing config**
+
+Add new route: `/admin/operations` → `OperationsHub`
+
+**Modified File: Admin sidebar**
+
+Add "Operations" link with badge for at-risk count.
 
 ---
 
-## E. Audit Log Integrity Tests
+## Phase 2.4 — Scale Safety & Hardening
+
+### 2.4.1 Defensive Action Guards
+
+**New Utility: `src/utils/actionGuards.ts`**
 
 ```typescript
-describe('Payment Audit Logging', () => {
-  test('payment_verified event logged with amount_verified')
-  test('deposit_verified event includes balance_remaining')
-  test('full_payment_verified event includes total_paid')
-  test('Audit includes previous_status and new_status')
-  test('mismatch_override flag captured when applicable')
-})
+interface ActionGuard {
+  allowed: boolean;
+  reason?: string;
+  suggestedAction?: string;
+}
+
+// Check if user can perform action on entity
+export function canPerformAction(
+  user: User,
+  entity: Order | Issue,
+  action: 'assign' | 'update_status' | 'reassign'
+): ActionGuard {
+  // Owner check (unless admin)
+  if (entity.assigned_to && entity.assigned_to !== user.id) {
+    if (!isAdmin(user)) {
+      return {
+        allowed: false,
+        reason: 'This item is assigned to another team member',
+        suggestedAction: 'Contact admin to reassign',
+      };
+    }
+  }
+  return { allowed: true };
+}
 ```
 
----
+### 2.4.2 Rate Awareness (Soft Warnings)
 
-## F. Regression Tests
+**New Hook: `src/hooks/useBulkActionTracking.ts`**
+
+Track bulk action frequency per user per hour:
 
 ```typescript
-describe('Phase 1 Regression', () => {
-  test('Admin can query orders without RLS errors')
-  test('Customer can query own orders')
-  test('Quote conversion still creates orders')
-  test('Invoice generation still works')
-  test('Customer cannot see other customers data')
-})
+const THRESHOLDS = {
+  bulk_actions_per_hour: 10,
+  failed_actions_per_hour: 5,
+};
+
+// Warn (don't block) when approaching limits
+function trackBulkAction(action: string, count: number) {
+  // Store in localStorage or state
+  // Return warning if approaching threshold
+}
 ```
 
----
-
-## G. Failure Mode Tests
-
-```typescript
-describe('Failure Modes', () => {
-  test('Duplicate payment proof upload handled gracefully')
-  test('RPC failure during verification shows clear error')
-  test('Network failure during upload shows retry message')
-  test('Invalid file type rejected with clear message')
-})
-```
+**Displays warning toast, does not block.**
 
 ---
 
 ## Implementation Order
 
-1. **Setup Infrastructure** (vitest.config.ts, setup.ts, testUtils.ts, package.json)
-2. **Unit Tests First** (payment.test.ts, orderStatusErrors.test.ts)
-3. **Integration Tests** (paymentStateTrigger.test.ts, orderStateMachine.test.ts, rlsPolicies.test.ts)
-4. **Edge Function Tests** (notify-payment-proof-uploaded, send-balance-payment-request)
-5. **Run Full Suite** and generate verdict
-
----
-
-## Test Execution Plan
-
-### Run Order
-1. Unit tests (fast, no DB required)
-2. Integration tests (requires DB, uses test data with rollback)
-3. Edge function tests (uses Deno test runner)
-
-### Output Format
-
-```text
-╔════════════════════════════════════════════════════╗
-║         PHASE 1.5 VERIFICATION RESULTS             ║
-╠════════════════════════════════════════════════════╣
-║ Total Tests:     XX                                ║
-║ Passed:          XX  ✓                             ║
-║ Failed:          XX  ✗                             ║
-║ Skipped:         XX  ○                             ║
-╠════════════════════════════════════════════════════╣
-║ VERDICT:  ✅ READY FOR PHASE 2                     ║
-║      OR:  ❌ BLOCKED                               ║
-╚════════════════════════════════════════════════════╝
-```
-
-If blocked, include:
-- Test name
-- Expected vs actual
-- Recommended fix
-
----
-
-## Technical Notes
-
-### Test Data Strategy
-- Use dedicated test customer ID (will not affect production)
-- Use database transactions with rollback where possible
-- Mock external services (Resend email, PDF generation)
-
-### Mocking Strategy
-- Mock `supabase.functions.invoke` for edge function calls
-- Mock `Resend` in edge function tests
-- Use `vi.mock` for external dependencies
+| Phase | Scope | Dependencies |
+|-------|-------|--------------|
+| 2.1.1 | Database migration (assigned_to columns) | None |
+| 2.1.2 | AssigneeSelector, AssigneeBadge components | 2.1.1 |
+| 2.1.3 | Integrate into OrdersDataTable, OrderIssues | 2.1.2 |
+| 2.1.4 | Assignment audit logging | 2.1.3 |
+| 2.2.1 | BulkActionDialog framework | 2.1 complete |
+| 2.2.2 | BulkAssignDialog | 2.2.1 |
+| 2.2.3 | BulkPaymentReminderDialog, BulkExportDialog | 2.2.1 |
+| 2.3.1 | OperationsHub page | 2.1 + 2.2 complete |
+| 2.3.2 | SLA helpers and badges | 2.3.1 |
+| 2.3.3 | WorkloadSummary component | 2.3.1 |
+| 2.4.1 | Action guards utility | 2.3 complete |
+| 2.4.2 | Bulk action tracking hook | 2.4.1 |
 
 ---
 
 ## Files Summary
 
-### New Files (8)
-| File | Lines | Purpose |
-|------|-------|---------|
-| `vitest.config.ts` | ~20 | Vitest configuration |
-| `src/test/setup.ts` | ~15 | Global test setup |
-| `src/test/testUtils.ts` | ~50 | Shared mocks and helpers |
-| `src/types/payment.test.ts` | ~80 | Payment utility unit tests |
-| `src/utils/orderStatusErrors.test.ts` | ~120 | Error parser unit tests |
-| `src/test/integration/paymentStateTrigger.test.ts` | ~100 | Trigger integration tests |
-| `src/test/integration/orderStateMachine.test.ts` | ~150 | Status transition tests |
-| `src/test/integration/rlsPolicies.test.ts` | ~100 | RLS verification tests |
+### New Files (13)
 
-### Modified Files (2)
+| File | Lines (est.) | Purpose |
+|------|--------------|---------|
+| `supabase/migrations/xxx_add_assignment_fields.sql` | ~20 | Add assigned_to columns |
+| `src/components/assignment/AssigneeSelector.tsx` | ~100 | Staff picker dropdown |
+| `src/components/assignment/AssigneeBadge.tsx` | ~60 | Display assignee |
+| `src/components/assignment/AssignmentFilters.tsx` | ~50 | Filter by assignment |
+| `src/components/bulk/BulkActionDialog.tsx` | ~150 | Reusable bulk action framework |
+| `src/components/bulk/BulkAssignDialog.tsx` | ~120 | Bulk assign orders/issues |
+| `src/components/bulk/BulkPaymentReminderDialog.tsx` | ~100 | Bulk send reminders |
+| `src/components/bulk/BulkExportDialog.tsx` | ~80 | Bulk export to CSV/Excel |
+| `src/pages/admin/OperationsHub.tsx` | ~300 | Queue-style ops dashboard |
+| `src/utils/slaHelpers.ts` | ~80 | SLA calculation utilities |
+| `src/components/admin/WorkloadSummary.tsx` | ~120 | Staff workload visibility |
+| `src/utils/actionGuards.ts` | ~60 | Defensive action checks |
+| `src/hooks/useBulkActionTracking.ts` | ~50 | Rate awareness tracking |
+
+### Modified Files (8)
+
 | File | Changes |
 |------|---------|
-| `package.json` | Add vitest, testing-library devDependencies |
-| `tsconfig.app.json` | Add "vitest/globals" to types |
+| `src/integrations/supabase/types.ts` | Auto-updated by migration |
+| `src/components/orders/OrdersDataTable.tsx` | Add Assigned column, checkboxes |
+| `src/components/orders/UnifiedOrdersManagement.tsx` | Add bulk toolbar, filters |
+| `src/pages/admin/OrderIssues.tsx` | Add assignment, bulk actions |
+| `src/pages/QuotesPage.tsx` | Add assignment badge |
+| `src/App.tsx` | Add /admin/operations route |
+| `src/components/admin/Sidebar.tsx` | Add Operations nav link |
+| `src/hooks/useNavigationCounts.tsx` | Add at-risk count |
+
+---
+
+## Testing Checklist
+
+### Phase 2.1 Tests
+- [ ] Can assign order to staff member
+- [ ] Assignment badge displays correctly
+- [ ] "Assigned to me" filter works
+- [ ] "Unassigned" filter works
+- [ ] Reassignment logs to audit
+
+### Phase 2.2 Tests
+- [ ] Bulk assign shows preview with count
+- [ ] Confirmation required before execution
+- [ ] Per-item failures are reported
+- [ ] Successful items proceed
+- [ ] Audit log captures batch event
+
+### Phase 2.3 Tests
+- [ ] Ops Hub loads with queues
+- [ ] At-risk orders surface correctly
+- [ ] SLA indicators calculate correctly
+- [ ] Workload summary shows staff load
+
+### Phase 2.4 Tests
+- [ ] Non-owners see warning on assigned items
+- [ ] Admins can override ownership
+- [ ] Rate warning appears after threshold
+
+### Regression Tests
+- [ ] Phase 1.5 money flows still work
+- [ ] Admin can still manage orders
+- [ ] Customer cannot see other customers
+- [ ] No RLS policies broken
+- [ ] No role logic changed
+
+---
+
+## What This Plan Does NOT Do
+
+- Does not add new user roles
+- Does not change existing permissions
+- Does not add customer-facing features
+- Does not modify pricing/billing
+- Does not introduce AI automation
+- Does not weaken RLS or RPCs
+- Does not refactor Phase 1.5 logic
 
 ---
 
 ## Success Criteria
 
-Phase 1.5 is READY FOR PHASE 2 when:
+Phase 2 is complete when:
 
-1. All unit tests pass (payment helpers, error parsing)
-2. All integration tests pass (triggers, state machine, RLS)
-3. Edge function tests confirm notification accuracy
-4. No regression in existing admin/customer flows
-5. Audit logs contain required payment events
+1. Staff know what they own (assignments visible)
+2. Bulk actions are safe and auditable
+3. Ops dashboards replace founder oversight
+4. Problems surface themselves (SLA awareness)
+5. Mistakes are harder to make (guards active)
+6. Phase 1.5 logic is untouched and verified
 
-Phase 1.5 is BLOCKED if:
-
-- Any payment state calculation is incorrect
-- Order gets stuck in unexplainable state
-- Admin and customer see different payment totals
-- RLS allows unauthorized data access
-- Notifications contain incorrect amounts
