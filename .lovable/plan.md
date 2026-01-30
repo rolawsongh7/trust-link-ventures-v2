@@ -1,387 +1,416 @@
 
-# Super Admin Layer Implementation for Trust Link Ventures
+# Money Flows & Ops Stabilization Plan (Phase 1.5)
 
-## Current State Summary
+## Executive Summary
 
-### Role Infrastructure (Already Exists)
-| Component | Status | Details |
-|-----------|--------|---------|
-| `user_roles` table | Exists | Contains `super_admin` in enum |
-| `is_super_admin(uuid)` function | Exists | SECURITY DEFINER, checks `user_roles` |
-| `is_admin()` function | Exists | Returns true for both `admin` and `super_admin` |
-| `check_user_role(uuid, text)` function | Exists | Used extensively in RLS policies |
-| `useRoleAuth` hook | Exists | Returns `hasSuperAdminAccess`, `hasAdminAccess` |
-| Auto-trigger | Exists | Currently targets `support@trustlinkcompany.com` |
+The existing payment and order infrastructure is **fundamentally sound**. This plan focuses on **hardening, gap-filling, and UX clarity** - not rewriting existing logic.
 
-### Current Admin Users
-| Email | Current Role | Target Role |
-|-------|--------------|-------------|
-| `info@trustlinkcompany.com` | `admin` | `super_admin` (to be promoted) |
-| `trustlventuresghana_a01@yahoo.com` | `admin` | `admin` (unchanged) |
+---
 
-### Existing Super Admin Features (UI-Protected Only)
-- PDF regeneration buttons in `InvoiceManagement.tsx`
-- Storage testing buttons
-- These are **UI-hidden** but lack server-side enforcement
+## Current State Assessment
+
+### What's Already Working
+| Component | Status | Notes |
+|-----------|--------|-------|
+| `payment_status` enum | Exists | unpaid, partially_paid, fully_paid, overpaid |
+| `balance_remaining` column | Exists | Auto-calculated via trigger |
+| `validate_order_status_transition()` | Exists | Blocks shipping without full payment |
+| `payment_records` ledger | Exists | Tracks deposit, balance, adjustment, refund |
+| PaymentSummaryCard | Exists | Shows customer payment history |
+| VerifyPaymentDialog | Exists | Handles partial payment verification |
+| Balance Request Edge Function | Exists | Sends email + notification to customer |
+
+### Gaps to Close
+| Issue | Impact | Priority |
+|-------|--------|----------|
+| Balance payment uploads don't auto-detect payment type | Customer confusion | High |
+| Status transition errors are generic | Poor admin UX | High |
+| Notifications lack explicit amounts | Customer confusion | Medium |
+| RLS for payment_records needs audit | Security gap | Medium |
+| Audit logs missing some payment events | Compliance gap | Low |
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Safe Super Admin Promotion (Database Migration)
+### Phase A: Payment State Model Hardening
 
-Promote `info@trustlinkcompany.com` to `super_admin` via a one-time migration. Update the auto-trigger to use this email for future sign-ups.
+#### A1. Enforce Derived payment_status (No Manual Overrides)
+
+Update `update_order_payment_status()` trigger to ALWAYS recalculate:
 
 ```sql
--- 1. Upgrade existing user to super_admin
-UPDATE public.user_roles 
-SET role = 'super_admin', updated_at = now()
-WHERE user_id = '7fca904d-7b99-45ae-8f40-b710dc149cf2'
-AND role = 'admin';
-
--- 2. Ensure no duplicate roles (insert if not exists via upgrade)
-INSERT INTO public.user_roles (user_id, role)
-VALUES ('7fca904d-7b99-45ae-8f40-b710dc149cf2', 'super_admin')
-ON CONFLICT (user_id, role) DO NOTHING;
-
--- 3. Update auto-trigger to use new super admin email
-CREATE OR REPLACE FUNCTION public.assign_super_admin_role()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+-- Ensure payment_status is NEVER manually set incorrectly
+-- This runs on EVERY update to payment_amount_confirmed
+CREATE OR REPLACE FUNCTION public.update_order_payment_status()
+RETURNS TRIGGER AS $$
 BEGIN
-  IF NEW.email = 'info@trustlinkcompany.com' THEN
-    INSERT INTO public.user_roles (user_id, role)
-    VALUES (NEW.id, 'super_admin')
-    ON CONFLICT (user_id, role) DO NOTHING;
-    
-    PERFORM public.log_security_event(
-      'super_admin_role_assigned',
-      NEW.id,
-      jsonb_build_object(
-        'email', NEW.email,
-        'method', 'auto_trigger',
-        'timestamp', extract(epoch from now())
-      ),
-      NULL, NULL, 'high'
-    );
+  -- Always recalculate, never trust manual input
+  IF NEW.payment_amount_confirmed IS NULL OR NEW.payment_amount_confirmed = 0 THEN
+    NEW.payment_status := 'unpaid'::public.payment_status_enum;
+  ELSIF NEW.payment_amount_confirmed < NEW.total_amount THEN
+    NEW.payment_status := 'partially_paid'::public.payment_status_enum;
+  ELSIF NEW.payment_amount_confirmed = NEW.total_amount THEN
+    NEW.payment_status := 'fully_paid'::public.payment_status_enum;
+  ELSE
+    NEW.payment_status := 'overpaid'::public.payment_status_enum;
   END IF;
+  
   RETURN NEW;
 END;
-$$;
-
--- 4. Log the promotion in audit trail
-INSERT INTO public.audit_logs (
-  user_id, event_type, action, severity, event_data
-) VALUES (
-  '7fca904d-7b99-45ae-8f40-b710dc149cf2',
-  'role_changed',
-  'Promoted to super_admin',
-  'high',
-  jsonb_build_object(
-    'email', 'info@trustlinkcompany.com',
-    'previous_role', 'admin',
-    'new_role', 'super_admin',
-    'promoted_at', now()
-  )
-);
+$$ LANGUAGE plpgsql;
 ```
+
+**Files Modified**: Database migration only
+
+#### A2. Auto-Detect Balance Payment on Upload
+
+Update `CustomerPaymentProofDialog.tsx` to check if order already has a verified deposit:
+
+```typescript
+// Detect if this is a balance payment by checking existing payment_amount_confirmed
+const isBalancePayment = (order.payment_amount_confirmed || 0) > 0;
+const balanceRemaining = order.total_amount - (order.payment_amount_confirmed || 0);
+
+// Pass payment type to backend
+const updateData = {
+  payment_proof_url: publicUrl,
+  payment_reference: paymentReference,
+  payment_method: paymentMethod,
+  payment_proof_uploaded_at: new Date().toISOString(),
+  // New: indicate this is a balance payment
+  payment_proof_type: isBalancePayment ? 'balance' : 'deposit',
+};
+```
+
+**Files Modified**: 
+- `src/components/customer/CustomerPaymentProofDialog.tsx`
+- `supabase/functions/notify-payment-proof-uploaded/index.ts`
+
+#### A3. Auto-Reconcile on Full Payment
+
+Update `VerifyPaymentDialog.tsx` to automatically:
+1. Calculate if new payment completes the balance
+2. Update `payment_status` via the existing trigger
+3. Emit correct notification type
+
+**Current Implementation**: Already handles this correctly. No changes needed.
 
 ---
 
-### Phase 2: Server-Side RPC Guards for Destructive Actions
+### Phase B: Order State Machine Clarity
 
-Create secure RPC functions that enforce super admin access. These wrap existing functionality with proper authorization.
+#### B1. Replace Generic Errors with Actionable Messages
+
+Create a utility to parse database constraint errors:
+
+```typescript
+// src/utils/orderStatusErrors.ts
+export const parseStatusTransitionError = (error: any): {
+  title: string;
+  description: string;
+  action?: string;
+  actionLabel?: string;
+} => {
+  const message = error?.message || '';
+  
+  if (message.includes('Cannot start processing without verified payment')) {
+    return {
+      title: 'Payment Required',
+      description: 'This order needs a verified deposit before processing can begin.',
+      action: 'verify-payment',
+      actionLabel: 'Verify Payment',
+    };
+  }
+  
+  if (message.includes('Cannot ship until fully paid')) {
+    const balanceMatch = message.match(/Balance: ([\d,.]+)/);
+    const balance = balanceMatch ? balanceMatch[1] : 'outstanding';
+    return {
+      title: 'Balance Payment Required',
+      description: `Cannot proceed to shipping. Outstanding balance: ${balance}`,
+      action: 'request-balance',
+      actionLabel: 'Request Balance Payment',
+    };
+  }
+  
+  if (message.includes('Cannot ship without delivery address')) {
+    return {
+      title: 'Address Required',
+      description: 'Customer must provide a delivery address before shipping.',
+      action: 'request-address',
+      actionLabel: 'Request Address',
+    };
+  }
+  
+  // Default fallback
+  return {
+    title: 'Status Update Failed',
+    description: message || 'Please check order requirements and try again.',
+  };
+};
+```
+
+**Files Modified**:
+- `src/utils/orderStatusErrors.ts` (new file)
+- `src/components/orders/UnifiedOrdersManagement.tsx`
+- `src/components/orders/OrdersDataTable.tsx`
+
+#### B2. Add "Why is this blocked?" Tooltips
+
+Enhance status badges to explain blockers:
+
+```typescript
+// In OrderStatusBadge or inline where status is displayed
+const getBlockerReason = (order: Order): string | null => {
+  if (order.status === 'processing' && order.payment_status === 'partially_paid') {
+    return `Waiting for balance payment of ${order.currency} ${order.balance_remaining?.toLocaleString()}`;
+  }
+  if (order.status === 'processing' && !order.delivery_address_id) {
+    return 'Waiting for customer to provide delivery address';
+  }
+  if (order.status === 'payment_received' && order.payment_status !== 'fully_paid') {
+    return 'Order cannot proceed until fully paid';
+  }
+  return null;
+};
+```
+
+**Files Modified**:
+- `src/components/customer/OrderStatusBadge.tsx`
+- `src/components/orders/OrdersDataTable.tsx`
+
+---
+
+### Phase C: Notification Truthfulness
+
+#### C1. Audit and Fix Notification Text
+
+Update all payment-related notifications to include explicit amounts:
+
+| Current | Fixed |
+|---------|-------|
+| "Payment received" | "Deposit of GHS 500 received - Balance of GHS 300 remaining" |
+| "Payment verified" | "Balance payment verified - Order fully paid (GHS 800 total)" |
+| "Order processing" | "Order processing - Awaiting balance payment of GHS 300" |
+
+**Files Modified**:
+- `src/components/orders/VerifyPaymentDialog.tsx` (notification text)
+- `supabase/functions/send-payment-confirmation/index.ts` (email templates)
+- `supabase/functions/send-balance-payment-request/index.ts` (email templates)
+- `src/services/notificationService.ts` (in-app notifications)
+
+#### C2. Customer Portal Notification Display
+
+Ensure CustomerOrders displays payment status with amounts:
+
+```typescript
+// Already exists in CustomerOrders.tsx - just audit for clarity
+{hasPartialPayment(order) && (
+  <Alert variant="warning">
+    <h4>Balance Payment Required</h4>
+    <p>Amount Received: {order.currency} {order.payment_amount_confirmed}</p>
+    <p className="font-bold">Balance: {order.currency} {order.balance_remaining}</p>
+    <p>Please complete the remaining payment to proceed with shipping.</p>
+  </Alert>
+)}
+```
+
+**Files Modified**: Review only - already implemented correctly
+
+---
+
+### Phase D: Admin-Customer Parity
+
+#### D1. Verify RLS for payment_records
+
+Audit and fix RLS policies:
 
 ```sql
--- Super admin guard for regenerating invoice PDFs
-CREATE OR REPLACE FUNCTION public.regenerate_invoice_pdf_secure(p_invoice_id uuid)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  IF NOT is_super_admin(auth.uid()) THEN
-    RAISE EXCEPTION 'Super admin privileges required';
-  END IF;
-  
-  -- Log the action
-  PERFORM log_security_event(
-    'invoice_pdf_regenerated',
-    auth.uid(),
-    jsonb_build_object('invoice_id', p_invoice_id),
-    NULL, NULL, 'high'
-  );
-  
-  RETURN jsonb_build_object('success', true, 'invoice_id', p_invoice_id);
-END;
-$$;
+-- Customer can only see their own payment records
+CREATE POLICY "customers_view_own_payment_records" ON public.payment_records
+FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM orders o
+    JOIN customer_users cu ON o.customer_id = cu.customer_id
+    WHERE o.id = payment_records.order_id
+    AND cu.user_id = auth.uid()
+  )
+);
 
--- Super admin guard for role changes to 'admin'
-CREATE OR REPLACE FUNCTION public.change_user_role_secure(
-  p_target_user_id uuid,
-  p_new_role text
-)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_current_role text;
-  v_caller_id uuid := auth.uid();
-BEGIN
-  -- Get target user's current role
-  SELECT role::text INTO v_current_role
-  FROM public.user_roles
-  WHERE user_id = p_target_user_id
-  ORDER BY created_at DESC
-  LIMIT 1;
-  
-  -- Prevent modification of super_admin
-  IF v_current_role = 'super_admin' THEN
-    RAISE EXCEPTION 'Cannot modify super admin role';
-  END IF;
-  
-  -- Only super_admin can assign/remove admin role
-  IF (p_new_role = 'admin' OR v_current_role = 'admin') 
-     AND NOT is_super_admin(v_caller_id) THEN
-    RAISE EXCEPTION 'Only super admin can assign or remove admin role';
-  END IF;
-  
-  -- Prevent self-demotion for super_admin
-  IF p_target_user_id = v_caller_id AND is_super_admin(v_caller_id) THEN
-    RAISE EXCEPTION 'Super admin cannot modify their own role';
-  END IF;
-  
-  -- Perform the role change
-  DELETE FROM public.user_roles WHERE user_id = p_target_user_id;
-  INSERT INTO public.user_roles (user_id, role) VALUES (p_target_user_id, p_new_role::app_role);
-  
-  -- Log the action
-  PERFORM log_security_event(
-    'role_changed',
-    v_caller_id,
-    jsonb_build_object(
-      'target_user_id', p_target_user_id,
-      'old_role', v_current_role,
-      'new_role', p_new_role
-    ),
-    NULL, NULL, 'high'
-  );
-  
-  RETURN jsonb_build_object(
-    'success', true,
-    'old_role', v_current_role,
-    'new_role', p_new_role
-  );
-END;
-$$;
+-- Customer cannot modify payment records
+CREATE POLICY "customers_cannot_modify_payment_records" ON public.payment_records
+FOR INSERT USING (false);
+
+CREATE POLICY "customers_cannot_update_payment_records" ON public.payment_records
+FOR UPDATE USING (false);
 ```
 
+**Files Modified**: Database migration
+
+#### D2. Ensure PaymentSummaryCard Shows Consistent Data
+
+Already implemented correctly - no changes needed.
+
 ---
 
-### Phase 3: Add Super Admin Tab to Settings
+### Phase E: Audit Completeness
 
-Add a new tab visible only to super admins, placed inside the existing Settings page structure.
+#### E1. Add Payment Event Logging
 
-**Modify `src/pages/Settings.tsx`:**
-
-1. Add `hasSuperAdminAccess` to the destructured hook values
-2. Add a new tab configuration for Super Admin
-3. Add the tab trigger and content
+Create audit entries for all payment events:
 
 ```typescript
-// Add to imports
-import { SuperAdminTab } from '@/components/settings/SuperAdminTab';
-
-// Update hook destructuring
-const { hasAdminAccess, hasSuperAdminAccess, loading: roleLoading } = useRoleAuth();
-
-// Add to tab configuration (after adminTabs)
-const superAdminTabs = hasSuperAdminAccess ? [
-  { value: "super-admin", label: "Super Admin", icon: <Crown className="h-4 w-4" /> },
-] : [];
-
-// Update allTabs
-const allTabs = [
-  ...(hasSuperAdminAccess ? superAdminTabs : []),
-  ...(hasAdminAccess ? adminTabs : []),
-  ...generalTabs,
-  ...securityTabs,
-];
-
-// Add TabsContent for Super Admin
-{hasSuperAdminAccess && (
-  <TabsContent value="super-admin" className="space-y-6">
-    <SuperAdminTab />
-  </TabsContent>
-)}
-```
-
----
-
-### Phase 4: Create SuperAdminTab Component
-
-**New File: `src/components/settings/SuperAdminTab.tsx`**
-
-A focused tab containing:
-- Role Management Card (view admins, promote/demote with restrictions)
-- System Tools Card (PDF regeneration, cache clear)
-- Audit Export (full history download)
-
-Features:
-- Uses `hasSuperAdminAccess` guard internally for defense-in-depth
-- Calls secure RPC functions instead of direct table operations
-- All actions logged with confirmation dialogs
-
----
-
-### Phase 5: Update User Management Restrictions
-
-**Modify `src/components/settings/UserManagementTab.tsx`:**
-
-```typescript
-const { hasAdminAccess, hasSuperAdminAccess } = useRoleAuth();
-
-// Role options based on caller's access level
-const availableRoles = hasSuperAdminAccess 
-  ? ['admin', 'sales_rep', 'user'] as const
-  : ['sales_rep', 'user'] as const;
-
-// Determine if a user row can be edited
-const canEditUser = (userRole: string) => {
-  if (userRole === 'super_admin') return false;
-  if (userRole === 'admin' && !hasSuperAdminAccess) return false;
-  return true;
-};
-
-// Update handleRoleChange to use secure RPC
-const handleRoleChange = async (userId: string, newRole: string) => {
-  const { data, error } = await supabase.rpc('change_user_role_secure', {
-    p_target_user_id: userId,
-    p_new_role: newRole
-  });
-  // Handle response...
-};
-```
-
-**Modify `src/components/settings/UserTable.tsx`:**
-
-- Accept `availableRoles` and `canEditUser` as props
-- Filter dropdown options based on `availableRoles`
-- Disable actions for rows where `canEditUser` returns false
-- Show visual indicator (lock icon) for protected users
-
----
-
-### Phase 6: Update Diagnostics Page
-
-**Modify `src/pages/admin/Diagnostics.tsx`:**
-
-```typescript
-const { hasSuperAdminAccess } = useRoleAuth();
-
-// Add super admin-only diagnostic checks
-const superAdminChecks: DiagnosticCheck[] = hasSuperAdminAccess ? [
-  {
-    name: "Storage Write Test",
-    description: "Test storage bucket write permissions",
-    run: async () => { /* destructive test */ }
-  },
-  {
-    name: "Edge Function Deployment",
-    description: "Verify edge functions are deployed",
-    run: async () => { /* check deployment */ }
+// Add to VerifyPaymentDialog after successful verification
+await supabase.from('audit_logs').insert({
+  user_id: user.id,
+  event_type: 'payment_verified',
+  action: isNowFullyPaid ? 'full_payment_verified' : 'deposit_verified',
+  severity: 'info',
+  event_data: {
+    order_id: order.id,
+    order_number: order.order_number,
+    amount_verified: parsedAmount,
+    total_paid: totalPaid,
+    balance_remaining: balanceAfterPayment,
+    payment_type: paymentType,
+    previous_status: order.payment_status,
+    new_status: isNowFullyPaid ? 'fully_paid' : 'partially_paid',
   }
-] : [];
+});
+```
 
-// Add repair actions section (super admin only)
-{hasSuperAdminAccess && (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <Wrench className="h-5 w-5" />
-        Repair Actions
-      </CardTitle>
-      <CardDescription>
-        System repair tools. Use with caution.
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      {/* Repair orphaned records, clear stale sessions, etc. */}
-    </CardContent>
-  </Card>
-)}
+**Files Modified**:
+- `src/components/orders/VerifyPaymentDialog.tsx`
+- `supabase/functions/send-balance-payment-request/index.ts`
+
+---
+
+### Phase F: Error Handling UX
+
+#### F1. Defensive UI - Disable Buttons for Blocked Actions
+
+Add visual guards to admin actions:
+
+```typescript
+// In OrdersDataTable.tsx
+const ShipButton = ({ order, onClick }) => {
+  const canShip = order.payment_status === 'fully_paid' || order.payment_status === 'overpaid';
+  const hasAddress = !!order.delivery_address_id;
+  
+  if (!canShip || !hasAddress) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button disabled variant="outline" size="sm">
+              <Truck className="h-4 w-4 mr-2" />
+              Mark Ready to Ship
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {!canShip && <p>Requires full payment (Balance: {order.currency} {order.balance_remaining})</p>}
+            {!hasAddress && <p>Requires delivery address</p>}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+  
+  return (
+    <Button onClick={onClick} size="sm">
+      <Truck className="h-4 w-4 mr-2" />
+      Mark Ready to Ship
+    </Button>
+  );
+};
+```
+
+**Files Modified**:
+- `src/components/orders/OrdersDataTable.tsx`
+- `src/components/orders/UnifiedOrdersManagement.tsx`
+
+#### F2. Surface Database Errors Gracefully
+
+Wrap status update calls with error parser:
+
+```typescript
+try {
+  const { error } = await supabase
+    .from('orders')
+    .update({ status: newStatus })
+    .eq('id', orderId);
+    
+  if (error) {
+    const parsed = parseStatusTransitionError(error);
+    toast({
+      title: parsed.title,
+      description: parsed.description,
+      variant: 'destructive',
+      action: parsed.action && (
+        <Button size="sm" onClick={() => handleAction(parsed.action, order)}>
+          {parsed.actionLabel}
+        </Button>
+      ),
+    });
+    return;
+  }
+} catch (err) {
+  // Handle unexpected errors
+}
 ```
 
 ---
 
-## Files to Create
+## Files Summary
 
-| File | Description |
-|------|-------------|
-| `src/components/settings/SuperAdminTab.tsx` | Container for super admin tools |
-| `src/components/settings/RoleManagementCard.tsx` | Admin/user role management UI |
-| `src/components/settings/SystemToolsCard.tsx` | PDF regen, cache clear, maintenance tools |
+### New Files
+| File | Purpose |
+|------|---------|
+| `src/utils/orderStatusErrors.ts` | Parse database constraint errors into user-friendly messages |
 
-## Files to Modify
-
+### Modified Files
 | File | Changes |
 |------|---------|
-| `src/pages/Settings.tsx` | Add Super Admin tab, update role checks |
-| `src/components/settings/UserManagementTab.tsx` | Add role restrictions, use secure RPC |
-| `src/components/settings/UserTable.tsx` | Filter role options, disable protected rows |
-| `src/pages/admin/Diagnostics.tsx` | Add super admin checks and repair actions |
-
-## Database Changes
-
-| Change | Type | Description |
-|--------|------|-------------|
-| Promote `info@trustlinkcompany.com` | UPDATE | Set role to `super_admin` |
-| Update trigger function | ALTER | Change email to `info@trustlinkcompany.com` |
-| `change_user_role_secure()` | CREATE | RPC with super admin guard |
-| `regenerate_invoice_pdf_secure()` | CREATE | RPC with super admin guard |
-
----
-
-## Security Matrix
-
-| Feature | User | Sales Rep | Admin | Super Admin |
-|---------|------|-----------|-------|-------------|
-| View dashboard | No | No | Yes | Yes |
-| Manage orders | No | View | Yes | Yes |
-| View users | No | No | Yes | Yes |
-| Assign `user`/`sales_rep` | No | No | Yes | Yes |
-| Assign/remove `admin` | No | No | **No** | **Yes** |
-| See Super Admin tab | No | No | No | Yes |
-| PDF regeneration | No | No | No | Yes |
-| Diagnostics repair | No | No | No | Yes |
-| Full audit export | No | No | 30 days | Unlimited |
-
----
-
-## Safety Guarantees
-
-1. **Existing Admin Access Unchanged**: All current admin features remain accessible to admins
-2. **Additive Only**: Super admin features are additions, not replacements
-3. **Server-Side Enforcement**: All destructive actions validated via RPC guards
-4. **Self-Protection**: Super admin cannot remove their own role
-5. **Last Admin Protection**: System prevents removing the last super admin
-6. **Comprehensive Audit Trail**: Every super admin action logged with high severity
+| `src/components/customer/CustomerPaymentProofDialog.tsx` | Auto-detect balance payment |
+| `src/components/orders/VerifyPaymentDialog.tsx` | Add audit logging, improve notifications |
+| `src/components/orders/OrdersDataTable.tsx` | Disable blocked actions, add blocker tooltips |
+| `src/components/orders/UnifiedOrdersManagement.tsx` | Use error parser for status changes |
+| `src/components/customer/OrderStatusBadge.tsx` | Add blocker explanations |
+| Database migration | Harden payment_status trigger, verify RLS |
 
 ---
 
 ## Testing Checklist
 
-- [ ] `info@trustlinkcompany.com` has `super_admin` role after migration
-- [ ] Existing admin users retain `admin` role and full admin access
-- [ ] Admins cannot see the Super Admin tab
-- [ ] Admins cannot assign/remove admin roles (RPC rejects)
-- [ ] Super Admin can see and use all elevated features
-- [ ] All super admin actions are logged in audit_logs
-- [ ] Direct API calls to role change without super admin fail
-- [ ] No regression in existing admin workflows
+### Money Flow Tests
+- [ ] Partial payment visible to customer immediately after upload
+- [ ] Partial payment visible to admin with correct amounts
+- [ ] Balance request shows exact outstanding amount
+- [ ] Balance payment auto-detects it's not a new deposit
+- [ ] Order unblocks for shipping only when fully paid
+
+### Regression Tests
+- [ ] Admin can still process orders normally
+- [ ] Customer cannot see other customers' payment data
+- [ ] No RLS policies broken
+- [ ] No role logic changed
+
+### UX Tests
+- [ ] No stuck order states without explanation
+- [ ] All payment statuses show amounts
+- [ ] Notifications are accurate and specific
+- [ ] Blocked actions show why they're blocked
+
+---
+
+## What This Plan Does NOT Do
+
+- Does not add new product features
+- Does not change role permissions
+- Does not modify pricing or subscriptions
+- Does not redesign dashboards
+- Does not add new order statuses
+- Does not change the fundamental payment flow
+
+This is purely **stabilization and correctness work**.
