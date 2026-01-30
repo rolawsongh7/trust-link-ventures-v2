@@ -17,7 +17,8 @@ import {
   Ship,
   DollarSign,
   AlertTriangle,
-  ShieldCheck
+  ShieldCheck,
+  Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
@@ -46,6 +47,7 @@ const navigationItems = [
   { title: 'Customers', url: '/admin/customers', icon: Users, badge: null },
   { title: 'Leads', url: '/admin/leads', icon: Target, badge: 'leads' as const },
   { title: 'Orders', url: '/admin/orders', icon: ShoppingCart, badge: 'orders' as const },
+  { title: 'Operations', url: '/admin/operations', icon: Activity, badge: 'atRisk' as const },
   { title: 'Quotes', url: '/admin/quotes', icon: FileText, badge: 'quotes' as const },
   { title: 'Invoices', url: '/admin/invoices', icon: Receipt, badge: null },
   { title: 'Reconciliation', url: '/admin/finance/reconciliation', icon: DollarSign, badge: null },
@@ -71,7 +73,7 @@ export function AppSidebar() {
   const isActive = (path: string) => currentPath === path;
   const isExpanded = state === 'expanded';
 
-  const getBadgeCount = (badgeKey: 'orders' | 'quotes' | 'leads' | 'communications' | 'quoteInquiries' | 'analytics' | 'orderIssues' | null) => {
+  const getBadgeCount = (badgeKey: 'orders' | 'quotes' | 'leads' | 'communications' | 'quoteInquiries' | 'analytics' | 'orderIssues' | 'atRisk' | null) => {
     if (!badgeKey || !counts) return 0;
     if (badgeKey === 'analytics') return 0; // Analytics doesn't have a count
     return counts[badgeKey] || 0;
