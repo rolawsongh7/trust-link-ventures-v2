@@ -527,6 +527,44 @@ export type Database = {
           },
         ]
       }
+      customer_loyalty: {
+        Row: {
+          customer_id: string
+          id: string
+          last_order_at: string | null
+          lifetime_orders: number
+          lifetime_revenue: number
+          loyalty_tier: string
+          updated_at: string | null
+        }
+        Insert: {
+          customer_id: string
+          id?: string
+          last_order_at?: string | null
+          lifetime_orders?: number
+          lifetime_revenue?: number
+          loyalty_tier?: string
+          updated_at?: string | null
+        }
+        Update: {
+          customer_id?: string
+          id?: string
+          last_order_at?: string | null
+          lifetime_orders?: number
+          lifetime_revenue?: number
+          loyalty_tier?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_loyalty_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_users: {
         Row: {
           created_at: string
@@ -3012,6 +3050,42 @@ export type Database = {
           ip_address?: unknown
           user_agent?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          billing_cycle: string
+          created_at: string | null
+          ends_at: string | null
+          id: string
+          plan: string
+          starts_at: string
+          status: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          billing_cycle?: string
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          plan: string
+          starts_at?: string
+          status?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          billing_cycle?: string
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          plan?: string
+          starts_at?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

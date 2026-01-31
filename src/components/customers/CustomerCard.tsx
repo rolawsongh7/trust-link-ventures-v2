@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreVertical, Building2, Mail, Phone, MapPin, Eye, Edit } from 'lucide-react';
 import type { Customer } from '@/hooks/useCustomersQuery';
+import { LoyaltyBadge } from '@/components/loyalty/LoyaltyBadge';
+import { useCustomerLoyalty } from '@/hooks/useCustomerLoyalty';
 
 interface CustomerCardProps {
   customer: Customer;
@@ -35,6 +37,8 @@ export const CustomerCard: React.FC<CustomerCardProps> = ({
   onView,
   onEdit,
 }) => {
+  const { data: loyaltyData } = useCustomerLoyalty(customer.id);
+  
   return (
     <Card className={`hover:shadow-md transition-shadow border-l-4 ${getCustomerBorderColor(customer.customer_status)}`}>
       <CardContent className="p-4">
@@ -94,10 +98,15 @@ export const CustomerCard: React.FC<CustomerCardProps> = ({
           )}
 
           <div className="flex items-center justify-between pt-2 border-t">
-            <span className="text-sm text-muted-foreground">Status</span>
-            <Badge className={getStatusColor(customer.customer_status)}>
-              {customer.customer_status || 'active'}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Status</span>
+              <Badge className={getStatusColor(customer.customer_status)}>
+                {customer.customer_status || 'active'}
+              </Badge>
+            </div>
+            {loyaltyData && (
+              <LoyaltyBadge tier={loyaltyData.loyalty_tier} variant="compact" />
+            )}
           </div>
 
           {customer.industry && (
