@@ -13,6 +13,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { AdminBreadcrumb } from '@/components/shared/AdminBreadcrumb';
+import { LoyaltyBadge } from '@/components/loyalty/LoyaltyBadge';
+import { CommercialSignalBadges } from '@/components/commercial/CommercialSignalBadges';
+import { useCustomerLoyalty, useCustomerRecentOrders } from '@/hooks/useCustomerLoyalty';
+import { getCommercialSignals } from '@/utils/commercialSignals';
 
 interface Customer {
   id: string;
@@ -90,6 +94,11 @@ export const UnifiedCustomerView: React.FC<UnifiedCustomerViewProps> = ({ custom
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  
+  // Loyalty and commercial signals
+  const { data: loyaltyData } = useCustomerLoyalty(customerId);
+  const { data: recentOrders } = useCustomerRecentOrders(customerId);
+  const commercialSignals = getCommercialSignals(loyaltyData || null, recentOrders || []);
 
   useEffect(() => {
     fetchCustomerData();
@@ -231,17 +240,29 @@ export const UnifiedCustomerView: React.FC<UnifiedCustomerViewProps> = ({ custom
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">{customer.company_name}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold">{customer.company_name}</h1>
+              {loyaltyData && (
+                <LoyaltyBadge tier={loyaltyData.loyalty_tier} />
+              )}
+            </div>
             <p className="text-muted-foreground">{customer.contact_name}</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Badge variant={getStatusColor(customer.customer_status)}>
-            {customer.customer_status}
-          </Badge>
-          <Badge variant={getPriorityColor(customer.priority)}>
-            {customer.priority} priority
-          </Badge>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex gap-2">
+            <Badge variant={getStatusColor(customer.customer_status)}>
+              {customer.customer_status}
+            </Badge>
+            <Badge variant={getPriorityColor(customer.priority)}>
+              {customer.priority} priority
+            </Badge>
+          </div>
+          <CommercialSignalBadges 
+            signals={commercialSignals} 
+            variant="compact"
+            showCreditCandidate={true}
+          />
         </div>
       </div>
 

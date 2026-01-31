@@ -23,9 +23,10 @@ import { IPWhitelistManagement } from '@/components/admin/IPWhitelistManagement'
 import { GeneralSettingsTab } from '@/components/settings/GeneralSettingsTab';
 import { NotificationPreferencesTab } from '@/components/settings/NotificationPreferencesTab';
 import { UserManagementTab } from '@/components/settings/UserManagementTab';
-import { Settings as SettingsIcon, Database, Bell, Users, Shield, FileText, Network, Activity, ShieldAlert, Link2, Crown, Menu } from 'lucide-react';
+import { Settings as SettingsIcon, Database, Bell, Users, Shield, FileText, Network, Activity, ShieldAlert, Link2, Crown, Menu, CreditCard } from 'lucide-react';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { SuperAdminTab } from '@/components/settings/SuperAdminTab';
+import { BillingSettingsTab } from '@/components/settings/BillingSettingsTab';
 
 const Settings = () => {
   const { hasAdminAccess, hasSuperAdminAccess, loading: roleLoading } = useRoleAuth();
@@ -50,6 +51,7 @@ const Settings = () => {
   // Tab configuration
   const superAdminTabs = hasSuperAdminAccess ? [
     { value: "super-admin", label: "Super Admin", icon: <Crown className="h-4 w-4" /> },
+    { value: "billing", label: "Billing", icon: <CreditCard className="h-4 w-4" /> },
   ] : [];
 
   const adminTabs = [
@@ -326,6 +328,13 @@ const Settings = () => {
             {hasSuperAdminAccess && (
               <TabsContent value="super-admin" className="space-y-6 animate-in fade-in-0 slide-in-from-right-5 duration-300">
                 <SuperAdminTab />
+              </TabsContent>
+            )}
+
+            {/* Billing Tab - Only for Super Admins */}
+            {hasSuperAdminAccess && (
+              <TabsContent value="billing" className="space-y-6 animate-in fade-in-0 slide-in-from-right-5 duration-300">
+                <BillingSettingsTab />
               </TabsContent>
             )}
 
