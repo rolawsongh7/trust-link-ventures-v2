@@ -1,812 +1,470 @@
 
-# Phase 3B Implementation Plan: Controlled Financial Leverage
 
-## Executive Summary
+# Phase 3B Stress Testing & Verification Plan
 
-This plan introduces **guarded financial leverage mechanisms** through three independent, opt-in systems: Customer Credit Terms, Subscription Enforcement (Soft), and Loyalty Benefits. All systems are super_admin controlled, per-customer scoped, and reversible with comprehensive audit logging.
+## Overview
+
+This plan creates a comprehensive test suite to verify Phase 3B (Controlled Financial Leverage) behaves safely under edge cases, misuse, partial failures, and scale. The tests validate all global invariants without adding new features or refactoring existing logic.
 
 ---
 
 ## Current State Analysis
 
-### Existing Infrastructure from Phase 3A
+### Existing Test Infrastructure
+| Component | Status |
+|-----------|--------|
+| `vitest.config.ts` | Configured with jsdom, globals, setup file |
+| `src/test/setup.ts` | Basic mocks (matchMedia, ResizeObserver) |
+| `src/test/testUtils.ts` | Mock factories for orders/payments from Phase 1.5 |
+| Existing tests | 2 test files (`orderStatusErrors.test.ts`, `payment.test.ts`) |
 
-| Component | Status | Relevance |
-|-----------|--------|-----------|
-| `customer_loyalty` table | Exists | Source for eligibility checks |
-| `subscriptions` table | Exists | Enforcement target |
-| `commercialSignals.ts` | Exists | `isCreditCandidate()` function ready |
-| `loyaltyHelpers.ts` | Exists | Tier calculation utilities |
-| `useCustomerLoyalty.ts` | Exists | Pattern for data fetching |
-| `BillingSettingsTab.tsx` | Exists | Pattern for super_admin UI |
-| `audit_logs` table | Exists | Logging destination |
-| `user_roles` table | Exists | Role-based access control |
+### Phase 3B Components to Test
+| Component | Purpose | Critical Invariants |
+|-----------|---------|---------------------|
+| `creditHelpers.ts` | Credit calculations | Balance never exceeds limit |
+| `benefitHelpers.ts` | Benefit utilities | SLA multiplier applied correctly |
+| `useFeatureFlags.ts` | Kill switch hooks | Instant disable/enable |
+| `useCustomerCreditTerms.ts` | Credit management | RPC-only mutations |
+| `useCustomerBenefits.ts` | Benefit toggles | Super admin only |
+| Database RPCs | Secure operations | All have super_admin guards |
 
-### Key Phase 1-2 Constraints to Preserve
+### Database Constraints Verified (Already in Migration)
+```sql
+-- Credit cannot exceed limit (enforced at DB level)
+CONSTRAINT credit_balance_within_limit CHECK (current_balance <= credit_limit)
 
-| System | Constraint |
-|--------|------------|
-| Orders | `orders` table unchanged - no foreign keys to credit |
-| Payments | `payment_records`, `payment_transactions` unchanged |
-| RLS | All existing policies on orders/quotes/payments preserved |
-| Operations Hub | Queue logic unchanged except badge additions |
-| SLA Engine | `slaHelpers.ts` unchanged unless benefit explicitly enabled |
+-- RPC functions check super_admin role before mutations
+-- All mutations log to audit_logs with severity = 'high'
+```
 
 ---
 
-## Implementation Scope
+## Test Suite Architecture
 
-### 3B.1 - Customer Credit Terms
-
-**Purpose**: Allow trusted customers to place orders with deferred payment (Net 7/14/30) within strict limits.
-
-**Database Table: `customer_credit_terms`**
-
-| Column | Type | Constraints |
-|--------|------|-------------|
-| `id` | uuid | Primary key |
-| `customer_id` | uuid | FK to customers, UNIQUE |
-| `credit_limit` | numeric(15,2) | NOT NULL, >= 0 |
-| `current_balance` | numeric(15,2) | DEFAULT 0, >= 0 |
-| `net_terms` | text | ENUM: 'net_7', 'net_14', 'net_30' |
-| `status` | text | ENUM: 'inactive', 'active', 'suspended' |
-| `approved_by` | uuid | FK to auth.users |
-| `approved_at` | timestamptz | Nullable |
-| `suspended_at` | timestamptz | Nullable |
-| `suspended_reason` | text | Nullable |
-| `created_at` | timestamptz | DEFAULT now() |
-| `updated_at` | timestamptz | Auto-updated |
-
-**RPC Function: `approve_credit_terms`**
+### Test File Structure
 
 ```text
-Parameters:
-- p_customer_id: uuid
-- p_credit_limit: numeric
-- p_net_terms: text ('net_7', 'net_14', 'net_30')
-
-Validation:
-1. Caller must be super_admin
-2. Customer must meet ALL eligibility requirements:
-   - isRepeatBuyer(customer) = true (lifetime_orders >= 2)
-   - loyalty_tier IN ('silver', 'gold')
-   - No overdue invoices
-3. Credit limit must be > 0
-
-Returns:
-- Success: credit_terms record
-- Failure: Error with reason (eligibility_failed, unauthorized, etc.)
+src/test/
+├── setup.ts                           # Existing: Test setup
+├── testUtils.ts                       # Existing: Phase 1.5 mocks
+├── phase3b/
+│   ├── testUtils.phase3b.ts           # New: Phase 3B mock factories
+│   ├── creditHelpers.test.ts          # Section A: Credit unit tests
+│   ├── benefitHelpers.test.ts         # Section C: Benefit unit tests
+│   ├── featureFlags.test.ts           # Section G: Kill switch tests
+│   ├── security.test.ts               # Section D: RLS/access tests
+│   ├── audit.test.ts                  # Section E: Audit coverage tests
+│   └── regression.test.ts             # Section F: Phase 1-2 regression tests
 ```
-
-**Hard Enforcement Rules (Database Level)**
-
-```sql
--- Constraint: current_balance never exceeds credit_limit
-ALTER TABLE customer_credit_terms
-ADD CONSTRAINT credit_balance_check 
-CHECK (current_balance <= credit_limit);
-
--- Constraint: credit_limit must be positive when active
-ALTER TABLE customer_credit_terms
-ADD CONSTRAINT credit_limit_positive 
-CHECK (credit_limit >= 0);
-```
-
----
-
-### 3B.2 - Subscription Enforcement (Soft Only)
-
-**Purpose**: Surface subscription status to admins without blocking operations.
-
-**Enforcement Level: Soft Only (Phase 3B)**
-
-| Feature | Behavior |
-|---------|----------|
-| Admin Portal | Yellow warning banner when `past_due` or `canceled` |
-| Customer Portal | Non-blocking "Plan status" indicator |
-| Order Creation | Unchanged - never blocked |
-| Analytics/Exports | Unchanged - no restrictions in Phase 3B |
-
-**No Database Changes Required** - Uses existing `subscriptions` table.
-
-**New Components**:
-- `SubscriptionStatusBanner.tsx` - Admin warning component
-- `useSubscriptionEnforcement.ts` - Hook for status checks
-
----
-
-### 3B.3 - Loyalty Benefits (Non-Monetary)
-
-**Purpose**: Reward loyal customers with operational advantages, not discounts.
-
-**Database Table: `customer_benefits`**
-
-| Column | Type | Constraints |
-|--------|------|-------------|
-| `id` | uuid | Primary key |
-| `customer_id` | uuid | FK to customers, UNIQUE per benefit_type |
-| `benefit_type` | text | ENUM (see below) |
-| `enabled` | boolean | DEFAULT false |
-| `enabled_by` | uuid | FK to auth.users |
-| `enabled_at` | timestamptz | Nullable |
-| `disabled_at` | timestamptz | Nullable |
-| `created_at` | timestamptz | DEFAULT now() |
-| `updated_at` | timestamptz | Auto-updated |
-
-**Allowed Benefit Types (Phase 3B)**
-
-| Type | Effect |
-|------|--------|
-| `priority_processing` | Orders float to top of Operations Hub queues |
-| `dedicated_manager` | Visual indicator + assignment preference |
-| `faster_sla` | SLA thresholds reduced by 25% for this customer |
-
-**Explicitly Excluded Benefits**
-
-- `discount_*` - No discount types
-- `credit_*` - Covered by credit terms system
-- `cashback` - No cash-equivalent benefits
-
----
-
-### 3B.4 - Kill Switches & Audit Logging
-
-**Kill Switch Table: `system_feature_flags`**
-
-| Column | Type | Constraints |
-|--------|------|-------------|
-| `id` | uuid | Primary key |
-| `feature_key` | text | UNIQUE |
-| `enabled` | boolean | DEFAULT true |
-| `disabled_by` | uuid | Nullable |
-| `disabled_at` | timestamptz | Nullable |
-| `disabled_reason` | text | Nullable |
-
-**Feature Keys**:
-- `credit_terms_global` - Master switch for all credit
-- `subscription_enforcement` - Master switch for enforcement
-- `loyalty_benefits_global` - Master switch for all benefits
-
-**Audit Events (High Severity)**
-
-| Event Type | When Logged |
-|------------|-------------|
-| `credit_terms_approved` | Credit activated for customer |
-| `credit_terms_suspended` | Credit suspended |
-| `credit_terms_limit_changed` | Limit adjusted |
-| `credit_balance_updated` | Balance changed (invoice/payment) |
-| `benefit_enabled` | Loyalty benefit activated |
-| `benefit_disabled` | Loyalty benefit deactivated |
-| `feature_flag_changed` | Kill switch toggled |
 
 ---
 
 ## Implementation Details
 
-### Step 1: Database Migration
+### Step 1: Phase 3B Test Utilities
 
-**Migration: Create Phase 3B tables**
+**File: `src/test/phase3b/testUtils.phase3b.ts`**
 
-```sql
--- Customer Credit Terms
-CREATE TABLE public.customer_credit_terms (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id UUID NOT NULL REFERENCES public.customers(id) ON DELETE CASCADE,
-  credit_limit NUMERIC(15,2) NOT NULL DEFAULT 0 CHECK (credit_limit >= 0),
-  current_balance NUMERIC(15,2) NOT NULL DEFAULT 0 CHECK (current_balance >= 0),
-  net_terms TEXT NOT NULL DEFAULT 'net_14' CHECK (net_terms IN ('net_7', 'net_14', 'net_30')),
-  status TEXT NOT NULL DEFAULT 'inactive' CHECK (status IN ('inactive', 'active', 'suspended')),
-  approved_by UUID REFERENCES auth.users(id),
-  approved_at TIMESTAMPTZ,
-  suspended_at TIMESTAMPTZ,
-  suspended_reason TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE(customer_id),
-  CONSTRAINT credit_balance_within_limit CHECK (current_balance <= credit_limit)
-);
+```text
+Mock Factories:
+- createMockCreditTerms(overrides) → CreditTerms
+- createMockCustomerBenefit(overrides) → CustomerBenefit
+- createMockFeatureFlag(overrides) → FeatureFlag
+- createMockLoyaltyData(overrides) → LoyaltyData
+- createMockCreditEligibility(overrides) → CreditEligibility
 
--- Customer Benefits
-CREATE TABLE public.customer_benefits (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id UUID NOT NULL REFERENCES public.customers(id) ON DELETE CASCADE,
-  benefit_type TEXT NOT NULL CHECK (benefit_type IN ('priority_processing', 'dedicated_manager', 'faster_sla')),
-  enabled BOOLEAN NOT NULL DEFAULT false,
-  enabled_by UUID REFERENCES auth.users(id),
-  enabled_at TIMESTAMPTZ,
-  disabled_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE(customer_id, benefit_type)
-);
-
--- System Feature Flags (Kill Switches)
-CREATE TABLE public.system_feature_flags (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  feature_key TEXT NOT NULL UNIQUE,
-  enabled BOOLEAN NOT NULL DEFAULT true,
-  disabled_by UUID REFERENCES auth.users(id),
-  disabled_at TIMESTAMPTZ,
-  disabled_reason TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- Insert default feature flags
-INSERT INTO public.system_feature_flags (feature_key, enabled) VALUES
-  ('credit_terms_global', true),
-  ('subscription_enforcement', true),
-  ('loyalty_benefits_global', true);
-```
-
-**RLS Policies**
-
-```sql
--- Credit Terms: Super admin manages, admins view
-ALTER TABLE customer_credit_terms ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Super admins can manage credit terms"
-  ON customer_credit_terms FOR ALL
-  USING (EXISTS (
-    SELECT 1 FROM user_roles
-    WHERE user_id = auth.uid() AND role = 'super_admin'
-  ));
-
-CREATE POLICY "Admins can view credit terms"
-  ON customer_credit_terms FOR SELECT
-  USING (EXISTS (
-    SELECT 1 FROM user_roles
-    WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')
-  ));
-
--- Customer Benefits: Same pattern
-ALTER TABLE customer_benefits ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Super admins can manage benefits"
-  ON customer_benefits FOR ALL
-  USING (EXISTS (
-    SELECT 1 FROM user_roles
-    WHERE user_id = auth.uid() AND role = 'super_admin'
-  ));
-
-CREATE POLICY "Admins can view benefits"
-  ON customer_benefits FOR SELECT
-  USING (EXISTS (
-    SELECT 1 FROM user_roles
-    WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')
-  ));
-
--- Feature Flags: Super admin only
-ALTER TABLE system_feature_flags ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Super admins can manage feature flags"
-  ON system_feature_flags FOR ALL
-  USING (EXISTS (
-    SELECT 1 FROM user_roles
-    WHERE user_id = auth.uid() AND role = 'super_admin'
-  ));
-
-CREATE POLICY "Admins can view feature flags"
-  ON system_feature_flags FOR SELECT
-  USING (EXISTS (
-    SELECT 1 FROM user_roles
-    WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')
-  ));
+Test Helpers:
+- assertCreditInvariant(creditTerms) → validates balance <= limit
+- assertAuditLogged(auditLogs, eventType) → validates log exists
+- createMockRPCResponse(success, data?) → standard RPC response
 ```
 
 ---
 
-### Step 2: RPC Functions (Secure Credit Operations)
+### Step 2: Section A - Credit Terms Stress Tests
 
-**Function: `approve_credit_terms`**
+**File: `src/test/phase3b/creditHelpers.test.ts`**
 
-```sql
-CREATE OR REPLACE FUNCTION public.approve_credit_terms(
-  p_customer_id UUID,
-  p_credit_limit NUMERIC,
-  p_net_terms TEXT DEFAULT 'net_14'
-)
-RETURNS JSONB
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_is_super_admin BOOLEAN;
-  v_loyalty_data RECORD;
-  v_has_overdue BOOLEAN;
-  v_credit_enabled BOOLEAN;
-  v_result JSONB;
-BEGIN
-  -- Check caller is super_admin
-  SELECT EXISTS (
-    SELECT 1 FROM user_roles
-    WHERE user_id = auth.uid() AND role = 'super_admin'
-  ) INTO v_is_super_admin;
-  
-  IF NOT v_is_super_admin THEN
-    RETURN jsonb_build_object('success', false, 'error', 'unauthorized', 'message', 'Only super admins can approve credit terms');
-  END IF;
-  
-  -- Check global kill switch
-  SELECT enabled INTO v_credit_enabled
-  FROM system_feature_flags
-  WHERE feature_key = 'credit_terms_global';
-  
-  IF NOT COALESCE(v_credit_enabled, true) THEN
-    RETURN jsonb_build_object('success', false, 'error', 'feature_disabled', 'message', 'Credit terms are globally disabled');
-  END IF;
-  
-  -- Validate net_terms
-  IF p_net_terms NOT IN ('net_7', 'net_14', 'net_30') THEN
-    RETURN jsonb_build_object('success', false, 'error', 'invalid_terms', 'message', 'Net terms must be net_7, net_14, or net_30');
-  END IF;
-  
-  -- Validate credit limit
-  IF p_credit_limit <= 0 THEN
-    RETURN jsonb_build_object('success', false, 'error', 'invalid_limit', 'message', 'Credit limit must be greater than 0');
-  END IF;
-  
-  -- Get loyalty data
-  SELECT lifetime_orders, loyalty_tier INTO v_loyalty_data
-  FROM customer_loyalty
-  WHERE customer_id = p_customer_id;
-  
-  -- Check eligibility: repeat buyer (2+ orders)
-  IF COALESCE(v_loyalty_data.lifetime_orders, 0) < 2 THEN
-    RETURN jsonb_build_object('success', false, 'error', 'eligibility_failed', 'message', 'Customer must have at least 2 completed orders');
-  END IF;
-  
-  -- Check eligibility: loyalty tier >= silver
-  IF COALESCE(v_loyalty_data.loyalty_tier, 'bronze') = 'bronze' THEN
-    RETURN jsonb_build_object('success', false, 'error', 'eligibility_failed', 'message', 'Customer must be Silver tier or higher');
-  END IF;
-  
-  -- Check for overdue invoices
-  SELECT EXISTS (
-    SELECT 1 FROM invoices
-    WHERE customer_id = p_customer_id
-    AND status = 'overdue'
-  ) INTO v_has_overdue;
-  
-  IF v_has_overdue THEN
-    RETURN jsonb_build_object('success', false, 'error', 'eligibility_failed', 'message', 'Customer has overdue invoices');
-  END IF;
-  
-  -- Upsert credit terms
-  INSERT INTO customer_credit_terms (
-    customer_id,
-    credit_limit,
-    net_terms,
-    status,
-    approved_by,
-    approved_at,
-    current_balance
-  ) VALUES (
-    p_customer_id,
-    p_credit_limit,
-    p_net_terms,
-    'active',
-    auth.uid(),
-    now(),
-    0
-  )
-  ON CONFLICT (customer_id) DO UPDATE SET
-    credit_limit = p_credit_limit,
-    net_terms = p_net_terms,
-    status = 'active',
-    approved_by = auth.uid(),
-    approved_at = now(),
-    suspended_at = NULL,
-    suspended_reason = NULL,
-    updated_at = now();
-  
-  -- Log audit event
-  INSERT INTO audit_logs (
-    event_type,
-    resource_type,
-    resource_id,
-    action,
-    event_data,
-    severity,
-    user_id
-  ) VALUES (
-    'credit_terms_approved',
-    'customer_credit_terms',
-    p_customer_id::text,
-    'approve',
-    jsonb_build_object(
-      'credit_limit', p_credit_limit,
-      'net_terms', p_net_terms,
-      'approved_by', auth.uid()
-    ),
-    'high',
-    auth.uid()
-  );
-  
-  RETURN jsonb_build_object('success', true, 'customer_id', p_customer_id, 'credit_limit', p_credit_limit, 'net_terms', p_net_terms);
-END;
-$$;
+```text
+Test Groups:
+
+A1. Credit Limit Enforcement
+├── getCreditUtilization - returns 0-100% correctly
+├── getAvailableCredit - never returns negative
+├── canCoverWithCredit - respects exact limits
+├── canCoverWithCredit - rejects limit+1 orders
+├── canCoverWithCredit - returns false for inactive/suspended
+
+A2. Edge Cases
+├── Zero credit limit returns 0 utilization
+├── Exact balance = limit returns 100% utilization
+├── Negative amounts handled gracefully
+├── Null/undefined creditTerms returns safe defaults
+
+A3. Partial Payment Isolation
+├── Credit balance independent of payment_records
+├── canCoverWithCredit ignores order.payment_amount_confirmed
+├── Credit status unaffected by order.payment_status
+
+A4. Suspension Logic
+├── isCreditUsable returns false when suspended
+├── Suspended credit cannot cover any order
+├── Inactive credit cannot cover any order
 ```
 
-**Function: `suspend_credit_terms`**
-
-```sql
-CREATE OR REPLACE FUNCTION public.suspend_credit_terms(
-  p_customer_id UUID,
-  p_reason TEXT DEFAULT NULL
-)
-RETURNS JSONB
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  -- Verify super_admin
-  IF NOT EXISTS (
-    SELECT 1 FROM user_roles
-    WHERE user_id = auth.uid() AND role = 'super_admin'
-  ) THEN
-    RETURN jsonb_build_object('success', false, 'error', 'unauthorized');
-  END IF;
-  
-  -- Update status
-  UPDATE customer_credit_terms
-  SET 
-    status = 'suspended',
-    suspended_at = now(),
-    suspended_reason = p_reason,
-    updated_at = now()
-  WHERE customer_id = p_customer_id;
-  
-  -- Log audit event
-  INSERT INTO audit_logs (
-    event_type, resource_type, resource_id, action, event_data, severity, user_id
-  ) VALUES (
-    'credit_terms_suspended', 'customer_credit_terms', p_customer_id::text,
-    'suspend', jsonb_build_object('reason', p_reason), 'high', auth.uid()
-  );
-  
-  RETURN jsonb_build_object('success', true);
-END;
-$$;
-```
-
-**Function: `check_credit_eligibility`**
-
-```sql
-CREATE OR REPLACE FUNCTION public.check_credit_eligibility(p_customer_id UUID)
-RETURNS JSONB
-LANGUAGE plpgsql
-STABLE
-AS $$
-DECLARE
-  v_loyalty_data RECORD;
-  v_has_overdue BOOLEAN;
-  v_eligible BOOLEAN := true;
-  v_reasons TEXT[] := ARRAY[]::TEXT[];
-BEGIN
-  -- Get loyalty data
-  SELECT lifetime_orders, loyalty_tier INTO v_loyalty_data
-  FROM customer_loyalty
-  WHERE customer_id = p_customer_id;
-  
-  -- Check repeat buyer
-  IF COALESCE(v_loyalty_data.lifetime_orders, 0) < 2 THEN
-    v_eligible := false;
-    v_reasons := array_append(v_reasons, 'Needs 2+ completed orders');
-  END IF;
-  
-  -- Check tier
-  IF COALESCE(v_loyalty_data.loyalty_tier, 'bronze') = 'bronze' THEN
-    v_eligible := false;
-    v_reasons := array_append(v_reasons, 'Needs Silver tier or higher');
-  END IF;
-  
-  -- Check overdue invoices
-  SELECT EXISTS (
-    SELECT 1 FROM invoices
-    WHERE customer_id = p_customer_id AND status = 'overdue'
-  ) INTO v_has_overdue;
-  
-  IF v_has_overdue THEN
-    v_eligible := false;
-    v_reasons := array_append(v_reasons, 'Has overdue invoices');
-  END IF;
-  
-  RETURN jsonb_build_object(
-    'eligible', v_eligible,
-    'lifetime_orders', COALESCE(v_loyalty_data.lifetime_orders, 0),
-    'loyalty_tier', COALESCE(v_loyalty_data.loyalty_tier, 'bronze'),
-    'has_overdue_invoices', v_has_overdue,
-    'missing_requirements', v_reasons
-  );
-END;
-$$;
-```
+**Expected Test Count: ~15-20 unit tests**
 
 ---
 
-### Step 3: Utility Files
+### Step 3: Section B - Subscription Enforcement Tests
 
-**File: `src/utils/creditHelpers.ts`**
-
-```text
-Types:
-- CreditTerms
-- NetTerms ('net_7' | 'net_14' | 'net_30')
-- CreditStatus ('inactive' | 'active' | 'suspended')
-
-Functions:
-- getNetTermsDays(terms: NetTerms) → number (7, 14, or 30)
-- getNetTermsLabel(terms: NetTerms) → string
-- getCreditUtilization(balance, limit) → percentage
-- getAvailableCredit(limit, balance) → numeric
-- formatCreditAmount(amount) → formatted string
-- getCreditStatusColor(status) → CSS class
-```
-
-**File: `src/utils/benefitHelpers.ts`**
+**File: `src/test/phase3b/subscriptionEnforcement.test.ts`**
 
 ```text
-Types:
-- BenefitType ('priority_processing' | 'dedicated_manager' | 'faster_sla')
-- CustomerBenefit
+Test Groups:
 
-Functions:
-- getBenefitLabel(type) → string
-- getBenefitDescription(type) → string
-- getBenefitIcon(type) → Lucide icon
-- hasBenefit(benefits, type) → boolean
+B1. Banner Visibility
+├── Shows banner for 'past_due' status
+├── Shows banner for 'canceled' status
+├── Hides banner for 'active' status
+├── Hides banner when dismissed
+├── Hides banner when enforcement disabled (kill switch)
+
+B2. Non-Blocking Behavior
+├── No order creation blocking (component doesn't block)
+├── No payment flow blocking
+├── Banner dismissal persists for session
+
+B3. Kill Switch
+├── Banner respects subscription_enforcement flag
+├── Flag toggle immediately affects visibility
 ```
+
+**Expected Test Count: ~8-10 unit tests**
 
 ---
 
-### Step 4: Hooks
+### Step 4: Section C - Loyalty Benefits Tests
 
-**File: `src/hooks/useCustomerCreditTerms.ts`**
-
-```text
-Functions:
-- useCustomerCreditTerms(customerId)
-  → { creditTerms, isLoading, eligibility }
-- useCreditTermsMutations()
-  → { approveCreditTerms, suspendCreditTerms, adjustLimit }
-- useCheckCreditEligibility(customerId)
-  → { eligible, reasons, isLoading }
-```
-
-**File: `src/hooks/useCustomerBenefits.ts`**
+**File: `src/test/phase3b/benefitHelpers.test.ts`**
 
 ```text
-Functions:
-- useCustomerBenefits(customerId)
-  → { benefits, isLoading }
-- useBenefitMutations()
-  → { enableBenefit, disableBenefit }
+Test Groups:
+
+C1. Priority Processing
+├── hasPriorityProcessing returns true when enabled
+├── hasPriorityProcessing returns false when disabled
+├── hasPriorityProcessing returns false when benefit missing
+├── getEnabledBenefits filters correctly
+
+C2. SLA Multiplier
+├── getSLAMultiplier returns 0.75 with faster_sla
+├── getSLAMultiplier returns 1.0 without faster_sla
+├── Multiple benefits handled correctly
+├── Empty benefits array returns 1.0
+
+C3. Benefit Removal Edge Cases
+├── hasBenefit returns false after disabled_at set
+├── Disabling benefit doesn't affect other benefits
+├── Re-enabling benefit works correctly
 ```
 
-**File: `src/hooks/useFeatureFlags.ts`**
-
-```text
-Functions:
-- useFeatureFlags()
-  → { flags, isLoading }
-- useFeatureFlagMutations()
-  → { toggleFlag }
-- useIsFeatureEnabled(key)
-  → boolean
-```
+**Expected Test Count: ~12-15 unit tests**
 
 ---
 
-### Step 5: UI Components
+### Step 5: Section D - RLS & Security Tests
 
-**File: `src/components/credit/CreditTermsPanel.tsx`**
+**File: `src/test/phase3b/security.test.ts`**
 
-Features:
-- Credit limit display with utilization bar
-- Current balance indicator
-- Net terms badge (Net 7/14/30)
-- Status badge (Active/Suspended/Inactive)
-- Eligibility check display
-- Actions: Approve, Suspend, Adjust Limit (super_admin)
-- Audit trail of credit changes
+```text
+Test Groups:
 
-**File: `src/components/credit/CreditEligibilityCard.tsx`**
+D1. Customer Access Denied (RLS Simulation)
+├── Mock customer context cannot insert credit terms
+├── Mock customer context cannot update credit terms
+├── Mock customer context cannot read other customer's credit
+├── Mock customer context cannot modify benefits
 
-Features:
-- Visual checklist of eligibility requirements
-- Pass/fail status for each requirement
-- "Request Credit Approval" button (initiates workflow)
+D2. Admin (Non-Super) Access Limits
+├── Admin can SELECT credit terms (read)
+├── Admin cannot INSERT credit terms
+├── Admin cannot UPDATE credit terms
+├── Admin cannot toggle benefits
 
-**File: `src/components/benefits/BenefitsBadge.tsx`**
+D3. RPC Guard Validation
+├── approve_credit_terms returns unauthorized for non-super_admin
+├── suspend_credit_terms returns unauthorized for non-super_admin
+├── adjust_credit_limit returns unauthorized for non-super_admin
+├── toggle_feature_flag returns unauthorized for non-super_admin
+├── toggle_customer_benefit returns unauthorized for non-super_admin
 
-Features:
-- Compact badge showing active benefits
-- Tooltip with benefit details
-- Color-coded by benefit type
+D4. Kill Switch Guard
+├── approve_credit_terms fails when credit_terms_global disabled
+├── toggle_customer_benefit fails when loyalty_benefits_global disabled
+```
 
-**File: `src/components/benefits/CustomerBenefitsPanel.tsx`**
-
-Features:
-- List of available benefits with toggle switches
-- Enabled/disabled state per benefit
-- Audit info (who enabled, when)
-- super_admin only controls
-
-**File: `src/components/enforcement/SubscriptionStatusBanner.tsx`**
-
-Features:
-- Yellow warning banner for `past_due`
-- Red warning banner for `canceled`
-- Dismissible (per session)
-- Link to billing settings
-
-**File: `src/components/admin/KillSwitchPanel.tsx`**
-
-Features:
-- Toggle switches for each feature flag
-- Confirmation dialog before disabling
-- Reason input when disabling
-- Audit trail display
+**Expected Test Count: ~15-18 unit tests**
 
 ---
 
-### Step 6: Integration Changes
+### Step 6: Section E - Audit & Observability Tests
 
-**Modified: `src/components/crm/UnifiedCustomerView.tsx`**
+**File: `src/test/phase3b/audit.test.ts`**
 
 ```text
-Changes:
-- Import CreditTermsPanel, CustomerBenefitsPanel
-- Add "Credit" tab to customer detail tabs
-- Add "Benefits" section to customer header
-- Show credit utilization badge if active
+Test Groups:
+
+E1. Event Coverage (Mock RPC Responses)
+├── credit_terms_approved logged with high severity
+├── credit_terms_suspended logged with high severity
+├── credit_terms_limit_changed logged with high severity
+├── benefit_enabled logged with high severity
+├── benefit_disabled logged with high severity
+├── feature_flag_changed logged with high severity
+
+E2. Event Data Completeness
+├── Credit approval includes credit_limit, net_terms, approved_by
+├── Credit suspension includes reason
+├── Limit adjustment includes old_limit, new_limit, reason
+├── Benefit toggle includes benefit_type, enabled
+
+E3. Failure Logging
+├── Failed authorization attempts should trigger logging
+├── Eligibility failures logged (via RPC response check)
 ```
 
-**Modified: `src/pages/admin/OperationsHub.tsx`**
+**Expected Test Count: ~12-15 unit tests**
+
+---
+
+### Step 7: Section F - Regression Tests
+
+**File: `src/test/phase3b/regression.test.ts`**
 
 ```text
-Changes:
-- Import BenefitsBadge
-- Add priority indicator for customers with priority_processing benefit
-- Adjust queue sorting to float priority customers up
+Test Groups:
+
+F1. Payment Flow Unchanged
+├── Payment status helpers unchanged (from payment.test.ts)
+├── canShip logic unchanged
+├── Balance calculation unchanged
+├── payment_records table not affected by credit
+
+F2. Order Status Unchanged
+├── parseStatusTransitionError unchanged
+├── canProceedToShipping unchanged
+├── getBlockerReason unchanged
+
+F3. SLA Logic Unchanged (Default)
+├── calculateSLA returns same results without benefits
+├── SLA_THRESHOLDS constant unchanged
+├── getUrgencyScore unchanged without priority benefit
+
+F4. Operations Queue Unchanged
+├── sortByUrgency base behavior unchanged
+├── filterActiveOrders unchanged
+├── countBySLAStatus unchanged
 ```
 
-**Modified: `src/pages/Settings.tsx`**
+**Expected Test Count: ~15-20 tests (can import existing)**
+
+---
+
+### Step 8: Section G - Kill Switch Validation Tests
+
+**File: `src/test/phase3b/featureFlags.test.ts`**
 
 ```text
-Changes:
-- Import KillSwitchPanel
-- Add "Kill Switches" section to Super Admin tab
+Test Groups:
+
+G1. Flag Utilities
+├── getFeatureLabel returns correct labels
+├── getFeatureDescription returns correct descriptions
+├── All 3 feature keys recognized
+
+G2. useIsFeatureEnabled Hook Logic
+├── Returns enabled=true when flag enabled
+├── Returns enabled=false when flag disabled
+├── Defaults to enabled=true when flag not found
+├── Loading state handled correctly
+
+G3. Kill Switch Effects
+├── credit_terms_global=false → credit operations blocked
+├── loyalty_benefits_global=false → benefit operations blocked
+├── subscription_enforcement=false → banners hidden
+
+G4. Reversibility
+├── Re-enabling flag restores functionality
+├── Flag toggle clears disabled_by, disabled_at, disabled_reason
 ```
 
-**Modified: `src/utils/slaHelpers.ts`**
+**Expected Test Count: ~12-15 unit tests**
 
-```text
-Changes (Additive Only):
-- New function: getSLAThresholdsForCustomer(customerId, benefits)
-  - If 'faster_sla' benefit enabled, reduce thresholds by 25%
-  - Otherwise return standard thresholds
-- Existing calculateSLA remains unchanged unless benefit is passed
+---
+
+## Test Utilities Implementation
+
+### Mock Credit Terms Factory
+
+```typescript
+export const createMockCreditTerms = (
+  overrides: Partial<CreditTerms> = {}
+): CreditTerms => ({
+  id: 'test-credit-id',
+  customer_id: 'test-customer-id',
+  credit_limit: 5000,
+  current_balance: 0,
+  net_terms: 'net_14',
+  status: 'active',
+  approved_by: 'super-admin-id',
+  approved_at: new Date().toISOString(),
+  suspended_at: null,
+  suspended_reason: null,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  ...overrides,
+});
+```
+
+### Mock Customer Benefit Factory
+
+```typescript
+export const createMockCustomerBenefit = (
+  overrides: Partial<CustomerBenefit> = {}
+): CustomerBenefit => ({
+  id: 'test-benefit-id',
+  customer_id: 'test-customer-id',
+  benefit_type: 'priority_processing',
+  enabled: true,
+  enabled_by: 'super-admin-id',
+  enabled_at: new Date().toISOString(),
+  disabled_at: null,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  ...overrides,
+});
+```
+
+### Credit Invariant Assertion
+
+```typescript
+export const assertCreditInvariant = (creditTerms: CreditTerms): void => {
+  // Global invariant: current_balance NEVER exceeds credit_limit
+  if (creditTerms.current_balance > creditTerms.credit_limit) {
+    throw new Error(
+      `INVARIANT VIOLATION: balance ${creditTerms.current_balance} ` +
+      `exceeds limit ${creditTerms.credit_limit}`
+    );
+  }
+};
 ```
 
 ---
 
 ## Files Summary
 
-### New Files (15)
+### New Files (8)
 
 | File | Lines (est.) | Purpose |
 |------|--------------|---------|
-| `src/utils/creditHelpers.ts` | ~80 | Credit calculation utilities |
-| `src/utils/benefitHelpers.ts` | ~60 | Benefit display utilities |
-| `src/hooks/useCustomerCreditTerms.ts` | ~150 | Credit terms data/mutations |
-| `src/hooks/useCustomerBenefits.ts` | ~100 | Benefits data/mutations |
-| `src/hooks/useFeatureFlags.ts` | ~80 | Kill switch management |
-| `src/components/credit/CreditTermsPanel.tsx` | ~300 | Admin credit management UI |
-| `src/components/credit/CreditEligibilityCard.tsx` | ~150 | Eligibility display |
-| `src/components/benefits/BenefitsBadge.tsx` | ~80 | Visual benefit indicator |
-| `src/components/benefits/CustomerBenefitsPanel.tsx` | ~200 | Admin benefit toggles |
-| `src/components/enforcement/SubscriptionStatusBanner.tsx` | ~80 | Status warning |
-| `src/components/admin/KillSwitchPanel.tsx` | ~200 | Feature flag controls |
-| `supabase/migrations/phase3b_credit_terms.sql` | ~200 | Database migration |
+| `src/test/phase3b/testUtils.phase3b.ts` | ~100 | Mock factories & assertions |
+| `src/test/phase3b/creditHelpers.test.ts` | ~200 | Credit limit enforcement tests |
+| `src/test/phase3b/subscriptionEnforcement.test.ts` | ~100 | Soft gating tests |
+| `src/test/phase3b/benefitHelpers.test.ts` | ~150 | Loyalty benefit tests |
+| `src/test/phase3b/security.test.ts` | ~200 | RLS/access control tests |
+| `src/test/phase3b/audit.test.ts` | ~150 | Audit coverage tests |
+| `src/test/phase3b/regression.test.ts` | ~200 | Phase 1-2 regression tests |
+| `src/test/phase3b/featureFlags.test.ts` | ~150 | Kill switch tests |
 
-### Modified Files (4)
+### Modified Files (1)
 
 | File | Changes |
 |------|---------|
-| `src/components/crm/UnifiedCustomerView.tsx` | Add Credit tab, Benefits section |
-| `src/pages/admin/OperationsHub.tsx` | Priority badge, queue sorting |
-| `src/pages/Settings.tsx` | Kill switch panel in Super Admin |
-| `src/utils/slaHelpers.ts` | Add customer-specific threshold function |
+| `src/test/setup.ts` | Add any additional mocks if needed |
 
 ---
 
-## Safety Verification Matrix
+## Verification Checklist Mapping
 
 ### Financial Safety
-
-| Check | Implementation |
-|-------|----------------|
-| Credit never exceeds limit | Database CHECK constraint |
-| Credit applied only to approved customers | RPC function validation |
-| No automatic credit approvals | Super admin approval required |
-| Payments reconcile correctly | Balance updates via audit-logged RPC |
-| Kill switch stops all credit | `credit_terms_global` flag check |
+| Requirement | Test File | Coverage |
+|-------------|-----------|----------|
+| Credit never exceeds limit | creditHelpers.test.ts | A1, A2 |
+| Credit applied only to approved customers | security.test.ts | D3 |
+| Payments reconcile correctly | regression.test.ts | F1 |
+| Partial payment logic unchanged | regression.test.ts | F1 |
 
 ### Operational Safety
-
-| Check | Implementation |
-|-------|----------------|
-| Operations queues still function | Badge-only additions, optional priority |
-| SLA logic unchanged by default | Only modified when `faster_sla` benefit passed |
-| Bulk operations unaffected | No changes to bulk action logic |
-| Order creation never blocked | No FK or constraint to orders |
+| Requirement | Test File | Coverage |
+|-------------|-----------|----------|
+| Operations queues still function | regression.test.ts | F4 |
+| SLA logic unchanged unless benefit enabled | regression.test.ts | F3 |
+| Bulk operations unaffected | regression.test.ts | F4 |
 
 ### Access Safety
-
-| Check | Implementation |
-|-------|----------------|
-| RLS enforced via RPC only | SECURITY DEFINER functions |
-| Customers cannot mutate credit data | No customer access policies |
-| Super admin cannot bypass audit logs | Logs in same transaction as action |
-| All mutations logged | High severity audit events |
+| Requirement | Test File | Coverage |
+|-------------|-----------|----------|
+| RLS enforced via RPC only | security.test.ts | D1, D2, D3 |
+| Customers cannot mutate credit data | security.test.ts | D1 |
+| Super admin cannot bypass audit logs | audit.test.ts | E1, E2 |
 
 ---
 
-## Explicit Non-Goals
+## Running the Tests
 
-| Feature | Status |
-|---------|--------|
-| Automatic credit approvals | NOT IMPLEMENTED |
-| Auto-increasing limits | NOT IMPLEMENTED |
-| Interest or penalties | NOT IMPLEMENTED |
-| Bulk credit assignment | NOT IMPLEMENTED |
-| Hard order blocking | NOT IMPLEMENTED |
-| Price mutation | NOT IMPLEMENTED |
-| Discounts or cashback | NOT IMPLEMENTED |
+Tests are run using Vitest:
+
+```bash
+# Run all Phase 3B tests
+npx vitest run src/test/phase3b/
+
+# Run specific test file
+npx vitest run src/test/phase3b/creditHelpers.test.ts
+
+# Run in watch mode for development
+npx vitest src/test/phase3b/
+```
 
 ---
 
-## Testing Checklist
+## Expected Test Counts
 
-### Credit Terms
-- [ ] Super admin can approve credit for eligible customer
-- [ ] Ineligible customers rejected with reason
-- [ ] Credit limit enforced at database level
-- [ ] Balance updates logged
-- [ ] Suspend/reactivate works correctly
-- [ ] Kill switch disables all credit operations
-
-### Benefits
-- [ ] Super admin can enable/disable benefits
-- [ ] Priority processing affects queue sorting
-- [ ] Faster SLA reduces thresholds for customer
-- [ ] Benefits badge displays correctly
-- [ ] Kill switch disables all benefits
-
-### Subscription Enforcement
-- [ ] Warning banner appears for past_due
-- [ ] Warning banner appears for canceled
-- [ ] No operations are blocked
-- [ ] Order creation unaffected
-
-### Audit & Safety
-- [ ] All credit changes logged
-- [ ] All benefit changes logged
-- [ ] Kill switch changes logged
-- [ ] Admins can view but not modify credit
-- [ ] Customers cannot see credit limits
+| Section | Test File | Tests |
+|---------|-----------|-------|
+| A - Credit Terms | creditHelpers.test.ts | ~18 |
+| B - Subscription | subscriptionEnforcement.test.ts | ~10 |
+| C - Benefits | benefitHelpers.test.ts | ~14 |
+| D - Security | security.test.ts | ~16 |
+| E - Audit | audit.test.ts | ~14 |
+| F - Regression | regression.test.ts | ~18 |
+| G - Kill Switches | featureFlags.test.ts | ~14 |
+| **Total** | | **~104 tests** |
 
 ---
 
 ## Success Criteria
 
-Phase 3B is complete when:
+Phase 3B stress testing is complete when:
 
-1. Credit terms work for 1-3 trusted customers
-2. No existing workflows break
-3. Credit exposure is visible at all times
-4. Benefits provide operational value without financial risk
-5. Super admin can disable everything instantly
-6. All changes are audit-logged with high severity
+1. All ~104 unit tests pass
+2. Credit invariant (balance <= limit) never violated
+3. Security tests confirm RLS/RPC guards work
+4. Audit tests confirm high-severity logging
+5. Regression tests confirm Phase 1-2 unchanged
+6. Kill switch tests confirm instant disable/enable
+7. No order/payment workflows affected
+
+---
+
+## Explicit Non-Goals
+
+| Item | Status |
+|------|--------|
+| Integration tests requiring live Supabase | NOT INCLUDED (unit tests only) |
+| E2E tests with real user sessions | NOT INCLUDED |
+| Performance/load testing | NOT INCLUDED |
+| UI component visual testing | NOT INCLUDED |
+
+These are unit/logic tests that validate invariants without external dependencies.
+
