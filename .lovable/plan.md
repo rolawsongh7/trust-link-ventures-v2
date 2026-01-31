@@ -1,386 +1,756 @@
 
-
-# Phase 3A — Revenue Foundations Implementation Plan
+# Phase 3B Implementation Plan: Controlled Financial Leverage
 
 ## Executive Summary
 
-This plan introduces **predictable, repeat revenue foundations** through three additive-only systems: Tenant Subscriptions, Customer Loyalty Tracking, and Commercial Signals. All implementations are informational-only with zero impact on existing order, quote, or payment workflows.
+This plan introduces **guarded financial leverage mechanisms** through three independent, opt-in systems: Customer Credit Terms, Subscription Enforcement (Soft), and Loyalty Benefits. All systems are super_admin controlled, per-customer scoped, and reversible with comprehensive audit logging.
 
 ---
 
 ## Current State Analysis
 
-### Existing Infrastructure
+### Existing Infrastructure from Phase 3A
+
 | Component | Status | Relevance |
 |-----------|--------|-----------|
-| `customers` table | Exists | Contains customer data, will reference for loyalty |
-| `orders` table | Exists | Source for loyalty calculations |
-| `audit_logs` table | Exists | Pattern for subscription/loyalty logging |
-| `Settings.tsx` | Exists | Has tabs structure for adding Billing tab |
-| `SuperAdminTab.tsx` | Exists | Pattern for super_admin-only features |
-| `UnifiedCustomerView.tsx` | Exists | Customer profile to add badges |
-| `CustomerCard.tsx` | Exists | Customer card to add loyalty badge |
-| `OperationsHub.tsx` | Exists | Will add commercial signal badges |
-| `slaHelpers.ts` | Exists | Pattern for utility functions |
+| `customer_loyalty` table | Exists | Source for eligibility checks |
+| `subscriptions` table | Exists | Enforcement target |
+| `commercialSignals.ts` | Exists | `isCreditCandidate()` function ready |
+| `loyaltyHelpers.ts` | Exists | Tier calculation utilities |
+| `useCustomerLoyalty.ts` | Exists | Pattern for data fetching |
+| `BillingSettingsTab.tsx` | Exists | Pattern for super_admin UI |
+| `audit_logs` table | Exists | Logging destination |
+| `user_roles` table | Exists | Role-based access control |
 
-### Key Constraints Verified
-- No existing `subscriptions` or `customer_loyalty` tables
-- No billing integrations exist
-- No discount/credit systems exist
-- All RLS policies on orders/quotes/payments remain untouched
+### Key Phase 1-2 Constraints to Preserve
+
+| System | Constraint |
+|--------|------------|
+| Orders | `orders` table unchanged - no foreign keys to credit |
+| Payments | `payment_records`, `payment_transactions` unchanged |
+| RLS | All existing policies on orders/quotes/payments preserved |
+| Operations Hub | Queue logic unchanged except badge additions |
+| SLA Engine | `slaHelpers.ts` unchanged unless benefit explicitly enabled |
 
 ---
 
 ## Implementation Scope
 
-### 3A.1 — Tenant-Level Subscriptions
+### 3B.1 - Customer Credit Terms
 
-**Database Table: `subscriptions`**
+**Purpose**: Allow trusted customers to place orders with deferred payment (Net 7/14/30) within strict limits.
 
-| Column | Type | Constraints |
-|--------|------|-------------|
-| `id` | uuid | Primary key |
-| `tenant_id` | uuid | References auth.users (super_admin) |
-| `plan` | text | ENUM: 'starter', 'growth', 'enterprise' |
-| `status` | text | ENUM: 'active', 'past_due', 'canceled' |
-| `billing_cycle` | text | ENUM: 'monthly', 'yearly' |
-| `starts_at` | timestamptz | NOT NULL |
-| `ends_at` | timestamptz | Nullable |
-| `created_at` | timestamptz | Default now() |
-| `updated_at` | timestamptz | Auto-updated |
-
-**RLS Policies:**
-- `super_admin` can INSERT/UPDATE/DELETE
-- `admin` can SELECT only
-- Customers have no access
-
-**New Files:**
-
-| File | Purpose |
-|------|---------|
-| `src/components/settings/BillingSettingsTab.tsx` | Admin Billing UI |
-| `src/hooks/useSubscription.ts` | Fetch/mutate subscription |
-
-**Integration:**
-- Add "Billing" tab to `Settings.tsx` (visible to super_admin only)
-- All changes logged to `audit_logs` with event_type: `subscription_*`
-
----
-
-### 3A.2 — Customer Loyalty Tracking
-
-**Database Table: `customer_loyalty`**
+**Database Table: `customer_credit_terms`**
 
 | Column | Type | Constraints |
 |--------|------|-------------|
 | `id` | uuid | Primary key |
-| `customer_id` | uuid | FK → customers, UNIQUE |
-| `lifetime_orders` | integer | Default 0 |
-| `lifetime_revenue` | numeric | Default 0 |
-| `last_order_at` | timestamptz | Nullable |
-| `loyalty_tier` | text | ENUM: 'bronze', 'silver', 'gold' |
+| `customer_id` | uuid | FK to customers, UNIQUE |
+| `credit_limit` | numeric(15,2) | NOT NULL, >= 0 |
+| `current_balance` | numeric(15,2) | DEFAULT 0, >= 0 |
+| `net_terms` | text | ENUM: 'net_7', 'net_14', 'net_30' |
+| `status` | text | ENUM: 'inactive', 'active', 'suspended' |
+| `approved_by` | uuid | FK to auth.users |
+| `approved_at` | timestamptz | Nullable |
+| `suspended_at` | timestamptz | Nullable |
+| `suspended_reason` | text | Nullable |
+| `created_at` | timestamptz | DEFAULT now() |
 | `updated_at` | timestamptz | Auto-updated |
 
-**Tier Calculation (Read-Only, Computed on Query):**
-
-| Tier | Condition |
-|------|-----------|
-| Bronze | < 3 orders |
-| Silver | ≥ 3 orders |
-| Gold | ≥ 10 orders OR lifetime_revenue > 50,000 |
-
-**New Files:**
-
-| File | Purpose |
-|------|---------|
-| `src/components/loyalty/LoyaltyBadge.tsx` | Visual tier indicator |
-| `src/hooks/useCustomerLoyalty.ts` | Fetch/compute loyalty data |
-| `src/utils/loyaltyHelpers.ts` | Tier calculation functions |
-
-**Integration Points:**
-- Add `LoyaltyBadge` to `UnifiedCustomerView.tsx` header
-- Add `LoyaltyBadge` to `CustomerCard.tsx`
-- Add tooltip explaining tier criteria
-
-**Customer Portal (Optional Badge):**
-- Show "Trusted Customer" badge for Gold tier only
-- No mention of rewards or benefits
-
----
-
-### 3A.3 — Commercial Signals
-
-**New File: `src/utils/commercialSignals.ts`**
-
-Utility functions for read-only intelligence:
+**RPC Function: `approve_credit_terms`**
 
 ```text
-isRepeatBuyer(customer)
-  → true if lifetime_orders ≥ 2
+Parameters:
+- p_customer_id: uuid
+- p_credit_limit: numeric
+- p_net_terms: text ('net_7', 'net_14', 'net_30')
 
-isHighValueCustomer(customer)
-  → true if lifetime_revenue > 25,000 OR avg_order_value > 5,000
+Validation:
+1. Caller must be super_admin
+2. Customer must meet ALL eligibility requirements:
+   - isRepeatBuyer(customer) = true (lifetime_orders >= 2)
+   - loyalty_tier IN ('silver', 'gold')
+   - No overdue invoices
+3. Credit limit must be > 0
 
-isHighFrequencyCustomer(customer)
-  → true if has ≥ 3 orders in last 90 days
-
-isCreditCandidate(customer)
-  → true if Gold tier AND isRepeatBuyer AND no late payments
-  → For Phase 3B preparation (not acted upon)
+Returns:
+- Success: credit_terms record
+- Failure: Error with reason (eligibility_failed, unauthorized, etc.)
 ```
 
-**New Files:**
+**Hard Enforcement Rules (Database Level)**
 
-| File | Purpose |
-|------|---------|
-| `src/utils/commercialSignals.ts` | Signal calculation functions |
-| `src/components/commercial/CommercialSignalBadges.tsx` | Visual indicators |
+```sql
+-- Constraint: current_balance never exceeds credit_limit
+ALTER TABLE customer_credit_terms
+ADD CONSTRAINT credit_balance_check 
+CHECK (current_balance <= credit_limit);
 
-**Integration Points:**
-- Admin: Customer profile shows signal badges
-- Admin: Order header shows repeat buyer indicator
-- Operations Hub: Badge-only indicators on queue rows
-- Super Admin: "Potential Credit Candidate" signal visible
+-- Constraint: credit_limit must be positive when active
+ALTER TABLE customer_credit_terms
+ADD CONSTRAINT credit_limit_positive 
+CHECK (credit_limit >= 0);
+```
+
+---
+
+### 3B.2 - Subscription Enforcement (Soft Only)
+
+**Purpose**: Surface subscription status to admins without blocking operations.
+
+**Enforcement Level: Soft Only (Phase 3B)**
+
+| Feature | Behavior |
+|---------|----------|
+| Admin Portal | Yellow warning banner when `past_due` or `canceled` |
+| Customer Portal | Non-blocking "Plan status" indicator |
+| Order Creation | Unchanged - never blocked |
+| Analytics/Exports | Unchanged - no restrictions in Phase 3B |
+
+**No Database Changes Required** - Uses existing `subscriptions` table.
+
+**New Components**:
+- `SubscriptionStatusBanner.tsx` - Admin warning component
+- `useSubscriptionEnforcement.ts` - Hook for status checks
+
+---
+
+### 3B.3 - Loyalty Benefits (Non-Monetary)
+
+**Purpose**: Reward loyal customers with operational advantages, not discounts.
+
+**Database Table: `customer_benefits`**
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `customer_id` | uuid | FK to customers, UNIQUE per benefit_type |
+| `benefit_type` | text | ENUM (see below) |
+| `enabled` | boolean | DEFAULT false |
+| `enabled_by` | uuid | FK to auth.users |
+| `enabled_at` | timestamptz | Nullable |
+| `disabled_at` | timestamptz | Nullable |
+| `created_at` | timestamptz | DEFAULT now() |
+| `updated_at` | timestamptz | Auto-updated |
+
+**Allowed Benefit Types (Phase 3B)**
+
+| Type | Effect |
+|------|--------|
+| `priority_processing` | Orders float to top of Operations Hub queues |
+| `dedicated_manager` | Visual indicator + assignment preference |
+| `faster_sla` | SLA thresholds reduced by 25% for this customer |
+
+**Explicitly Excluded Benefits**
+
+- `discount_*` - No discount types
+- `credit_*` - Covered by credit terms system
+- `cashback` - No cash-equivalent benefits
+
+---
+
+### 3B.4 - Kill Switches & Audit Logging
+
+**Kill Switch Table: `system_feature_flags`**
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `feature_key` | text | UNIQUE |
+| `enabled` | boolean | DEFAULT true |
+| `disabled_by` | uuid | Nullable |
+| `disabled_at` | timestamptz | Nullable |
+| `disabled_reason` | text | Nullable |
+
+**Feature Keys**:
+- `credit_terms_global` - Master switch for all credit
+- `subscription_enforcement` - Master switch for enforcement
+- `loyalty_benefits_global` - Master switch for all benefits
+
+**Audit Events (High Severity)**
+
+| Event Type | When Logged |
+|------------|-------------|
+| `credit_terms_approved` | Credit activated for customer |
+| `credit_terms_suspended` | Credit suspended |
+| `credit_terms_limit_changed` | Limit adjusted |
+| `credit_balance_updated` | Balance changed (invoice/payment) |
+| `benefit_enabled` | Loyalty benefit activated |
+| `benefit_disabled` | Loyalty benefit deactivated |
+| `feature_flag_changed` | Kill switch toggled |
 
 ---
 
 ## Implementation Details
 
-### Step 1: Database Migrations
+### Step 1: Database Migration
 
-**Migration 1: Create subscriptions table**
+**Migration: Create Phase 3B tables**
+
 ```sql
-CREATE TABLE public.subscriptions (
+-- Customer Credit Terms
+CREATE TABLE public.customer_credit_terms (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES auth.users(id),
-  plan TEXT NOT NULL CHECK (plan IN ('starter', 'growth', 'enterprise')),
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'past_due', 'canceled')),
-  billing_cycle TEXT NOT NULL DEFAULT 'monthly' CHECK (billing_cycle IN ('monthly', 'yearly')),
-  starts_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  ends_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  customer_id UUID NOT NULL REFERENCES public.customers(id) ON DELETE CASCADE,
+  credit_limit NUMERIC(15,2) NOT NULL DEFAULT 0 CHECK (credit_limit >= 0),
+  current_balance NUMERIC(15,2) NOT NULL DEFAULT 0 CHECK (current_balance >= 0),
+  net_terms TEXT NOT NULL DEFAULT 'net_14' CHECK (net_terms IN ('net_7', 'net_14', 'net_30')),
+  status TEXT NOT NULL DEFAULT 'inactive' CHECK (status IN ('inactive', 'active', 'suspended')),
+  approved_by UUID REFERENCES auth.users(id),
+  approved_at TIMESTAMPTZ,
+  suspended_at TIMESTAMPTZ,
+  suspended_reason TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(customer_id),
+  CONSTRAINT credit_balance_within_limit CHECK (current_balance <= credit_limit)
 );
 
--- RLS
-ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+-- Customer Benefits
+CREATE TABLE public.customer_benefits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES public.customers(id) ON DELETE CASCADE,
+  benefit_type TEXT NOT NULL CHECK (benefit_type IN ('priority_processing', 'dedicated_manager', 'faster_sla')),
+  enabled BOOLEAN NOT NULL DEFAULT false,
+  enabled_by UUID REFERENCES auth.users(id),
+  enabled_at TIMESTAMPTZ,
+  disabled_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(customer_id, benefit_type)
+);
 
-CREATE POLICY "Super admins can manage subscriptions"
-  ON subscriptions FOR ALL
+-- System Feature Flags (Kill Switches)
+CREATE TABLE public.system_feature_flags (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  feature_key TEXT NOT NULL UNIQUE,
+  enabled BOOLEAN NOT NULL DEFAULT true,
+  disabled_by UUID REFERENCES auth.users(id),
+  disabled_at TIMESTAMPTZ,
+  disabled_reason TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Insert default feature flags
+INSERT INTO public.system_feature_flags (feature_key, enabled) VALUES
+  ('credit_terms_global', true),
+  ('subscription_enforcement', true),
+  ('loyalty_benefits_global', true);
+```
+
+**RLS Policies**
+
+```sql
+-- Credit Terms: Super admin manages, admins view
+ALTER TABLE customer_credit_terms ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Super admins can manage credit terms"
+  ON customer_credit_terms FOR ALL
   USING (EXISTS (
     SELECT 1 FROM user_roles
     WHERE user_id = auth.uid() AND role = 'super_admin'
   ));
 
-CREATE POLICY "Admins can view subscriptions"
-  ON subscriptions FOR SELECT
+CREATE POLICY "Admins can view credit terms"
+  ON customer_credit_terms FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')
+  ));
+
+-- Customer Benefits: Same pattern
+ALTER TABLE customer_benefits ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Super admins can manage benefits"
+  ON customer_benefits FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = auth.uid() AND role = 'super_admin'
+  ));
+
+CREATE POLICY "Admins can view benefits"
+  ON customer_benefits FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')
+  ));
+
+-- Feature Flags: Super admin only
+ALTER TABLE system_feature_flags ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Super admins can manage feature flags"
+  ON system_feature_flags FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = auth.uid() AND role = 'super_admin'
+  ));
+
+CREATE POLICY "Admins can view feature flags"
+  ON system_feature_flags FOR SELECT
   USING (EXISTS (
     SELECT 1 FROM user_roles
     WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')
   ));
 ```
 
-**Migration 2: Create customer_loyalty table**
+---
+
+### Step 2: RPC Functions (Secure Credit Operations)
+
+**Function: `approve_credit_terms`**
+
 ```sql
-CREATE TABLE public.customer_loyalty (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
-  lifetime_orders INTEGER DEFAULT 0,
-  lifetime_revenue NUMERIC(15,2) DEFAULT 0,
-  last_order_at TIMESTAMPTZ,
-  loyalty_tier TEXT DEFAULT 'bronze' CHECK (loyalty_tier IN ('bronze', 'silver', 'gold')),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(customer_id)
-);
-
--- RLS
-ALTER TABLE customer_loyalty ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Admins can view loyalty"
-  ON customer_loyalty FOR SELECT
-  USING (EXISTS (
+CREATE OR REPLACE FUNCTION public.approve_credit_terms(
+  p_customer_id UUID,
+  p_credit_limit NUMERIC,
+  p_net_terms TEXT DEFAULT 'net_14'
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_is_super_admin BOOLEAN;
+  v_loyalty_data RECORD;
+  v_has_overdue BOOLEAN;
+  v_credit_enabled BOOLEAN;
+  v_result JSONB;
+BEGIN
+  -- Check caller is super_admin
+  SELECT EXISTS (
     SELECT 1 FROM user_roles
-    WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin', 'sales_rep')
-  ));
+    WHERE user_id = auth.uid() AND role = 'super_admin'
+  ) INTO v_is_super_admin;
+  
+  IF NOT v_is_super_admin THEN
+    RETURN jsonb_build_object('success', false, 'error', 'unauthorized', 'message', 'Only super admins can approve credit terms');
+  END IF;
+  
+  -- Check global kill switch
+  SELECT enabled INTO v_credit_enabled
+  FROM system_feature_flags
+  WHERE feature_key = 'credit_terms_global';
+  
+  IF NOT COALESCE(v_credit_enabled, true) THEN
+    RETURN jsonb_build_object('success', false, 'error', 'feature_disabled', 'message', 'Credit terms are globally disabled');
+  END IF;
+  
+  -- Validate net_terms
+  IF p_net_terms NOT IN ('net_7', 'net_14', 'net_30') THEN
+    RETURN jsonb_build_object('success', false, 'error', 'invalid_terms', 'message', 'Net terms must be net_7, net_14, or net_30');
+  END IF;
+  
+  -- Validate credit limit
+  IF p_credit_limit <= 0 THEN
+    RETURN jsonb_build_object('success', false, 'error', 'invalid_limit', 'message', 'Credit limit must be greater than 0');
+  END IF;
+  
+  -- Get loyalty data
+  SELECT lifetime_orders, loyalty_tier INTO v_loyalty_data
+  FROM customer_loyalty
+  WHERE customer_id = p_customer_id;
+  
+  -- Check eligibility: repeat buyer (2+ orders)
+  IF COALESCE(v_loyalty_data.lifetime_orders, 0) < 2 THEN
+    RETURN jsonb_build_object('success', false, 'error', 'eligibility_failed', 'message', 'Customer must have at least 2 completed orders');
+  END IF;
+  
+  -- Check eligibility: loyalty tier >= silver
+  IF COALESCE(v_loyalty_data.loyalty_tier, 'bronze') = 'bronze' THEN
+    RETURN jsonb_build_object('success', false, 'error', 'eligibility_failed', 'message', 'Customer must be Silver tier or higher');
+  END IF;
+  
+  -- Check for overdue invoices
+  SELECT EXISTS (
+    SELECT 1 FROM invoices
+    WHERE customer_id = p_customer_id
+    AND status = 'overdue'
+  ) INTO v_has_overdue;
+  
+  IF v_has_overdue THEN
+    RETURN jsonb_build_object('success', false, 'error', 'eligibility_failed', 'message', 'Customer has overdue invoices');
+  END IF;
+  
+  -- Upsert credit terms
+  INSERT INTO customer_credit_terms (
+    customer_id,
+    credit_limit,
+    net_terms,
+    status,
+    approved_by,
+    approved_at,
+    current_balance
+  ) VALUES (
+    p_customer_id,
+    p_credit_limit,
+    p_net_terms,
+    'active',
+    auth.uid(),
+    now(),
+    0
+  )
+  ON CONFLICT (customer_id) DO UPDATE SET
+    credit_limit = p_credit_limit,
+    net_terms = p_net_terms,
+    status = 'active',
+    approved_by = auth.uid(),
+    approved_at = now(),
+    suspended_at = NULL,
+    suspended_reason = NULL,
+    updated_at = now();
+  
+  -- Log audit event
+  INSERT INTO audit_logs (
+    event_type,
+    resource_type,
+    resource_id,
+    action,
+    event_data,
+    severity,
+    user_id
+  ) VALUES (
+    'credit_terms_approved',
+    'customer_credit_terms',
+    p_customer_id::text,
+    'approve',
+    jsonb_build_object(
+      'credit_limit', p_credit_limit,
+      'net_terms', p_net_terms,
+      'approved_by', auth.uid()
+    ),
+    'high',
+    auth.uid()
+  );
+  
+  RETURN jsonb_build_object('success', true, 'customer_id', p_customer_id, 'credit_limit', p_credit_limit, 'net_terms', p_net_terms);
+END;
+$$;
+```
 
-CREATE POLICY "System can update loyalty"
-  ON customer_loyalty FOR ALL
-  USING (true);
+**Function: `suspend_credit_terms`**
+
+```sql
+CREATE OR REPLACE FUNCTION public.suspend_credit_terms(
+  p_customer_id UUID,
+  p_reason TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Verify super_admin
+  IF NOT EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = auth.uid() AND role = 'super_admin'
+  ) THEN
+    RETURN jsonb_build_object('success', false, 'error', 'unauthorized');
+  END IF;
+  
+  -- Update status
+  UPDATE customer_credit_terms
+  SET 
+    status = 'suspended',
+    suspended_at = now(),
+    suspended_reason = p_reason,
+    updated_at = now()
+  WHERE customer_id = p_customer_id;
+  
+  -- Log audit event
+  INSERT INTO audit_logs (
+    event_type, resource_type, resource_id, action, event_data, severity, user_id
+  ) VALUES (
+    'credit_terms_suspended', 'customer_credit_terms', p_customer_id::text,
+    'suspend', jsonb_build_object('reason', p_reason), 'high', auth.uid()
+  );
+  
+  RETURN jsonb_build_object('success', true);
+END;
+$$;
+```
+
+**Function: `check_credit_eligibility`**
+
+```sql
+CREATE OR REPLACE FUNCTION public.check_credit_eligibility(p_customer_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+STABLE
+AS $$
+DECLARE
+  v_loyalty_data RECORD;
+  v_has_overdue BOOLEAN;
+  v_eligible BOOLEAN := true;
+  v_reasons TEXT[] := ARRAY[]::TEXT[];
+BEGIN
+  -- Get loyalty data
+  SELECT lifetime_orders, loyalty_tier INTO v_loyalty_data
+  FROM customer_loyalty
+  WHERE customer_id = p_customer_id;
+  
+  -- Check repeat buyer
+  IF COALESCE(v_loyalty_data.lifetime_orders, 0) < 2 THEN
+    v_eligible := false;
+    v_reasons := array_append(v_reasons, 'Needs 2+ completed orders');
+  END IF;
+  
+  -- Check tier
+  IF COALESCE(v_loyalty_data.loyalty_tier, 'bronze') = 'bronze' THEN
+    v_eligible := false;
+    v_reasons := array_append(v_reasons, 'Needs Silver tier or higher');
+  END IF;
+  
+  -- Check overdue invoices
+  SELECT EXISTS (
+    SELECT 1 FROM invoices
+    WHERE customer_id = p_customer_id AND status = 'overdue'
+  ) INTO v_has_overdue;
+  
+  IF v_has_overdue THEN
+    v_eligible := false;
+    v_reasons := array_append(v_reasons, 'Has overdue invoices');
+  END IF;
+  
+  RETURN jsonb_build_object(
+    'eligible', v_eligible,
+    'lifetime_orders', COALESCE(v_loyalty_data.lifetime_orders, 0),
+    'loyalty_tier', COALESCE(v_loyalty_data.loyalty_tier, 'bronze'),
+    'has_overdue_invoices', v_has_overdue,
+    'missing_requirements', v_reasons
+  );
+END;
+$$;
 ```
 
 ---
 
-### Step 2: Utility Files
+### Step 3: Utility Files
 
-**File: `src/utils/loyaltyHelpers.ts`**
+**File: `src/utils/creditHelpers.ts`**
 
 ```text
+Types:
+- CreditTerms
+- NetTerms ('net_7' | 'net_14' | 'net_30')
+- CreditStatus ('inactive' | 'active' | 'suspended')
+
 Functions:
-- calculateLoyaltyTier(lifetimeOrders, lifetimeRevenue) → 'bronze' | 'silver' | 'gold'
-- getTierColor(tier) → string (for badge styling)
-- getTierDescription(tier) → string (for tooltips)
+- getNetTermsDays(terms: NetTerms) → number (7, 14, or 30)
+- getNetTermsLabel(terms: NetTerms) → string
+- getCreditUtilization(balance, limit) → percentage
+- getAvailableCredit(limit, balance) → numeric
+- formatCreditAmount(amount) → formatted string
+- getCreditStatusColor(status) → CSS class
 ```
 
-**File: `src/utils/commercialSignals.ts`**
+**File: `src/utils/benefitHelpers.ts`**
 
 ```text
+Types:
+- BenefitType ('priority_processing' | 'dedicated_manager' | 'faster_sla')
+- CustomerBenefit
+
 Functions:
-- isRepeatBuyer(loyaltyData) → boolean
-- isHighValueCustomer(loyaltyData) → boolean
-- isHighFrequencyCustomer(loyaltyData, orders) → boolean
-- isCreditCandidate(loyaltyData, paymentHistory) → boolean (super_admin only)
-- getCommercialSignals(loyaltyData) → { repeatBuyer, highValue, creditCandidate }
-```
-
----
-
-### Step 3: Hooks
-
-**File: `src/hooks/useSubscription.ts`**
-
-```text
-Functions:
-- useSubscription() → { subscription, isLoading, updatePlan, cancelSubscription }
-- Uses react-query for caching
-- Logs all changes to audit_logs
-```
-
-**File: `src/hooks/useCustomerLoyalty.ts`**
-
-```text
-Functions:
-- useCustomerLoyalty(customerId) → { loyalty, isLoading, refetch }
-- useBulkCustomerLoyalty(customerIds) → { loyaltyMap, isLoading }
-- Computes tier client-side from raw data
+- getBenefitLabel(type) → string
+- getBenefitDescription(type) → string
+- getBenefitIcon(type) → Lucide icon
+- hasBenefit(benefits, type) → boolean
 ```
 
 ---
 
-### Step 4: UI Components
+### Step 4: Hooks
 
-**File: `src/components/settings/BillingSettingsTab.tsx`**
+**File: `src/hooks/useCustomerCreditTerms.ts`**
+
+```text
+Functions:
+- useCustomerCreditTerms(customerId)
+  → { creditTerms, isLoading, eligibility }
+- useCreditTermsMutations()
+  → { approveCreditTerms, suspendCreditTerms, adjustLimit }
+- useCheckCreditEligibility(customerId)
+  → { eligible, reasons, isLoading }
+```
+
+**File: `src/hooks/useCustomerBenefits.ts`**
+
+```text
+Functions:
+- useCustomerBenefits(customerId)
+  → { benefits, isLoading }
+- useBenefitMutations()
+  → { enableBenefit, disableBenefit }
+```
+
+**File: `src/hooks/useFeatureFlags.ts`**
+
+```text
+Functions:
+- useFeatureFlags()
+  → { flags, isLoading }
+- useFeatureFlagMutations()
+  → { toggleFlag }
+- useIsFeatureEnabled(key)
+  → boolean
+```
+
+---
+
+### Step 5: UI Components
+
+**File: `src/components/credit/CreditTermsPanel.tsx`**
 
 Features:
-- Current plan display with badge
-- Status indicator (Active/Past Due/Canceled)
-- Plan change dropdown (super_admin only)
-- Billing cycle display
-- Audit history of plan changes
-- Manual cancel/reactivate buttons
+- Credit limit display with utilization bar
+- Current balance indicator
+- Net terms badge (Net 7/14/30)
+- Status badge (Active/Suspended/Inactive)
+- Eligibility check display
+- Actions: Approve, Suspend, Adjust Limit (super_admin)
+- Audit trail of credit changes
 
-**File: `src/components/loyalty/LoyaltyBadge.tsx`**
-
-Features:
-- Color-coded tier badge (Bronze/Silver/Gold)
-- Optional tooltip with tier criteria
-- Compact variant for list views
-- Full variant for profile headers
-
-**File: `src/components/commercial/CommercialSignalBadges.tsx`**
+**File: `src/components/credit/CreditEligibilityCard.tsx`**
 
 Features:
-- "Repeat Buyer" badge (green)
-- "High Value" badge (purple)
-- "Credit Candidate" badge (super_admin only, amber)
-- Stacked display for multiple signals
+- Visual checklist of eligibility requirements
+- Pass/fail status for each requirement
+- "Request Credit Approval" button (initiates workflow)
+
+**File: `src/components/benefits/BenefitsBadge.tsx`**
+
+Features:
+- Compact badge showing active benefits
+- Tooltip with benefit details
+- Color-coded by benefit type
+
+**File: `src/components/benefits/CustomerBenefitsPanel.tsx`**
+
+Features:
+- List of available benefits with toggle switches
+- Enabled/disabled state per benefit
+- Audit info (who enabled, when)
+- super_admin only controls
+
+**File: `src/components/enforcement/SubscriptionStatusBanner.tsx`**
+
+Features:
+- Yellow warning banner for `past_due`
+- Red warning banner for `canceled`
+- Dismissible (per session)
+- Link to billing settings
+
+**File: `src/components/admin/KillSwitchPanel.tsx`**
+
+Features:
+- Toggle switches for each feature flag
+- Confirmation dialog before disabling
+- Reason input when disabling
+- Audit trail display
 
 ---
 
-### Step 5: Integration Changes
-
-**Modified: `src/pages/Settings.tsx`**
-
-```text
-Changes:
-- Import BillingSettingsTab
-- Add "Billing" tab trigger (super_admin only)
-- Add TabsContent for billing tab
-```
+### Step 6: Integration Changes
 
 **Modified: `src/components/crm/UnifiedCustomerView.tsx`**
 
 ```text
 Changes:
-- Import LoyaltyBadge, CommercialSignalBadges
-- Add useCustomerLoyalty hook call
-- Display badges in customer header section
-- Add tooltip for tier explanation
-```
-
-**Modified: `src/components/customers/CustomerCard.tsx`**
-
-```text
-Changes:
-- Import LoyaltyBadge
-- Fetch loyalty tier for customer
-- Display compact badge in card footer
+- Import CreditTermsPanel, CustomerBenefitsPanel
+- Add "Credit" tab to customer detail tabs
+- Add "Benefits" section to customer header
+- Show credit utilization badge if active
 ```
 
 **Modified: `src/pages/admin/OperationsHub.tsx`**
 
 ```text
 Changes:
-- Import CommercialSignalBadges
-- Pass customer loyalty data to queue rows
-- Display repeat buyer indicator on order rows
+- Import BenefitsBadge
+- Add priority indicator for customers with priority_processing benefit
+- Adjust queue sorting to float priority customers up
+```
+
+**Modified: `src/pages/Settings.tsx`**
+
+```text
+Changes:
+- Import KillSwitchPanel
+- Add "Kill Switches" section to Super Admin tab
+```
+
+**Modified: `src/utils/slaHelpers.ts`**
+
+```text
+Changes (Additive Only):
+- New function: getSLAThresholdsForCustomer(customerId, benefits)
+  - If 'faster_sla' benefit enabled, reduce thresholds by 25%
+  - Otherwise return standard thresholds
+- Existing calculateSLA remains unchanged unless benefit is passed
 ```
 
 ---
 
 ## Files Summary
 
-### New Files (8)
+### New Files (15)
 
 | File | Lines (est.) | Purpose |
 |------|--------------|---------|
-| `src/utils/loyaltyHelpers.ts` | ~50 | Tier calculation utilities |
-| `src/utils/commercialSignals.ts` | ~80 | Signal calculation utilities |
-| `src/hooks/useSubscription.ts` | ~100 | Subscription data hook |
-| `src/hooks/useCustomerLoyalty.ts` | ~80 | Loyalty data hook |
-| `src/components/settings/BillingSettingsTab.tsx` | ~250 | Admin billing UI |
-| `src/components/loyalty/LoyaltyBadge.tsx` | ~60 | Tier badge component |
-| `src/components/commercial/CommercialSignalBadges.tsx` | ~100 | Signal badges component |
-| `.lovable/migrations/phase3a_subscriptions.sql` | ~50 | Database migration |
+| `src/utils/creditHelpers.ts` | ~80 | Credit calculation utilities |
+| `src/utils/benefitHelpers.ts` | ~60 | Benefit display utilities |
+| `src/hooks/useCustomerCreditTerms.ts` | ~150 | Credit terms data/mutations |
+| `src/hooks/useCustomerBenefits.ts` | ~100 | Benefits data/mutations |
+| `src/hooks/useFeatureFlags.ts` | ~80 | Kill switch management |
+| `src/components/credit/CreditTermsPanel.tsx` | ~300 | Admin credit management UI |
+| `src/components/credit/CreditEligibilityCard.tsx` | ~150 | Eligibility display |
+| `src/components/benefits/BenefitsBadge.tsx` | ~80 | Visual benefit indicator |
+| `src/components/benefits/CustomerBenefitsPanel.tsx` | ~200 | Admin benefit toggles |
+| `src/components/enforcement/SubscriptionStatusBanner.tsx` | ~80 | Status warning |
+| `src/components/admin/KillSwitchPanel.tsx` | ~200 | Feature flag controls |
+| `supabase/migrations/phase3b_credit_terms.sql` | ~200 | Database migration |
 
 ### Modified Files (4)
 
 | File | Changes |
 |------|---------|
-| `src/pages/Settings.tsx` | Add Billing tab for super_admin |
-| `src/components/crm/UnifiedCustomerView.tsx` | Add loyalty/signal badges |
-| `src/components/customers/CustomerCard.tsx` | Add loyalty badge |
-| `src/pages/admin/OperationsHub.tsx` | Add signal indicators |
+| `src/components/crm/UnifiedCustomerView.tsx` | Add Credit tab, Benefits section |
+| `src/pages/admin/OperationsHub.tsx` | Priority badge, queue sorting |
+| `src/pages/Settings.tsx` | Kill switch panel in Super Admin |
+| `src/utils/slaHelpers.ts` | Add customer-specific threshold function |
 
 ---
 
 ## Safety Verification Matrix
 
-### Data Safety
+### Financial Safety
 
-| Check | Status |
-|-------|--------|
-| Orders unaffected by subscription status | No foreign keys, no queries |
-| Payments unaffected by loyalty tier | Read-only display only |
-| RLS unchanged for orders, quotes, payments | Not modified |
-| No foreign keys from orders → subscriptions | Verified |
-
-### UX Safety
-
-| Check | Status |
-|-------|--------|
-| Customers never blocked by subscription | Not implemented |
-| Subscriptions invisible to customers | RLS enforced |
-| Loyalty badges are informational only | No pricing logic |
-| No rewards, discounts, or credits | Explicitly excluded |
+| Check | Implementation |
+|-------|----------------|
+| Credit never exceeds limit | Database CHECK constraint |
+| Credit applied only to approved customers | RPC function validation |
+| No automatic credit approvals | Super admin approval required |
+| Payments reconcile correctly | Balance updates via audit-logged RPC |
+| Kill switch stops all credit | `credit_terms_global` flag check |
 
 ### Operational Safety
 
-| Check | Status |
-|-------|--------|
-| Operations queues unchanged | Badge-only additions |
-| SLA calculations unchanged | Not modified |
-| Bulk operations unaffected | Not modified |
-| Phase 2 workflows preserved | Verified |
+| Check | Implementation |
+|-------|----------------|
+| Operations queues still function | Badge-only additions, optional priority |
+| SLA logic unchanged by default | Only modified when `faster_sla` benefit passed |
+| Bulk operations unaffected | No changes to bulk action logic |
+| Order creation never blocked | No FK or constraint to orders |
+
+### Access Safety
+
+| Check | Implementation |
+|-------|----------------|
+| RLS enforced via RPC only | SECURITY DEFINER functions |
+| Customers cannot mutate credit data | No customer access policies |
+| Super admin cannot bypass audit logs | Logs in same transaction as action |
+| All mutations logged | High severity audit events |
 
 ---
 
@@ -388,44 +758,55 @@ Changes:
 
 | Feature | Status |
 |---------|--------|
-| Automatic billing | NOT IMPLEMENTED |
-| Discount calculations | NOT IMPLEMENTED |
-| Credit systems | NOT IMPLEMENTED |
-| Deferred payments | NOT IMPLEMENTED |
-| Subscription enforcement | NOT IMPLEMENTED |
-| Workflow automation triggers | NOT IMPLEMENTED |
+| Automatic credit approvals | NOT IMPLEMENTED |
+| Auto-increasing limits | NOT IMPLEMENTED |
+| Interest or penalties | NOT IMPLEMENTED |
+| Bulk credit assignment | NOT IMPLEMENTED |
+| Hard order blocking | NOT IMPLEMENTED |
+| Price mutation | NOT IMPLEMENTED |
+| Discounts or cashback | NOT IMPLEMENTED |
 
 ---
 
 ## Testing Checklist
 
-- [ ] Subscriptions table created with correct RLS
-- [ ] Super admin can view/update/cancel subscriptions
-- [ ] Admin can only view subscriptions
-- [ ] Customers cannot access subscriptions
-- [ ] Billing tab appears only for super_admin
-- [ ] Subscription changes logged to audit_logs
-- [ ] Loyalty table created with customer FK
-- [ ] Loyalty tier correctly computed (Bronze < 3, Silver ≥ 3, Gold ≥ 10)
-- [ ] Loyalty badge displays in customer profile
-- [ ] Loyalty badge displays in customer card
-- [ ] Commercial signals compute correctly
-- [ ] Credit candidate badge only visible to super_admin
-- [ ] All badges are display-only (no click actions)
-- [ ] Orders flow completely unaffected
-- [ ] Payment flow completely unaffected
-- [ ] Quote flow completely unaffected
+### Credit Terms
+- [ ] Super admin can approve credit for eligible customer
+- [ ] Ineligible customers rejected with reason
+- [ ] Credit limit enforced at database level
+- [ ] Balance updates logged
+- [ ] Suspend/reactivate works correctly
+- [ ] Kill switch disables all credit operations
+
+### Benefits
+- [ ] Super admin can enable/disable benefits
+- [ ] Priority processing affects queue sorting
+- [ ] Faster SLA reduces thresholds for customer
+- [ ] Benefits badge displays correctly
+- [ ] Kill switch disables all benefits
+
+### Subscription Enforcement
+- [ ] Warning banner appears for past_due
+- [ ] Warning banner appears for canceled
+- [ ] No operations are blocked
+- [ ] Order creation unaffected
+
+### Audit & Safety
+- [ ] All credit changes logged
+- [ ] All benefit changes logged
+- [ ] Kill switch changes logged
+- [ ] Admins can view but not modify credit
+- [ ] Customers cannot see credit limits
 
 ---
 
 ## Success Criteria
 
-Phase 3A is complete when:
+Phase 3B is complete when:
 
-1. Subscription state is visible and manageable by super_admin
-2. Loyalty tiers track customer behavior without monetary impact
-3. Commercial signals surface valuable customers
-4. Badges are purely informational
-5. Zero breaking changes to Phase 1-2 workflows
-6. All changes are audit-logged
-
+1. Credit terms work for 1-3 trusted customers
+2. No existing workflows break
+3. Credit exposure is visible at all times
+4. Benefits provide operational value without financial risk
+5. Super admin can disable everything instantly
+6. All changes are audit-logged with high severity
