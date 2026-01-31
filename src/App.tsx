@@ -81,6 +81,7 @@ import CustomerAuth from "./pages/CustomerAuth";
 import Unauthorized from "./pages/Unauthorized";
 import NotificationSettingsPage from "./pages/NotificationSettings";
 import MobileHub from "./pages/MobileHub";
+import AutomationControl from "./pages/admin/AutomationControl";
 import CustomerSettings from "./pages/CustomerSettings";
 import ProductDetail from "./pages/ProductDetail";
 
@@ -207,6 +208,7 @@ const App = () => {
                         <Route path="diagnostics" element={<Diagnostics />} />
                         <Route path="orders/issues" element={<OrderIssues />} />
                         <Route path="finance/reconciliation" element={<FinancialReconciliation />} />
+                        <Route path="automation" element={<AutomationControl />} />
                       </Route>
                       
                       {/* Mobile Hub - standalone page outside PublicLayout */}
@@ -304,6 +306,7 @@ const App = () => {
                         <Route path="finance/reconciliation" element={<FinancialReconciliation />} />
                         <Route path="analytics/manual-quotes" element={<ManualQuoteAnalytics />} />
                         <Route path="analytics/currency" element={<CurrencyAnalytics />} />
+                        <Route path="automation" element={<AutomationControl />} />
                       </Route>
                       
                       <Route path="*" element={<Navigate to="/" replace />} />
@@ -411,6 +414,8 @@ const App = () => {
                         <Route path="finance/reconciliation" element={<FinancialReconciliation />} />
                         <Route path="analytics/manual-quotes" element={<ManualQuoteAnalytics />} />
                         <Route path="analytics/currency" element={<CurrencyAnalytics />} />
+                        <Route path="automation" element={<AutomationControl />} />
+                        <Route path="operations" element={<OperationsHub />} />
                       </Route>
                       
                       {/* Mobile Hub - standalone page outside PublicLayout */}
