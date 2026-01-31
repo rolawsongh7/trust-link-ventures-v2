@@ -16,7 +16,8 @@ import {
   FileText,
   Activity,
   Search,
-  Power
+  Power,
+  Zap
 } from 'lucide-react';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { RoleManagementCard } from './RoleManagementCard';
@@ -25,6 +26,7 @@ import { MaintenanceModeCard } from './MaintenanceModeCard';
 import { OrphanedDataCard } from './OrphanedDataCard';
 import { BulkPdfRegenerationCard } from './BulkPdfRegenerationCard';
 import { ExtendedAuditLogCard } from './ExtendedAuditLogCard';
+import { AutomationStatusCard } from '@/components/automation/AutomationStatusCard';
 import { KillSwitchPanel } from '@/components/admin/KillSwitchPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -146,6 +148,10 @@ export const SuperAdminTab = () => {
             <Power className="h-4 w-4" />
             <span className="hidden sm:inline">Kill Switches</span>
           </TabsTrigger>
+          <TabsTrigger value="automation" className="gap-2">
+            <Zap className="h-4 w-4" />
+            <span className="hidden sm:inline">Automation</span>
+          </TabsTrigger>
           <TabsTrigger value="audit" className="gap-2">
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Audit</span>
@@ -207,6 +213,17 @@ export const SuperAdminTab = () => {
             transition={{ duration: 0.3 }}
           >
             <KillSwitchPanel />
+          </motion.div>
+        </TabsContent>
+
+        {/* Automation Tab */}
+        <TabsContent value="automation" className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <AutomationStatusCard />
           </motion.div>
         </TabsContent>
 

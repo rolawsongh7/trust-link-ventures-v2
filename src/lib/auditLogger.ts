@@ -22,7 +22,16 @@ export type AuditEventType =
   | 'file_uploaded'
   | 'file_downloaded'
   | 'api_access'
-  | 'suspicious_activity';
+  | 'suspicious_activity'
+  // Phase 4.1: Automation events
+  | 'automation_global_enabled'
+  | 'automation_global_disabled'
+  | 'automation_rule_enabled'
+  | 'automation_rule_disabled'
+  | 'automation_rule_auto_disabled'
+  | 'automation_execution_success'
+  | 'automation_execution_failed'
+  | 'automation_failure_reset';
 
 export type AuditSeverity = 'low' | 'medium' | 'high';
 

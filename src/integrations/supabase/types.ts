@@ -191,6 +191,134 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_executions: {
+        Row: {
+          duration_ms: number | null
+          entity_id: string
+          entity_type: string
+          error_message: string | null
+          executed_at: string
+          id: string
+          result: Json | null
+          rule_id: string
+          status: string
+          trigger_event: string
+        }
+        Insert: {
+          duration_ms?: number | null
+          entity_id: string
+          entity_type: string
+          error_message?: string | null
+          executed_at?: string
+          id?: string
+          result?: Json | null
+          rule_id: string
+          status: string
+          trigger_event: string
+        }
+        Update: {
+          duration_ms?: number | null
+          entity_id?: string
+          entity_type?: string
+          error_message?: string | null
+          executed_at?: string
+          id?: string
+          result?: Json | null
+          rule_id?: string
+          status?: string
+          trigger_event?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_executions_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_rules: {
+        Row: {
+          actions: Json
+          auto_disabled_at: string | null
+          conditions: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          enabled: boolean
+          entity_type: string
+          failure_count: number
+          id: string
+          name: string
+          priority: number
+          trigger_event: string
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json
+          auto_disabled_at?: string | null
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          entity_type: string
+          failure_count?: number
+          id?: string
+          name: string
+          priority?: number
+          trigger_event: string
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          auto_disabled_at?: string | null
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          entity_type?: string
+          failure_count?: number
+          id?: string
+          name?: string
+          priority?: number
+          trigger_event?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      automation_settings: {
+        Row: {
+          auto_disable_threshold: number
+          auto_disable_window_minutes: number
+          automation_enabled: boolean
+          id: string
+          max_executions_per_minute: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          auto_disable_threshold?: number
+          auto_disable_window_minutes?: number
+          automation_enabled?: boolean
+          id?: string
+          max_executions_per_minute?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          auto_disable_threshold?: number
+          auto_disable_window_minutes?: number
+          automation_enabled?: boolean
+          id?: string
+          max_executions_per_minute?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           created_at: string
@@ -4240,9 +4368,24 @@ export type Database = {
       get_user_role: { Args: { user_id: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       is_allowed_admin_email: { Args: { user_email: string }; Returns: boolean }
+      is_automation_enabled: { Args: never; Returns: boolean }
+      is_rule_enabled: { Args: { p_rule_id: string }; Returns: boolean }
       is_super_admin: { Args: { check_user_id: string }; Returns: boolean }
       link_quote_to_request: {
         Args: { p_quote_id: string; p_quote_number: string }
+        Returns: Json
+      }
+      log_automation_execution: {
+        Args: {
+          p_duration_ms?: number
+          p_entity_id: string
+          p_entity_type: string
+          p_error_message?: string
+          p_result?: Json
+          p_rule_id: string
+          p_status: string
+          p_trigger_event: string
+        }
         Returns: Json
       }
       log_security_event: {
@@ -4273,8 +4416,17 @@ export type Database = {
         Returns: Json
       }
       repair_customer_user_mappings: { Args: never; Returns: number }
+      reset_rule_failure_count: { Args: { p_rule_id: string }; Returns: Json }
       suspend_credit_terms: {
         Args: { p_customer_id: string; p_reason?: string }
+        Returns: Json
+      }
+      toggle_automation_global: {
+        Args: { p_enabled: boolean; p_reason?: string }
+        Returns: Json
+      }
+      toggle_automation_rule: {
+        Args: { p_enabled: boolean; p_rule_id: string }
         Returns: Json
       }
       toggle_customer_benefit: {
