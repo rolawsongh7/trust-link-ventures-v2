@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, Mail, Phone, Building, MapPin, Calendar, 
   DollarSign, TrendingUp, FileText, MessageSquare, 
-  Activity, Target, ShoppingCart, Eye
+  Activity, Target, ShoppingCart, Eye, CreditCard, Gift
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +17,9 @@ import { LoyaltyBadge } from '@/components/loyalty/LoyaltyBadge';
 import { CommercialSignalBadges } from '@/components/commercial/CommercialSignalBadges';
 import { useCustomerLoyalty, useCustomerRecentOrders } from '@/hooks/useCustomerLoyalty';
 import { getCommercialSignals } from '@/utils/commercialSignals';
+import { CreditTermsPanel } from '@/components/credit/CreditTermsPanel';
+import { CustomerBenefitsPanel } from '@/components/benefits/CustomerBenefitsPanel';
+import { useRoleAuth } from '@/hooks/useRoleAuth';
 
 interface Customer {
   id: string;
@@ -94,6 +97,7 @@ export const UnifiedCustomerView: React.FC<UnifiedCustomerViewProps> = ({ custom
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { hasAdminAccess } = useRoleAuth();
   
   // Loyalty and commercial signals
   const { data: loyaltyData } = useCustomerLoyalty(customerId);
@@ -352,11 +356,23 @@ export const UnifiedCustomerView: React.FC<UnifiedCustomerViewProps> = ({ custom
 
       {/* Detailed Information Tabs */}
       <Tabs defaultValue="timeline" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className={`grid w-full ${hasAdminAccess ? 'grid-cols-6' : 'grid-cols-4'}`}>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="leads">Leads ({leads.length})</TabsTrigger>
           <TabsTrigger value="quotes">Quotes ({quotes.length})</TabsTrigger>
           <TabsTrigger value="orders">Orders ({orders.length})</TabsTrigger>
+          {hasAdminAccess && (
+            <>
+              <TabsTrigger value="credit" className="gap-1">
+                <CreditCard className="h-3 w-3" />
+                Credit
+              </TabsTrigger>
+              <TabsTrigger value="benefits" className="gap-1">
+                <Gift className="h-3 w-3" />
+                Benefits
+              </TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         <TabsContent value="timeline" className="space-y-4">
@@ -510,6 +526,26 @@ export const UnifiedCustomerView: React.FC<UnifiedCustomerViewProps> = ({ custom
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Credit Tab - Admin only */}
+        {hasAdminAccess && (
+          <TabsContent value="credit" className="space-y-4">
+            <CreditTermsPanel 
+              customerId={customerId} 
+              customerName={customer.company_name} 
+            />
+          </TabsContent>
+        )}
+
+        {/* Benefits Tab - Admin only */}
+        {hasAdminAccess && (
+          <TabsContent value="benefits" className="space-y-4">
+            <CustomerBenefitsPanel 
+              customerId={customerId} 
+              customerName={customer.company_name} 
+            />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

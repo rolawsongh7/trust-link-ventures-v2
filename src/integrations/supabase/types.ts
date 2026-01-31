@@ -484,6 +484,103 @@ export type Database = {
           },
         ]
       }
+      customer_benefits: {
+        Row: {
+          benefit_type: string
+          created_at: string
+          customer_id: string
+          disabled_at: string | null
+          enabled: boolean
+          enabled_at: string | null
+          enabled_by: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          benefit_type: string
+          created_at?: string
+          customer_id: string
+          disabled_at?: string | null
+          enabled?: boolean
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          benefit_type?: string
+          created_at?: string
+          customer_id?: string
+          disabled_at?: string | null
+          enabled?: boolean
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_benefits_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_credit_terms: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          credit_limit: number
+          current_balance: number
+          customer_id: string
+          id: string
+          net_terms: string
+          status: string
+          suspended_at: string | null
+          suspended_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          credit_limit?: number
+          current_balance?: number
+          customer_id: string
+          id?: string
+          net_terms?: string
+          status?: string
+          suspended_at?: string | null
+          suspended_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          credit_limit?: number
+          current_balance?: number
+          customer_id?: string
+          id?: string
+          net_terms?: string
+          status?: string
+          suspended_at?: string | null
+          suspended_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_credit_terms_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_favorites: {
         Row: {
           created_at: string
@@ -3239,6 +3336,39 @@ export type Database = {
         }
         Relationships: []
       }
+      system_feature_flags: {
+        Row: {
+          created_at: string
+          disabled_at: string | null
+          disabled_by: string | null
+          disabled_reason: string | null
+          enabled: boolean
+          feature_key: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          disabled_at?: string | null
+          disabled_by?: string | null
+          disabled_reason?: string | null
+          enabled?: boolean
+          feature_key: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          disabled_at?: string | null
+          disabled_by?: string | null
+          disabled_reason?: string | null
+          enabled?: boolean
+          feature_key?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           created_at: string
@@ -3917,6 +4047,18 @@ export type Database = {
       }
     }
     Functions: {
+      adjust_credit_limit: {
+        Args: { p_customer_id: string; p_new_limit: number; p_reason?: string }
+        Returns: Json
+      }
+      approve_credit_terms: {
+        Args: {
+          p_credit_limit: number
+          p_customer_id: string
+          p_net_terms?: string
+        }
+        Returns: Json
+      }
       change_user_role_secure: {
         Args: { p_new_role: string; p_target_user_id: string }
         Returns: Json
@@ -3924,6 +4066,10 @@ export type Database = {
       check_communication_rate_limit: {
         Args: { p_ip_address: unknown }
         Returns: boolean
+      }
+      check_credit_eligibility: {
+        Args: { p_customer_id: string }
+        Returns: Json
       }
       check_lead_rate_limit: {
         Args: { p_ip_address: unknown }
@@ -4127,6 +4273,22 @@ export type Database = {
         Returns: Json
       }
       repair_customer_user_mappings: { Args: never; Returns: number }
+      suspend_credit_terms: {
+        Args: { p_customer_id: string; p_reason?: string }
+        Returns: Json
+      }
+      toggle_customer_benefit: {
+        Args: {
+          p_benefit_type: string
+          p_customer_id: string
+          p_enabled: boolean
+        }
+        Returns: Json
+      }
+      toggle_feature_flag: {
+        Args: { p_enabled: boolean; p_feature_key: string; p_reason?: string }
+        Returns: Json
+      }
       toggle_maintenance_mode: {
         Args: { p_enabled: boolean; p_message?: string }
         Returns: Json
