@@ -1912,6 +1912,7 @@ export type Database = {
         Row: {
           actual_delivery_date: string | null
           assigned_to: string | null
+          automation_flags: Json | null
           balance_remaining: number | null
           cancellation_reason: string | null
           cancelled_at: string | null
@@ -1982,6 +1983,7 @@ export type Database = {
         Insert: {
           actual_delivery_date?: string | null
           assigned_to?: string | null
+          automation_flags?: Json | null
           balance_remaining?: number | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -2052,6 +2054,7 @@ export type Database = {
         Update: {
           actual_delivery_date?: string | null
           assigned_to?: string | null
+          automation_flags?: Json | null
           balance_remaining?: number | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
