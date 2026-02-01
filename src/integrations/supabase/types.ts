@@ -557,6 +557,13 @@ export type Database = {
             foreignKeyName: "communications_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "customer_credit_ledger"
+            referencedColumns: ["order_id"]
+          },
+          {
+            foreignKeyName: "communications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -1136,6 +1143,13 @@ export type Database = {
             foreignKeyName: "delivery_history_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "customer_credit_ledger"
+            referencedColumns: ["order_id"]
+          },
+          {
+            foreignKeyName: "delivery_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -1167,6 +1181,13 @@ export type Database = {
           token?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "delivery_tracking_tokens_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "customer_credit_ledger"
+            referencedColumns: ["order_id"]
+          },
           {
             foreignKeyName: "delivery_tracking_tokens_order_id_fkey"
             columns: ["order_id"]
@@ -1268,6 +1289,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "customer_credit_ledger"
+            referencedColumns: ["order_id"]
           },
           {
             foreignKeyName: "email_logs_order_id_fkey"
@@ -1522,6 +1550,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "customer_credit_ledger"
+            referencedColumns: ["order_id"]
           },
           {
             foreignKeyName: "invoices_order_id_fkey"
@@ -2003,6 +2038,13 @@ export type Database = {
             foreignKeyName: "order_issues_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "customer_credit_ledger"
+            referencedColumns: ["order_id"]
+          },
+          {
+            foreignKeyName: "order_issues_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -2046,6 +2088,13 @@ export type Database = {
           unit_price?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "customer_credit_ledger"
+            referencedColumns: ["order_id"]
+          },
           {
             foreignKeyName: "order_items_order_id_fkey"
             columns: ["order_id"]
@@ -2094,6 +2143,13 @@ export type Database = {
             foreignKeyName: "order_status_history_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "customer_credit_ledger"
+            referencedColumns: ["order_id"]
+          },
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -2111,6 +2167,9 @@ export type Database = {
           carrier_name: string | null
           created_at: string | null
           created_by: string | null
+          credit_amount_used: number | null
+          credit_due_date: string | null
+          credit_terms_days: number | null
           currency: string
           customer_id: string | null
           delivered_at: string | null
@@ -2182,6 +2241,9 @@ export type Database = {
           carrier_name?: string | null
           created_at?: string | null
           created_by?: string | null
+          credit_amount_used?: number | null
+          credit_due_date?: string | null
+          credit_terms_days?: number | null
           currency?: string
           customer_id?: string | null
           delivered_at?: string | null
@@ -2253,6 +2315,9 @@ export type Database = {
           carrier_name?: string | null
           created_at?: string | null
           created_by?: string | null
+          credit_amount_used?: number | null
+          credit_due_date?: string | null
+          credit_terms_days?: number | null
           currency?: string
           customer_id?: string | null
           delivered_at?: string | null
@@ -2468,6 +2533,13 @@ export type Database = {
             foreignKeyName: "payment_records_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "customer_credit_ledger"
+            referencedColumns: ["order_id"]
+          },
+          {
+            foreignKeyName: "payment_records_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -2568,6 +2640,13 @@ export type Database = {
           webhook_received_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "customer_credit_ledger"
+            referencedColumns: ["order_id"]
+          },
           {
             foreignKeyName: "payment_transactions_order_id_fkey"
             columns: ["order_id"]
@@ -4319,6 +4398,33 @@ export type Database = {
       }
     }
     Views: {
+      customer_credit_ledger: {
+        Row: {
+          credit_amount_used: number | null
+          credit_due_date: string | null
+          credit_limit: number | null
+          current_balance: number | null
+          customer_id: string | null
+          is_overdue: boolean | null
+          net_terms: string | null
+          order_date: string | null
+          order_id: string | null
+          order_number: string | null
+          payment_status:
+            | Database["public"]["Enums"]["payment_status_enum"]
+            | null
+          total_amount: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_product_catalog: {
         Row: {
           brand: string | null
@@ -4377,6 +4483,7 @@ export type Database = {
         Args: { target_date?: string }
         Returns: undefined
       }
+      apply_credit_to_order: { Args: { p_order_id: string }; Returns: Json }
       approve_credit_terms: {
         Args: {
           p_credit_limit: number
@@ -4621,6 +4728,10 @@ export type Database = {
         }
         Returns: Json
       }
+      record_credit_payment: {
+        Args: { p_amount: number; p_order_id: string }
+        Returns: Json
+      }
       regenerate_invoice_pdfs: {
         Args: {
           p_end_date?: string
@@ -4629,6 +4740,7 @@ export type Database = {
         }
         Returns: Json
       }
+      release_credit_from_order: { Args: { p_order_id: string }; Returns: Json }
       repair_customer_user_mappings: { Args: never; Returns: number }
       reset_rule_failure_count: { Args: { p_rule_id: string }; Returns: Json }
       suspend_credit_terms: {
