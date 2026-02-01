@@ -1,6 +1,6 @@
 /**
- * Phase 4.3: Automation Execution Log
- * Displays execution history with filtering and customer notification indicators
+ * Phase 4.4: Automation Execution Log
+ * Displays execution history with filtering, customer notification indicators, and feedback
  */
 
 import React, { useState } from 'react';
@@ -24,7 +24,8 @@ import {
   Clock,
   Users,
   Timer,
-  BellOff
+  BellOff,
+  MessageSquare
 } from 'lucide-react';
 import { useAutomationExecutions, useAutomationRules } from '@/hooks/useAutomation';
 import { 
@@ -37,6 +38,7 @@ import {
 } from '@/utils/automationHelpers';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { FeedbackDialog } from '@/components/admin/automation/analytics/FeedbackDialog';
 
 // Helper functions for customer notification status
 const isCustomerExecution = (result: Record<string, unknown> | null): boolean => {
@@ -54,9 +56,10 @@ const wasPrefsDisabled = (result: Record<string, unknown> | null): boolean => {
 interface ExecutionRowProps {
   execution: AutomationExecution;
   ruleName?: string;
+  onFeedback: (executionId: string) => void;
 }
 
-const ExecutionRow: React.FC<ExecutionRowProps> = ({ execution, ruleName }) => {
+const ExecutionRow: React.FC<ExecutionRowProps> = ({ execution, ruleName, onFeedback }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const StatusIcon = getExecutionStatusIcon(execution.status);
   const statusColor = getExecutionStatusColor(execution.status);
@@ -161,6 +164,22 @@ const ExecutionRow: React.FC<ExecutionRowProps> = ({ execution, ruleName }) => {
                   </pre>
                 </div>
               )}
+
+              {/* Feedback Button */}
+              <div className="flex justify-end pt-2 border-t">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onFeedback(execution.id);
+                  }}
+                  className="gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Submit Feedback
+                </Button>
+              </div>
             </div>
           </motion.div>
         )}
@@ -179,6 +198,7 @@ export const AutomationExecutionLog: React.FC<AutomationExecutionLogProps> = ({
   limit = 50 
 }) => {
   const [statusFilter, setStatusFilter] = useState<ExecutionStatus | 'all'>('all');
+  const [feedbackExecutionId, setFeedbackExecutionId] = useState<string | null>(null);
   
   const { data: executions, isLoading, refetch } = useAutomationExecutions({
     ruleId,
@@ -257,23 +277,31 @@ export const AutomationExecutionLog: React.FC<AutomationExecutionLogProps> = ({
         ) : (
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-2">
-              {executions.map((execution, index) => (
-                <motion.div
-                  key={execution.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.02 }}
-                >
-                  <ExecutionRow
-                    execution={execution}
-                    ruleName={ruleNameMap.get(execution.rule_id)}
-                  />
-                </motion.div>
-              ))}
-            </div>
-          </ScrollArea>
-        )}
-      </CardContent>
-    </Card>
-  );
+                {executions.map((execution, index) => (
+                  <motion.div
+                    key={execution.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.02 }}
+                  >
+                    <ExecutionRow
+                      execution={execution}
+                      ruleName={ruleNameMap.get(execution.rule_id)}
+                      onFeedback={setFeedbackExecutionId}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </CardContent>
+
+        {/* Feedback Dialog */}
+        <FeedbackDialog
+          executionId={feedbackExecutionId}
+          open={!!feedbackExecutionId}
+          onOpenChange={(open) => !open && setFeedbackExecutionId(null)}
+        />
+      </Card>
+    );
 };

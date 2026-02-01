@@ -238,6 +238,91 @@ export type Database = {
           },
         ]
       }
+      automation_feedback: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          execution_id: string | null
+          feedback_type: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          execution_id?: string | null
+          feedback_type: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          execution_id?: string | null
+          feedback_type?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_feedback_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "automation_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_metrics_daily: {
+        Row: {
+          affected_entities: number | null
+          created_at: string | null
+          customer_notifications_sent: number | null
+          customer_notifications_throttled: number | null
+          date: string
+          executions: number | null
+          failures: number | null
+          id: string
+          rule_id: string | null
+          skipped: number | null
+          successes: number | null
+        }
+        Insert: {
+          affected_entities?: number | null
+          created_at?: string | null
+          customer_notifications_sent?: number | null
+          customer_notifications_throttled?: number | null
+          date: string
+          executions?: number | null
+          failures?: number | null
+          id?: string
+          rule_id?: string | null
+          skipped?: number | null
+          successes?: number | null
+        }
+        Update: {
+          affected_entities?: number | null
+          created_at?: string | null
+          customer_notifications_sent?: number | null
+          customer_notifications_throttled?: number | null
+          date?: string
+          executions?: number | null
+          failures?: number | null
+          id?: string
+          rule_id?: string | null
+          skipped?: number | null
+          successes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_metrics_daily_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_rules: {
         Row: {
           actions: Json
@@ -4181,6 +4266,10 @@ export type Database = {
       adjust_credit_limit: {
         Args: { p_customer_id: string; p_new_limit: number; p_reason?: string }
         Returns: Json
+      }
+      aggregate_automation_metrics: {
+        Args: { target_date?: string }
+        Returns: undefined
       }
       approve_credit_terms: {
         Args: {
