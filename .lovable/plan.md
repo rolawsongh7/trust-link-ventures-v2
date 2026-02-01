@@ -1,270 +1,223 @@
 
-# Phase 4.2 Completion Plan: SLA & Risk Automation
+# Phase 4.3 Audit & Implementation Plan: Customer-Facing Automation
 
-## Summary
+## Audit Summary
 
-Complete the remaining Phase 4.2 implementation by adding TypeScript types, format helpers, the AutomationRuleDetailDrawer component, the automationExecutionService, and enhanced UI components with SLA highlighting.
+### Already Implemented (Substantial Foundation)
 
----
+| Component | Status | Details |
+|-----------|--------|---------|
+| **TriggerEvent types** | Done | `partial_payment_received`, `balance_due_detected` added |
+| **ActionType types** | Done | `send_customer_email`, `send_customer_notification` added |
+| **AuditEventType** | Done | 5 customer automation events added |
+| **CustomerAutomationService** | Done | 594-line service with throttling, attribution, idempotency |
+| **THROTTLE_WINDOWS** | Done | Configured for payment/balance/status/delay notices |
+| **AUTOMATION_ATTRIBUTION** | Done | "Automated update from Trust Link Company" |
+| **executePaymentReminder()** | Done | Payment overdue emails with balance info |
+| **executeStatusNotification()** | Done | Status change in-app notifications |
+| **executePartialPaymentAck()** | Done | Payment received acknowledgement |
+| **executeBalanceReminder()** | Done | Balance due reminders |
+| **executeDelayNotice()** | Done | SLA breach courtesy notices |
+| **areNotificationsEnabled()** | Done | Customer preference check |
 
-## Current State
+### Missing (Required for Phase 4.3 Completion)
 
-**Already Complete:**
-- Database migration with 5 seeded automation rules (all disabled by default)
-- `automation_flags` JSONB column added to orders table
-- Basic automation hooks and components from Phase 4.1
-
-**Missing (to implement):**
-1. Extended `TriggerEvent` types (4 new triggers)
-2. Extended `AuditEventType` (5 new SLA events)
-3. Format helper functions (`formatConditions`, `formatActions`, `isSLARelatedTrigger`)
-4. `useAutomationRule(id)` hook for single rule fetch
-5. `AutomationRuleDetailDrawer` component
-6. `automationExecutionService` for safe action execution
-7. Enhanced UI with SLA highlighting and entity links
+| Component | Status | Required Work |
+|-----------|--------|---------------|
+| **Database: 5 customer-facing rules** | Missing | Seed 5 new automation rules (disabled by default) |
+| **automationExecutionService integration** | Missing | Add `send_customer_email` and `send_customer_notification` cases |
+| **send-email template** | Missing | Add `automated_customer_notification` email type |
+| **AutomationControl.tsx** | Needs Update | Update phase notice to "4.3 Active" |
+| **Customer-facing rule badges** | Missing | Visual indicator for customer-facing rules |
+| **Execution log enhancements** | Missing | Show "Customer Notified" badge for customer-facing executions |
 
 ---
 
 ## Implementation Details
 
-### 1. Update automationHelpers.ts
+### 1. Database Migration: Seed 5 Customer-Facing Rules
 
-**Extend TriggerEvent type:**
-Add `sla_at_risk`, `order_unassigned`, `payment_overdue`, `high_risk_customer_detected`
+Create a new migration that inserts 5 rules (all `enabled = false`):
 
-**Add new helper functions:**
-- `formatConditions(conditions)` - Converts condition JSON to human-readable strings (e.g., "Order not delivered or cancelled")
-- `formatActions(actions)` - Converts action array to readable descriptions (e.g., "Notify assigned staff")
-- `isSLARelatedTrigger(trigger)` - Returns true for `sla_at_risk`, `sla_breached`
-- `getSLAHighlightColor(trigger)` - Returns amber for at_risk, red for breached
+**Rule 1: Payment Reminder (Customer Notification)**
+- Trigger: `payment_overdue`
+- Entity: `order`
+- Conditions: `{ "payment_status": { "not_equals": "fully_paid" } }`
+- Actions: `[{ type: "send_customer_email", config: { ... } }]`
 
-**Update VALID_TRIGGER_EVENTS and formatTriggerEvent:**
-Include all Phase 4.2 triggers in the validation arrays and display formatters
+**Rule 2: Order Status Progress Notification**
+- Trigger: `order_status_changed`
+- Entity: `order`
+- Conditions: `{ "status": { "in": ["processing", "ready_to_ship", "shipped"] } }`
+- Actions: `[{ type: "send_customer_notification", config: { ... } }]`
 
----
+**Rule 3: Partial Payment Acknowledgement**
+- Trigger: `partial_payment_received`
+- Entity: `order`
+- Conditions: `{ "payment_status": { "not_equals": "fully_paid" } }`
+- Actions: `[{ type: "send_customer_notification", config: { ... } }]`
 
-### 2. Update auditLogger.ts
+**Rule 4: Balance Due Reminder**
+- Trigger: `balance_due_detected`
+- Entity: `order`
+- Conditions: `{ "balance_remaining": { "greater_than": 0 } }`
+- Actions: `[{ type: "send_customer_notification", config: { ... } }]`
 
-**Add 5 new SLA audit event types:**
-- `sla_at_risk_notified`
-- `sla_breached_escalated`
-- `order_unassigned_alerted`
-- `payment_overdue_reminded`
-- `high_risk_customer_alerted`
-
----
-
-### 3. Update useAutomation.ts
-
-**Add `useAutomationRule(ruleId)` hook:**
-- Fetches a single rule by ID
-- Includes the last 10 executions for that rule
-- Used by the detail drawer component
-
-**Add query key:**
-- `rule: (id: string) => ['automation', 'rule', id]`
+**Rule 5: Delivery Delay Courtesy Notice**
+- Trigger: `sla_breached`
+- Entity: `order`
+- Conditions: `{ "sla_status": "breached" }`
+- Actions: `[{ type: "send_customer_email", config: { notification_type: "delay_notice" } }]`
 
 ---
 
-### 4. Create AutomationRuleDetailDrawer Component
+### 2. Update automationExecutionService.ts
 
-**Location:** `src/components/automation/AutomationRuleDetailDrawer.tsx`
-
-**UI Structure:**
-```text
-+------------------------------------------+
-| [X]        Rule Details                  |
-+------------------------------------------+
-| [Zap] SLA At-Risk Notification           |
-| "Notifies assigned staff when..."        |
-+------------------------------------------+
-| TRIGGER                                  |
-| [Clock] sla_at_risk on Order             |
-+------------------------------------------+
-| CONDITIONS                               |
-| - SLA status is "at_risk"                |
-| - Order not delivered or cancelled       |
-+------------------------------------------+
-| ACTIONS                                  |
-| [Bell] Notify assigned staff             |
-| [Bell] Notify operations inbox           |
-| [FileText] Log audit event               |
-+------------------------------------------+
-| [Info] No order data is modified         |
-+------------------------------------------+
-| STATUS            [Toggle Switch]        |
-| Failures          0                      |
-| Last Execution    Never                  |
-+------------------------------------------+
-| RECENT EXECUTIONS (Last 10)              |
-| (list or empty state)                    |
-+------------------------------------------+
-```
-
-**Features:**
-- Uses Sheet component (slides in from right)
-- Read-only view of rule configuration
-- Human-readable conditions and actions
-- Enable/Disable toggle (super_admin only)
-- "No data modified" label for SLA rules
-- Mini execution log showing last 10 runs
-
----
-
-### 5. Create automationExecutionService.ts
-
-**Location:** `src/services/automationExecutionService.ts`
-
-**Purpose:** Provides a clean interface for executing automation actions safely
-
-**Key Functions:**
+Add cases for customer-facing actions in the `executeAction` switch:
 
 ```typescript
-class AutomationExecutionService {
-  // Validate action is in allowed list
-  static isActionSafe(action: AutomationAction): boolean;
-  
-  // Check if automation can run (guards)
-  static async canExecute(ruleId: string): Promise<{
-    canRun: boolean;
-    reason?: string;
-  }>;
-  
-  // Check for duplicate execution (idempotency)
-  static async isDuplicateExecution(
-    ruleId: string, 
-    entityId: string, 
-    windowMinutes?: number
-  ): Promise<boolean>;
-  
-  // Execute a single action
-  static async executeAction(
-    action: AutomationAction, 
-    context: ActionContext
-  ): Promise<ActionResult>;
-  
-  // Log execution result
-  static async logExecution(params: ExecutionParams): Promise<void>;
+case 'send_customer_email':
+  return await this.executeCustomerEmail(action, context);
+
+case 'send_customer_notification':
+  return await this.executeCustomerNotification(action, context);
+```
+
+Add private methods that delegate to `CustomerAutomationService`:
+- `executeCustomerEmail()` - calls `CustomerAutomationService.sendCustomerEmail()`
+- `executeCustomerNotification()` - calls `CustomerAutomationService.sendCustomerNotification()`
+
+These methods require fetching customer context (customerId, customerEmail, orderNumber) from the order.
+
+---
+
+### 3. Update send-email Edge Function
+
+Add `automated_customer_notification` email type support:
+
+```typescript
+case 'automated_customer_notification':
+  html = generateAutomatedCustomerNotificationEmail(data);
+  break;
+```
+
+Create `generateAutomatedCustomerNotificationEmail()` function with:
+- Clear "Automated update" attribution
+- Professional, non-threatening tone
+- Link to customer portal
+- Contact support option
+- Order reference
+
+---
+
+### 4. Update AutomationControl.tsx
+
+Change phase notice from:
+> "Phase 4.2: SLA & Risk Automation Active"
+
+To:
+> "Phase 4.3: Customer-Facing Automation Active"
+
+Update description:
+> "10 pre-configured automation rules including 5 customer-facing notification rules. All rules are disabled by default. Customer notifications respect preferences and throttling."
+
+---
+
+### 5. Enhance AutomationRulesList.tsx
+
+Add visual indicators for customer-facing rules:
+- Blue left border for rules with `send_customer_*` actions
+- "Customer Facing" badge on rule cards
+- Tooltip: "This rule may send notifications to customers"
+
+Add helper function:
+```typescript
+function isCustomerFacingRule(rule: AutomationRule): boolean {
+  return rule.actions.some(a => 
+    a.type === 'send_customer_email' || 
+    a.type === 'send_customer_notification'
+  );
 }
 ```
 
-**Action Executors (Phase 4.2):**
-- `send_notification` - Calls NotificationService.notifyAllAdmins()
-- `log_audit_event` - Calls AuditLogger.log() with configured severity
-- `add_tag` - Updates automation_flags JSONB on orders/customers table
+---
 
-**Deferred to Phase 4.3:**
-- `create_task` - Requires activities table integration
-- `assign_staff` - Requires assignment logic
+### 6. Enhance AutomationExecutionLog.tsx
 
-**Safety Constraints:**
-- Validates against FORBIDDEN_ACTIONS list
-- Checks global automation enabled flag
-- Checks individual rule enabled flag
-- Prevents duplicate executions within 1 hour
+Add customer notification indicators:
+- Badge: "Customer Notified" for customer-facing executions
+- Show throttle status: "Throttled - No duplicate sent"
+- Filter option: "Customer Notifications" in status dropdown
 
 ---
 
-### 6. Enhance AutomationRulesList.tsx
+### 7. Enhance AutomationRuleDetailDrawer.tsx
 
-**Changes:**
-- Add click handler to open detail drawer
-- Add visual indicator for SLA rules (amber/red left border)
-- Show rule description on hover via tooltip
-- Add "Phase 4.2" badge for seeded rules
-- Pass selected rule to drawer component
+For customer-facing rules, add informational banner:
+> "This rule sends notifications to customers. Messages include attribution and respect notification preferences."
 
----
-
-### 7. Enhance AutomationExecutionLog.tsx
-
-**Changes:**
-- Add SLA-related execution highlighting:
-  - Amber border for `sla_at_risk` trigger
-  - Red border for `sla_breached` trigger
-- Add clickable entity links (navigate to `/admin/orders/{id}`)
-- Add "Automated Action" badge on SLA executions
-- Add trigger type filter dropdown
-- Add "No data was modified" indicator for read-only actions
-- Show Phase 4.2 badge for seeded rule executions
-
----
-
-### 8. Update AutomationControl.tsx
-
-**Changes:**
-- Update Phase notice from "4.1" to "4.2 Active"
-- Add summary of seeded rules count
-- Show which rules are enabled vs disabled
+Show throttle configuration in action display.
 
 ---
 
 ## File Changes Summary
 
-### New Files (2)
+### New Files (1)
 
 | File | Purpose |
 |------|---------|
-| `src/components/automation/AutomationRuleDetailDrawer.tsx` | Rule detail panel with conditions/actions/executions |
-| `src/services/automationExecutionService.ts` | Safe action execution service |
+| Migration SQL | Seed 5 customer-facing automation rules |
 
-### Modified Files (6)
+### Modified Files (5)
 
 | File | Changes |
 |------|---------|
-| `src/utils/automationHelpers.ts` | Add 4 triggers, format helpers, SLA detection |
-| `src/lib/auditLogger.ts` | Add 5 new SLA audit event types |
-| `src/hooks/useAutomation.ts` | Add useAutomationRule(id) hook |
-| `src/components/automation/AutomationRulesList.tsx` | Add drawer trigger, SLA highlighting |
-| `src/components/automation/AutomationExecutionLog.tsx` | Add SLA highlighting, entity links |
-| `src/pages/admin/AutomationControl.tsx` | Update phase notice, add rule summary |
+| `src/services/automationExecutionService.ts` | Add customer action cases, delegate to CustomerAutomationService |
+| `supabase/functions/send-email/index.ts` | Add `automated_customer_notification` template |
+| `src/pages/admin/AutomationControl.tsx` | Update phase notice to 4.3 |
+| `src/components/automation/AutomationRulesList.tsx` | Add customer-facing rule indicators |
+| `src/components/automation/AutomationExecutionLog.tsx` | Add customer notification badges |
+| `src/components/automation/AutomationRuleDetailDrawer.tsx` | Add customer-facing rule info banner |
 
 ---
 
-## Technical Specifications
+## Safety Constraints (Verified)
 
-### formatConditions Implementation
+All Phase 4.3 rules will:
+1. Be created with `enabled = false`
+2. Respect global automation toggle
+3. Respect customer notification preferences
+4. Use throttling (24-48 hours for payment reminders)
+5. Include clear "Automated update" attribution
+6. Never send duplicate messages within throttle window
+7. Exit early on missing email (fallback to in-app only)
+8. Log all actions to audit trail
+9. Never modify financial or order data
 
-```typescript
-function formatConditions(conditions: Record<string, unknown>): string[] {
-  const results: string[] = [];
-  
-  for (const [field, value] of Object.entries(conditions)) {
-    if (value === null) {
-      results.push(`${formatFieldName(field)} is empty`);
-    } else if (typeof value === 'object') {
-      const op = Object.keys(value as object)[0];
-      const val = (value as Record<string, unknown>)[op];
-      results.push(formatConditionWithOperator(field, op, val));
-    } else {
-      results.push(`${formatFieldName(field)} equals "${value}"`);
-    }
-  }
-  
-  return results;
-}
-```
+---
 
-### SLA Highlight Colors
+## Explicitly Forbidden (Verified in FORBIDDEN_ACTIONS)
 
-| Trigger | Border Color | Badge Color |
-|---------|--------------|-------------|
-| `sla_at_risk` | `border-l-amber-500` | `bg-amber-100 text-amber-700` |
-| `sla_breached` | `border-l-red-500` | `bg-red-100 text-red-700` |
-| Other triggers | Default | Default |
+- `delete_record`
+- `modify_payment`
+- `modify_total`
+- `cancel_order`
+- `create_refund`
+- `delete_customer`
+- `modify_invoice`
 
 ---
 
 ## Definition of Done
 
-Phase 4.2 is complete when:
+Phase 4.3 is complete when:
 
-1. All 4 new trigger events are in TypeScript types
-2. All 5 new audit events are in AuditEventType
-3. formatConditions and formatActions produce readable output
-4. AutomationRuleDetailDrawer shows full rule details
-5. automationExecutionService validates action safety
-6. SLA-related executions have visual highlighting
-7. Entity links navigate to correct admin pages
-8. Rules can be individually enabled by super_admin
-9. All actions are non-destructive (notify, tag, log only)
+1. 5 customer-facing automation rules exist in database (disabled)
+2. `send_customer_email` and `send_customer_notification` actions execute via CustomerAutomationService
+3. Email template for automated customer notifications exists
+4. Throttling prevents duplicate notifications
+5. Attribution appears on all automated customer messages
+6. Admin UI shows customer-facing rule indicators
+7. Execution log shows customer notification status
+8. All rules are opt-in and respect customer preferences
+9. No financial or destructive actions are possible
