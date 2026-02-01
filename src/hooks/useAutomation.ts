@@ -20,6 +20,7 @@ import type {
 const AUTOMATION_KEYS = {
   settings: ['automation', 'settings'] as const,
   rules: ['automation', 'rules'] as const,
+  rule: (id: string) => ['automation', 'rule', id] as const,
   executions: (ruleId?: string) => 
     ruleId 
       ? ['automation', 'executions', ruleId] as const
@@ -72,6 +73,36 @@ export function useAutomationRules() {
         actions: (Array.isArray(rule.actions) ? rule.actions : []) as unknown as AutomationRule['actions'],
       })) as AutomationRule[];
     },
+  });
+}
+
+// ============================================
+// Single Rule Hook
+// ============================================
+
+export function useAutomationRule(ruleId: string | null) {
+  return useQuery({
+    queryKey: ruleId ? AUTOMATION_KEYS.rule(ruleId) : ['automation', 'rule', 'none'],
+    queryFn: async () => {
+      if (!ruleId) return null;
+      
+      const { data, error } = await supabase
+        .from('automation_rules')
+        .select('*')
+        .eq('id', ruleId)
+        .single();
+
+      if (error) throw error;
+      
+      return {
+        ...data,
+        entity_type: data.entity_type as AutomationRule['entity_type'],
+        trigger_event: data.trigger_event as AutomationRule['trigger_event'],
+        conditions: data.conditions as Record<string, unknown>,
+        actions: (Array.isArray(data.actions) ? data.actions : []) as unknown as AutomationRule['actions'],
+      } as AutomationRule;
+    },
+    enabled: !!ruleId,
   });
 }
 

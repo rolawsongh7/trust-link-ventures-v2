@@ -10,8 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Zap, 
   FileText, 
-  Settings2,
-  AlertTriangle
+  Settings2
 } from 'lucide-react';
 import { AutomationStatusCard } from '@/components/automation/AutomationStatusCard';
 import { AutomationRulesList } from '@/components/automation/AutomationRulesList';
@@ -65,21 +64,22 @@ const AutomationControl: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Phase 4.1 Notice */}
+      {/* Phase 4.2 Notice */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="flex items-start gap-3 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30"
+        className="flex items-start gap-3 p-4 rounded-lg bg-primary/10 border border-primary/30"
       >
-        <AlertTriangle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+        <Zap className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
         <div className="text-sm">
-          <p className="font-medium text-blue-600 dark:text-blue-400">
-            Phase 4.1: Infrastructure Only
+          <p className="font-medium text-primary">
+            Phase 4.2: SLA & Risk Automation Active
           </p>
           <p className="text-muted-foreground">
-            This phase provides automation infrastructure. Rule creation and editing will be available in Phase 4.2.
-            All automation is disabled by default and requires super admin to enable.
+            5 pre-configured automation rules for SLA tracking and risk management.
+            All rules are disabled by default and require super admin to enable.
+            Actions are non-destructive (notifications and logging only).
           </p>
         </div>
       </motion.div>

@@ -1,9 +1,9 @@
 /**
- * Phase 4.1: Automation Rules List
+ * Phase 4.2: Automation Rules List
  * Displays all automation rules with status and controls
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,8 @@ import {
   RefreshCw, 
   Zap,
   Info,
-  RotateCcw
+  RotateCcw,
+  ChevronRight
 } from 'lucide-react';
 import { useAutomationRules, useAutomationMutations } from '@/hooks/useAutomation';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
@@ -23,15 +24,19 @@ import {
   formatTriggerEvent, 
   formatEntityType, 
   getRuleStatusInfo,
+  isSLARelatedTrigger,
+  getSLAHighlightColor,
   type AutomationRule 
 } from '@/utils/automationHelpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { AutomationRuleDetailDrawer } from './AutomationRuleDetailDrawer';
 
 interface RuleRowProps {
   rule: AutomationRule;
   canManage: boolean;
   onToggle: (ruleId: string, enabled: boolean) => void;
   onResetFailures: (ruleId: string) => void;
+  onViewDetails: (ruleId: string) => void;
   isToggling: boolean;
   isResetting: boolean;
 }
@@ -41,25 +46,29 @@ const RuleRow: React.FC<RuleRowProps> = ({
   canManage, 
   onToggle, 
   onResetFailures,
+  onViewDetails,
   isToggling,
   isResetting 
 }) => {
   const statusInfo = getRuleStatusInfo(rule);
   const isAutoDisabled = !!rule.auto_disabled_at;
+  const isSLA = isSLARelatedTrigger(rule.trigger_event);
+  const slaColors = getSLAHighlightColor(rule.trigger_event);
 
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+      className={`flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${slaColors?.border || ''}`}
+      onClick={() => onViewDetails(rule.id)}
     >
       <div className="flex items-center gap-4 flex-1 min-w-0">
         {/* Status Indicator */}
         <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
           isAutoDisabled 
-            ? 'bg-orange-500' 
+            ? 'bg-destructive' 
             : rule.enabled 
-              ? 'bg-green-500' 
+              ? 'bg-primary' 
               : 'bg-muted-foreground'
         }`} />
 
@@ -70,6 +79,11 @@ const RuleRow: React.FC<RuleRowProps> = ({
             <Badge variant="outline" className="text-xs">
               {formatEntityType(rule.entity_type)}
             </Badge>
+            {isSLA && (
+              <Badge variant="secondary" className="text-xs">
+                SLA
+              </Badge>
+            )}
           </div>
           <p className="text-sm text-muted-foreground truncate">
             Trigger: {formatTriggerEvent(rule.trigger_event)}
@@ -85,7 +99,7 @@ const RuleRow: React.FC<RuleRowProps> = ({
         {rule.failure_count > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 text-orange-500">
+              <div className="flex items-center gap-1 text-destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <span className="text-sm font-medium">{rule.failure_count}</span>
               </div>
@@ -98,7 +112,7 @@ const RuleRow: React.FC<RuleRowProps> = ({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 ml-4">
+      <div className="flex items-center gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
         {/* Reset Failures Button (if auto-disabled) */}
         {isAutoDisabled && canManage && (
           <Button
@@ -133,12 +147,15 @@ const RuleRow: React.FC<RuleRowProps> = ({
             </TooltipContent>
           </Tooltip>
         )}
+
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </div>
     </motion.div>
   );
 };
 
 export const AutomationRulesList: React.FC = () => {
+  const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
   const { data: rules, isLoading, refetch } = useAutomationRules();
   const { toggleRule, resetFailureCount, isToggling, isResetting } = useAutomationMutations();
   const { hasSuperAdminAccess } = useRoleAuth();
@@ -167,56 +184,72 @@ export const AutomationRulesList: React.FC = () => {
     resetFailureCount(ruleId);
   };
 
+  const handleViewDetails = (ruleId: string) => {
+    setSelectedRuleId(ruleId);
+  };
+
+  const enabledCount = rules?.filter(r => r.enabled).length || 0;
+  const totalCount = rules?.length || 0;
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Zap className="h-5 w-5 text-primary" />
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Zap className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Automation Rules</CardTitle>
+                <CardDescription>
+                  {totalCount} rules configured • {enabledCount} enabled
+                </CardDescription>
+              </div>
             </div>
-            <div>
-              <CardTitle>Automation Rules</CardTitle>
-              <CardDescription>
-                {rules?.length || 0} rules configured
-              </CardDescription>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!rules || rules.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Zap className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="font-medium">No automation rules configured</p>
+              <p className="text-sm">Rules will appear here once created</p>
             </div>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {!rules || rules.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Zap className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="font-medium">No automation rules configured</p>
-            <p className="text-sm">Rules can be added in Phase 4.2</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {rules.map((rule, index) => (
-              <motion.div
-                key={rule.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <RuleRow
-                  rule={rule}
-                  canManage={hasSuperAdminAccess}
-                  onToggle={handleToggle}
-                  onResetFailures={handleResetFailures}
-                  isToggling={isToggling}
-                  isResetting={isResetting}
-                />
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          ) : (
+            <div className="space-y-3">
+              {rules.map((rule, index) => (
+                <motion.div
+                  key={rule.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <RuleRow
+                    rule={rule}
+                    canManage={hasSuperAdminAccess}
+                    onToggle={handleToggle}
+                    onResetFailures={handleResetFailures}
+                    onViewDetails={handleViewDetails}
+                    isToggling={isToggling}
+                    isResetting={isResetting}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <AutomationRuleDetailDrawer
+        ruleId={selectedRuleId}
+        open={!!selectedRuleId}
+        onOpenChange={(open) => !open && setSelectedRuleId(null)}
+      />
+    </>
   );
 };
