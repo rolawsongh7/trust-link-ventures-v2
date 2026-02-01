@@ -98,7 +98,10 @@ export const createMockCreditEligibility = (
   eligible: true,
   lifetime_orders: 5,
   loyalty_tier: 'silver',
+  trust_tier: 'verified',
   has_overdue_invoices: false,
+  has_overdue_credit: false,
+  available_credit: 5000,
   missing_requirements: [],
   ...overrides,
 });

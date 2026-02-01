@@ -212,3 +212,160 @@ export function useCreditTermsMutations() {
     reactivateCreditTerms,
   };
 }
+
+/**
+ * Fetch credit ledger (orders using credit) for a customer
+ */
+export function useCustomerCreditLedger(customerId: string | undefined) {
+  return useQuery({
+    queryKey: ['customer-credit-ledger', customerId],
+    queryFn: async () => {
+      if (!customerId) return [];
+
+      const { data, error } = await supabase
+        .from('customer_credit_ledger')
+        .select('*')
+        .eq('customer_id', customerId)
+        .order('order_date', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!customerId,
+  });
+}
+
+interface ApplyCreditParams {
+  orderId: string;
+}
+
+interface ReleaseCreditParams {
+  orderId: string;
+}
+
+interface RecordPaymentParams {
+  orderId: string;
+  amountPaid: number;
+}
+
+/**
+ * Mutations for order-level credit operations (Phase 5.2)
+ */
+export function useOrderCreditMutations() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const applyCreditToOrder = useMutation({
+    mutationFn: async ({ orderId }: ApplyCreditParams) => {
+      const { data, error } = await supabase.rpc('apply_credit_to_order', {
+        p_order_id: orderId,
+      });
+
+      if (error) throw error;
+      
+      const result = data as { 
+        success: boolean; 
+        error?: string; 
+        order_id?: string;
+        credit_used?: number;
+        due_date?: string;
+        new_balance?: number;
+      };
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to apply credit to order');
+      }
+      
+      return result;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-credit-terms'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-credit-ledger'] });
+      toast({
+        title: 'Credit Applied',
+        description: `Payment due by ${result.due_date ? new Date(result.due_date).toLocaleDateString() : 'TBD'}.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to Apply Credit',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const releaseCreditFromOrder = useMutation({
+    mutationFn: async ({ orderId }: ReleaseCreditParams) => {
+      const { data, error } = await supabase.rpc('release_credit_from_order', {
+        p_order_id: orderId,
+      });
+
+      if (error) throw error;
+      
+      const result = data as { success: boolean; error?: string };
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to release credit from order');
+      }
+      
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-credit-terms'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-credit-ledger'] });
+      toast({
+        title: 'Credit Released',
+        description: 'Credit has been returned to available balance.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to Release Credit',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const recordCreditPayment = useMutation({
+    mutationFn: async ({ orderId, amountPaid }: RecordPaymentParams) => {
+      const { data, error } = await supabase.rpc('record_credit_payment', {
+        p_order_id: orderId,
+        p_amount: amountPaid,
+      });
+
+      if (error) throw error;
+      
+      const result = data as { success: boolean; error?: string };
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to record credit payment');
+      }
+      
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-credit-terms'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-credit-ledger'] });
+      toast({
+        title: 'Payment Recorded',
+        description: 'Credit balance has been updated.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to Record Payment',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  return {
+    applyCreditToOrder,
+    releaseCreditFromOrder,
+    recordCreditPayment,
+  };
+}
