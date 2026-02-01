@@ -14,9 +14,13 @@ export type TriggerEvent =
   | 'order_status_changed'
   | 'payment_received'
   | 'sla_breached'
+  | 'sla_at_risk'
   | 'quote_created'
   | 'quote_accepted'
-  | 'customer_created';
+  | 'customer_created'
+  | 'order_unassigned'
+  | 'payment_overdue'
+  | 'high_risk_customer_detected';
 
 export type EntityType = 'order' | 'customer' | 'payment' | 'quote';
 
@@ -99,9 +103,13 @@ export const VALID_TRIGGER_EVENTS: TriggerEvent[] = [
   'order_status_changed',
   'payment_received',
   'sla_breached',
+  'sla_at_risk',
   'quote_created',
   'quote_accepted',
   'customer_created',
+  'order_unassigned',
+  'payment_overdue',
+  'high_risk_customer_detected',
 ];
 
 export const VALID_ENTITY_TYPES: EntityType[] = [
@@ -178,11 +186,122 @@ export function formatTriggerEvent(event: string): string {
     'order_status_changed': 'Order Status Changed',
     'payment_received': 'Payment Received',
     'sla_breached': 'SLA Breached',
+    'sla_at_risk': 'SLA At Risk',
     'quote_created': 'Quote Created',
     'quote_accepted': 'Quote Accepted',
     'customer_created': 'Customer Created',
+    'order_unassigned': 'Order Unassigned',
+    'payment_overdue': 'Payment Overdue',
+    'high_risk_customer_detected': 'High Risk Customer',
   };
   return formats[event] || event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+/**
+ * Check if trigger is SLA-related
+ */
+export function isSLARelatedTrigger(trigger: string): boolean {
+  return trigger === 'sla_at_risk' || trigger === 'sla_breached';
+}
+
+/**
+ * Get SLA highlight color classes
+ */
+export function getSLAHighlightColor(trigger: string): { border: string; badge: string } | null {
+  if (trigger === 'sla_at_risk') {
+    return {
+      border: 'border-l-4 border-l-amber-500',
+      badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    };
+  }
+  if (trigger === 'sla_breached') {
+    return {
+      border: 'border-l-4 border-l-red-500',
+      badge: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    };
+  }
+  return null;
+}
+
+/**
+ * Format conditions object to human-readable strings
+ */
+export function formatConditions(conditions: Record<string, unknown>): string[] {
+  const results: string[] = [];
+  
+  const formatFieldName = (field: string): string => {
+    return field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const formatOperator = (op: string): string => {
+    const ops: Record<string, string> = {
+      'equals': 'equals',
+      'not_equals': 'is not',
+      'greater_than': 'is greater than',
+      'less_than': 'is less than',
+      'contains': 'contains',
+      'not_contains': 'does not contain',
+      'in': 'is one of',
+      'not_in': 'is not one of',
+    };
+    return ops[op] || op;
+  };
+
+  for (const [field, value] of Object.entries(conditions)) {
+    if (value === null || value === undefined) {
+      results.push(`${formatFieldName(field)} is empty`);
+    } else if (typeof value === 'object' && !Array.isArray(value)) {
+      const obj = value as Record<string, unknown>;
+      const op = Object.keys(obj)[0];
+      const val = obj[op];
+      if (Array.isArray(val)) {
+        results.push(`${formatFieldName(field)} ${formatOperator(op)} [${val.join(', ')}]`);
+      } else {
+        results.push(`${formatFieldName(field)} ${formatOperator(op)} "${val}"`);
+      }
+    } else if (Array.isArray(value)) {
+      results.push(`${formatFieldName(field)} is one of [${value.join(', ')}]`);
+    } else {
+      results.push(`${formatFieldName(field)} equals "${value}"`);
+    }
+  }
+  
+  return results.length > 0 ? results : ['No conditions (always runs)'];
+}
+
+/**
+ * Format actions array to human-readable strings
+ */
+export function formatActions(actions: AutomationAction[]): string[] {
+  if (!actions || actions.length === 0) {
+    return ['No actions configured'];
+  }
+
+  return actions.map(action => {
+    const baseLabel = formatActionType(action.type);
+    const config = action.config || {};
+    
+    switch (action.type) {
+      case 'send_notification':
+        return config.target === 'assigned_staff' 
+          ? 'Notify assigned staff'
+          : config.target === 'operations_inbox'
+            ? 'Notify operations inbox'
+            : `Send notification to ${config.target || 'admins'}`;
+      case 'create_task':
+        return `Create task: "${config.title || 'Follow up'}"`;
+      case 'log_audit_event':
+        return `Log audit event (${config.severity || 'medium'} severity)`;
+      case 'assign_staff':
+        return config.strategy === 'round_robin' 
+          ? 'Auto-assign staff (round robin)'
+          : 'Assign to available staff';
+      case 'add_tag':
+        return `Add tag: "${config.tag || 'automated'}"`;
+      default:
+        return baseLabel;
+    }
+  });
 }
 
 /**

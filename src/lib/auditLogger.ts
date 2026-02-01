@@ -31,7 +31,13 @@ export type AuditEventType =
   | 'automation_rule_auto_disabled'
   | 'automation_execution_success'
   | 'automation_execution_failed'
-  | 'automation_failure_reset';
+  | 'automation_failure_reset'
+  // Phase 4.2: SLA automation events
+  | 'sla_at_risk_notified'
+  | 'sla_breached_escalated'
+  | 'order_unassigned_alerted'
+  | 'payment_overdue_reminded'
+  | 'high_risk_customer_alerted';
 
 export type AuditSeverity = 'low' | 'medium' | 'high';
 
