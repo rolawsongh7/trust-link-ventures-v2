@@ -6,7 +6,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreVertical, Building2, Mail, Phone, MapPin, Eye, Edit } from 'lucide-react';
 import type { Customer } from '@/hooks/useCustomersQuery';
 import { LoyaltyBadge } from '@/components/loyalty/LoyaltyBadge';
+import { TrustBadge } from '@/components/trust/TrustBadge';
 import { useCustomerLoyalty } from '@/hooks/useCustomerLoyalty';
+import { useCustomerTrust } from '@/hooks/useCustomerTrust';
+import type { TrustTier } from '@/utils/trustHelpers';
 
 interface CustomerCardProps {
   customer: Customer;
@@ -38,6 +41,7 @@ export const CustomerCard: React.FC<CustomerCardProps> = ({
   onEdit,
 }) => {
   const { data: loyaltyData } = useCustomerLoyalty(customer.id);
+  const { data: trustData } = useCustomerTrust(customer.id);
   
   return (
     <Card className={`hover:shadow-md transition-shadow border-l-4 ${getCustomerBorderColor(customer.customer_status)}`}>
@@ -104,9 +108,18 @@ export const CustomerCard: React.FC<CustomerCardProps> = ({
                 {customer.customer_status || 'active'}
               </Badge>
             </div>
-            {loyaltyData && (
-              <LoyaltyBadge tier={loyaltyData.loyalty_tier} variant="compact" />
-            )}
+            <div className="flex items-center gap-1">
+              {trustData && (
+                <TrustBadge 
+                  tier={(trustData.trust_tier || 'new') as TrustTier} 
+                  variant="compact" 
+                  hasOverride={trustData.manual_override}
+                />
+              )}
+              {loyaltyData && (
+                <LoyaltyBadge tier={loyaltyData.loyalty_tier} variant="compact" />
+              )}
+            </div>
           </div>
 
           {customer.industry && (

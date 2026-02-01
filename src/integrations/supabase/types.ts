@@ -875,6 +875,112 @@ export type Database = {
           },
         ]
       }
+      customer_trust_history: {
+        Row: {
+          change_reason: string
+          changed_by: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          is_manual_override: boolean
+          new_score: number
+          new_tier: Database["public"]["Enums"]["customer_trust_tier"]
+          previous_score: number | null
+          previous_tier:
+            | Database["public"]["Enums"]["customer_trust_tier"]
+            | null
+        }
+        Insert: {
+          change_reason: string
+          changed_by?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          is_manual_override?: boolean
+          new_score: number
+          new_tier: Database["public"]["Enums"]["customer_trust_tier"]
+          previous_score?: number | null
+          previous_tier?:
+            | Database["public"]["Enums"]["customer_trust_tier"]
+            | null
+        }
+        Update: {
+          change_reason?: string
+          changed_by?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          is_manual_override?: boolean
+          new_score?: number
+          new_tier?: Database["public"]["Enums"]["customer_trust_tier"]
+          previous_score?: number | null
+          previous_tier?:
+            | Database["public"]["Enums"]["customer_trust_tier"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_trust_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_trust_profiles: {
+        Row: {
+          created_at: string
+          customer_id: string
+          evaluation_version: number | null
+          id: string
+          last_evaluated_at: string | null
+          manual_override: boolean
+          override_at: string | null
+          override_by: string | null
+          override_reason: string | null
+          score: number
+          trust_tier: Database["public"]["Enums"]["customer_trust_tier"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          evaluation_version?: number | null
+          id?: string
+          last_evaluated_at?: string | null
+          manual_override?: boolean
+          override_at?: string | null
+          override_by?: string | null
+          override_reason?: string | null
+          score?: number
+          trust_tier?: Database["public"]["Enums"]["customer_trust_tier"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          evaluation_version?: number | null
+          id?: string
+          last_evaluated_at?: string | null
+          manual_override?: boolean
+          override_at?: string | null
+          override_by?: string | null
+          override_reason?: string | null
+          score?: number
+          trust_tier?: Database["public"]["Enums"]["customer_trust_tier"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_trust_profiles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_users: {
         Row: {
           created_at: string
@@ -4307,6 +4413,10 @@ export type Database = {
       cleanup_expired_devices: { Args: never; Returns: number }
       cleanup_expired_sessions: { Args: never; Returns: number }
       cleanup_old_tracking_logs: { Args: never; Returns: number }
+      clear_customer_trust_override: {
+        Args: { p_customer_id: string }
+        Returns: Json
+      }
       count_recent_failed_logins: {
         Args: { p_identifier: string; p_minutes?: number }
         Returns: number
@@ -4368,6 +4478,10 @@ export type Database = {
           p_user_agent?: string
         }
         Returns: undefined
+      }
+      evaluate_customer_trust: {
+        Args: { p_customer_id: string }
+        Returns: Json
       }
       force_order_status_change: {
         Args: {
@@ -4499,6 +4613,14 @@ export type Database = {
         Args: { keep_id: string; remove_id: string }
         Returns: undefined
       }
+      override_customer_trust: {
+        Args: {
+          p_customer_id: string
+          p_new_tier: Database["public"]["Enums"]["customer_trust_tier"]
+          p_reason: string
+        }
+        Returns: Json
+      }
       regenerate_invoice_pdfs: {
         Args: {
           p_end_date?: string
@@ -4570,6 +4692,12 @@ export type Database = {
     Enums: {
       assistant_mode: "qa" | "workflow"
       communication_type: "email" | "phone" | "meeting" | "note"
+      customer_trust_tier:
+        | "new"
+        | "verified"
+        | "trusted"
+        | "preferred"
+        | "restricted"
       lead_status:
         | "new"
         | "contacted"
@@ -4764,6 +4892,13 @@ export const Constants = {
     Enums: {
       assistant_mode: ["qa", "workflow"],
       communication_type: ["email", "phone", "meeting", "note"],
+      customer_trust_tier: [
+        "new",
+        "verified",
+        "trusted",
+        "preferred",
+        "restricted",
+      ],
       lead_status: [
         "new",
         "contacted",
