@@ -37,7 +37,12 @@ export type AuditEventType =
   | 'sla_breached_escalated'
   | 'order_unassigned_alerted'
   | 'payment_overdue_reminded'
-  | 'high_risk_customer_alerted';
+  | 'high_risk_customer_alerted'
+  // Phase 5.1: Trust events
+  | 'trust_tier_evaluated'
+  | 'trust_tier_changed'
+  | 'trust_tier_override'
+  | 'trust_override_cleared';
 
 export type AuditSeverity = 'low' | 'medium' | 'high';
 

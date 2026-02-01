@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
+import { TrustSignalsCard, TrustHistoryPanel, TrustOverrideDialog } from '@/components/trust';
+import type { TrustTier } from '@/utils/trustHelpers';
+import { useCustomerTrust } from '@/hooks/useCustomerTrust';
 
 interface Customer {
   id: string;
@@ -75,7 +78,9 @@ const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({ customer, onBac
   const [loading, setLoading] = useState(true);
   const [createLeadOpen, setCreateLeadOpen] = useState(false);
   const [logCommunicationOpen, setLogCommunicationOpen] = useState(false);
+  const [trustOverrideOpen, setTrustOverrideOpen] = useState(false);
   const { toast } = useToast();
+  const { data: trustProfile } = useCustomerTrust(customer.id);
 
   const leadForm = useForm({
     defaultValues: {
@@ -285,6 +290,15 @@ const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({ customer, onBac
             <div className="text-2xl font-bold">{activities.length}</div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Trust & Standing Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TrustSignalsCard 
+          customerId={customer.id} 
+          onOverrideClick={() => setTrustOverrideOpen(true)}
+        />
+        <TrustHistoryPanel customerId={customer.id} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -599,6 +613,15 @@ const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({ customer, onBac
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Trust Override Dialog */}
+      <TrustOverrideDialog
+        open={trustOverrideOpen}
+        onOpenChange={setTrustOverrideOpen}
+        customerId={customer.id}
+        customerName={customer.company_name}
+        currentTier={(trustProfile?.trust_tier || 'new') as TrustTier}
+      />
     </div>
   );
 };
