@@ -1,564 +1,675 @@
-# Phase 4.4 — Automation Analytics, Trust & ROI Measurement
+
+# Phase 5.1 Implementation Plan: Customer Trust & Tiering
 
 ## Overview
 
-Phase 4.4 adds **measurement, visibility, and trust controls** to prove automation is helping operations. This phase does NOT add new automation behavior—it adds observability and accountability.
-
-**Goal**: Answer these questions:
-- Is automation helping or hurting?
-- Which rules create value?
-- Where is automation noisy or ineffective?
-- Are customers responding positively?
-- Can automation be safely expanded?
+This phase introduces a **measured, explainable trust system** that evaluates customer reliability over time and unlocks eligibility for future growth features. This is a **read-only foundation** that prepares for Phase 5.2+ (credit terms, subscriptions, priority handling) without changing any existing workflows.
 
 ---
 
-## Implementation Tasks
+## Current State Analysis
 
-### Task 1: Database Schema Extensions
+### Existing Infrastructure (Leverage Points)
+- **`customer_loyalty` table**: Already tracks `lifetime_orders`, `lifetime_revenue`, `loyalty_tier` (bronze/silver/gold)
+- **`loyaltyHelpers.ts`**: Client-side tier calculation functions
+- **`LoyaltyBadge` component**: Displays loyalty tiers with icons/tooltips
+- **`order_issues` table**: Tracks disputes with status (submitted/reviewing/resolved/rejected)
+- **`orders` table**: Has `payment_status` enum (unpaid/partially_paid/fully_paid/overpaid)
+- **Audit logging**: Mature `AuditLogger` class with severity levels
+- **Role-based access**: `useRoleAuth` hook with `hasSuperAdminAccess`
+- **RPC pattern**: `check_user_role` function for secure role checks
 
-**Migration 1: `automation_metrics_daily` table**
-Pre-aggregated metrics for performance tracking.
+### Key Insight
+The existing `customer_loyalty` table uses a simple order-count-based tier system. Phase 5.1 introduces a **separate trust profile** that considers **behavioral signals** (payment punctuality, disputes, manual flags) rather than just volume metrics.
+
+---
+
+## Database Schema
+
+### 1. Create Trust Tier Enum
 
 ```sql
-CREATE TABLE public.automation_metrics_daily (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  rule_id UUID REFERENCES automation_rules(id) ON DELETE CASCADE,
-  date DATE NOT NULL,
-  executions INTEGER DEFAULT 0,
-  successes INTEGER DEFAULT 0,
-  failures INTEGER DEFAULT 0,
-  skipped INTEGER DEFAULT 0,
-  affected_entities INTEGER DEFAULT 0,
-  customer_notifications_sent INTEGER DEFAULT 0,
-  customer_notifications_throttled INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(rule_id, date)
+CREATE TYPE public.customer_trust_tier AS ENUM (
+  'new',        -- No history
+  'verified',   -- Paid at least once on time
+  'trusted',    -- Consistent, on-time payments
+  'preferred',  -- High volume, low risk
+  'restricted'  -- Late payments or disputes
 );
-
--- Enable RLS
-ALTER TABLE automation_metrics_daily ENABLE ROW LEVEL SECURITY;
-
--- Admin read-only access
-CREATE POLICY "Admins can view automation metrics"
-  ON automation_metrics_daily FOR SELECT
-  USING (EXISTS (
-    SELECT 1 FROM user_roles 
-    WHERE user_id = auth.uid() 
-    AND role IN ('super_admin', 'admin')
-  ));
-
--- Index for date range queries
-CREATE INDEX idx_automation_metrics_date ON automation_metrics_daily(date DESC);
-CREATE INDEX idx_automation_metrics_rule ON automation_metrics_daily(rule_id, date DESC);
 ```
 
-**Migration 2: `automation_feedback` table**
-Optional human feedback loop for staff trust signals.
+### 2. Create `customer_trust_profiles` Table
 
 ```sql
-CREATE TABLE public.automation_feedback (
+CREATE TABLE public.customer_trust_profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  execution_id UUID REFERENCES automation_executions(id) ON DELETE CASCADE,
-  feedback_type TEXT CHECK (feedback_type IN ('helpful', 'neutral', 'harmful')) NOT NULL,
-  notes TEXT,
-  created_by UUID,
-  created_at TIMESTAMPTZ DEFAULT now()
+  customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  trust_tier customer_trust_tier NOT NULL DEFAULT 'new',
+  score INTEGER NOT NULL DEFAULT 0 CHECK (score >= 0 AND score <= 100),
+  
+  -- Evaluation tracking
+  last_evaluated_at TIMESTAMPTZ,
+  evaluation_version INTEGER DEFAULT 1,
+  
+  -- Manual override controls
+  manual_override BOOLEAN NOT NULL DEFAULT false,
+  override_reason TEXT,
+  override_by UUID REFERENCES auth.users(id),
+  override_at TIMESTAMPTZ,
+  
+  -- Timestamps
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  
+  -- One profile per customer
+  UNIQUE(customer_id)
 );
 
--- Enable RLS
-ALTER TABLE automation_feedback ENABLE ROW LEVEL SECURITY;
-
--- Admins can submit feedback
-CREATE POLICY "Admins can create feedback"
-  ON automation_feedback FOR INSERT
-  WITH CHECK (EXISTS (
-    SELECT 1 FROM user_roles 
-    WHERE user_id = auth.uid() 
-    AND role IN ('super_admin', 'admin')
-  ));
-
--- Admins can view feedback
-CREATE POLICY "Admins can view feedback"
-  ON automation_feedback FOR SELECT
-  USING (EXISTS (
-    SELECT 1 FROM user_roles 
-    WHERE user_id = auth.uid() 
-    AND role IN ('super_admin', 'admin')
-  ));
-
--- Index for execution lookups
-CREATE INDEX idx_automation_feedback_execution ON automation_feedback(execution_id);
-CREATE INDEX idx_automation_feedback_type ON automation_feedback(feedback_type, created_at DESC);
+-- Indexes for performance
+CREATE INDEX idx_trust_profiles_customer ON customer_trust_profiles(customer_id);
+CREATE INDEX idx_trust_profiles_tier ON customer_trust_profiles(trust_tier);
+CREATE INDEX idx_trust_profiles_score ON customer_trust_profiles(score);
 ```
 
-**Migration 3: Helper function for daily aggregation**
+### 3. Create `customer_trust_history` Table (Audit Trail)
+
 ```sql
-CREATE OR REPLACE FUNCTION aggregate_automation_metrics(target_date DATE DEFAULT CURRENT_DATE - 1)
-RETURNS void AS $$
-BEGIN
-  INSERT INTO automation_metrics_daily (
-    rule_id, 
-    date, 
-    executions, 
-    successes, 
-    failures, 
-    skipped, 
-    affected_entities,
-    customer_notifications_sent,
-    customer_notifications_throttled
+CREATE TABLE public.customer_trust_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  previous_tier customer_trust_tier,
+  new_tier customer_trust_tier NOT NULL,
+  previous_score INTEGER,
+  new_score INTEGER NOT NULL,
+  change_reason TEXT NOT NULL,
+  changed_by UUID REFERENCES auth.users(id), -- NULL for system
+  is_manual_override BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_trust_history_customer ON customer_trust_history(customer_id);
+CREATE INDEX idx_trust_history_created ON customer_trust_history(created_at DESC);
+```
+
+### 4. RLS Policies
+
+```sql
+-- Enable RLS
+ALTER TABLE customer_trust_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customer_trust_history ENABLE ROW LEVEL SECURITY;
+
+-- Staff can read all trust profiles
+CREATE POLICY "Staff can read trust profiles"
+ON customer_trust_profiles FOR SELECT
+TO authenticated
+USING (
+  public.check_user_role(auth.uid(), 'admin') OR
+  public.check_user_role(auth.uid(), 'super_admin') OR
+  public.check_user_role(auth.uid(), 'sales_rep')
+);
+
+-- Only super_admin can modify trust profiles
+CREATE POLICY "Super admin can modify trust profiles"
+ON customer_trust_profiles FOR ALL
+TO authenticated
+USING (public.check_user_role(auth.uid(), 'super_admin'))
+WITH CHECK (public.check_user_role(auth.uid(), 'super_admin'));
+
+-- Customers can read their own trust tier (limited view)
+CREATE POLICY "Customers can read own trust profile"
+ON customer_trust_profiles FOR SELECT
+TO authenticated
+USING (
+  customer_id IN (
+    SELECT cu.customer_id FROM customer_users cu WHERE cu.user_id = auth.uid()
   )
-  SELECT 
-    rule_id,
-    target_date,
-    COUNT(*) as executions,
-    COUNT(*) FILTER (WHERE status = 'success') as successes,
-    COUNT(*) FILTER (WHERE status = 'failure') as failures,
-    COUNT(*) FILTER (WHERE status = 'skipped') as skipped,
-    COUNT(DISTINCT entity_id) as affected_entities,
-    COUNT(*) FILTER (WHERE (result->>'customerNotified')::boolean = true) as customer_notifications_sent,
-    COUNT(*) FILTER (WHERE (result->>'throttled')::boolean = true) as customer_notifications_throttled
-  FROM automation_executions
-  WHERE executed_at::date = target_date
-  GROUP BY rule_id
-  ON CONFLICT (rule_id, date) DO UPDATE SET
-    executions = EXCLUDED.executions,
-    successes = EXCLUDED.successes,
-    failures = EXCLUDED.failures,
-    skipped = EXCLUDED.skipped,
-    affected_entities = EXCLUDED.affected_entities,
-    customer_notifications_sent = EXCLUDED.customer_notifications_sent,
-    customer_notifications_throttled = EXCLUDED.customer_notifications_throttled;
+);
+
+-- Trust history: read-only for admin+
+CREATE POLICY "Staff can read trust history"
+ON customer_trust_history FOR SELECT
+TO authenticated
+USING (
+  public.check_user_role(auth.uid(), 'admin') OR
+  public.check_user_role(auth.uid(), 'super_admin')
+);
+```
+
+### 5. Trust Evaluation Function (Server-Side RPC)
+
+```sql
+CREATE OR REPLACE FUNCTION public.evaluate_customer_trust(p_customer_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_completed_orders INTEGER;
+  v_total_orders INTEGER;
+  v_on_time_payments INTEGER;
+  v_late_payments INTEGER;
+  v_disputed_orders INTEGER;
+  v_resolved_disputes INTEGER;
+  v_unresolved_disputes INTEGER;
+  v_score INTEGER;
+  v_tier customer_trust_tier;
+  v_existing_tier customer_trust_tier;
+  v_existing_score INTEGER;
+  v_has_manual_override BOOLEAN;
+  v_payment_ratio NUMERIC;
+BEGIN
+  -- Get existing profile
+  SELECT trust_tier, score, manual_override 
+  INTO v_existing_tier, v_existing_score, v_has_manual_override
+  FROM customer_trust_profiles
+  WHERE customer_id = p_customer_id;
+  
+  -- If manual override is active, do not recalculate
+  IF v_has_manual_override THEN
+    RETURN jsonb_build_object(
+      'success', true,
+      'skipped', true,
+      'reason', 'Manual override active',
+      'tier', v_existing_tier::text,
+      'score', v_existing_score
+    );
+  END IF;
+
+  -- Count completed orders (delivered)
+  SELECT COUNT(*) INTO v_completed_orders
+  FROM orders
+  WHERE customer_id = p_customer_id
+    AND status = 'delivered';
+
+  -- Count total non-cancelled orders
+  SELECT COUNT(*) INTO v_total_orders
+  FROM orders
+  WHERE customer_id = p_customer_id
+    AND status NOT IN ('cancelled', 'quote_pending', 'quote_sent');
+
+  -- Count on-time payments (fully_paid or overpaid)
+  SELECT COUNT(*) INTO v_on_time_payments
+  FROM orders
+  WHERE customer_id = p_customer_id
+    AND status = 'delivered'
+    AND payment_status IN ('fully_paid', 'overpaid');
+
+  -- Count late/partial payments at delivery
+  SELECT COUNT(*) INTO v_late_payments
+  FROM orders
+  WHERE customer_id = p_customer_id
+    AND status = 'delivered'
+    AND (payment_status = 'partially_paid' OR payment_status = 'unpaid');
+
+  -- Count disputes
+  SELECT COUNT(*) INTO v_disputed_orders
+  FROM order_issues
+  WHERE customer_id = p_customer_id;
+
+  SELECT COUNT(*) INTO v_unresolved_disputes
+  FROM order_issues
+  WHERE customer_id = p_customer_id
+    AND status IN ('submitted', 'reviewing');
+
+  SELECT COUNT(*) INTO v_resolved_disputes
+  FROM order_issues
+  WHERE customer_id = p_customer_id
+    AND status = 'resolved';
+
+  -- Calculate score (0-100)
+  v_score := 50; -- Base score
+  
+  -- Completed orders bonus (+2 per order, max +20)
+  v_score := v_score + LEAST(v_completed_orders * 2, 20);
+  
+  -- On-time payment ratio bonus (+25 max)
+  IF v_completed_orders > 0 THEN
+    v_payment_ratio := v_on_time_payments::NUMERIC / v_completed_orders;
+    v_score := v_score + (v_payment_ratio * 25)::INTEGER;
+  END IF;
+  
+  -- Late payment penalty (-5 per late payment)
+  v_score := v_score - (v_late_payments * 5);
+  
+  -- Dispute penalty (-10 per unresolved, -3 per resolved)
+  v_score := v_score - (v_unresolved_disputes * 10);
+  v_score := v_score - (v_resolved_disputes * 3);
+  
+  -- Clamp score
+  v_score := GREATEST(0, LEAST(100, v_score));
+
+  -- Determine tier based on score
+  IF v_total_orders = 0 THEN
+    v_tier := 'new';
+  ELSIF v_score < 30 OR v_unresolved_disputes > 0 THEN
+    v_tier := 'restricted';
+  ELSIF v_score < 50 OR v_completed_orders = 0 THEN
+    v_tier := 'new';
+  ELSIF v_score < 65 THEN
+    v_tier := 'verified';
+  ELSIF v_score < 80 THEN
+    v_tier := 'trusted';
+  ELSE
+    v_tier := 'preferred';
+  END IF;
+
+  -- Upsert trust profile
+  INSERT INTO customer_trust_profiles (customer_id, trust_tier, score, last_evaluated_at)
+  VALUES (p_customer_id, v_tier, v_score, now())
+  ON CONFLICT (customer_id) DO UPDATE SET
+    trust_tier = EXCLUDED.trust_tier,
+    score = EXCLUDED.score,
+    last_evaluated_at = now(),
+    updated_at = now();
+
+  -- Log tier change if changed
+  IF v_existing_tier IS NOT NULL AND v_existing_tier != v_tier THEN
+    INSERT INTO customer_trust_history (
+      customer_id, previous_tier, new_tier, previous_score, new_score, change_reason
+    ) VALUES (
+      p_customer_id, v_existing_tier, v_tier, v_existing_score, v_score,
+      'Automatic re-evaluation'
+    );
+  ELSIF v_existing_tier IS NULL THEN
+    INSERT INTO customer_trust_history (
+      customer_id, new_tier, new_score, change_reason
+    ) VALUES (
+      p_customer_id, v_tier, v_score, 'Initial evaluation'
+    );
+  END IF;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'customer_id', p_customer_id,
+    'tier', v_tier::text,
+    'score', v_score,
+    'signals', jsonb_build_object(
+      'completed_orders', v_completed_orders,
+      'on_time_payments', v_on_time_payments,
+      'late_payments', v_late_payments,
+      'unresolved_disputes', v_unresolved_disputes
+    )
+  );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
+```
+
+### 6. Manual Override Function (Super Admin Only)
+
+```sql
+CREATE OR REPLACE FUNCTION public.override_customer_trust(
+  p_customer_id UUID,
+  p_new_tier customer_trust_tier,
+  p_reason TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_caller_id UUID := auth.uid();
+  v_is_super_admin BOOLEAN;
+  v_existing_tier customer_trust_tier;
+  v_existing_score INTEGER;
+BEGIN
+  -- Verify super admin access
+  SELECT public.check_user_role(v_caller_id, 'super_admin') INTO v_is_super_admin;
+  
+  IF NOT v_is_super_admin THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', 'unauthorized',
+      'message', 'Only super admins can override trust tiers'
+    );
+  END IF;
+
+  -- Require reason
+  IF p_reason IS NULL OR trim(p_reason) = '' THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', 'validation',
+      'message', 'Override reason is required'
+    );
+  END IF;
+
+  -- Get existing profile
+  SELECT trust_tier, score INTO v_existing_tier, v_existing_score
+  FROM customer_trust_profiles
+  WHERE customer_id = p_customer_id;
+
+  -- Upsert with override
+  INSERT INTO customer_trust_profiles (
+    customer_id, trust_tier, score, manual_override, 
+    override_reason, override_by, override_at
+  ) VALUES (
+    p_customer_id, p_new_tier, 
+    CASE p_new_tier 
+      WHEN 'preferred' THEN 90
+      WHEN 'trusted' THEN 75
+      WHEN 'verified' THEN 60
+      WHEN 'new' THEN 50
+      WHEN 'restricted' THEN 20
+    END,
+    true, p_reason, v_caller_id, now()
+  )
+  ON CONFLICT (customer_id) DO UPDATE SET
+    trust_tier = p_new_tier,
+    manual_override = true,
+    override_reason = p_reason,
+    override_by = v_caller_id,
+    override_at = now(),
+    updated_at = now();
+
+  -- Log the change
+  INSERT INTO customer_trust_history (
+    customer_id, previous_tier, new_tier, 
+    previous_score, new_score, change_reason,
+    changed_by, is_manual_override
+  ) VALUES (
+    p_customer_id, v_existing_tier, p_new_tier,
+    v_existing_score,
+    CASE p_new_tier 
+      WHEN 'preferred' THEN 90
+      WHEN 'trusted' THEN 75
+      WHEN 'verified' THEN 60
+      WHEN 'new' THEN 50
+      WHEN 'restricted' THEN 20
+    END,
+    p_reason, v_caller_id, true
+  );
+
+  -- High severity audit log
+  INSERT INTO audit_logs (
+    user_id, event_type, action, resource_type, resource_id,
+    severity, event_data
+  ) VALUES (
+    v_caller_id, 'role_changed', 'trust_tier_override', 'customer', p_customer_id::text,
+    'high', jsonb_build_object(
+      'previous_tier', v_existing_tier::text,
+      'new_tier', p_new_tier::text,
+      'reason', p_reason
+    )
+  );
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'customer_id', p_customer_id,
+    'new_tier', p_new_tier::text,
+    'overridden_by', v_caller_id
+  );
+END;
+$$;
 ```
 
 ---
 
-### Task 2: Automation Analytics Service
+## Frontend Implementation
 
-**File: `src/services/automationAnalyticsService.ts`**
-
-Core service providing analytics data:
+### 1. Trust Types & Helpers (`src/utils/trustHelpers.ts`)
 
 ```typescript
-interface HealthOverview {
-  totalExecutions: number;
-  successRate: number;
-  failureRate: number;
-  activeRulesCount: number;
-  autoDisabledCount: number;
-  healthStatus: 'healthy' | 'warning' | 'critical';
+export type TrustTier = 'new' | 'verified' | 'trusted' | 'preferred' | 'restricted';
+
+export interface TrustProfile {
+  id: string;
+  customer_id: string;
+  trust_tier: TrustTier;
+  score: number;
+  last_evaluated_at: string | null;
+  manual_override: boolean;
+  override_reason: string | null;
 }
 
-interface RulePerformance {
-  ruleId: string;
-  ruleName: string;
-  triggerEvent: string;
-  enabled: boolean;
-  autoDisabled: boolean;
-  executions30d: number;
-  successRate: number;
-  failureRate: number;
-  avgPerDay: number;
-  lastRun: string | null;
-  isCustomerFacing: boolean;
-}
-
-interface RuleDetails {
-  rule: RulePerformance;
-  dailyTrend: { date: string; executions: number; successes: number; failures: number }[];
-  skipReasons: { reason: string; count: number }[];
-  impactMetrics: {
-    entitiesAffected: number;
-    customerNotificationsSent: number;
-    customerNotificationsThrottled: number;
-  };
-}
-
-interface CustomerImpactMetrics {
-  notificationsSent7d: number;
-  notificationsSent30d: number;
-  throttledRate: number;
-  warningsCount: number;
-  warnings: string[];
-}
-
-interface StaffTrustMetrics {
-  totalFeedback: number;
-  helpfulCount: number;
-  neutralCount: number;
-  harmfulCount: number;
-  recentFeedback: AutomationFeedback[];
-}
-
-class AutomationAnalyticsService {
-  // Health Overview KPIs
-  static async getHealthOverview(days: number): Promise<HealthOverview>
-  
-  // Rule Performance Table
-  static async getRulePerformance(days: number): Promise<RulePerformance[]>
-  
-  // Single Rule Details
-  static async getRuleDetails(ruleId: string, days: number): Promise<RuleDetails>
-  
-  // Customer Impact Metrics
-  static async getCustomerImpactMetrics(days: number): Promise<CustomerImpactMetrics>
-  
-  // Staff Trust Signals
-  static async getStaffTrustMetrics(days: number): Promise<StaffTrustMetrics>
-  
-  // Submit Feedback
-  static async submitFeedback(
-    executionId: string, 
-    feedbackType: 'helpful' | 'neutral' | 'harmful',
-    notes?: string
-  ): Promise<void>
-}
+export const TIER_CONFIG: Record<TrustTier, {
+  label: string;
+  description: string;
+  color: string;
+  iconColor: string;
+  eligibilities: string[];
+}> = {
+  new: {
+    label: 'New',
+    description: 'New customer, no order history yet',
+    color: 'bg-gray-100 text-gray-700 border-gray-300',
+    iconColor: 'text-gray-500',
+    eligibilities: []
+  },
+  verified: {
+    label: 'Verified',
+    description: 'Completed at least one order with on-time payment',
+    color: 'bg-blue-100 text-blue-700 border-blue-300',
+    iconColor: 'text-blue-500',
+    eligibilities: ['Standard payment terms']
+  },
+  trusted: {
+    label: 'Trusted',
+    description: 'Consistent payment history, reliable customer',
+    color: 'bg-green-100 text-green-700 border-green-300',
+    iconColor: 'text-green-500',
+    eligibilities: ['Priority processing', 'Extended payment terms eligible']
+  },
+  preferred: {
+    label: 'Preferred',
+    description: 'High volume, excellent payment record',
+    color: 'bg-purple-100 text-purple-700 border-purple-300',
+    iconColor: 'text-purple-500',
+    eligibilities: ['Credit terms eligible', 'Priority processing', 'Subscription eligible']
+  },
+  restricted: {
+    label: 'Restricted',
+    description: 'Payment issues or unresolved disputes',
+    color: 'bg-red-100 text-red-700 border-red-300',
+    iconColor: 'text-red-500',
+    eligibilities: ['Upfront payment only']
+  }
+};
 ```
 
----
-
-### Task 3: Automation Trust Service (Auto-Degrade Logic)
-
-**File: `src/services/automationTrustService.ts`**
-
-Implements automatic rule degradation for safety:
+### 2. Trust Hook (`src/hooks/useCustomerTrust.ts`)
 
 ```typescript
-interface DegradeConfig {
-  failureThreshold: number;        // Default: 30% in 24h
-  minExecutionsForEval: number;    // Default: 10 (don't eval with too few)
-  maxExecutionsPerEntity: number;  // Default: 3 per entity per day
-  harmfulFeedbackThreshold: number; // Default: 3 harmful in 7 days
+export function useCustomerTrust(customerId: string | undefined) {
+  return useQuery({
+    queryKey: ['customer-trust', customerId],
+    queryFn: async () => {
+      if (!customerId) return null;
+      
+      const { data, error } = await supabase
+        .from('customer_trust_profiles')
+        .select('*')
+        .eq('customer_id', customerId)
+        .maybeSingle();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching trust profile:', error);
+        return null;
+      }
+      
+      // If no profile, return default "new" status
+      return data || {
+        customer_id: customerId,
+        trust_tier: 'new' as TrustTier,
+        score: 50,
+        manual_override: false
+      };
+    },
+    enabled: !!customerId,
+    staleTime: 5 * 60 * 1000
+  });
 }
 
-interface TrustEvaluation {
-  shouldDegrade: boolean;
-  reason?: string;
-  metrics: {
-    failureRate24h: number;
-    maxEntityExecutions: number;
-    harmfulFeedbackCount: number;
-  };
-}
-
-class AutomationTrustService {
-  static readonly DEFAULT_CONFIG: DegradeConfig = {
-    failureThreshold: 0.30,
-    minExecutionsForEval: 10,
-    maxExecutionsPerEntity: 3,
-    harmfulFeedbackThreshold: 3,
-  };
-
-  // Evaluate if rule should be auto-disabled
-  static async evaluateRuleTrust(ruleId: string): Promise<TrustEvaluation>
+export function useEvaluateCustomerTrust() {
+  const queryClient = useQueryClient();
   
-  // Auto-disable rule with audit trail
-  static async degradeRule(ruleId: string, reason: string): Promise<void>
+  return useMutation({
+    mutationFn: async (customerId: string) => {
+      const { data, error } = await supabase
+        .rpc('evaluate_customer_trust', { p_customer_id: customerId });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, customerId) => {
+      queryClient.invalidateQueries({ queryKey: ['customer-trust', customerId] });
+    }
+  });
+}
+
+export function useOverrideCustomerTrust() {
+  const queryClient = useQueryClient();
   
-  // Notify super_admin of degradation
-  static async notifyDegradation(ruleId: string, ruleName: string, reason: string): Promise<void>
-  
-  // Check and potentially degrade after each execution
-  static async checkPostExecution(ruleId: string): Promise<void>
+  return useMutation({
+    mutationFn: async ({ 
+      customerId, 
+      newTier, 
+      reason 
+    }: { 
+      customerId: string; 
+      newTier: TrustTier; 
+      reason: string 
+    }) => {
+      const { data, error } = await supabase
+        .rpc('override_customer_trust', { 
+          p_customer_id: customerId,
+          p_new_tier: newTier,
+          p_reason: reason
+        });
+      
+      if (error) throw error;
+      if (!data.success) throw new Error(data.message);
+      return data;
+    },
+    onSuccess: (_, { customerId }) => {
+      queryClient.invalidateQueries({ queryKey: ['customer-trust', customerId] });
+      queryClient.invalidateQueries({ queryKey: ['customer-trust-history', customerId] });
+    }
+  });
 }
 ```
 
-**Trigger Conditions for Auto-Disable:**
-1. **Failure spike**: >30% failure rate in last 24h (min 10 executions)
-2. **Entity spam**: Same entity triggered >3 times by same rule in 24h
-3. **Negative feedback**: 3+ "harmful" feedback in 7 days
+### 3. TrustBadge Component (`src/components/trust/TrustBadge.tsx`)
+
+Similar pattern to existing `LoyaltyBadge`:
+- Display tier with icon (Shield variants)
+- Tooltip showing tier description and eligibilities
+- Variant support: compact/default/full
+- Manual override indicator (lock icon)
+
+### 4. Admin UI Integration
+
+**CustomerDetailView.tsx Updates:**
+- Add "Trust & Standing" card alongside existing stats
+- Show TrustBadge with score
+- Display trust signals (on-time %, disputes)
+- "Re-evaluate" button (triggers RPC)
+- "Override Tier" button (super_admin only, opens dialog)
+
+**Trust History Panel:**
+- Timeline of tier changes
+- Distinguishes manual overrides from automatic evaluations
+- Shows changed_by for manual overrides
+
+### 5. Customer Portal Integration
+
+**Optional "Account Standing" Display:**
+- In CustomerPortalMain sidebar or header
+- Show simplified tier badge (no internal score)
+- Tooltip: "Your account standing based on order history"
+- No "restricted" label exposed - show "Account Review Required" instead
 
 ---
 
-### Task 4: Analytics Hooks
+## File Structure
 
-**File: `src/hooks/useAutomationAnalytics.ts`**
+```text
+src/
+├── utils/
+│   └── trustHelpers.ts              # NEW: Trust tier types & config
+├── hooks/
+│   └── useCustomerTrust.ts          # NEW: Trust data fetching hooks
+├── components/
+│   └── trust/
+│       ├── TrustBadge.tsx           # NEW: Trust tier badge component
+│       ├── TrustHistoryPanel.tsx    # NEW: Trust change timeline
+│       └── TrustOverrideDialog.tsx  # NEW: Super admin override dialog
+└── components/
+    ├── CustomerDetailView.tsx       # EDIT: Add trust card section
+    └── customers/
+        └── CustomerCard.tsx         # EDIT: Add trust badge (optional)
 
-React Query hooks for analytics data:
+src/pages/
+└── CustomerPortalMain.tsx           # EDIT: Add account standing display
+```
 
+---
+
+## Audit Event Types
+
+Add to `AuditEventType` in `auditLogger.ts`:
 ```typescript
-// Health overview with loading/error states
-export function useHealthOverview(days: number = 7)
-
-// Paginated rule performance table
-export function useRulePerformance(days: number = 30, filters?: RuleFilters)
-
-// Single rule detailed metrics
-export function useRuleDetails(ruleId: string, days: number = 30)
-
-// Customer-facing automation metrics
-export function useCustomerImpact(days: number = 7)
-
-// Staff feedback metrics
-export function useStaffTrust(days: number = 30)
-
-// Submit feedback mutation
-export function useSubmitFeedback()
+// Phase 5.1: Trust events
+| 'trust_tier_evaluated'
+| 'trust_tier_changed'
+| 'trust_tier_override'
 ```
 
 ---
 
-### Task 5: Analytics Page Components
+## Safety Guarantees
 
-**Route: `/admin/automation/analytics`**
-
-#### Component Structure:
-```
-src/components/admin/automation/analytics/
-├── AutomationAnalyticsPage.tsx       # Main page with sections
-├── HealthOverviewSection.tsx         # KPI cards with health indicators
-├── RulePerformanceTable.tsx          # Sortable rule performance table
-├── RuleDetailDrawer.tsx              # Drawer with rule deep-dive
-├── CustomerImpactSection.tsx         # Customer-facing metrics + warnings
-├── StaffTrustSection.tsx             # Feedback summary and recent list
-├── FeedbackDialog.tsx                # Submit feedback modal
-├── AnalyticsMetricCard.tsx           # Metric card with trend/status
-└── ExecutionTrendChart.tsx           # Daily execution trend visualization
-```
-
----
-
-#### Section 1: Health Overview (`HealthOverviewSection.tsx`)
-
-**KPI Cards:**
-| Metric | Description |
-|--------|-------------|
-| Total Executions | Count (7d or 30d toggle) |
-| Success Rate % | With trend indicator |
-| Failure Rate % | With warning threshold |
-| Active Rules | Currently enabled count |
-| Auto-Disabled | Rules disabled due to errors (warning if > 0) |
-
-**Health Status Indicators:**
-- 🟢 **Healthy**: Success rate > 95%, no auto-disabled rules
-- 🟡 **Warning**: Success rate 80-95% OR 1+ auto-disabled rules
-- 🔴 **Critical**: Success rate < 80% OR 3+ auto-disabled rules
-
----
-
-#### Section 2: Rule Performance Table (`RulePerformanceTable.tsx`)
-
-**Columns:**
-| Rule Name | Trigger | Status | Executions (30d) | Success % | Fail % | Avg/Day | Last Run | Actions |
-
-**Features:**
-- Sortable by: Fail rate (desc), Volume (desc), Last run (desc)
-- Filters: All / Active / Disabled / Customer-facing
-- Row click opens RuleDetailDrawer
-- Customer-facing rules have blue left border
-- Auto-disabled rules show warning icon
-
----
-
-#### Section 3: Rule Detail Drawer (`RuleDetailDrawer.tsx`)
-
-**Metrics Panel:**
-- Execution trend chart (daily, 30d)
-- Success vs failure breakdown (donut chart)
-- Skip reasons breakdown
-
-**Impact Panel:**
-- Entities affected count
-- Customer notifications sent
-- Customer notifications throttled
-
-**Actions Panel (super_admin only):**
-- Enable/Disable toggle
-- Temporary pause (1h / 24h)
-- View execution log link
-
----
-
-#### Section 4: Customer Impact (`CustomerImpactSection.tsx`)
-
-**Metric Cards:**
-- Notifications sent (7d)
-- Throttle prevention rate (%)
-- Failed deliveries (if any)
-
-**Warnings Panel:**
-- High volume alerts (>50 notifications/day)
-- Repeated reminders to same customer (>2 in 7d)
-- Failed notification deliveries
-
----
-
-#### Section 5: Staff Trust (`StaffTrustSection.tsx`)
-
-**Feedback Summary:**
-- Helpful / Neutral / Harmful counts
-- Trend indicator (improving/declining)
-
-**Recent Feedback List:**
-- Execution reference
-- Feedback type badge
-- Notes (if any)
-- Timestamp
-
----
-
-#### Feedback Dialog (`FeedbackDialog.tsx`)
-
-**Usage:** Triggered from execution log entries
-
-**Fields:**
-- Feedback type: Helpful / Neutral / Harmful (radio group)
-- Notes (optional textarea)
-- Submit button
-
----
-
-### Task 6: Navigation & Routing Updates
-
-**Files to Update:**
-
-1. **`src/App.tsx`** - Add route:
-```typescript
-<Route path="/admin/automation/analytics" element={<AutomationAnalyticsPage />} />
-```
-
-2. **`src/components/admin/automation/AutomationAdminPage.tsx`** - Add tab:
-```typescript
-// Add "Analytics" tab to existing tabs
-<TabsTrigger value="analytics">Analytics</TabsTrigger>
-<TabsContent value="analytics">
-  <AutomationAnalyticsPage embedded />
-</TabsContent>
-```
-
-3. **`src/components/automation/AutomationExecutionLog.tsx`** - Add feedback button:
-```typescript
-// Add feedback button to each execution row
-<Button size="sm" variant="ghost" onClick={() => openFeedbackDialog(execution.id)}>
-  <MessageSquare className="h-4 w-4" />
-</Button>
-```
-
----
-
-### Task 7: Integration with Execution Flow
-
-**File: `src/services/automationExecutionService.ts`**
-
-Add post-execution trust check:
-
-```typescript
-// After logExecution(), add:
-if (params.status === 'failure') {
-  await AutomationTrustService.checkPostExecution(params.ruleId);
-}
-```
-
----
-
-## Implementation Order
-
-### Phase 4.4.1: Database Foundation
-1. Create migration for `automation_metrics_daily` table
-2. Create migration for `automation_feedback` table
-3. Create `aggregate_automation_metrics` function
-
-### Phase 4.4.2: Services
-4. Create `automationAnalyticsService.ts`
-5. Create `automationTrustService.ts`
-6. Create `useAutomationAnalytics.ts` hooks
-
-### Phase 4.4.3: Analytics UI
-7. Create `AutomationAnalyticsPage.tsx` with routing
-8. Create `HealthOverviewSection.tsx`
-9. Create `RulePerformanceTable.tsx`
-10. Create `RuleDetailDrawer.tsx`
-
-### Phase 4.4.4: Extended Analytics
-11. Create `CustomerImpactSection.tsx`
-12. Create `StaffTrustSection.tsx`
-13. Create `FeedbackDialog.tsx`
-
-### Phase 4.4.5: Integration
-14. Add feedback button to execution log
-15. Integrate auto-degrade with execution flow
-16. Add navigation and routing
-
----
-
-## Security & Access Control
-
-| Feature | super_admin | admin |
-|---------|-------------|-------|
-| View analytics dashboard | ✅ | ✅ |
-| View rule details | ✅ | ✅ |
-| Submit feedback | ✅ | ✅ |
-| Enable/Disable rules | ✅ | ❌ |
-| Configure thresholds | ✅ | ❌ |
-| Export analytics data | ✅ | ❌ |
+1. **No Workflow Changes**: Trust tier is **informational only** - no auto-approvals, no bypassed payments
+2. **Existing Loyalty Preserved**: `customer_loyalty` table remains untouched
+3. **Manual Override Protection**: Super admin only, requires reason, logged with high severity
+4. **Customer Privacy**: Customers see simplified "Account Standing", never see internal score
+5. **Deterministic Scoring**: All signals are explicit and auditable
 
 ---
 
 ## Testing Checklist
 
-### Analytics Accuracy
-- [ ] Metrics match raw execution logs
-- [ ] Daily aggregation runs correctly
-- [ ] Date range filtering works
-- [ ] Customer notification counts accurate
-
-### Safety
-- [ ] Auto-degrade triggers at threshold
-- [ ] Disabled rule stops counting
-- [ ] Kill switch reflected in analytics
-- [ ] Degradation notification sent
-
-### Performance
-- [ ] Analytics page loads < 2s
-- [ ] Large datasets don't block UI
-- [ ] Pre-aggregated metrics used for charts
-
-### UI/UX
-- [ ] Health indicators show correctly
-- [ ] Table sorting works
-- [ ] Rule detail drawer opens
-- [ ] Feedback submission works
-
----
-
-## Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/services/automationAnalyticsService.ts` | Analytics data service |
-| `src/services/automationTrustService.ts` | Auto-degrade logic |
-| `src/hooks/useAutomationAnalytics.ts` | React Query hooks |
-| `src/components/admin/automation/analytics/AutomationAnalyticsPage.tsx` | Main analytics page |
-| `src/components/admin/automation/analytics/HealthOverviewSection.tsx` | Health KPIs |
-| `src/components/admin/automation/analytics/RulePerformanceTable.tsx` | Performance table |
-| `src/components/admin/automation/analytics/RuleDetailDrawer.tsx` | Rule deep-dive |
-| `src/components/admin/automation/analytics/CustomerImpactSection.tsx` | Customer metrics |
-| `src/components/admin/automation/analytics/StaffTrustSection.tsx` | Staff feedback |
-| `src/components/admin/automation/analytics/FeedbackDialog.tsx` | Feedback modal |
-| `src/components/admin/automation/analytics/AnalyticsMetricCard.tsx` | Metric card |
-| `src/components/admin/automation/analytics/ExecutionTrendChart.tsx` | Trend chart |
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/App.tsx` | Add analytics route |
-| `src/components/admin/automation/AutomationAdminPage.tsx` | Add analytics tab |
-| `src/components/automation/AutomationExecutionLog.tsx` | Add feedback button |
-| `src/services/automationExecutionService.ts` | Add trust check post-execution |
+- [ ] Trust profile created on first evaluation
+- [ ] Score calculation matches documented formula
+- [ ] Tier boundaries correct (verified at 65+, trusted at 80+, etc.)
+- [ ] Manual override prevents automatic recalculation
+- [ ] Override logged in audit_logs with high severity
+- [ ] RLS prevents non-super_admin from modifying profiles
+- [ ] Customer can only see their own trust tier
+- [ ] Trust history records all tier changes
+- [ ] Existing order/payment workflows unchanged
 
 ---
 
 ## Definition of Done
 
-Phase 4.4 is complete when:
-- [ ] Automation health is visible at a glance (KPI cards)
-- [ ] Individual rule performance is measurable (performance table)
-- [ ] Customer impact is tracked with warnings
-- [ ] Staff can provide feedback on automation quality
-- [ ] Risky rules auto-degrade with super_admin notification
-- [ ] Analytics load efficiently (< 2s)
-- [ ] All security constraints enforced (RLS, role checks)
-- [ ] Leadership can make data-driven expansion decisions
+- Trust tiers are visible and stable
+- No existing workflows are affected
+- No automation is triggered by trust tier alone
+- System behavior remains unchanged
+- Foundation is ready for Phase 5.2 (Credit Terms)
+
+---
+
+## Technical Notes
+
+### Relationship to Existing Loyalty System
+- **Loyalty Tier** (bronze/silver/gold): Volume-based, rewards ordering frequency
+- **Trust Tier** (new/verified/trusted/preferred/restricted): Behavior-based, enables privileges
+
+Both systems coexist. A customer can be "Gold" (high volume) but "Restricted" (payment issues). Phase 5.2+ will check **trust tier** for eligibility while **loyalty tier** may provide additional benefits.
+
+### Evaluation Triggers
+Phase 5.1 is manual evaluation only (button click). Future phases may add:
+- Automatic evaluation after order delivery
+- Scheduled batch evaluation
+
+### Score Formula Summary
+```text
+Base: 50
++ Completed orders: +2 per order (max +20)
++ On-time payment ratio: +25 max
+- Late payments: -5 per order
+- Unresolved disputes: -10 each
+- Resolved disputes: -3 each
+```
