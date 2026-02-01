@@ -447,30 +447,30 @@ Add to `AuditEventType` in `auditLogger.ts`:
 
 ## Definition of Done
 
-- [ ] Credit fields added to orders table (additive, non-breaking)
-- [ ] `apply_credit_to_order` RPC validates all eligibility rules
-- [ ] Credit option appears only for eligible customers
-- [ ] Overdue balances block new credit usage
-- [ ] Admin can view credit ledger per customer
-- [ ] Customer sees simplified credit status (no internal scores)
-- [ ] All credit operations logged with high severity
-- [ ] No existing payment or order workflows are bypassed
-- [ ] No automation is introduced (manual enforcement only)
-- [ ] Trust tier integration: requires `trusted` or `preferred`
+- [x] Credit fields added to orders table (additive, non-breaking)
+- [x] `apply_credit_to_order` RPC validates all eligibility rules
+- [x] Credit option appears only for eligible customers
+- [x] Overdue balances block new credit usage
+- [x] Admin can view credit ledger per customer
+- [x] Customer sees simplified credit status (no internal scores)
+- [x] All credit operations logged with high severity
+- [x] No existing payment or order workflows are bypassed
+- [x] No automation is introduced (manual enforcement only)
+- [x] Trust tier integration: requires `trusted` or `preferred`
 
 ---
 
 ## Testing Checklist
 
-- [ ] Customer with `new` trust tier cannot use credit
-- [ ] Customer with `preferred` tier and active credit CAN use credit
-- [ ] Credit application fails if available credit insufficient
-- [ ] Credit application fails if overdue balance exists
-- [ ] Order cancellation releases credit back to available
-- [ ] Payment verification updates credit balance correctly
-- [ ] Audit logs capture all credit operations
-- [ ] Customer portal shows credit option only when eligible
-- [ ] Admin ledger shows all credit usage with due dates
+- [x] Customer with `new` trust tier cannot use credit
+- [x] Customer with `preferred` tier and active credit CAN use credit
+- [x] Credit application fails if available credit insufficient
+- [x] Credit application fails if overdue balance exists
+- [x] Order cancellation releases credit back to available
+- [x] Payment verification updates credit balance correctly
+- [x] Audit logs capture all credit operations
+- [x] Customer portal shows credit option only when eligible
+- [x] Admin ledger shows all credit usage with due dates
 
 ---
 
