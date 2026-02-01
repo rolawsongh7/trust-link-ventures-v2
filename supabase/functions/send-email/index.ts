@@ -11,7 +11,7 @@ const corsHeaders = {
 interface EmailRequest {
   to: string;
   subject: string;
-  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification' | 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered' | 'new_quote_request_admin' | 'account_deleted' | 'support_reply' | 'payment_verified' | 'payment_rejected' | 'payment_clarification_needed' | 'order_issue_reply' | 'order_issue_status_change' | 'pod_uploaded';
+  type: 'welcome' | 'password-reset' | 'security-alert' | 'quote-confirmation' | 'verification' | 'quote_ready' | 'quote_accepted' | 'order_confirmed' | 'order_shipped' | 'order_delivered' | 'new_quote_request_admin' | 'account_deleted' | 'support_reply' | 'payment_verified' | 'payment_rejected' | 'payment_clarification_needed' | 'order_issue_reply' | 'order_issue_status_change' | 'pod_uploaded' | 'automated_customer_notification';
   data?: Record<string, any>;
 }
 
@@ -86,6 +86,10 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'pod_uploaded':
         html = generatePODUploadedEmail(data);
+        break;
+      case 'automated_customer_notification':
+        html = generateAutomatedCustomerNotificationEmail(data);
+        from = "Trust Link Ventures <info@trustlinkcompany.com>";
         break;
       default:
         throw new Error('Invalid email type');
@@ -1074,6 +1078,143 @@ function generatePODUploadedEmail(data: any): string {
     </body>
     </html>
   `;
+}
+
+function generateAutomatedCustomerNotificationEmail(data: any): string {
+  const notificationType = data?.notification_type || 'status_update';
+  const customerName = data?.customerName || 'Valued Customer';
+  const orderNumber = data?.orderNumber || 'N/A';
+  const customerPortalLink = data?.customerPortalLink || 'https://trustlinkcompany.com/portal';
+  const supportEmail = data?.supportEmail || 'support@trustlinkcompany.com';
+  const attribution = data?.attribution || 'Automated update from Trust Link Ventures';
+
+  // Get notification-specific content
+  const content = getNotificationContent(notificationType, data);
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; border-top: none; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; color: #666; border: 1px solid #e0e0e0; border-top: none; }
+        .button { display: inline-block; background: #1e3a5f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .order-box { background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #1e3a5f; }
+        .notice-box { background: #fff3cd; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #ffc107; }
+        .success-box { background: #d4edda; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #28a745; }
+        .attribution { font-size: 12px; color: #888; margin-top: 20px; padding-top: 15px; border-top: 1px solid #e0e0e0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>${content.headerIcon} ${content.headerTitle}</h1>
+        </div>
+        <div class="content">
+          <p>Dear ${customerName},</p>
+          
+          ${content.body}
+          
+          <div class="order-box">
+            <p style="margin: 0;"><strong>Order Reference:</strong> #${orderNumber}</p>
+          </div>
+
+          <p>View your order details and track updates in your customer portal:</p>
+          <a href="${customerPortalLink}" class="button">View Order Details</a>
+          
+          <p>If you have any questions, please don't hesitate to contact us at <a href="mailto:${supportEmail}">${supportEmail}</a>.</p>
+        </div>
+        <div class="footer">
+          <p>Best regards,<br><strong>Trust Link Ventures Team</strong></p>
+          <p class="attribution">${attribution}</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function getNotificationContent(notificationType: string, data: any): { headerIcon: string; headerTitle: string; body: string } {
+  switch (notificationType) {
+    case 'payment_reminder':
+      return {
+        headerIcon: '💳',
+        headerTitle: 'Payment Reminder',
+        body: `
+          <p>This is a friendly reminder that we have not yet received payment for your order.</p>
+          <div class="notice-box">
+            <p style="margin: 0;"><strong>Action Required:</strong> Please submit your payment at your earliest convenience to avoid any delays in processing your order.</p>
+          </div>
+          <p>If you have already made the payment, please disregard this notice and allow 1-2 business days for processing.</p>
+        `,
+      };
+
+    case 'balance_reminder':
+      return {
+        headerIcon: '💰',
+        headerTitle: 'Balance Due Reminder',
+        body: `
+          <p>We wanted to remind you that there is a remaining balance on your order.</p>
+          <div class="notice-box">
+            <p style="margin: 0;"><strong>Outstanding Balance:</strong> Please review your order and submit the remaining payment to ensure timely delivery.</p>
+          </div>
+          <p>You can view the full payment breakdown in your customer portal.</p>
+        `,
+      };
+
+    case 'status_notification':
+      return {
+        headerIcon: '📦',
+        headerTitle: 'Order Status Update',
+        body: `
+          <p>There has been an update to your order status.</p>
+          <div class="success-box">
+            <p style="margin: 0;">${data?.message || 'Your order has been updated. Please check your customer portal for details.'}</p>
+          </div>
+          <p>We're working hard to ensure your order is processed efficiently.</p>
+        `,
+      };
+
+    case 'payment_received':
+      return {
+        headerIcon: '✅',
+        headerTitle: 'Payment Received',
+        body: `
+          <p>Thank you! We have received your payment.</p>
+          <div class="success-box">
+            <p style="margin: 0;"><strong>Payment Confirmed:</strong> Your payment has been successfully recorded and your order is being processed.</p>
+          </div>
+          <p>You will receive further updates as your order progresses.</p>
+        `,
+      };
+
+    case 'delay_notice':
+      return {
+        headerIcon: '⏰',
+        headerTitle: 'Delivery Update',
+        body: `
+          <p>We wanted to keep you informed about your order delivery.</p>
+          <div class="notice-box">
+            <p style="margin: 0;">${data?.message || 'There may be a slight delay in your expected delivery date. We apologize for any inconvenience and are working to fulfill your order as quickly as possible.'}</p>
+          </div>
+          <p>We appreciate your patience and understanding. Please check your customer portal for the latest estimated delivery date.</p>
+        `,
+      };
+
+    default:
+      return {
+        headerIcon: '📋',
+        headerTitle: 'Order Update',
+        body: `
+          <p>We have an update regarding your order.</p>
+          <p>${data?.message || 'Please check your customer portal for the latest information about your order.'}</p>
+        `,
+      };
+  }
 }
 
 serve(handler);

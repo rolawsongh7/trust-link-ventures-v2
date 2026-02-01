@@ -1,5 +1,5 @@
 /**
- * Phase 4.2: Automation Rules List
+ * Phase 4.3: Automation Rules List
  * Displays all automation rules with status and controls
  */
 
@@ -26,7 +26,10 @@ import {
   getRuleStatusInfo,
   isSLARelatedTrigger,
   getSLAHighlightColor,
-  type AutomationRule 
+  isCustomerFacingAction,
+  getCustomerFacingHighlightColor,
+  type AutomationRule,
+  type AutomationAction
 } from '@/utils/automationHelpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AutomationRuleDetailDrawer } from './AutomationRuleDetailDrawer';
@@ -54,12 +57,21 @@ const RuleRow: React.FC<RuleRowProps> = ({
   const isAutoDisabled = !!rule.auto_disabled_at;
   const isSLA = isSLARelatedTrigger(rule.trigger_event);
   const slaColors = getSLAHighlightColor(rule.trigger_event);
+  
+  // Check if rule has customer-facing actions
+  const isCustomerFacing = rule.actions?.some(
+    (a: AutomationAction) => isCustomerFacingAction(a.type)
+  );
+  const customerColors = isCustomerFacing ? getCustomerFacingHighlightColor() : null;
+  
+  // SLA border takes precedence, then customer-facing
+  const borderClass = slaColors?.border || customerColors?.border || '';
 
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className={`flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${slaColors?.border || ''}`}
+      className={`flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${borderClass}`}
       onClick={() => onViewDetails(rule.id)}
     >
       <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -74,7 +86,7 @@ const RuleRow: React.FC<RuleRowProps> = ({
 
         {/* Rule Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h4 className="font-medium truncate">{rule.name}</h4>
             <Badge variant="outline" className="text-xs">
               {formatEntityType(rule.entity_type)}
@@ -82,6 +94,11 @@ const RuleRow: React.FC<RuleRowProps> = ({
             {isSLA && (
               <Badge variant="secondary" className="text-xs">
                 SLA
+              </Badge>
+            )}
+            {isCustomerFacing && (
+              <Badge variant="secondary" className={`text-xs ${customerColors?.badge}`}>
+                Customer
               </Badge>
             )}
           </div>

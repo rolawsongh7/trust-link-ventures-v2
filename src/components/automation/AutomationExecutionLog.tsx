@@ -1,6 +1,6 @@
 /**
- * Phase 4.1: Automation Execution Log
- * Displays execution history with filtering
+ * Phase 4.3: Automation Execution Log
+ * Displays execution history with filtering and customer notification indicators
  */
 
 import React, { useState } from 'react';
@@ -21,7 +21,10 @@ import {
   FileText,
   ChevronDown,
   ChevronUp,
-  Clock
+  Clock,
+  Users,
+  Timer,
+  BellOff
 } from 'lucide-react';
 import { useAutomationExecutions, useAutomationRules } from '@/hooks/useAutomation';
 import { 
@@ -35,6 +38,19 @@ import {
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+// Helper functions for customer notification status
+const isCustomerExecution = (result: Record<string, unknown> | null): boolean => {
+  return result?.customerNotified === true;
+};
+
+const wasThrottled = (result: Record<string, unknown> | null): boolean => {
+  return result?.throttled === true;
+};
+
+const wasPrefsDisabled = (result: Record<string, unknown> | null): boolean => {
+  return result?.prefsDisabled === true;
+};
+
 interface ExecutionRowProps {
   execution: AutomationExecution;
   ruleName?: string;
@@ -44,6 +60,11 @@ const ExecutionRow: React.FC<ExecutionRowProps> = ({ execution, ruleName }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const StatusIcon = getExecutionStatusIcon(execution.status);
   const statusColor = getExecutionStatusColor(execution.status);
+  
+  // Check customer notification status
+  const customerNotified = isCustomerExecution(execution.result);
+  const throttled = wasThrottled(execution.result);
+  const prefsDisabled = wasPrefsDisabled(execution.result);
 
   return (
     <div className="border rounded-lg overflow-hidden">
@@ -56,11 +77,30 @@ const ExecutionRow: React.FC<ExecutionRowProps> = ({ execution, ruleName }) => {
             <StatusIcon className="h-4 w-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-medium truncate">{ruleName || 'Unknown Rule'}</span>
               <Badge variant="outline" className="text-xs">
                 {formatTriggerEvent(execution.trigger_event)}
               </Badge>
+              {/* Customer notification indicators */}
+              {customerNotified && (
+                <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                  <Users className="h-3 w-3 mr-1" />
+                  Customer Notified
+                </Badge>
+              )}
+              {throttled && (
+                <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                  <Timer className="h-3 w-3 mr-1" />
+                  Throttled
+                </Badge>
+              )}
+              {prefsDisabled && (
+                <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
+                  <BellOff className="h-3 w-3 mr-1" />
+                  Prefs Disabled
+                </Badge>
+              )}
             </div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span>{format(new Date(execution.executed_at), 'MMM d, h:mm:ss a')}</span>
