@@ -1,5 +1,5 @@
 // Credit Terms Utility Functions
-// Phase 3B: Controlled Financial Leverage
+// Phase 3B + 5.2: Controlled Financial Leverage with Order-Level Credit
 
 export type NetTerms = 'net_7' | 'net_14' | 'net_30';
 export type CreditStatus = 'inactive' | 'active' | 'suspended';
@@ -23,7 +23,10 @@ export interface CreditEligibility {
   eligible: boolean;
   lifetime_orders: number;
   loyalty_tier: string;
+  trust_tier: string;
   has_overdue_invoices: boolean;
+  has_overdue_credit: boolean;
+  available_credit: number;
   missing_requirements: string[];
 }
 
@@ -153,4 +156,73 @@ export function canCoverWithCredit(
   if (!creditTerms || !isCreditUsable(creditTerms)) return false;
   const available = getAvailableCredit(creditTerms.credit_limit, creditTerms.current_balance);
   return available >= orderAmount;
+}
+
+/**
+ * Calculate due date from net terms
+ */
+export function calculateDueDate(netTerms: NetTerms, fromDate: Date = new Date()): Date {
+  const days = getNetTermsDays(netTerms);
+  const dueDate = new Date(fromDate);
+  dueDate.setDate(dueDate.getDate() + days);
+  return dueDate;
+}
+
+/**
+ * Check if a credit order is overdue
+ */
+export function isOverdue(dueDate: string | Date): boolean {
+  const due = typeof dueDate === 'string' ? new Date(dueDate) : dueDate;
+  return due < new Date();
+}
+
+/**
+ * Get days until due (negative if overdue)
+ */
+export function getDaysUntilDue(dueDate: string | Date): number {
+  const due = typeof dueDate === 'string' ? new Date(dueDate) : dueDate;
+  const now = new Date();
+  const diffTime = due.getTime() - now.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Get due status label and color
+ */
+export function getDueStatus(dueDate: string | Date): {
+  label: string;
+  color: string;
+  isUrgent: boolean;
+} {
+  const days = getDaysUntilDue(dueDate);
+
+  if (days < 0) {
+    return {
+      label: `${Math.abs(days)} days overdue`,
+      color: 'text-red-600 dark:text-red-400',
+      isUrgent: true,
+    };
+  }
+
+  if (days === 0) {
+    return {
+      label: 'Due today',
+      color: 'text-amber-600 dark:text-amber-400',
+      isUrgent: true,
+    };
+  }
+
+  if (days <= 3) {
+    return {
+      label: `Due in ${days} days`,
+      color: 'text-amber-600 dark:text-amber-400',
+      isUrgent: true,
+    };
+  }
+
+  return {
+    label: `Due in ${days} days`,
+    color: 'text-muted-foreground',
+    isUrgent: false,
+  };
 }
