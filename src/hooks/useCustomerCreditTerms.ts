@@ -46,7 +46,24 @@ export function useCustomerCreditTerms(customerId: string | undefined) {
 }
 
 /**
- * Check credit eligibility for a customer
+ * Enhanced credit eligibility interface from check_credit_eligibility_v2 RPC
+ */
+export interface CreditEligibilityV2 {
+  eligible: boolean;
+  reasons: string[];
+  credit_limit: number;
+  current_balance: number;
+  available_credit: number;
+  net_terms: string;
+  credit_status: string;
+  trust_tier: string;
+  trust_score: number;
+  loyalty_tier: string;
+  has_overdue: boolean;
+}
+
+/**
+ * Check credit eligibility for a customer (v2 with trust tier integration)
  */
 export function useCheckCreditEligibility(customerId: string | undefined) {
   return useQuery({
@@ -54,12 +71,35 @@ export function useCheckCreditEligibility(customerId: string | undefined) {
     queryFn: async () => {
       if (!customerId) return null;
 
-      const { data, error } = await supabase.rpc('check_credit_eligibility', {
+      // Use v2 RPC with trust tier integration (cast to any since types may not be generated yet)
+      const { data, error } = await (supabase as any).rpc('check_credit_eligibility_v2', {
         p_customer_id: customerId,
       });
 
-      if (error) throw error;
-      return data as unknown as CreditEligibility;
+      if (error) {
+        // Fallback to v1 if v2 doesn't exist yet
+        if (error.code === 'PGRST202') {
+          const { data: v1Data, error: v1Error } = await supabase.rpc('check_credit_eligibility', {
+            p_customer_id: customerId,
+          });
+          if (v1Error) throw v1Error;
+          return v1Data as unknown as CreditEligibility;
+        }
+        throw error;
+      }
+      
+      // Map v2 response to CreditEligibility interface for compatibility
+      const result = data as CreditEligibilityV2;
+      return {
+        eligible: result.eligible,
+        lifetime_orders: 0, // Not returned from v2
+        loyalty_tier: result.loyalty_tier,
+        trust_tier: result.trust_tier,
+        has_overdue_invoices: false, // Not returned from v2
+        has_overdue_credit: result.has_overdue,
+        available_credit: result.available_credit,
+        missing_requirements: result.reasons,
+      } as CreditEligibility;
     },
     enabled: !!customerId,
   });

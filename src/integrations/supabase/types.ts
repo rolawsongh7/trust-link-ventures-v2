@@ -4624,8 +4624,11 @@ export type Database = {
           credit_amount_used: number | null
           credit_due_date: string | null
           credit_limit: number | null
+          credit_status: string | null
+          credit_terms_days: number | null
           current_balance: number | null
           customer_id: string | null
+          days_overdue: number | null
           is_overdue: boolean | null
           net_terms: string | null
           order_date: string | null
