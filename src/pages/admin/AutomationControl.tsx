@@ -64,7 +64,7 @@ const AutomationControl: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Phase 4.2 Notice */}
+      {/* Phase 4.3 Notice */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -74,11 +74,11 @@ const AutomationControl: React.FC = () => {
         <Zap className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
         <div className="text-sm">
           <p className="font-medium text-primary">
-            Phase 4.2: SLA & Risk Automation Active
+            Phase 4.3: Customer-Facing Automation Active
           </p>
           <p className="text-muted-foreground">
-            5 pre-configured automation rules for SLA tracking and risk management.
-            All rules are disabled by default and require super admin to enable.
+            10 pre-configured automation rules including 5 customer-facing notification rules.
+            All rules are disabled by default. Customer notifications respect preferences and throttling.
             Actions are non-destructive (notifications and logging only).
           </p>
         </div>

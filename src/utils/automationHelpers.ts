@@ -29,7 +29,9 @@ export type ActionType =
   | 'create_task'
   | 'log_audit_event'
   | 'assign_staff'
-  | 'add_tag';
+  | 'add_tag'
+  | 'send_customer_email'
+  | 'send_customer_notification';
 
 export type ExecutionStatus = 'success' | 'skipped' | 'failed';
 
@@ -125,6 +127,8 @@ export const ALLOWED_ACTIONS: ActionType[] = [
   'log_audit_event',
   'assign_staff',
   'add_tag',
+  'send_customer_email',
+  'send_customer_notification',
 ];
 
 // Explicitly forbidden actions - never allow these
@@ -298,6 +302,10 @@ export function formatActions(actions: AutomationAction[]): string[] {
           : 'Assign to available staff';
       case 'add_tag':
         return `Add tag: "${config.tag || 'automated'}"`;
+      case 'send_customer_email':
+        return `Email customer: ${config.notification_type || 'notification'}`;
+      case 'send_customer_notification':
+        return `Notify customer: ${config.notification_type || 'update'}`;
       default:
         return baseLabel;
     }
@@ -314,8 +322,27 @@ export function formatActionType(action: string): string {
     'log_audit_event': 'Log Audit Event',
     'assign_staff': 'Assign Staff',
     'add_tag': 'Add Tag',
+    'send_customer_email': 'Send Customer Email',
+    'send_customer_notification': 'Send Customer Notification',
   };
   return formats[action] || action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+/**
+ * Check if action is customer-facing
+ */
+export function isCustomerFacingAction(action: string): boolean {
+  return action === 'send_customer_email' || action === 'send_customer_notification';
+}
+
+/**
+ * Get color classes for customer-facing rules
+ */
+export function getCustomerFacingHighlightColor(): { border: string; badge: string } {
+  return {
+    border: 'border-l-4 border-l-blue-500',
+    badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  };
 }
 
 /**

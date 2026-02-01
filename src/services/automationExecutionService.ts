@@ -1,11 +1,16 @@
 /**
- * Phase 4.2: Automation Execution Service
- * Provides safe action execution with validation and idempotency
+ * Phase 4.3: Automation Execution Service
+ * Provides safe action execution with validation, idempotency, and customer-facing actions
  */
 
 import { supabase } from '@/integrations/supabase/client';
 import { AuditLogger, AuditEventType } from '@/lib/auditLogger';
 import { NotificationService } from '@/services/notificationService';
+import {
+  CustomerAutomationService,
+  THROTTLE_WINDOWS,
+  type CustomerNotificationType,
+} from '@/services/CustomerAutomationService';
 import {
   isActionAllowed,
   isActionForbidden,
@@ -166,19 +171,23 @@ export class AutomationExecutionService {
         case 'add_tag':
           return await this.executeAddTag(action, context);
 
+        case 'send_customer_email':
+          return await this.executeCustomerEmail(action, context);
+
+        case 'send_customer_notification':
+          return await this.executeCustomerNotification(action, context);
+
         case 'create_task':
-          // Deferred to Phase 4.3
           return {
             success: true,
-            message: 'Task creation deferred to Phase 4.3',
+            message: 'Task creation deferred to future phase',
             data: { deferred: true },
           };
 
         case 'assign_staff':
-          // Deferred to Phase 4.3
           return {
             success: true,
-            message: 'Staff assignment deferred to Phase 4.3',
+            message: 'Staff assignment deferred to future phase',
             data: { deferred: true },
           };
 
@@ -346,6 +355,217 @@ export class AutomationExecutionService {
       return {
         success: false,
         message: `Failed to add tag: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
+    }
+  }
+
+  // ============================================
+  // Customer-Facing Action Executors (Phase 4.3)
+  // ============================================
+
+  private static async executeCustomerEmail(
+    action: AutomationAction,
+    context: ActionContext
+  ): Promise<ActionResult> {
+    const config = action.config || {};
+    const notificationType = (config.notification_type as CustomerNotificationType) || 'status_notification';
+
+    try {
+      // Fetch order and customer context
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          order_number,
+          customer_id,
+          customers (
+            id,
+            email,
+            contact_name,
+            company_name
+          )
+        `)
+        .eq('id', context.entityId)
+        .single();
+
+      if (orderError || !order) {
+        return { success: false, message: 'Order not found' };
+      }
+
+      const customer = order.customers as any;
+      if (!customer?.email) {
+        return {
+          success: true,
+          message: 'Customer has no email address',
+          data: { skipped: true, reason: 'no_email' },
+        };
+      }
+
+      // Get user ID for customer to check preferences
+      const { data: customerUser } = await supabase
+        .from('customer_users')
+        .select('user_id')
+        .eq('customer_id', customer.id)
+        .limit(1)
+        .maybeSingle();
+
+      // Check customer notification preferences
+      if (customerUser?.user_id) {
+        const prefsEnabled = await CustomerAutomationService.isCustomerNotificationsEnabled(customerUser.user_id);
+        if (!prefsEnabled) {
+          return {
+            success: true,
+            message: 'Customer has disabled notifications',
+            data: { skipped: true, prefsDisabled: true },
+          };
+        }
+      }
+
+      // Check throttle window
+      const throttleCheck = await CustomerAutomationService.isThrottled(
+        context.ruleId,
+        context.entityId,
+        notificationType
+      );
+
+      if (throttleCheck.isThrottled) {
+        return {
+          success: true,
+          message: `Throttled: last sent ${throttleCheck.hoursRemaining}h ago`,
+          data: { throttled: true, hoursRemaining: throttleCheck.hoursRemaining },
+        };
+      }
+
+      // Send the email
+      const result = await CustomerAutomationService.sendCustomerEmail({
+        notification_type: notificationType,
+        orderId: order.id,
+        orderNumber: order.order_number,
+        customerId: customer.id,
+        customerEmail: customer.email,
+        customerName: customer.contact_name || customer.company_name,
+        message: config.message as string,
+        additionalData: config.additional_data as Record<string, unknown>,
+      });
+
+      // Log to communications table
+      await CustomerAutomationService.logCustomerCommunication(
+        order.id,
+        customer.id,
+        notificationType,
+        'email',
+        result.success
+      );
+
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        message: `Failed to send customer email: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
+    }
+  }
+
+  private static async executeCustomerNotification(
+    action: AutomationAction,
+    context: ActionContext
+  ): Promise<ActionResult> {
+    const config = action.config || {};
+    const notificationType = (config.notification_type as CustomerNotificationType) || 'status_notification';
+    const title = (config.title as string) || 'Order Update';
+    const message = (config.message as string) || 'Your order has been updated.';
+
+    try {
+      // Fetch order and customer context
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          order_number,
+          customer_id,
+          customers (
+            id,
+            company_name
+          )
+        `)
+        .eq('id', context.entityId)
+        .single();
+
+      if (orderError || !order) {
+        return { success: false, message: 'Order not found' };
+      }
+
+      const customer = order.customers as any;
+      if (!customer?.id) {
+        return { success: false, message: 'Customer not found' };
+      }
+
+      // Get user ID for customer
+      const { data: customerUser } = await supabase
+        .from('customer_users')
+        .select('user_id')
+        .eq('customer_id', customer.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (!customerUser?.user_id) {
+        return {
+          success: true,
+          message: 'Customer has no linked user account',
+          data: { skipped: true, reason: 'no_user_account' },
+        };
+      }
+
+      // Check customer notification preferences
+      const prefsEnabled = await CustomerAutomationService.isCustomerNotificationsEnabled(customerUser.user_id);
+      if (!prefsEnabled) {
+        return {
+          success: true,
+          message: 'Customer has disabled notifications',
+          data: { skipped: true, prefsDisabled: true },
+        };
+      }
+
+      // Check throttle window
+      const throttleCheck = await CustomerAutomationService.isThrottled(
+        context.ruleId,
+        context.entityId,
+        notificationType
+      );
+
+      if (throttleCheck.isThrottled) {
+        return {
+          success: true,
+          message: `Throttled: last sent ${throttleCheck.hoursRemaining}h ago`,
+          data: { throttled: true, hoursRemaining: throttleCheck.hoursRemaining },
+        };
+      }
+
+      // Send the notification
+      const result = await CustomerAutomationService.sendCustomerNotification({
+        orderId: order.id,
+        orderNumber: order.order_number,
+        customerId: customer.id,
+        userId: customerUser.user_id,
+        title,
+        message,
+        notificationType,
+      });
+
+      // Log to communications table
+      await CustomerAutomationService.logCustomerCommunication(
+        order.id,
+        customer.id,
+        notificationType,
+        'notification',
+        result.success
+      );
+
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        message: `Failed to send customer notification: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
