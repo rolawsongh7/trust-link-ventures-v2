@@ -1,291 +1,564 @@
-
-# Phase 4.3: Customer-Facing Automation - Complete Implementation Plan
+# Phase 4.4 — Automation Analytics, Trust & ROI Measurement
 
 ## Overview
-This plan completes Phase 4.3 by implementing the infrastructure needed to execute customer-facing automation actions. The database already contains all 10 automation rules (5 internal from Phase 4.2 + 5 customer-facing), but the code to execute `send_customer_email` and `send_customer_notification` actions is missing.
 
-## Current State Analysis
+Phase 4.4 adds **measurement, visibility, and trust controls** to prove automation is helping operations. This phase does NOT add new automation behavior—it adds observability and accountability.
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Database Rules | Complete | 10 rules exist, 5 are customer-facing |
-| automationHelpers.ts | Incomplete | Missing customer action types |
-| automationExecutionService.ts | Incomplete | Missing customer action handlers |
-| CustomerAutomationService.ts | Missing | Core service needed |
-| send-email Edge Function | Incomplete | Missing automated_customer_notification type |
-| UI Components | Incomplete | Missing customer-facing indicators |
-
-## Implementation Items (7 Total)
+**Goal**: Answer these questions:
+- Is automation helping or hurting?
+- Which rules create value?
+- Where is automation noisy or ineffective?
+- Are customers responding positively?
+- Can automation be safely expanded?
 
 ---
 
-### 1. Create CustomerAutomationService.ts (NEW FILE)
+## Implementation Tasks
 
-**Purpose**: Core service handling customer-facing automation with throttling, attribution, and preference checking.
+### Task 1: Database Schema Extensions
 
-**Location**: `src/services/CustomerAutomationService.ts`
+**Migration 1: `automation_metrics_daily` table**
+Pre-aggregated metrics for performance tracking.
 
-**Features**:
-- Throttle windows to prevent notification spam:
-  - Payment reminder: 48 hours
-  - Balance reminder: 72 hours  
-  - Status notification: 1 hour (debounce rapid changes)
-  - Delay notice: 48 hours
-- Attribution message: "Automated update from Trust Link Ventures"
-- Customer preference checking before sending
-- Delegation to NotificationService for in-app notifications
-- Delegation to send-email Edge Function for emails
-- Audit logging for all customer communications
+```sql
+CREATE TABLE public.automation_metrics_daily (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  rule_id UUID REFERENCES automation_rules(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  executions INTEGER DEFAULT 0,
+  successes INTEGER DEFAULT 0,
+  failures INTEGER DEFAULT 0,
+  skipped INTEGER DEFAULT 0,
+  affected_entities INTEGER DEFAULT 0,
+  customer_notifications_sent INTEGER DEFAULT 0,
+  customer_notifications_throttled INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(rule_id, date)
+);
 
-**Key Methods**:
-- `isCustomerNotificationsEnabled(userId)` - Check customer preferences
-- `isThrottled(ruleId, entityId, throttleHours)` - Check throttle window
-- `sendCustomerEmail(type, orderId, customerId, config)` - Send automated email
-- `sendCustomerNotification(orderId, customerId, config)` - Send in-app notification
+-- Enable RLS
+ALTER TABLE automation_metrics_daily ENABLE ROW LEVEL SECURITY;
 
----
+-- Admin read-only access
+CREATE POLICY "Admins can view automation metrics"
+  ON automation_metrics_daily FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM user_roles 
+    WHERE user_id = auth.uid() 
+    AND role IN ('super_admin', 'admin')
+  ));
 
-### 2. Update automationHelpers.ts
+-- Index for date range queries
+CREATE INDEX idx_automation_metrics_date ON automation_metrics_daily(date DESC);
+CREATE INDEX idx_automation_metrics_rule ON automation_metrics_daily(rule_id, date DESC);
+```
 
-**Purpose**: Add customer-facing action types to the type system.
+**Migration 2: `automation_feedback` table**
+Optional human feedback loop for staff trust signals.
 
-**Changes**:
+```sql
+CREATE TABLE public.automation_feedback (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  execution_id UUID REFERENCES automation_executions(id) ON DELETE CASCADE,
+  feedback_type TEXT CHECK (feedback_type IN ('helpful', 'neutral', 'harmful')) NOT NULL,
+  notes TEXT,
+  created_by UUID,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
-```text
-Add to ActionType union (line 27-32):
-  | 'send_customer_email'
-  | 'send_customer_notification'
+-- Enable RLS
+ALTER TABLE automation_feedback ENABLE ROW LEVEL SECURITY;
 
-Add to ALLOWED_ACTIONS array (line 122-128):
-  'send_customer_email',
-  'send_customer_notification',
+-- Admins can submit feedback
+CREATE POLICY "Admins can create feedback"
+  ON automation_feedback FOR INSERT
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM user_roles 
+    WHERE user_id = auth.uid() 
+    AND role IN ('super_admin', 'admin')
+  ));
 
-Add to formatActionType function (line 310-318):
-  'send_customer_email': 'Send Customer Email',
-  'send_customer_notification': 'Send Customer Notification',
+-- Admins can view feedback
+CREATE POLICY "Admins can view feedback"
+  ON automation_feedback FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM user_roles 
+    WHERE user_id = auth.uid() 
+    AND role IN ('super_admin', 'admin')
+  ));
 
-Add new helper function:
-  export function isCustomerFacingAction(action: string): boolean {
-    return action === 'send_customer_email' || action === 'send_customer_notification';
-  }
+-- Index for execution lookups
+CREATE INDEX idx_automation_feedback_execution ON automation_feedback(execution_id);
+CREATE INDEX idx_automation_feedback_type ON automation_feedback(feedback_type, created_at DESC);
+```
 
-Add customer-facing highlight helper:
-  export function getCustomerFacingHighlightColor(): { border: string; badge: string } {
-    return {
-      border: 'border-l-4 border-l-blue-500',
-      badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    };
-  }
+**Migration 3: Helper function for daily aggregation**
+```sql
+CREATE OR REPLACE FUNCTION aggregate_automation_metrics(target_date DATE DEFAULT CURRENT_DATE - 1)
+RETURNS void AS $$
+BEGIN
+  INSERT INTO automation_metrics_daily (
+    rule_id, 
+    date, 
+    executions, 
+    successes, 
+    failures, 
+    skipped, 
+    affected_entities,
+    customer_notifications_sent,
+    customer_notifications_throttled
+  )
+  SELECT 
+    rule_id,
+    target_date,
+    COUNT(*) as executions,
+    COUNT(*) FILTER (WHERE status = 'success') as successes,
+    COUNT(*) FILTER (WHERE status = 'failure') as failures,
+    COUNT(*) FILTER (WHERE status = 'skipped') as skipped,
+    COUNT(DISTINCT entity_id) as affected_entities,
+    COUNT(*) FILTER (WHERE (result->>'customerNotified')::boolean = true) as customer_notifications_sent,
+    COUNT(*) FILTER (WHERE (result->>'throttled')::boolean = true) as customer_notifications_throttled
+  FROM automation_executions
+  WHERE executed_at::date = target_date
+  GROUP BY rule_id
+  ON CONFLICT (rule_id, date) DO UPDATE SET
+    executions = EXCLUDED.executions,
+    successes = EXCLUDED.successes,
+    failures = EXCLUDED.failures,
+    skipped = EXCLUDED.skipped,
+    affected_entities = EXCLUDED.affected_entities,
+    customer_notifications_sent = EXCLUDED.customer_notifications_sent,
+    customer_notifications_throttled = EXCLUDED.customer_notifications_throttled;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
 
 ---
 
-### 3. Update automationExecutionService.ts
+### Task 2: Automation Analytics Service
 
-**Purpose**: Add execution handlers for customer-facing actions.
+**File: `src/services/automationAnalyticsService.ts`**
 
-**Changes**:
+Core service providing analytics data:
 
-1. Import CustomerAutomationService at top
-2. Add cases to `executeAction` switch statement:
+```typescript
+interface HealthOverview {
+  totalExecutions: number;
+  successRate: number;
+  failureRate: number;
+  activeRulesCount: number;
+  autoDisabledCount: number;
+  healthStatus: 'healthy' | 'warning' | 'critical';
+}
 
-```text
-case 'send_customer_email':
-  return await this.executeCustomerEmail(action, context);
+interface RulePerformance {
+  ruleId: string;
+  ruleName: string;
+  triggerEvent: string;
+  enabled: boolean;
+  autoDisabled: boolean;
+  executions30d: number;
+  successRate: number;
+  failureRate: number;
+  avgPerDay: number;
+  lastRun: string | null;
+  isCustomerFacing: boolean;
+}
 
-case 'send_customer_notification':
-  return await this.executeCustomerNotification(action, context);
-```
+interface RuleDetails {
+  rule: RulePerformance;
+  dailyTrend: { date: string; executions: number; successes: number; failures: number }[];
+  skipReasons: { reason: string; count: number }[];
+  impactMetrics: {
+    entitiesAffected: number;
+    customerNotificationsSent: number;
+    customerNotificationsThrottled: number;
+  };
+}
 
-3. Add private executor methods:
+interface CustomerImpactMetrics {
+  notificationsSent7d: number;
+  notificationsSent30d: number;
+  throttledRate: number;
+  warningsCount: number;
+  warnings: string[];
+}
 
-**executeCustomerEmail**:
-- Fetch order and customer context
-- Check throttle window (skip if throttled)
-- Check customer notification preferences
-- Call CustomerAutomationService.sendCustomerEmail
-- Return appropriate ActionResult with throttled/sent status
+interface StaffTrustMetrics {
+  totalFeedback: number;
+  helpfulCount: number;
+  neutralCount: number;
+  harmfulCount: number;
+  recentFeedback: AutomationFeedback[];
+}
 
-**executeCustomerNotification**:
-- Fetch order and customer context
-- Check throttle window
-- Check customer notification preferences  
-- Call CustomerAutomationService.sendCustomerNotification
-- Return ActionResult
-
----
-
-### 4. Update send-email Edge Function
-
-**Purpose**: Add `automated_customer_notification` email type with variants.
-
-**Location**: `supabase/functions/send-email/index.ts`
-
-**Changes**:
-
-1. Add to EmailRequest type union:
-   - `'automated_customer_notification'`
-
-2. Add case in switch statement:
-   ```text
-   case 'automated_customer_notification':
-     html = generateAutomatedCustomerNotificationEmail(data);
-     from = "Trust Link Ventures <info@trustlinkcompany.com>";
-     break;
-   ```
-
-3. Add new template function `generateAutomatedCustomerNotificationEmail`:
-
-**Supported notification_type variants**:
-- `payment_reminder` - Polite payment overdue notice
-- `status_update` - Order status change notification
-- `payment_received` - Partial payment acknowledgement
-- `balance_due` - Balance remaining reminder
-- `delay_notice` - SLA breach courtesy notice
-
-**Email Template Design**:
-- Professional header with Trust Link branding
-- Clear, non-threatening messaging
-- Attribution footer: "This is an automated update from Trust Link Ventures"
-- Customer portal link button
-- Contact support option
-- Order reference in all emails
-
----
-
-### 5. Update AutomationControl.tsx
-
-**Purpose**: Update phase status notice from 4.2 to 4.3.
-
-**Location**: `src/pages/admin/AutomationControl.tsx`
-
-**Changes** (lines 57-69):
-
-```text
-Before:
-  Phase 4.2: SLA & Risk Automation Active
-  5 pre-configured automation rules...
-
-After:
-  Phase 4.3: Customer-Facing Automation Active
-  10 pre-configured automation rules including 5 customer-facing notification rules.
-  All rules are disabled by default. Customer notifications respect preferences and throttling.
-```
-
----
-
-### 6. Update AutomationRulesList.tsx
-
-**Purpose**: Add visual indicators for customer-facing rules.
-
-**Location**: `src/components/automation/AutomationRulesList.tsx`
-
-**Changes**:
-
-1. Import `isCustomerFacingAction` and `getCustomerFacingHighlightColor` from automationHelpers
-
-2. Add check in RuleRow component:
-   ```text
-   const isCustomerFacing = rule.actions?.some(a => isCustomerFacingAction(a.type));
-   const customerColors = isCustomerFacing ? getCustomerFacingHighlightColor() : null;
-   ```
-
-3. Apply border styling:
-   - Blue left border for customer-facing rules
-   - SLA border takes precedence if both apply
-
-4. Add "Customer" badge next to "SLA" badge:
-   ```text
-   {isCustomerFacing && (
-     <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
-       Customer
-     </Badge>
-   )}
-   ```
-
----
-
-### 7. Update AutomationExecutionLog.tsx
-
-**Purpose**: Add customer notification status indicators in execution log.
-
-**Location**: `src/components/automation/AutomationExecutionLog.tsx`
-
-**Changes**:
-
-1. Import `isCustomerFacingAction` from automationHelpers
-
-2. Add helper to check if execution was customer-facing:
-   ```text
-   const isCustomerExecution = (result: Record<string, unknown>) => {
-     return result?.customerNotified === true;
-   };
-   
-   const wasThrottled = (result: Record<string, unknown>) => {
-     return result?.throttled === true;
-   };
-   ```
-
-3. Add badges in ExecutionRow expanded section:
-   - "Customer Notified" badge (blue) when customerNotified is true
-   - "Throttled" badge (yellow) when execution was throttled
-
-4. Add filter option to status dropdown:
-   - Add "Customer" option that filters executions by result.customerNotified
-
----
-
-## Technical Safety Details
-
-### Throttle Windows Configuration
-```text
-THROTTLE_WINDOWS = {
-  payment_reminder: 48 hours,
-  balance_reminder: 72 hours,
-  status_notification: 1 hour,
-  delay_notice: 48 hours
+class AutomationAnalyticsService {
+  // Health Overview KPIs
+  static async getHealthOverview(days: number): Promise<HealthOverview>
+  
+  // Rule Performance Table
+  static async getRulePerformance(days: number): Promise<RulePerformance[]>
+  
+  // Single Rule Details
+  static async getRuleDetails(ruleId: string, days: number): Promise<RuleDetails>
+  
+  // Customer Impact Metrics
+  static async getCustomerImpactMetrics(days: number): Promise<CustomerImpactMetrics>
+  
+  // Staff Trust Signals
+  static async getStaffTrustMetrics(days: number): Promise<StaffTrustMetrics>
+  
+  // Submit Feedback
+  static async submitFeedback(
+    executionId: string, 
+    feedbackType: 'helpful' | 'neutral' | 'harmful',
+    notes?: string
+  ): Promise<void>
 }
 ```
 
-### Attribution
-All automated customer communications will include:
-- Email footer: "This is an automated update from Trust Link Ventures. If you have questions, please contact support@trustlinkcompany.com"
-- Metadata flag: `automated: true`
+---
 
-### Safety Guarantees
-1. All 10 rules disabled by default (already done in database)
-2. Respects global automation kill switch
-3. Respects customer notification preferences
-4. Uses throttling to prevent duplicate messages
-5. Logs all actions to audit trail
-6. Never modifies financial or order data
-7. Non-destructive actions only
+### Task 3: Automation Trust Service (Auto-Degrade Logic)
+
+**File: `src/services/automationTrustService.ts`**
+
+Implements automatic rule degradation for safety:
+
+```typescript
+interface DegradeConfig {
+  failureThreshold: number;        // Default: 30% in 24h
+  minExecutionsForEval: number;    // Default: 10 (don't eval with too few)
+  maxExecutionsPerEntity: number;  // Default: 3 per entity per day
+  harmfulFeedbackThreshold: number; // Default: 3 harmful in 7 days
+}
+
+interface TrustEvaluation {
+  shouldDegrade: boolean;
+  reason?: string;
+  metrics: {
+    failureRate24h: number;
+    maxEntityExecutions: number;
+    harmfulFeedbackCount: number;
+  };
+}
+
+class AutomationTrustService {
+  static readonly DEFAULT_CONFIG: DegradeConfig = {
+    failureThreshold: 0.30,
+    minExecutionsForEval: 10,
+    maxExecutionsPerEntity: 3,
+    harmfulFeedbackThreshold: 3,
+  };
+
+  // Evaluate if rule should be auto-disabled
+  static async evaluateRuleTrust(ruleId: string): Promise<TrustEvaluation>
+  
+  // Auto-disable rule with audit trail
+  static async degradeRule(ruleId: string, reason: string): Promise<void>
+  
+  // Notify super_admin of degradation
+  static async notifyDegradation(ruleId: string, ruleName: string, reason: string): Promise<void>
+  
+  // Check and potentially degrade after each execution
+  static async checkPostExecution(ruleId: string): Promise<void>
+}
+```
+
+**Trigger Conditions for Auto-Disable:**
+1. **Failure spike**: >30% failure rate in last 24h (min 10 executions)
+2. **Entity spam**: Same entity triggered >3 times by same rule in 24h
+3. **Negative feedback**: 3+ "harmful" feedback in 7 days
 
 ---
 
-## File Summary
+### Task 4: Analytics Hooks
 
-| Action | File |
-|--------|------|
-| CREATE | src/services/CustomerAutomationService.ts |
-| UPDATE | src/utils/automationHelpers.ts |
-| UPDATE | src/services/automationExecutionService.ts |
-| UPDATE | supabase/functions/send-email/index.ts |
-| UPDATE | src/pages/admin/AutomationControl.tsx |
-| UPDATE | src/components/automation/AutomationRulesList.tsx |
-| UPDATE | src/components/automation/AutomationExecutionLog.tsx |
+**File: `src/hooks/useAutomationAnalytics.ts`**
+
+React Query hooks for analytics data:
+
+```typescript
+// Health overview with loading/error states
+export function useHealthOverview(days: number = 7)
+
+// Paginated rule performance table
+export function useRulePerformance(days: number = 30, filters?: RuleFilters)
+
+// Single rule detailed metrics
+export function useRuleDetails(ruleId: string, days: number = 30)
+
+// Customer-facing automation metrics
+export function useCustomerImpact(days: number = 7)
+
+// Staff feedback metrics
+export function useStaffTrust(days: number = 30)
+
+// Submit feedback mutation
+export function useSubmitFeedback()
+```
 
 ---
 
-## Verification Checklist
+### Task 5: Analytics Page Components
 
-After implementation, Phase 4.3 is complete when:
-- [ ] CustomerAutomationService exists with throttling and attribution
-- [ ] `send_customer_email` action type is recognized and executes
-- [ ] `send_customer_notification` action type is recognized and executes
-- [ ] Email template for automated customer notifications renders correctly
-- [ ] Throttling prevents duplicate notifications within window
-- [ ] Attribution appears on all automated customer messages
-- [ ] Admin UI shows "Customer" badges on customer-facing rules
-- [ ] Execution log shows "Customer Notified" and "Throttled" badges
-- [ ] Phase 4.3 status notice displays in Automation Control page
+**Route: `/admin/automation/analytics`**
+
+#### Component Structure:
+```
+src/components/admin/automation/analytics/
+├── AutomationAnalyticsPage.tsx       # Main page with sections
+├── HealthOverviewSection.tsx         # KPI cards with health indicators
+├── RulePerformanceTable.tsx          # Sortable rule performance table
+├── RuleDetailDrawer.tsx              # Drawer with rule deep-dive
+├── CustomerImpactSection.tsx         # Customer-facing metrics + warnings
+├── StaffTrustSection.tsx             # Feedback summary and recent list
+├── FeedbackDialog.tsx                # Submit feedback modal
+├── AnalyticsMetricCard.tsx           # Metric card with trend/status
+└── ExecutionTrendChart.tsx           # Daily execution trend visualization
+```
+
+---
+
+#### Section 1: Health Overview (`HealthOverviewSection.tsx`)
+
+**KPI Cards:**
+| Metric | Description |
+|--------|-------------|
+| Total Executions | Count (7d or 30d toggle) |
+| Success Rate % | With trend indicator |
+| Failure Rate % | With warning threshold |
+| Active Rules | Currently enabled count |
+| Auto-Disabled | Rules disabled due to errors (warning if > 0) |
+
+**Health Status Indicators:**
+- 🟢 **Healthy**: Success rate > 95%, no auto-disabled rules
+- 🟡 **Warning**: Success rate 80-95% OR 1+ auto-disabled rules
+- 🔴 **Critical**: Success rate < 80% OR 3+ auto-disabled rules
+
+---
+
+#### Section 2: Rule Performance Table (`RulePerformanceTable.tsx`)
+
+**Columns:**
+| Rule Name | Trigger | Status | Executions (30d) | Success % | Fail % | Avg/Day | Last Run | Actions |
+
+**Features:**
+- Sortable by: Fail rate (desc), Volume (desc), Last run (desc)
+- Filters: All / Active / Disabled / Customer-facing
+- Row click opens RuleDetailDrawer
+- Customer-facing rules have blue left border
+- Auto-disabled rules show warning icon
+
+---
+
+#### Section 3: Rule Detail Drawer (`RuleDetailDrawer.tsx`)
+
+**Metrics Panel:**
+- Execution trend chart (daily, 30d)
+- Success vs failure breakdown (donut chart)
+- Skip reasons breakdown
+
+**Impact Panel:**
+- Entities affected count
+- Customer notifications sent
+- Customer notifications throttled
+
+**Actions Panel (super_admin only):**
+- Enable/Disable toggle
+- Temporary pause (1h / 24h)
+- View execution log link
+
+---
+
+#### Section 4: Customer Impact (`CustomerImpactSection.tsx`)
+
+**Metric Cards:**
+- Notifications sent (7d)
+- Throttle prevention rate (%)
+- Failed deliveries (if any)
+
+**Warnings Panel:**
+- High volume alerts (>50 notifications/day)
+- Repeated reminders to same customer (>2 in 7d)
+- Failed notification deliveries
+
+---
+
+#### Section 5: Staff Trust (`StaffTrustSection.tsx`)
+
+**Feedback Summary:**
+- Helpful / Neutral / Harmful counts
+- Trend indicator (improving/declining)
+
+**Recent Feedback List:**
+- Execution reference
+- Feedback type badge
+- Notes (if any)
+- Timestamp
+
+---
+
+#### Feedback Dialog (`FeedbackDialog.tsx`)
+
+**Usage:** Triggered from execution log entries
+
+**Fields:**
+- Feedback type: Helpful / Neutral / Harmful (radio group)
+- Notes (optional textarea)
+- Submit button
+
+---
+
+### Task 6: Navigation & Routing Updates
+
+**Files to Update:**
+
+1. **`src/App.tsx`** - Add route:
+```typescript
+<Route path="/admin/automation/analytics" element={<AutomationAnalyticsPage />} />
+```
+
+2. **`src/components/admin/automation/AutomationAdminPage.tsx`** - Add tab:
+```typescript
+// Add "Analytics" tab to existing tabs
+<TabsTrigger value="analytics">Analytics</TabsTrigger>
+<TabsContent value="analytics">
+  <AutomationAnalyticsPage embedded />
+</TabsContent>
+```
+
+3. **`src/components/automation/AutomationExecutionLog.tsx`** - Add feedback button:
+```typescript
+// Add feedback button to each execution row
+<Button size="sm" variant="ghost" onClick={() => openFeedbackDialog(execution.id)}>
+  <MessageSquare className="h-4 w-4" />
+</Button>
+```
+
+---
+
+### Task 7: Integration with Execution Flow
+
+**File: `src/services/automationExecutionService.ts`**
+
+Add post-execution trust check:
+
+```typescript
+// After logExecution(), add:
+if (params.status === 'failure') {
+  await AutomationTrustService.checkPostExecution(params.ruleId);
+}
+```
+
+---
+
+## Implementation Order
+
+### Phase 4.4.1: Database Foundation
+1. Create migration for `automation_metrics_daily` table
+2. Create migration for `automation_feedback` table
+3. Create `aggregate_automation_metrics` function
+
+### Phase 4.4.2: Services
+4. Create `automationAnalyticsService.ts`
+5. Create `automationTrustService.ts`
+6. Create `useAutomationAnalytics.ts` hooks
+
+### Phase 4.4.3: Analytics UI
+7. Create `AutomationAnalyticsPage.tsx` with routing
+8. Create `HealthOverviewSection.tsx`
+9. Create `RulePerformanceTable.tsx`
+10. Create `RuleDetailDrawer.tsx`
+
+### Phase 4.4.4: Extended Analytics
+11. Create `CustomerImpactSection.tsx`
+12. Create `StaffTrustSection.tsx`
+13. Create `FeedbackDialog.tsx`
+
+### Phase 4.4.5: Integration
+14. Add feedback button to execution log
+15. Integrate auto-degrade with execution flow
+16. Add navigation and routing
+
+---
+
+## Security & Access Control
+
+| Feature | super_admin | admin |
+|---------|-------------|-------|
+| View analytics dashboard | ✅ | ✅ |
+| View rule details | ✅ | ✅ |
+| Submit feedback | ✅ | ✅ |
+| Enable/Disable rules | ✅ | ❌ |
+| Configure thresholds | ✅ | ❌ |
+| Export analytics data | ✅ | ❌ |
+
+---
+
+## Testing Checklist
+
+### Analytics Accuracy
+- [ ] Metrics match raw execution logs
+- [ ] Daily aggregation runs correctly
+- [ ] Date range filtering works
+- [ ] Customer notification counts accurate
+
+### Safety
+- [ ] Auto-degrade triggers at threshold
+- [ ] Disabled rule stops counting
+- [ ] Kill switch reflected in analytics
+- [ ] Degradation notification sent
+
+### Performance
+- [ ] Analytics page loads < 2s
+- [ ] Large datasets don't block UI
+- [ ] Pre-aggregated metrics used for charts
+
+### UI/UX
+- [ ] Health indicators show correctly
+- [ ] Table sorting works
+- [ ] Rule detail drawer opens
+- [ ] Feedback submission works
+
+---
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/services/automationAnalyticsService.ts` | Analytics data service |
+| `src/services/automationTrustService.ts` | Auto-degrade logic |
+| `src/hooks/useAutomationAnalytics.ts` | React Query hooks |
+| `src/components/admin/automation/analytics/AutomationAnalyticsPage.tsx` | Main analytics page |
+| `src/components/admin/automation/analytics/HealthOverviewSection.tsx` | Health KPIs |
+| `src/components/admin/automation/analytics/RulePerformanceTable.tsx` | Performance table |
+| `src/components/admin/automation/analytics/RuleDetailDrawer.tsx` | Rule deep-dive |
+| `src/components/admin/automation/analytics/CustomerImpactSection.tsx` | Customer metrics |
+| `src/components/admin/automation/analytics/StaffTrustSection.tsx` | Staff feedback |
+| `src/components/admin/automation/analytics/FeedbackDialog.tsx` | Feedback modal |
+| `src/components/admin/automation/analytics/AnalyticsMetricCard.tsx` | Metric card |
+| `src/components/admin/automation/analytics/ExecutionTrendChart.tsx` | Trend chart |
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/App.tsx` | Add analytics route |
+| `src/components/admin/automation/AutomationAdminPage.tsx` | Add analytics tab |
+| `src/components/automation/AutomationExecutionLog.tsx` | Add feedback button |
+| `src/services/automationExecutionService.ts` | Add trust check post-execution |
+
+---
+
+## Definition of Done
+
+Phase 4.4 is complete when:
+- [ ] Automation health is visible at a glance (KPI cards)
+- [ ] Individual rule performance is measurable (performance table)
+- [ ] Customer impact is tracked with warnings
+- [ ] Staff can provide feedback on automation quality
+- [ ] Risky rules auto-degrade with super_admin notification
+- [ ] Analytics load efficiently (< 2s)
+- [ ] All security constraints enforced (RLS, role checks)
+- [ ] Leadership can make data-driven expansion decisions
