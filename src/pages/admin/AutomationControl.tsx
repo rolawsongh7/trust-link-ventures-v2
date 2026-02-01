@@ -1,6 +1,6 @@
 /**
- * Phase 4.1: Automation Control Center
- * Main admin page for automation management
+ * Phase 4.4: Automation Control Center
+ * Main admin page for automation management with analytics
  */
 
 import React from 'react';
@@ -10,12 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Zap, 
   FileText, 
-  Settings2
+  Settings2,
+  BarChart3
 } from 'lucide-react';
 import { AutomationStatusCard } from '@/components/automation/AutomationStatusCard';
 import { AutomationRulesList } from '@/components/automation/AutomationRulesList';
 import { AutomationExecutionLog } from '@/components/automation/AutomationExecutionLog';
 import { AutomationKillSwitch } from '@/components/automation/AutomationKillSwitch';
+import { AutomationAnalyticsPage } from '@/components/admin/automation/analytics/AutomationAnalyticsPage';
 import { useIsAutomationEnabled } from '@/hooks/useAutomation';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { Navigate } from 'react-router-dom';
@@ -64,7 +66,7 @@ const AutomationControl: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Phase 4.3 Notice */}
+      {/* Phase 4.4 Notice */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -74,12 +76,11 @@ const AutomationControl: React.FC = () => {
         <Zap className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
         <div className="text-sm">
           <p className="font-medium text-primary">
-            Phase 4.3: Customer-Facing Automation Active
+            Phase 4.4: Automation Analytics & Trust Controls
           </p>
           <p className="text-muted-foreground">
-            10 pre-configured automation rules including 5 customer-facing notification rules.
-            All rules are disabled by default. Customer notifications respect preferences and throttling.
-            Actions are non-destructive (notifications and logging only).
+            10 automation rules with full analytics, trust monitoring, and ROI measurement.
+            View the Analytics tab for performance metrics and staff feedback.
           </p>
         </div>
       </motion.div>
@@ -97,6 +98,10 @@ const AutomationControl: React.FC = () => {
           <TabsTrigger value="executions" className="gap-2">
             <FileText className="h-4 w-4" />
             Execution Log
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analytics
           </TabsTrigger>
         </TabsList>
 
@@ -117,6 +122,16 @@ const AutomationControl: React.FC = () => {
             transition={{ duration: 0.3 }}
           >
             <AutomationExecutionLog />
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <AutomationAnalyticsPage embedded />
           </motion.div>
         </TabsContent>
       </Tabs>

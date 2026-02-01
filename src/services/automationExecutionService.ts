@@ -1,6 +1,6 @@
 /**
- * Phase 4.3: Automation Execution Service
- * Provides safe action execution with validation, idempotency, and customer-facing actions
+ * Phase 4.4: Automation Execution Service
+ * Provides safe action execution with validation, idempotency, customer-facing actions, and trust checks
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +11,7 @@ import {
   THROTTLE_WINDOWS,
   type CustomerNotificationType,
 } from '@/services/CustomerAutomationService';
+import { AutomationTrustService } from '@/services/automationTrustService';
 import {
   isActionAllowed,
   isActionForbidden,
@@ -207,7 +208,7 @@ export class AutomationExecutionService {
   }
 
   /**
-   * Log execution result
+   * Log execution result and check trust status on failures
    */
   static async logExecution(params: ExecutionParams): Promise<void> {
     try {
@@ -224,6 +225,16 @@ export class AutomationExecutionService {
 
       if (error) {
         console.error('[AutomationExecution] Failed to log execution:', error);
+      }
+
+      // Phase 4.4: Check trust status after failures
+      if (params.status === 'failed') {
+        try {
+          await AutomationTrustService.checkPostExecution(params.ruleId);
+        } catch (trustError) {
+          console.error('[AutomationExecution] Trust check failed:', trustError);
+          // Don't throw - trust check is non-critical
+        }
       }
     } catch (error) {
       console.error('[AutomationExecution] Error logging execution:', error);
