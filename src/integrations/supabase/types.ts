@@ -3551,6 +3551,227 @@ export type Database = {
         }
         Relationships: []
       }
+      standing_order_generations: {
+        Row: {
+          created_at: string
+          estimated_amount: number | null
+          failure_reason: string | null
+          generated_at: string
+          generation_type: string
+          id: string
+          order_id: string | null
+          quote_id: string | null
+          scheduled_date: string
+          skipped_reason: string | null
+          standing_order_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          estimated_amount?: number | null
+          failure_reason?: string | null
+          generated_at?: string
+          generation_type?: string
+          id?: string
+          order_id?: string | null
+          quote_id?: string | null
+          scheduled_date: string
+          skipped_reason?: string | null
+          standing_order_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          estimated_amount?: number | null
+          failure_reason?: string | null
+          generated_at?: string
+          generation_type?: string
+          id?: string
+          order_id?: string | null
+          quote_id?: string | null
+          scheduled_date?: string
+          skipped_reason?: string | null
+          standing_order_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "standing_order_generations_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "customer_credit_ledger"
+            referencedColumns: ["order_id"]
+          },
+          {
+            foreignKeyName: "standing_order_generations_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "standing_order_generations_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "standing_order_generations_standing_order_id_fkey"
+            columns: ["standing_order_id"]
+            isOneToOne: false
+            referencedRelation: "standing_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      standing_order_items: {
+        Row: {
+          created_at: string
+          grade: string | null
+          id: string
+          notes: string | null
+          product_description: string | null
+          product_id: string | null
+          product_name: string
+          quantity: number
+          specifications: string | null
+          standing_order_id: string
+          unit: string
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          grade?: string | null
+          id?: string
+          notes?: string | null
+          product_description?: string | null
+          product_id?: string | null
+          product_name: string
+          quantity: number
+          specifications?: string | null
+          standing_order_id: string
+          unit?: string
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          grade?: string | null
+          id?: string
+          notes?: string | null
+          product_description?: string | null
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          specifications?: string | null
+          standing_order_id?: string
+          unit?: string
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "standing_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_product_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "standing_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "standing_order_items_standing_order_id_fkey"
+            columns: ["standing_order_id"]
+            isOneToOne: false
+            referencedRelation: "standing_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      standing_orders: {
+        Row: {
+          auto_use_credit: boolean
+          cancelled_at: string | null
+          cancelled_reason: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          day_of_month: number | null
+          day_of_week: number | null
+          description: string | null
+          frequency: string
+          id: string
+          last_generated_date: string | null
+          name: string
+          next_scheduled_date: string
+          paused_at: string | null
+          paused_reason: string | null
+          requires_approval: boolean
+          status: string
+          total_orders_generated: number
+          updated_at: string
+        }
+        Insert: {
+          auto_use_credit?: boolean
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          description?: string | null
+          frequency: string
+          id?: string
+          last_generated_date?: string | null
+          name: string
+          next_scheduled_date: string
+          paused_at?: string | null
+          paused_reason?: string | null
+          requires_approval?: boolean
+          status?: string
+          total_orders_generated?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_use_credit?: boolean
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          description?: string | null
+          frequency?: string
+          id?: string
+          last_generated_date?: string | null
+          name?: string
+          next_scheduled_date?: string
+          paused_at?: string | null
+          paused_reason?: string | null
+          requires_approval?: boolean
+          status?: string
+          total_orders_generated?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "standing_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           billing_cycle: string
@@ -4492,6 +4713,15 @@ export type Database = {
         }
         Returns: Json
       }
+      calculate_next_schedule_date: {
+        Args: {
+          p_day_of_month: number
+          p_day_of_week: number
+          p_frequency: string
+          p_from_date?: string
+        }
+        Returns: string
+      }
       change_user_role_secure: {
         Args: { p_new_role: string; p_target_user_id: string }
         Returns: Json
@@ -4602,6 +4832,10 @@ export type Database = {
       generate_invoice_number: {
         Args: { invoice_type: string }
         Returns: string
+      }
+      generate_order_from_standing_order: {
+        Args: { p_generation_type?: string; p_standing_order_id: string }
+        Returns: Json
       }
       generate_order_number: { Args: never; Returns: string }
       generate_quote_request_number: { Args: never; Returns: string }
@@ -4769,6 +5003,14 @@ export type Database = {
       }
       toggle_maintenance_mode: {
         Args: { p_enabled: boolean; p_message?: string }
+        Returns: Json
+      }
+      update_standing_order_status: {
+        Args: {
+          p_reason?: string
+          p_standing_order_id: string
+          p_status: string
+        }
         Returns: Json
       }
       user_can_access_customer: {
