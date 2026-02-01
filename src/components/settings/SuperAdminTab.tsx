@@ -17,7 +17,8 @@ import {
   Activity,
   Search,
   Power,
-  Zap
+  Zap,
+  Building2,
 } from 'lucide-react';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { RoleManagementCard } from './RoleManagementCard';
@@ -28,6 +29,7 @@ import { BulkPdfRegenerationCard } from './BulkPdfRegenerationCard';
 import { ExtendedAuditLogCard } from './ExtendedAuditLogCard';
 import { AutomationStatusCard } from '@/components/automation/AutomationStatusCard';
 import { KillSwitchPanel } from '@/components/admin/KillSwitchPanel';
+import { TenantWorkflowConfigPanel } from '@/components/admin/TenantWorkflowConfigPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -131,7 +133,7 @@ export const SuperAdminTab = () => {
 
       {/* Tabbed Interface for Super Admin Features */}
       <Tabs defaultValue="system" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="system" className="gap-2">
             <Wrench className="h-4 w-4" />
             <span className="hidden sm:inline">System</span>
@@ -140,17 +142,21 @@ export const SuperAdminTab = () => {
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Roles</span>
           </TabsTrigger>
+          <TabsTrigger value="tenants" className="gap-2">
+            <Building2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Tenants</span>
+          </TabsTrigger>
           <TabsTrigger value="data" className="gap-2">
             <Search className="h-4 w-4" />
-            <span className="hidden sm:inline">Data Health</span>
+            <span className="hidden sm:inline">Data</span>
           </TabsTrigger>
           <TabsTrigger value="kill-switches" className="gap-2">
             <Power className="h-4 w-4" />
-            <span className="hidden sm:inline">Kill Switches</span>
+            <span className="hidden sm:inline">Switches</span>
           </TabsTrigger>
           <TabsTrigger value="automation" className="gap-2">
             <Zap className="h-4 w-4" />
-            <span className="hidden sm:inline">Automation</span>
+            <span className="hidden sm:inline">Auto</span>
           </TabsTrigger>
           <TabsTrigger value="audit" className="gap-2">
             <FileText className="h-4 w-4" />
@@ -191,6 +197,17 @@ export const SuperAdminTab = () => {
             transition={{ duration: 0.3 }}
           >
             <RoleManagementCard />
+          </motion.div>
+        </TabsContent>
+
+        {/* Tenants Tab */}
+        <TabsContent value="tenants" className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <TenantWorkflowConfigPanel />
           </motion.div>
         </TabsContent>
 
