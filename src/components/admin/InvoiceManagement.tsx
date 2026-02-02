@@ -21,7 +21,6 @@ import {
   Calendar,
   Filter,
   Eye,
-  Beaker,
   DollarSign,
   CheckCircle,
   Clock,
@@ -96,7 +95,7 @@ export default function InvoiceManagement() {
   const itemsPerPage = 20;
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [selectedInvoiceForPreview, setSelectedInvoiceForPreview] = useState<Invoice | null>(null);
-  const [regeneratingAll, setRegeneratingAll] = useState(false);
+  
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedInvoiceForDetail, setSelectedInvoiceForDetail] = useState<Invoice | null>(null);
 
@@ -317,47 +316,6 @@ export default function InvoiceManagement() {
     }
   };
 
-  const handleTestStorage = async (invoice: Invoice) => {
-    console.group('🧪 Storage Test - Start');
-    
-    try {
-      // Test 1: Check if file exists
-      console.log('Test 1: Checking if file exists...');
-      const folderPath = invoice.file_url?.split('/')[0] || '';
-      const { data: fileList, error: listError } = await supabase.storage
-        .from('invoices')
-        .list(folderPath, {
-          search: invoice.invoice_number
-        });
-      
-      console.log('File list result:', { fileList, listError });
-      
-      // Test 2: Try to get signed URL directly
-      console.log('Test 2: Getting signed URL...');
-      const { data: signedData, error: signedError } = await supabase.storage
-        .from('invoices')
-        .createSignedUrl(invoice.file_url || '', 3600);
-      
-      console.log('Signed URL result:', { signedData, signedError });
-      
-      // Test 3: Check authentication
-      console.log('Test 3: Checking auth...');
-      const { data: session } = await supabase.auth.getSession();
-      console.log('Session exists:', !!session?.session);
-      console.log('User ID:', session?.session?.user?.id);
-      
-      console.groupEnd();
-      
-      toast({
-        title: "Storage Test Complete",
-        description: "Check browser console for detailed results",
-      });
-    } catch (error) {
-      console.error('❌ Test error:', error);
-      console.groupEnd();
-    }
-  };
-
   const getInvoiceTypeDisplay = (type: string) => {
     return type.replace('_', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   };
@@ -368,59 +326,6 @@ export default function InvoiceManagement() {
       case 'paid': return 'secondary';
       case 'draft': return 'outline';
       default: return 'outline';
-    }
-  };
-
-  const handleRegenerateMissingPDFs = async () => {
-    setRegeneratingAll(true);
-    try {
-      toast({
-        title: "Scanning invoices...",
-        description: "Checking for missing PDF files in storage.",
-      });
-
-      const { data, error } = await supabase.functions.invoke('regenerate-missing-invoices');
-      
-      if (error) throw error;
-      
-      const result = data as {
-        total: number;
-        missing: string[];
-        regenerated: string[];
-        failed: { invoice: string; reason: string }[];
-        already_exists: string[];
-      };
-
-      toast({
-        title: "PDF Regeneration Complete",
-        description: (
-          <div className="space-y-2 text-sm">
-            <p>Total invoices: {result.total}</p>
-            <p>Already have PDFs: {result.already_exists.length}</p>
-            <p>Missing PDFs found: {result.missing.length}</p>
-            <p>Successfully regenerated: {result.regenerated.length}</p>
-            <p>Failed: {result.failed.length}</p>
-            {result.failed.length > 0 && (
-              <div className="mt-2 p-2 bg-destructive/10 rounded text-destructive">
-                Failed invoices: {result.failed.map(f => f.invoice).join(', ')}
-              </div>
-            )}
-          </div>
-        ),
-      });
-
-      if (result.regenerated.length > 0) {
-        refetch();
-      }
-    } catch (error: any) {
-      console.error('Error regenerating PDFs:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to regenerate missing PDFs',
-        variant: 'destructive',
-      });
-    } finally {
-      setRegeneratingAll(false);
     }
   };
 
@@ -447,20 +352,6 @@ export default function InvoiceManagement() {
         ]}
       />
       
-      {hasSuperAdminAccess && (
-        <div className="flex justify-end">
-          <Button
-            onClick={handleRegenerateMissingPDFs}
-            disabled={regeneratingAll}
-            variant="outline"
-            className="gap-2"
-          >
-            {regeneratingAll && <RefreshCw className="h-4 w-4 animate-spin" />}
-            <Beaker className="h-4 w-4" />
-            Regenerate Missing PDFs
-          </Button>
-        </div>
-      )}
 
       <InteractiveCard variant="glass" className="border-primary/10">
         <CardHeader>
@@ -679,29 +570,6 @@ export default function InvoiceManagement() {
                             >
                               <Download className="h-4 w-4" />
                             </Button>
-                            {hasSuperAdminAccess && (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRegenerate(invoice.id)}
-                                  disabled={regeneratingId === invoice.id}
-                                >
-                                  {regeneratingId === invoice.id ? (
-                                    <RefreshCw className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <RefreshCw className="h-4 w-4" />
-                                  )}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleTestStorage(invoice)}
-                                >
-                                  <Beaker className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
                           </div>
                         </TableCell>
                       </TableRow>
