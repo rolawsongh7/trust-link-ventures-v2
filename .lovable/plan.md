@@ -1,122 +1,135 @@
 
-
-# Plan: Fix Admin Portal Access for Super Admin on Production
+# Plan: Fix RLS Policies for Super Admin Access
 
 ## Problem Summary
 
-The user `info@trustlinkcompany.com` (with `super_admin` role) can successfully log in on the Lovable preview but gets "Access Denied" on production (`trustlinkcompany.com`).
+The admin portal shows only 1 quote instead of the expected 58 quote requests, 48 quotes, and 52 invoices. The user `info@trustlinkcompany.com` has the `super_admin` role, but the RLS (Row Level Security) policies on these tables only check for the exact `'admin'` role.
 
-**Evidence from Auth Logs:**
-- Login succeeds at 13:33:39 (status 200)
-- Logout happens immediately at 13:33:39 (status 204)
-- This pattern repeats on every production login attempt
+**Database confirmation:**
+- 58 quote requests exist in the database
+- `check_user_role('...', 'admin')` returns `false` for super_admin users
+- `check_user_role('...', 'super_admin')` returns `true`
 
-## Root Cause Analysis
+## Root Cause
 
-The `check_user_role` RPC calls in `AdminAuth.tsx` are not properly handling errors. When the RPC fails (returns `null`/`undefined` with an error), the code treats this as "user doesn't have the role" instead of "check failed":
+Several RLS policies use exact role matching that excludes `super_admin`:
 
-```typescript
-// Current problematic code (lines 163-180)
-const { data: isAdmin } = await supabase.rpc('check_user_role', {...});
-const { data: isSuperAdmin } = await supabase.rpc('check_user_role', {...});
-
-if (!isAdmin && !isSuperAdmin) {  // This triggers if data is null/undefined!
-  await supabase.auth.signOut();
-  // Access Denied...
-}
-```
-
-**Why it works on preview but fails on production:**
-- Network latency or timing differences between preview and production
-- The auth token may not be fully propagated to the database connection immediately after login
-- Production may have stricter CORS or different network conditions
+| Table | Policy | Current Check |
+|-------|--------|---------------|
+| `quote_requests` | Admins can view all quote requests | `check_user_role(auth.uid(), 'admin')` |
+| `quote_requests` | Admins can update quote requests | `check_user_role(auth.uid(), 'admin')` |
+| `quote_requests` | Admins can delete quote requests | `get_user_role(auth.uid()) = 'admin'` |
+| `quotes` | Admins can manage all quotes | `role = 'admin'::user_role` |
+| `quotes` | Admins can delete quotes | `check_user_role(auth.uid(), 'admin')` |
+| `invoices` | Admins can manage all invoices | `check_user_role(auth.uid(), 'admin')` |
+| `invoices` | Customers and admins can view invoices | `check_user_role(auth.uid(), 'admin')` |
 
 ## Solution
 
-### File Changes
-
-**1. `src/pages/AdminAuth.tsx`** - Add error handling and retry logic for RPC calls
-
-Update the role checking section (lines 161-181) to:
-- Capture and log RPC errors
-- Add a small delay to ensure auth token is propagated
-- Retry the check once if it fails
-- Only sign out if role check definitively returns `false` (not on error)
-
-**2. `src/hooks/useRoleAuth.tsx`** - Add similar error handling
-
-Update the `fetchUserRole` function to handle RPC errors more gracefully and add logging.
-
-### Technical Implementation
-
-**AdminAuth.tsx changes:**
-
-```typescript
-// After getting session, add a small delay to ensure token propagation
-await new Promise(resolve => setTimeout(resolve, 100));
-
-// Check roles with proper error handling
-const checkRoleWithRetry = async (role: string, retries = 2): Promise<boolean> => {
-  for (let i = 0; i < retries; i++) {
-    const { data, error } = await supabase.rpc('check_user_role', {
-      check_user_id: currentSession.user.id,
-      required_role: role
-    });
-    
-    if (error) {
-      console.error(`[AdminAuth] Role check error (attempt ${i + 1}):`, error);
-      if (i < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 200));
-        continue;
-      }
-      return false; // Final attempt failed
-    }
-    
-    return data === true;
-  }
-  return false;
-};
-
-const isAdmin = await checkRoleWithRetry('admin');
-const isSuperAdmin = await checkRoleWithRetry('super_admin');
-
-console.log('[AdminAuth] Role check results:', { 
-  isAdmin, 
-  isSuperAdmin, 
-  userId: currentSession.user.id 
-});
-
-if (!isAdmin && !isSuperAdmin) {
-  console.warn('[AdminAuth] Access denied for user:', currentSession.user.email);
-  await supabase.auth.signOut();
-  // Show toast...
-}
+A helper function `is_admin()` already exists and correctly includes both roles:
+```sql
+SELECT EXISTS (
+  SELECT 1 FROM public.user_roles 
+  WHERE user_id = auth.uid() 
+  AND role IN ('admin', 'super_admin')
+);
 ```
 
-**useRoleAuth.tsx changes:**
+We need to create a database migration that drops the old policies and recreates them using `is_admin()`.
 
-Add similar error handling and logging to the `fetchUserRole` function to ensure consistent behavior across all role checks.
+---
 
-### Files to Modify
+## Technical Implementation
 
-| File | Change |
-|------|--------|
-| `src/pages/AdminAuth.tsx` | Add error handling, delay, retry logic, and logging for role checks |
-| `src/hooks/useRoleAuth.tsx` | Add error handling and logging for role fetching |
+### Migration File
 
-### Testing Steps
+Create a new migration file that:
 
-After implementation:
-1. Publish the changes to production
-2. Navigate to `https://admin.trustlinkcompany.com`
-3. Sign in with `info@trustlinkcompany.com`
-4. Verify successful redirect to admin dashboard
-5. Check browser console for role check logs to confirm the fix is working
+1. **Drop existing policies** on all three tables
+2. **Recreate policies** using `is_admin()` function
 
-### Why This Will Work
+```sql
+-- =============================================
+-- FIX: Update RLS policies to include super_admin
+-- =============================================
 
-1. **Error handling**: Distinguishes between "check failed" (retry or continue cautiously) vs "user doesn't have role" (deny access)
-2. **Delay after login**: Ensures the auth token is fully propagated to the database connection
-3. **Retry logic**: Handles transient network issues
-4. **Logging**: Provides visibility into what's happening for future debugging
+-- QUOTE_REQUESTS TABLE
+DROP POLICY IF EXISTS "Admins can view all quote requests" ON quote_requests;
+DROP POLICY IF EXISTS "Admins can update quote requests" ON quote_requests;
+DROP POLICY IF EXISTS "Admins can delete quote requests" ON quote_requests;
 
+CREATE POLICY "Admins can view all quote requests" 
+  ON quote_requests FOR SELECT 
+  TO authenticated 
+  USING (is_admin());
+
+CREATE POLICY "Admins can update quote requests" 
+  ON quote_requests FOR UPDATE 
+  TO authenticated 
+  USING (is_admin()) 
+  WITH CHECK (is_admin());
+
+CREATE POLICY "Admins can delete quote requests" 
+  ON quote_requests FOR DELETE 
+  TO public 
+  USING (is_admin());
+
+-- QUOTES TABLE
+DROP POLICY IF EXISTS "Admins can manage all quotes" ON quotes;
+DROP POLICY IF EXISTS "Admins can delete quotes" ON quotes;
+
+CREATE POLICY "Admins can manage all quotes" 
+  ON quotes FOR ALL 
+  TO authenticated 
+  USING (is_admin()) 
+  WITH CHECK (is_admin());
+
+CREATE POLICY "Admins can delete quotes" 
+  ON quotes FOR DELETE 
+  TO public 
+  USING (is_admin());
+
+-- INVOICES TABLE
+DROP POLICY IF EXISTS "Admins can manage all invoices" ON invoices;
+DROP POLICY IF EXISTS "Customers and admins can view invoices" ON invoices;
+
+CREATE POLICY "Admins can manage all invoices" 
+  ON invoices FOR ALL 
+  TO authenticated 
+  USING (is_admin()) 
+  WITH CHECK (is_admin());
+
+CREATE POLICY "Customers and admins can view invoices" 
+  ON invoices FOR SELECT 
+  TO authenticated 
+  USING (
+    customer_id = auth.uid() 
+    OR user_can_access_customer(customer_id, auth.uid()) 
+    OR is_admin()
+  );
+```
+
+---
+
+## Files to Create
+
+| File | Description |
+|------|-------------|
+| `supabase/migrations/[timestamp]_fix_super_admin_rls_policies.sql` | Update RLS policies to use `is_admin()` |
+
+## Testing Steps
+
+After applying the migration:
+1. Log in as `info@trustlinkcompany.com` (super_admin)
+2. Navigate to Customer Quote Inquiries → should see all 58 requests
+3. Navigate to Quote Management → should see all 48 quotes
+4. Navigate to Invoices → should see all 52 invoices
+
+## Why This Works
+
+The `is_admin()` function already handles both roles correctly:
+- Returns `true` if user has `admin` role
+- Returns `true` if user has `super_admin` role
+- Returns `false` otherwise
+
+By using this function consistently across all admin-related RLS policies, super admins will have the same data access as regular admins.
