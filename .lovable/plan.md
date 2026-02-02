@@ -1,151 +1,78 @@
 
 
-# Plan: Fix Super Admin Access Across All Workflow Tasks
+# Plan: Remove Debugging and Redundant Buttons from Invoice Page
 
-## Problem Summary
+## Current State
 
-When trying to create a quote from a customer quote inquiry, the super_admin user (`info@trustlinkcompany.com`) gets denied access. Investigation revealed that while some tables (like `quotes`, `quote_requests`, `invoices`) were fixed in the previous migration, **many other tables still use RLS policies that only check for `'admin'` role**, excluding super_admin users.
+The Invoice Management page currently shows three super-admin-only buttons:
 
-The specific failure occurs when trying to insert `quote_items` after creating a quote - the INSERT policy uses `check_user_role(auth.uid(), 'admin')` which returns `false` for super_admin.
+| Button | Location | Purpose |
+|--------|----------|---------|
+| **Regenerate Missing PDFs** | Top of page (below header) | Scans all invoices and regenerates only those with missing PDF files |
+| **Regenerate (per row)** | Actions column (RefreshCw icon) | Regenerates a single invoice PDF |
+| **Storage Test (per row)** | Actions column (Beaker icon) | Logs storage diagnostic info to browser console - purely for debugging |
 
-## Tables Requiring RLS Policy Updates
+## Why These Appeared
 
-### Critical (Blocks Quote Creation Workflow)
+These buttons were always in the code but gated by `hasSuperAdminAccess`. When we fixed the RLS policies for super_admin access, the `useRoleAuth` hook started correctly identifying you as a super_admin, making these buttons visible.
 
-| Table | Policies to Update |
-|-------|-------------------|
-| `quote_items` | Admins can insert, update, delete, view |
-| `customers` | Delete, Role-based viewing, Update |
-| `orders` | DELETE, UPDATE, SELECT, INSERT |
+## Analysis: Can They Be Removed?
 
-### Important (Other Admin Workflows)
+| Button | Safe to Remove? | Reason |
+|--------|-----------------|--------|
+| **Storage Test** | Yes | Pure debugging tool - logs to console only. No workflow dependencies. |
+| **Regenerate (per row)** | Yes | Redundant - same functionality available in Settings via **Bulk PDF Regeneration Card** which provides better control with date ranges |
+| **Regenerate Missing PDFs** | Partially | Useful for quick scans, but could be moved to Settings page alongside the Bulk PDF tool for cleaner invoice page |
 
-| Table | Policies to Update |
-|-------|-------------------|
-| `customer_addresses` | ALL, SELECT |
-| `customer_users` | ALL |
-| `invoice_items` | ALL |
-| `opportunities` | DELETE, UPDATE, SELECT |
-| `activities` | DELETE |
-| `communications` | DELETE |
-| `supplier_products` | ALL, DELETE, INSERT |
-| `user_roles` | INSERT, UPDATE, DELETE, SELECT |
-| `account_deletions` | SELECT |
-| `audit_logs` | SELECT |
-| `csp_violations` | SELECT |
-| `failed_login_attempts` | SELECT |
-| `file_uploads` | SELECT |
-| `order_status_history` | SELECT |
-| `quote_status_history` | SELECT |
-| `quote_view_analytics` | SELECT |
-| `security_alert_rules` | ALL |
-| `security_alerts` | UPDATE, SELECT |
-| `system_events` | SELECT |
-| `password_policies` | ALL |
-| `pipeline_stages` | ALL |
-| `products` | DELETE |
-| `delivery_tracking_tokens` | ALL |
-| `newsletter_subscriptions` | ALL, SELECT |
+## Recommended Changes
 
-## Solution
+### Option A: Remove All Three (Cleanest Invoice Page)
 
-Create a database migration that updates all policies to use `is_admin()` instead of `check_user_role(auth.uid(), 'admin')` or `get_user_role(auth.uid()) = 'admin'`.
+Move PDF regeneration to Settings > Super Admin tab where the `BulkPdfRegenerationCard` already exists. This keeps the Invoice page focused on viewing and downloading.
 
-The existing `is_admin()` function already correctly includes both roles:
-```sql
-SELECT EXISTS (
-  SELECT 1 FROM public.user_roles 
-  WHERE user_id = auth.uid() 
-  AND role IN ('admin', 'super_admin')
-);
-```
+### Option B: Remove Only Debug Buttons (Keep Some Control)
 
-### Migration Strategy
-
-1. Drop existing policies that use exact admin role matching
-2. Recreate them using `is_admin()` function
-3. For policies that combine admin check with other conditions (like customer access), update only the admin portion
+- Remove **Storage Test button** (Beaker icon) - no value for production use
+- Remove **Regenerate Missing PDFs** button at top - move to Settings
+- Keep **per-row Regenerate button** for quick fixes on individual invoices
 
 ## Technical Implementation
 
-A single migration file will:
+### Files to Modify
 
-### Phase 1: Critical Tables (Quote Workflow)
+1. **`src/components/admin/InvoiceManagement.tsx`**
 
-**quote_items table:**
-```sql
-DROP POLICY IF EXISTS "Admins can insert quote items" ON quote_items;
-DROP POLICY IF EXISTS "Admins can update quote items" ON quote_items;
-DROP POLICY IF EXISTS "Admins can delete quote items" ON quote_items;
-DROP POLICY IF EXISTS "Users can view relevant quote items" ON quote_items;
+**Remove/cleanup:**
+- Remove `Beaker` import (line 24)
+- Remove `handleTestStorage` function (lines 320-359)
+- Remove `handleRegenerateMissingPDFs` function (lines 374-425)
+- Remove `regeneratingAll` state (line 99)
+- Remove the "Regenerate Missing PDFs" button section (lines 450-463)
+- Remove the per-row super-admin buttons in the Actions column (lines 682-704)
+- Remove unused imports: `Beaker`
 
-CREATE POLICY "Admins can insert quote items" 
-  ON quote_items FOR INSERT TO authenticated 
-  WITH CHECK (is_admin());
+**Keep intact:**
+- `handleRegenerate` function - still used by mobile views
+- Pass-through to mobile components (MobileInvoiceCard, MobileInvoiceDetailDialog)
 
-CREATE POLICY "Admins can update quote items" 
-  ON quote_items FOR UPDATE TO authenticated 
-  USING (is_admin()) WITH CHECK (is_admin());
+### No Edge Functions Affected
 
-CREATE POLICY "Admins can delete quote items" 
-  ON quote_items FOR DELETE TO authenticated 
-  USING (is_admin());
+The edge functions (`generate-invoice-pdf`, `regenerate-missing-invoices`, `check-invoice-storage`) remain available for:
+- Settings page bulk regeneration
+- Mobile invoice views
+- Future use if needed
 
-CREATE POLICY "Users can view relevant quote items" 
-  ON quote_items FOR SELECT TO authenticated 
-  USING (
-    is_admin() OR EXISTS (
-      SELECT 1 FROM quotes q
-      WHERE q.id = quote_items.quote_id 
-      AND (q.customer_email = (auth.jwt() ->> 'email')
-        OR q.customer_id IN (SELECT cu.customer_id FROM customer_users cu WHERE cu.user_id = auth.uid()))
-    )
-  );
-```
+### No Workflow Impact
 
-**customers table:**
-```sql
-DROP POLICY IF EXISTS "Admins can delete customers" ON customers;
-DROP POLICY IF EXISTS "Role-based customer viewing" ON customers;
-DROP POLICY IF EXISTS "Users can update assigned customers" ON customers;
+These are administrative tools, not part of the core invoice workflow (create quote → send → order → generate invoice). The normal invoice generation still happens automatically during order status transitions.
 
--- Recreate with is_admin()
-```
+## Summary
 
-**orders table:**
-```sql
-DROP POLICY IF EXISTS "Admins can delete orders" ON orders;
-DROP POLICY IF EXISTS "Admins can update all orders" ON orders;
-DROP POLICY IF EXISTS "Admins can view all orders" ON orders;
-DROP POLICY IF EXISTS "Orders can be created by authorized users or system" ON orders;
-DROP POLICY IF EXISTS "Customers and admins can update orders" ON orders;
+| Change | Impact |
+|--------|--------|
+| Remove Storage Test button | None - debug only |
+| Remove Regenerate Missing PDFs | Move functionality to Settings (already exists there via BulkPdfRegenerationCard) |
+| Remove per-row Regenerate | Mobile views still have it; Settings has bulk regeneration |
 
--- Recreate with is_admin()
-```
-
-### Phase 2: All Other Admin Tables
-
-Similar updates for all remaining tables listed above, ensuring super_admin has the same access as admin across the entire platform.
-
-## Files to Create
-
-| File | Description |
-|------|-------------|
-| `supabase/migrations/[timestamp]_fix_super_admin_all_rls_policies.sql` | Comprehensive RLS policy update |
-
-## Testing Steps
-
-After applying the migration:
-1. Log in as `info@trustlinkcompany.com` (super_admin)
-2. Navigate to Customer Quote Inquiries
-3. Click "Create Quote" on a pending request
-4. Verify the quote is created with items successfully
-5. Test other workflows: orders, customer management, invoices
-
-## Why This Will Work
-
-1. **Single source of truth**: The `is_admin()` function already handles both roles
-2. **Comprehensive fix**: Updates ALL policies that check for admin role
-3. **Maintains security**: Only changes how admin access is verified, doesn't open access to unauthorized users
-4. **Future-proof**: Any new admin-level roles can be added to `is_admin()` function once
+The Invoice page will show only: **Preview** and **Download** buttons per row - clean and focused on the primary use case.
 
