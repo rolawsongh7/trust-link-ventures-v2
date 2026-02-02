@@ -81,7 +81,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setTimeout(() => reject(new Error('Role fetch timeout')), 10000)
       );
 
-      // Check for admin role first
+      // Check for super_admin role first (super admins have full admin access)
+      const superAdminPromise = supabase.rpc('check_user_role', {
+        check_user_id: userId,
+        required_role: 'super_admin'
+      });
+
+      const { data: isSuperAdmin } = await Promise.race([superAdminPromise, timeoutPromise]) as any;
+
+      if (isSuperAdmin) {
+        console.log('[Auth] User has super_admin role');
+        setUserRole('admin');
+        return;
+      }
+
+      // Check for regular admin role
       const adminPromise = supabase.rpc('check_user_role', {
         check_user_id: userId,
         required_role: 'admin'

@@ -159,12 +159,18 @@ const AdminAuth = () => {
         }
 
         // Check if user has admin role
+        // Check if user has admin OR super_admin role
         const { data: isAdmin } = await supabase.rpc('check_user_role', {
           check_user_id: currentSession.user.id,
           required_role: 'admin'
         });
 
-        if (!isAdmin) {
+        const { data: isSuperAdmin } = await supabase.rpc('check_user_role', {
+          check_user_id: currentSession.user.id,
+          required_role: 'super_admin'
+        });
+
+        if (!isAdmin && !isSuperAdmin) {
           await supabase.auth.signOut();
           toast({
             title: 'Access Denied',
