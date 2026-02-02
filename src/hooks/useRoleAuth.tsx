@@ -29,25 +29,33 @@ export const useRoleAuth = (): UseRoleAuthReturn => {
     try {
       setLoading(true);
       
+      // Helper function to check role with error handling
+      const checkRole = async (roleToCheck: string): Promise<boolean> => {
+        const { data, error } = await supabase.rpc('check_user_role', {
+          check_user_id: user.id,
+          required_role: roleToCheck
+        });
+        
+        if (error) {
+          console.error(`[useRoleAuth] Error checking ${roleToCheck} role:`, error);
+          return false;
+        }
+        
+        return data === true;
+      };
+      
       // Check for super_admin first
-      const { data: isSuperAdmin } = await supabase.rpc('check_user_role', {
-        check_user_id: user.id,
-        required_role: 'super_admin'
-      });
+      const isSuperAdmin = await checkRole('super_admin');
+      console.log('[useRoleAuth] Role check:', { userId: user.id, isSuperAdmin });
 
       if (isSuperAdmin) {
         setRole('super_admin');
       } else {
-        // Use the check_user_role function to verify user role
-        const { data: isAdmin } = await supabase.rpc('check_user_role', {
-          check_user_id: user.id,
-          required_role: 'admin'
-        });
+        // Check other roles
+        const isAdmin = await checkRole('admin');
+        const isSalesRep = await checkRole('sales_rep');
 
-        const { data: isSalesRep } = await supabase.rpc('check_user_role', {
-          check_user_id: user.id,
-          required_role: 'sales_rep'
-        });
+        console.log('[useRoleAuth] Additional role checks:', { isAdmin, isSalesRep });
 
         if (isAdmin) {
           setRole('admin');
@@ -58,7 +66,7 @@ export const useRoleAuth = (): UseRoleAuthReturn => {
         }
       }
     } catch (error) {
-      console.error('Error fetching user role:', error);
+      console.error('[useRoleAuth] Error fetching user role:', error);
       setRole('user'); // Default to user role on error
     } finally {
       setLoading(false);

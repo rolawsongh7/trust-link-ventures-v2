@@ -158,19 +158,43 @@ const AdminAuth = () => {
           return;
         }
 
-        // Check if user has admin role
-        // Check if user has admin OR super_admin role
-        const { data: isAdmin } = await supabase.rpc('check_user_role', {
-          check_user_id: currentSession.user.id,
-          required_role: 'admin'
-        });
+        // Add a small delay to ensure auth token is fully propagated
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-        const { data: isSuperAdmin } = await supabase.rpc('check_user_role', {
-          check_user_id: currentSession.user.id,
-          required_role: 'super_admin'
+        // Check roles with proper error handling and retry logic
+        const checkRoleWithRetry = async (role: string, retries = 2): Promise<boolean> => {
+          for (let i = 0; i < retries; i++) {
+            const { data, error } = await supabase.rpc('check_user_role', {
+              check_user_id: currentSession.user.id,
+              required_role: role
+            });
+            
+            if (error) {
+              console.error(`[AdminAuth] Role check error for ${role} (attempt ${i + 1}):`, error);
+              if (i < retries - 1) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+                continue;
+              }
+              return false;
+            }
+            
+            return data === true;
+          }
+          return false;
+        };
+
+        const isAdmin = await checkRoleWithRetry('admin');
+        const isSuperAdmin = await checkRoleWithRetry('super_admin');
+
+        console.log('[AdminAuth] Role check results:', { 
+          isAdmin, 
+          isSuperAdmin, 
+          userId: currentSession.user.id,
+          email: currentSession.user.email
         });
 
         if (!isAdmin && !isSuperAdmin) {
+          console.warn('[AdminAuth] Access denied for user:', currentSession.user.email);
           await supabase.auth.signOut();
           toast({
             title: 'Access Denied',
