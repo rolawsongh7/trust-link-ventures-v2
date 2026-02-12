@@ -28,6 +28,7 @@ import {
   CalendarClock,
   Receipt,
   AlertTriangle,
+  Plus,
 } from 'lucide-react';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { useAllTenants, type Tenant } from '@/hooks/useTenant';
@@ -41,6 +42,7 @@ import {
   type TenantFeatureEligibility,
 } from '@/hooks/useTenantFeatureEligibility';
 import { StatusPulse } from '@/components/shared/StatusPulse';
+import { CreateTenantDialog } from './CreateTenantDialog';
 
 const FEATURE_ICONS: Record<TenantFeatureKey, React.ElementType> = {
   quotes: FileText,
@@ -56,6 +58,7 @@ export function TenantFeatureEligibilityPanel() {
   const { data: tenants, isLoading: tenantsLoading } = useAllTenants();
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   if (!hasSuperAdminAccess) return null;
 
@@ -88,6 +91,10 @@ export function TenantFeatureEligibilityPanel() {
           <CardDescription>
             Control which features each tenant can access. Disabled features are hidden from the tenant's users.
           </CardDescription>
+          <Button size="sm" className="mt-2 w-fit" onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Tenant
+          </Button>
         </CardHeader>
         <CardContent className="space-y-3">
           {!tenants?.length ? (
@@ -139,6 +146,8 @@ export function TenantFeatureEligibilityPanel() {
           }}
         />
       )}
+
+      <CreateTenantDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
     </>
   );
 }
