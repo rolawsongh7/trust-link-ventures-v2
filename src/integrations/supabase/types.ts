@@ -4042,6 +4042,138 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_feature_eligibility: {
+        Row: {
+          created_at: string
+          disabled_reason: string | null
+          enabled: boolean | null
+          feature_key: string
+          id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          disabled_reason?: string | null
+          enabled?: boolean | null
+          feature_key: string
+          id?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          disabled_reason?: string | null
+          enabled?: boolean | null
+          feature_key?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_feature_eligibility_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_users: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_users_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_workflow_config: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          id?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_workflow_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          settings: Json | null
+          slug: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          settings?: Json | null
+          slug: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          settings?: Json | null
+          slug?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tracking_access_logs: {
         Row: {
           created_at: string
@@ -4725,6 +4857,10 @@ export type Database = {
         }
         Returns: string
       }
+      can_tenant_use_feature: {
+        Args: { p_feature_key: string; p_tenant_id: string }
+        Returns: Json
+      }
       change_user_role_secure: {
         Args: { p_new_role: string; p_target_user_id: string }
         Returns: Json
@@ -4915,6 +5051,10 @@ export type Database = {
         }[]
       }
       get_password_policy: { Args: never; Returns: Json }
+      get_tenant_workflow_config: {
+        Args: { p_tenant_id: string }
+        Returns: Json
+      }
       get_user_role: { Args: { user_id: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       is_allowed_admin_email: { Args: { user_email: string }; Returns: boolean }
@@ -5014,6 +5154,10 @@ export type Database = {
           p_standing_order_id: string
           p_status: string
         }
+        Returns: Json
+      }
+      update_tenant_workflow_config: {
+        Args: { p_config: Json; p_tenant_id: string }
         Returns: Json
       }
       user_can_access_customer: {
