@@ -78,28 +78,51 @@
   --tl-font-caption: 0.75rem;  /* 12px */
   
   --tl-line-height: 1.5;
+  --tl-line-height-tight: 1.25;
+  --tl-line-height-relaxed: 1.625;
   
   /* Spacing System */
-  --tl-space-xs: 0.5rem;  /* 8px */
+  --tl-space-1: 0.25rem;   /* 4px */
+  --tl-space-2: 0.5rem;    /* 8px */
+  --tl-space-3: 0.75rem;   /* 12px */
+  --tl-space-4: 1rem;      /* 16px */
+  --tl-space-5: 1.25rem;   /* 20px */
+  --tl-space-6: 1.5rem;    /* 24px */
+  --tl-space-8: 2rem;      /* 32px */
+  --tl-space-10: 2.5rem;   /* 40px */
+  --tl-space-12: 3rem;     /* 48px */
+  --tl-space-16: 4rem;     /* 64px */
+  --tl-space-xs: 0.5rem;   /* 8px */
   --tl-space-sm: 0.75rem;  /* 12px */
-  --tl-space-md: 1rem;  /* 16px */
-  --tl-space-lg: 1.5rem;  /* 24px */
-  --tl-space-xl: 2rem;  /* 32px */
-  --tl-space-2xl: 3rem;  /* 48px */
+  --tl-space-md: 1rem;     /* 16px */
+  --tl-space-lg: 1.5rem;   /* 24px */
+  --tl-space-xl: 2rem;     /* 32px */
+  --tl-space-2xl: 3rem;    /* 48px */
   
   /* Border Radius */
-  --tl-radius-sm: 0.5rem;  /* 8px */
-  --tl-radius-md: 0.75rem;  /* 12px */
-  --tl-radius-lg: 1rem;  /* 16px */
-  --tl-radius-xl: 1.5rem;  /* 24px */
+  --tl-radius-sm: 0.375rem;  /* 6px */
+  --tl-radius-md: 0.5rem;    /* 8px */
+  --tl-radius-lg: 0.75rem;   /* 12px */
+  --tl-radius-xl: 1rem;      /* 16px */
   --tl-radius-full: 9999px;
   
   /* Shadows */
   --tl-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --tl-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --tl-shadow-md: 0 4px 10px rgba(0, 0, 0, 0.08);
-  --tl-shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
-  --tl-shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.2);
+  --tl-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --tl-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  --tl-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+  --tl-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  
+  /* Transitions */
+  --tl-transition-fast: 150ms ease;
+  --tl-transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --tl-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --tl-transition-slower: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Status-specific Colors */
+  --tl-status-processing: 239 84% 67%;
+  --tl-status-under-review: 38 92% 50%;
+  --tl-status-accepted: 160 84% 39%;
   
   /* === ENTERPRISE CUSTOMER PORTAL COLORS === */
   
@@ -182,4 +205,28 @@
   --portal-bg-subtle: 222 47% 13%;
   --portal-surface: 222 47% 15%;
   --portal-shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(0, 0, 0, 0.2);
+  
+  /* Dark mode shadow overrides */
+  --tl-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --tl-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  --tl-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .enterprise-card,
+  .enterprise-card-glass,
+  .metric-card,
+  .product-card {
+    border-width: 2px;
+  }
+  
+  .btn-enterprise-primary,
+  .btn-enterprise-success {
+    border: 2px solid currentColor;
+  }
+  
+  .status-badge-enterprise {
+    border-width: 2px;
+  }
 }

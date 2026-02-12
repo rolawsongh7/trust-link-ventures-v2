@@ -1324,6 +1324,360 @@ html {
   .cart-badge {
     @apply bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center;
   }
+
+  /* ========================================
+     ENTERPRISE DESIGN POLISH - Cards & Surfaces
+     ======================================== */
+
+  /* Quote/Request Cards - Premium Elevation */
+  .enterprise-card {
+    @apply bg-card border border-border rounded-xl transition-all duration-300;
+    box-shadow: var(--tl-shadow-sm);
+  }
+
+  .enterprise-card:hover {
+    @apply border-primary/30;
+    box-shadow: var(--tl-shadow-md), 0 0 0 1px hsl(var(--primary) / 0.1);
+    transform: translateY(-2px);
+  }
+
+  .dark .enterprise-card {
+    background: linear-gradient(135deg, hsl(var(--neutral-900)) 0%, hsl(var(--neutral-950)) 100%);
+    border-color: hsl(var(--neutral-800));
+  }
+
+  .dark .enterprise-card:hover {
+    border-color: hsl(var(--primary) / 0.3);
+  }
+
+  /* Glass Card Premium Variant */
+  .enterprise-card-glass {
+    @apply backdrop-blur-xl rounded-xl transition-all duration-300;
+    background: hsl(var(--card) / 0.7);
+    border: 1px solid hsl(var(--border) / 0.5);
+    box-shadow: var(--tl-shadow-sm);
+  }
+
+  .dark .enterprise-card-glass {
+    background: hsl(var(--neutral-900) / 0.7);
+    border-color: hsl(var(--neutral-700) / 0.3);
+  }
+
+  /* Interactive Card with Hover Overlay */
+  .enterprise-card-interactive {
+    @apply enterprise-card cursor-pointer relative overflow-hidden;
+  }
+
+  .enterprise-card-interactive::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0) 0%, hsl(var(--primary) / 0.04) 100%);
+  }
+
+  .enterprise-card-interactive:hover::before {
+    @apply opacity-100;
+  }
+
+  /* Metric/Stat Cards */
+  .metric-card {
+    @apply enterprise-card relative overflow-hidden p-6;
+  }
+
+  .metric-card::after {
+    content: '';
+    @apply absolute top-0 right-0 w-24 h-24 pointer-events-none;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%);
+  }
+
+  /* Product Cards */
+  .product-card {
+    @apply enterprise-card overflow-hidden;
+  }
+
+  .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--tl-shadow-lg), 0 0 0 1px hsl(var(--primary) / 0.1);
+  }
+
+  .product-card .product-image {
+    @apply bg-white dark:bg-neutral-800 p-4 rounded-lg transition-transform duration-300;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+  }
+
+  .product-card:hover .product-image {
+    transform: scale(1.05);
+  }
+
+  .product-category-badge {
+    @apply px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider;
+    background: hsl(var(--primary) / 0.12);
+    color: hsl(var(--primary));
+  }
+
+  /* ========================================
+     ENTERPRISE STATUS BADGES - Refined
+     ======================================== */
+
+  .status-badge-enterprise {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200;
+  }
+
+  .status-accepted {
+    background: hsl(var(--success) / 0.1);
+    color: hsl(var(--success));
+    border: 1px solid hsl(var(--success) / 0.2);
+    box-shadow: 0 0 8px -2px hsl(var(--success) / 0.2);
+  }
+
+  .status-under-review {
+    background: hsl(var(--warning) / 0.1);
+    color: hsl(var(--warning));
+    border: 1px solid hsl(var(--warning) / 0.2);
+    box-shadow: 0 0 8px -2px hsl(var(--warning) / 0.2);
+  }
+
+  .status-processing {
+    background: hsl(239 84% 67% / 0.1);
+    color: hsl(239 84% 67%);
+    border: 1px solid hsl(239 84% 67% / 0.2);
+    box-shadow: 0 0 8px -2px hsl(239 84% 67% / 0.2);
+  }
+
+  .status-processing::before {
+    content: '';
+    @apply w-1.5 h-1.5 rounded-full;
+    background: currentColor;
+    animation: status-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .status-cancelled {
+    background: hsl(var(--destructive) / 0.1);
+    color: hsl(var(--destructive));
+    border: 1px solid hsl(var(--destructive) / 0.2);
+  }
+
+  .status-pending {
+    background: hsl(var(--warning) / 0.1);
+    color: hsl(var(--warning));
+    border: 1px solid hsl(var(--warning) / 0.2);
+  }
+
+  @keyframes status-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ========================================
+     ENTERPRISE BUTTONS - Professional CTAs
+     ======================================== */
+
+  .btn-enterprise-primary {
+    @apply font-semibold rounded-lg px-6 py-3 text-primary-foreground transition-all duration-200;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-variant)) 100%);
+    box-shadow: 
+      var(--tl-shadow-sm),
+      inset 0 1px 0 hsl(0 0% 100% / 0.1);
+  }
+
+  .btn-enterprise-primary:hover {
+    box-shadow: 
+      0 4px 12px hsl(var(--primary) / 0.35),
+      var(--tl-shadow-sm),
+      inset 0 1px 0 hsl(0 0% 100% / 0.1);
+    transform: translateY(-1px);
+  }
+
+  .btn-enterprise-primary:active {
+    transform: translateY(0);
+    box-shadow: 
+      var(--tl-shadow-xs),
+      inset 0 2px 4px hsl(0 0% 0% / 0.15);
+  }
+
+  .btn-enterprise-success {
+    @apply font-semibold rounded-lg px-6 py-3 text-success-foreground transition-all duration-200;
+    background: linear-gradient(135deg, hsl(var(--success)) 0%, hsl(var(--success-600)) 100%);
+    box-shadow: var(--tl-shadow-sm), inset 0 1px 0 hsl(0 0% 100% / 0.1);
+  }
+
+  .btn-enterprise-success:hover {
+    box-shadow: 0 4px 12px hsl(var(--success) / 0.35), var(--tl-shadow-sm);
+    transform: translateY(-1px);
+  }
+
+  .btn-enterprise-ghost {
+    @apply font-medium rounded-lg px-4 py-2 transition-all duration-200;
+    background: transparent;
+    border: 1.5px solid hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+  }
+
+  .btn-enterprise-ghost:hover {
+    border-color: hsl(var(--primary) / 0.5);
+    color: hsl(var(--primary));
+    background: hsl(var(--primary) / 0.04);
+  }
+
+  /* ========================================
+     ENTERPRISE DATA VISUALIZATION
+     ======================================== */
+
+  .amount-display {
+    @apply text-3xl font-bold tracking-tight;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ========================================
+     ENTERPRISE SECURITY DISPLAY
+     ======================================== */
+
+  .security-score-card {
+    @apply relative p-8 rounded-2xl overflow-hidden;
+    background: linear-gradient(135deg, hsl(var(--success) / 0.08) 0%, hsl(var(--primary) / 0.08) 100%);
+    border: 1px solid hsl(var(--success) / 0.2);
+  }
+
+  .security-progress {
+    @apply h-3 rounded-full overflow-hidden relative;
+    background: hsl(var(--neutral-900) / 0.1);
+  }
+
+  .dark .security-progress {
+    background: hsl(var(--neutral-50) / 0.1);
+  }
+
+  .security-progress-fill {
+    @apply h-full rounded-full relative overflow-hidden;
+    background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+    transition: width 1s ease-out;
+  }
+
+  .security-progress-fill::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.25), transparent);
+    animation: security-shine 2s infinite;
+  }
+
+  @keyframes security-shine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* ========================================
+     ENTERPRISE EMPTY STATES
+     ======================================== */
+
+  .empty-state-enterprise {
+    @apply py-16 px-8 text-center;
+  }
+
+  .empty-state-enterprise .empty-state-icon {
+    @apply w-16 h-16 mx-auto mb-6 opacity-40;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .empty-state-enterprise .empty-state-title {
+    @apply text-xl font-semibold mb-2;
+    color: hsl(var(--foreground) / 0.8);
+  }
+
+  .empty-state-enterprise .empty-state-description {
+    @apply text-sm;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* ========================================
+     ENTERPRISE SKELETON LOADERS
+     ======================================== */
+
+  .skeleton-enterprise {
+    @apply rounded-lg overflow-hidden relative;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted) / 0.3) 0%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted) / 0.3) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+
+  .dark .skeleton-enterprise {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--neutral-800) / 0.4) 0%,
+      hsl(var(--neutral-700) / 0.4) 50%,
+      hsl(var(--neutral-800) / 0.4) 100%
+    );
+    background-size: 200% 100%;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ========================================
+     ENTERPRISE APP HEADER
+     ======================================== */
+
+  .app-header-enterprise {
+    @apply sticky top-0 z-50 px-6 py-4;
+    background: hsl(var(--background) / 0.8);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border-bottom: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .dark .app-header-enterprise {
+    background: hsl(var(--neutral-950) / 0.8);
+    border-bottom-color: hsl(var(--neutral-800) / 0.5);
+  }
+
+  .logo-text-enterprise {
+    @apply text-xl font-bold;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ========================================
+     ENTERPRISE ICON ACCENTS
+     ======================================== */
+
+  .icon-accent {
+    color: hsl(var(--primary));
+    filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.3));
+  }
+
+  .icon-muted {
+    color: hsl(var(--muted-foreground));
+    @apply transition-colors duration-200;
+  }
+
+  .icon-muted:hover {
+    color: hsl(var(--primary));
+  }
+
+  /* ========================================
+     ENTERPRISE STATUS CHANGE ANIMATION
+     ======================================== */
+
+  .status-change-anim {
+    animation: statusPulseScale 0.6s ease-out;
+  }
+
+  @keyframes statusPulseScale {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
   
   /* Mobile Optimization Utilities */
   .touch-manipulation {
