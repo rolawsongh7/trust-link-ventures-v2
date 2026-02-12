@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
   ShoppingCart, 
@@ -26,6 +27,7 @@ import { DashboardCard } from '@/components/customer/DashboardCard';
 import { RecentActivityList } from '@/components/customer/RecentActivityList';
 import { FavoritesWidget } from '@/components/customer/FavoritesWidget';
 import { DashboardAlerts } from '@/components/customer/DashboardAlerts';
+import { CustomerStandingOrdersWidget } from '@/components/subscriptions';
 import { TabletPillNav } from '@/components/customer/navigation/TabletPillNav';
 import { DesktopSidebar } from '@/components/customer/navigation/DesktopSidebar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,6 +40,23 @@ interface DashboardStats {
   pendingIssues: number;
   recentActivity: any[];
 }
+
+const StandingOrdersWidgetWrapper: React.FC<{ userId: string }> = ({ userId }) => {
+  const { data: customerId } = useQuery({
+    queryKey: ['customer-mapping-widget', userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('customer_users')
+        .select('customer_id')
+        .eq('user_id', userId)
+        .single();
+      return data?.customer_id || userId;
+    },
+  });
+
+  if (!customerId) return null;
+  return <CustomerStandingOrdersWidget customerId={customerId} compact />;
+};
 
 const CustomerPortalMain = () => {
   const { profile, signOut } = useCustomerAuth();
@@ -473,6 +492,11 @@ const CustomerPortalMain = () => {
 
             {/* Favorites Widget */}
             <FavoritesWidget />
+
+            {/* Standing Orders / Subscriptions Widget */}
+            {profile?.id && (
+              <StandingOrdersWidgetWrapper userId={profile.id} />
+            )}
 
             {/* Recent Activity */}
             {recentActivities.length > 0 && (

@@ -74,6 +74,8 @@ import FinancialReconciliation from "./pages/admin/FinancialReconciliation";
 import OperationsHub from "./pages/admin/OperationsHub";
 import CustomerIssueDetail from "./pages/CustomerIssueDetail";
 import CustomerIssues from "./pages/CustomerIssues";
+import StandingOrdersPage from "./pages/StandingOrdersPage";
+import CustomerStandingOrdersPage from "./pages/CustomerStandingOrdersPage";
 
 import UnifiedAuth from "./pages/UnifiedAuth";
 import AdminAuth from "./pages/AdminAuth";
@@ -209,6 +211,7 @@ const App = () => {
                         <Route path="orders/issues" element={<OrderIssues />} />
                         <Route path="finance/reconciliation" element={<FinancialReconciliation />} />
                         <Route path="automation" element={<AutomationControl />} />
+                        <Route path="standing-orders" element={<StandingOrdersPage />} />
                       </Route>
                       
                       {/* Mobile Hub - standalone page outside PublicLayout */}
@@ -257,6 +260,7 @@ const App = () => {
                         <Route path="analytics" element={<CustomerAnalytics />} />
                         <Route path="help" element={<CustomerHelp />} />
                         <Route path="payment-callback" element={<PaymentCallback />} />
+                        <Route path="subscriptions" element={<CustomerStandingOrdersPage />} />
                       </Route>
                       
                       {/* Customer Auth Routes - Redirect to Portal */}
@@ -307,6 +311,7 @@ const App = () => {
                         <Route path="analytics/manual-quotes" element={<ManualQuoteAnalytics />} />
                         <Route path="analytics/currency" element={<CurrencyAnalytics />} />
                         <Route path="automation" element={<AutomationControl />} />
+                        <Route path="standing-orders" element={<StandingOrdersPage />} />
                       </Route>
                       
                       <Route path="*" element={<Navigate to="/" replace />} />
@@ -360,6 +365,7 @@ const App = () => {
                         <Route path="profile" element={<CustomerProfile />} />
                         <Route path="settings" element={<CustomerSettings />} />
                         <Route path="payment-callback" element={<PaymentCallback />} />
+                        <Route path="subscriptions" element={<CustomerStandingOrdersPage />} />
                       </Route>
                       
                       {/* Customer Auth Routes - Redirect to Portal */}
@@ -416,6 +422,7 @@ const App = () => {
                         <Route path="analytics/currency" element={<CurrencyAnalytics />} />
                         <Route path="automation" element={<AutomationControl />} />
                         <Route path="operations" element={<OperationsHub />} />
+                        <Route path="standing-orders" element={<StandingOrdersPage />} />
                       </Route>
                       
                       {/* Mobile Hub - standalone page outside PublicLayout */}
@@ -464,6 +471,7 @@ const App = () => {
                         <Route path="analytics" element={<CustomerAnalytics />} />
                         <Route path="settings" element={<CustomerSettings />} />
                         <Route path="payment-callback" element={<PaymentCallback />} />
+                        <Route path="subscriptions" element={<CustomerStandingOrdersPage />} />
                       </Route>
                       
                       {/* Public tracking and payment pages */}
@@ -509,6 +517,7 @@ const App = () => {
                         <Route path="finance/reconciliation" element={<FinancialReconciliation />} />
                         <Route path="analytics/manual-quotes" element={<ManualQuoteAnalytics />} />
                         <Route path="analytics/currency" element={<CurrencyAnalytics />} />
+                        <Route path="standing-orders" element={<StandingOrdersPage />} />
                       </Route>
                       
                       {/* Redirect all other routes to admin login */}
@@ -564,6 +573,7 @@ const App = () => {
                         <Route path="analytics" element={<CustomerAnalytics />} />
                         <Route path="settings" element={<CustomerSettings />} />
                         <Route path="payment-callback" element={<PaymentCallback />} />
+                        <Route path="subscriptions" element={<CustomerStandingOrdersPage />} />
                       </Route>
                       
                       {/* Public tracking and payment pages */}

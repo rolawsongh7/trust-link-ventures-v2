@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Package, ShoppingCart, FileText, UserCircle, MessageSquare, MapPin } from 'lucide-react';
+import { Home, Package, ShoppingCart, FileText, UserCircle, MessageSquare, MapPin, Calendar } from 'lucide-react';
 
 interface NavItem {
   label: string;
@@ -14,6 +14,7 @@ const navItems: NavItem[] = [
   { label: 'Cart', path: '/portal/cart', icon: ShoppingCart },
   { label: 'Quotes', path: '/portal/quotes', icon: FileText },
   { label: 'Orders', path: '/portal/orders', icon: ShoppingCart },
+  { label: 'Subscriptions', path: '/portal/subscriptions', icon: Calendar },
   { label: 'Addresses', path: '/portal/addresses', icon: MapPin },
   { label: 'Profile', path: '/portal/profile', icon: UserCircle },
 ];

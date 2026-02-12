@@ -8,7 +8,8 @@ import {
   UserCircle, 
   MessageSquare, 
   MapPin,
-  Receipt
+  Receipt,
+  Calendar
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -38,6 +39,7 @@ export const LargeTabletNav: React.FC<LargeTabletNavProps> = ({
     { label: 'Quotes', path: '/portal/quotes', icon: FileText },
     { label: 'Orders', path: '/portal/orders', icon: ShoppingCart, badge: pendingOrdersCount > 0 ? pendingOrdersCount : undefined, badgeVariant: 'destructive' },
     { label: 'Invoices', path: '/portal/invoices', icon: Receipt },
+    { label: 'Subscriptions', path: '/portal/subscriptions', icon: Calendar },
     { label: 'Addresses', path: '/portal/addresses', icon: MapPin },
     { label: 'Messages', path: '/portal/communications', icon: MessageSquare },
     { label: 'Profile', path: '/portal/profile', icon: UserCircle },
