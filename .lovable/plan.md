@@ -1,58 +1,93 @@
 
-# Phase 5.3 Completion: Integrate Standing Orders into Admin and Customer Portals
+# Phase 5.4: Create Multi-Tenancy Database Tables and Wire Up Hooks
 
 ## Overview
 
-The Standing Orders components (`StandingOrdersList`, `CreateStandingOrderDialog`, `CustomerStandingOrdersWidget`) and hook (`useStandingOrders`) are fully built but not wired into the application routes or navigation. This plan adds them to both portals.
+The frontend hooks (`useTenant`, `useWorkflowConfig`, `useFeatureGuard`) and UI panels (`TenantWorkflowConfigPanel`) already exist but have no backing database tables. This plan creates the required tables, RLS policies, and RPC functions so the existing frontend code works end-to-end.
 
-## Changes
+## Database Migration
 
-### 1. Create Admin Standing Orders Page
+A single migration will create 4 tables, 3 RPC functions, RLS policies, and indexes.
 
-Create `src/pages/StandingOrdersPage.tsx` -- a simple page wrapper (following the pattern of `CustomersPage.tsx`) that renders the `StandingOrdersList` component with a "New Standing Order" dialog trigger.
+### Tables
 
-### 2. Create Customer Standing Orders Page
+| Table | Purpose |
+|-------|---------|
+| `tenants` | Core tenant/organization records with name, slug, status, settings |
+| `tenant_users` | Maps users to tenants with a role (owner/admin/member) |
+| `tenant_workflow_config` | Per-tenant feature toggle configuration (JSONB) |
+| `tenant_feature_eligibility` | Controls which features each tenant can access (for Phase 5.5 `can_tenant_use_feature`) |
 
-Create `src/pages/CustomerStandingOrdersPage.tsx` -- renders the `CustomerStandingOrdersWidget` (non-compact mode) for the logged-in customer.
+### Table Schemas
 
-### 3. Add Routes to App.tsx
+**tenants**
+- `id` UUID PK
+- `name` TEXT NOT NULL
+- `slug` TEXT NOT NULL UNIQUE
+- `status` TEXT NOT NULL DEFAULT 'active' (active/suspended/trial)
+- `settings` JSONB DEFAULT '{}'
+- `created_at`, `updated_at` TIMESTAMPTZ
 
-Add the following routes across all three route blocks (preview, admin-only, public-only) and native (HashRouter):
+**tenant_users**
+- `id` UUID PK
+- `tenant_id` UUID FK -> tenants
+- `user_id` UUID FK -> auth.users
+- `role` TEXT NOT NULL DEFAULT 'member' (owner/admin/member)
+- `created_at` TIMESTAMPTZ
+- UNIQUE(tenant_id, user_id)
 
-- **Admin**: `<Route path="standing-orders" element={<StandingOrdersPage />} />` under `/admin`
-- **Customer Portal**: `<Route path="subscriptions" element={<CustomerStandingOrdersPage />} />` under `/portal`
+**tenant_workflow_config**
+- `id` UUID PK
+- `tenant_id` UUID FK -> tenants (UNIQUE)
+- `config` JSONB NOT NULL DEFAULT '{}'
+- `created_at`, `updated_at` TIMESTAMPTZ
 
-This must be added in all 4 route definition blocks (HashRouter preview, HashRouter public, BrowserRouter preview, BrowserRouter admin, BrowserRouter public).
+**tenant_feature_eligibility**
+- `id` UUID PK
+- `tenant_id` UUID FK -> tenants
+- `feature_key` TEXT NOT NULL
+- `enabled` BOOLEAN DEFAULT true
+- `disabled_reason` TEXT
+- `created_at`, `updated_at` TIMESTAMPTZ
+- UNIQUE(tenant_id, feature_key)
 
-### 4. Add Navigation Links
+### RLS Policies
 
-- **Admin Sidebar** (`src/components/layout/AppSidebar.tsx`): Add "Standing Orders" with a `Calendar` icon to the `navigationItems` array (after "Order Issues").
-- **Customer Navigation** (`src/components/customer/CustomerNavigation.tsx`): Add "Subscriptions" with a `Calendar` icon to the `navigationItems` array (after "Invoices").
-- **Customer Desktop Sidebar** (`src/components/customer/navigation/DesktopSidebar.tsx`): Add "Subscriptions" entry.
-- **Customer Tablet Navs** (`LargeTabletNav.tsx`, `TabletPillNav.tsx`): Add "Subscriptions" entry.
+- **tenants**: Super admins can do everything; tenant members can SELECT their own tenant
+- **tenant_users**: Super admins can do everything; users can SELECT their own row
+- **tenant_workflow_config**: Super admins can do everything; tenant members can SELECT their tenant's config
+- **tenant_feature_eligibility**: Super admins can do everything; tenant members can SELECT their tenant's eligibility
 
-### 5. Add Widget to Customer Dashboard
+All policies use the existing `user_roles` table to check for `super_admin` role.
 
-In `src/pages/CustomerPortalMain.tsx`, embed the `CustomerStandingOrdersWidget` (compact mode) so customers see a quick summary of their active subscriptions on their dashboard.
+### RPC Functions
 
-## Technical Details
+1. **`get_tenant_workflow_config(p_tenant_id UUID)`** -- Returns the merged config (defaults + stored overrides). Used by `useWorkflowConfig` hook.
 
-### New Files
+2. **`update_tenant_workflow_config(p_tenant_id UUID, p_config JSONB)`** -- Upserts workflow config for a tenant. Super admin only. Returns `{success: true}`. Used by `useUpdateWorkflowConfig` hook.
+
+3. **`can_tenant_use_feature(p_tenant_id UUID, p_feature_key TEXT)`** -- Checks `tenant_feature_eligibility` table. Returns `{allowed: boolean, reason: text}`. Used by `useCanUseFeature` hook (Phase 5.5).
+
+All RPCs use `SECURITY DEFINER` to avoid RLS recursion issues.
+
+## Frontend Changes
+
+### No hook changes needed
+The hooks (`useTenant`, `useWorkflowConfig`, `useFeatureGuard`) already use `(supabase as any)` casts and match the table/RPC names exactly. They will work immediately once the migration runs.
+
+### Minor: Remove `(supabase as any)` casts (optional cleanup)
+After the migration creates the tables and types are regenerated, the `as any` casts in the hooks could be removed. This is optional and won't be done in this phase to keep scope focused.
+
+## Files
+
+### New File
 | File | Purpose |
 |------|---------|
-| `src/pages/StandingOrdersPage.tsx` | Admin page wrapping `StandingOrdersList` + `CreateStandingOrderDialog` |
-| `src/pages/CustomerStandingOrdersPage.tsx` | Customer page wrapping `CustomerStandingOrdersWidget` |
+| `supabase/migrations/[timestamp]_phase_5_4_multi_tenancy.sql` | Full migration with tables, indexes, RLS, RPCs |
 
-### Modified Files
-| File | Change |
-|------|--------|
-| `src/App.tsx` | Add `standing-orders` and `subscriptions` routes in all route blocks |
-| `src/components/layout/AppSidebar.tsx` | Add "Standing Orders" nav item with Calendar icon |
-| `src/components/customer/CustomerNavigation.tsx` | Add "Subscriptions" nav item |
-| `src/components/customer/navigation/DesktopSidebar.tsx` | Add "Subscriptions" nav item |
-| `src/components/customer/navigation/LargeTabletNav.tsx` | Add "Subscriptions" nav item |
-| `src/components/customer/navigation/TabletPillNav.tsx` | Add "Subscriptions" nav item |
-| `src/pages/CustomerPortalMain.tsx` | Add compact `CustomerStandingOrdersWidget` |
+### No Modified Files
+The existing hooks and UI components are already built to work with these exact table and function names.
 
-### No Database Changes Required
-The `standing_orders`, `standing_order_items`, and `standing_order_generations` tables and RPCs already exist from previous migrations.
+## Summary
+
+This is a database-only change. Once the migration runs, the existing `useTenant`, `useWorkflowConfig`, `useFeatureGuard` hooks and the `TenantWorkflowConfigPanel` UI will all become functional.
