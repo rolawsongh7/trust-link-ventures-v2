@@ -1,35 +1,41 @@
 
 
-# Seed Test Tenant for Feature Eligibility Testing
+# Add "Create Tenant" UI to Super Admin Panel
 
 ## Overview
+Add a "Create Tenant" button and dialog to the Super Admin > Tenants tab, allowing super admins to create new tenant organizations directly from the UI without database access.
 
-Insert a test tenant and assign the super admin user as owner so the Feature Eligibility panel can be tested interactively.
+## New Component: `CreateTenantDialog.tsx`
 
-## Database Changes
+**Location:** `src/components/admin/CreateTenantDialog.tsx`
 
-Two SQL statements will be executed via a migration:
+**Form Fields:**
+- **Tenant Name** (required) - e.g., "Acme Corp"
+- **Slug** (required, auto-generated from name) - e.g., "acme-corp"
+- **Status** (select: active / trial / suspended, default: active)
+- **Owner Email** (optional) - looks up user by email and assigns as owner
 
-```text
-1. INSERT INTO tenants (name, slug, status)
-   VALUES ('TrustLink Demo', 'trustlink-demo', 'active')
-   RETURNING id;
+**Behavior:**
+1. Validates slug uniqueness against existing tenants
+2. Inserts into `tenants` table
+3. If owner email provided, looks up user ID from `auth.users` (via profiles table) and inserts into `tenant_users` with role `owner`
+4. Shows success toast and invalidates the `['tenants', 'all']` query to refresh the list
+5. Closes dialog on success
 
-2. INSERT INTO tenant_users (tenant_id, user_id, role)
-   VALUES (<tenant_id from step 1>, '7fca904d-7b99-45ae-8f40-b710dc149cf2', 'owner');
-```
+## Modified File: `TenantFeatureEligibilityPanel.tsx`
 
-The super admin user being assigned is **info@trustlinkcompany.com**.
+Add a "Create Tenant" button next to the panel header that opens the new dialog.
 
-## What Happens Next
+## Modified File: `TenantWorkflowConfigPanel.tsx`
 
-After the migration runs:
-- The "Tenants" tab in Super Admin settings will show **TrustLink Demo** in the tenant list
-- Clicking "Manage Features" will open the dialog with 6 feature toggles (quotes, credit_terms, loyalty_program, payment_proofs, standing_orders, auto_invoicing)
-- All features default to enabled (no rows = enabled by convention)
-- Toggling a feature off will prompt for a reason and upsert a row into `tenant_feature_eligibility`
+Add the same "Create Tenant" button for consistency across both tenant management panels.
 
-## No Code Changes
+## Technical Details
 
-Only a database migration is needed -- no frontend or hook changes required.
+- Uses `react-hook-form` with `zod` validation (matching existing patterns)
+- Slug auto-generation: lowercase, replace spaces/special chars with hyphens
+- Owner lookup queries `profiles` table by email field
+- All operations use the existing `supabase` client
+- No new database tables or migrations needed -- uses existing `tenants` and `tenant_users` tables
+- No new dependencies required
 
