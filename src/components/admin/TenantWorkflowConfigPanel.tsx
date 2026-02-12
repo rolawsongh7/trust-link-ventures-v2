@@ -32,6 +32,7 @@ import {
   Receipt,
   Truck,
   Clock,
+  Plus,
 } from 'lucide-react';
 import { useAllTenants, type Tenant } from '@/hooks/useTenant';
 import { 
@@ -42,6 +43,7 @@ import {
 } from '@/hooks/useWorkflowConfig';
 import { useRoleAuth } from '@/hooks/useRoleAuth';
 import { format } from 'date-fns';
+import { CreateTenantDialog } from './CreateTenantDialog';
 
 const CONFIG_ITEMS = [
   { key: 'quotes_enabled', label: 'Quotes', icon: FileText, description: 'Enable quote creation and management' },
@@ -67,6 +69,7 @@ export function TenantWorkflowConfigPanel() {
   const { data: tenants, isLoading: tenantsLoading } = useAllTenants();
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   if (!hasSuperAdminAccess) return null;
 
@@ -96,6 +99,10 @@ export function TenantWorkflowConfigPanel() {
           <CardDescription>
             Configure workflow features for each tenant. Changes apply immediately.
           </CardDescription>
+          <Button size="sm" className="mt-2 w-fit" onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Tenant
+          </Button>
         </CardHeader>
         <CardContent>
           {!tenants || tenants.length === 0 ? (
@@ -152,6 +159,8 @@ export function TenantWorkflowConfigPanel() {
           }}
         />
       )}
+
+      <CreateTenantDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
     </>
   );
 }
