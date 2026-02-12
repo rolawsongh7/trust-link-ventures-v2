@@ -30,6 +30,7 @@ import { ExtendedAuditLogCard } from './ExtendedAuditLogCard';
 import { AutomationStatusCard } from '@/components/automation/AutomationStatusCard';
 import { KillSwitchPanel } from '@/components/admin/KillSwitchPanel';
 import { TenantWorkflowConfigPanel } from '@/components/admin/TenantWorkflowConfigPanel';
+import { TenantFeatureEligibilityPanel } from '@/components/admin/TenantFeatureEligibilityPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -208,6 +209,13 @@ export const SuperAdminTab = () => {
             transition={{ duration: 0.3 }}
           >
             <TenantWorkflowConfigPanel />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <TenantFeatureEligibilityPanel />
           </motion.div>
         </TabsContent>
 
