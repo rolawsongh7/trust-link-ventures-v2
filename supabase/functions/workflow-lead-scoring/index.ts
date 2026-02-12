@@ -16,10 +16,10 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Calculate lead scores based on activity
+    // Calculate lead scores based on activity - process all tenants
     const { data: leads, error: fetchError } = await supabase
       .from('leads')
-      .select('id, customer_id, status');
+      .select('id, customer_id, status, tenant_id');
 
     if (fetchError) throw fetchError;
 
