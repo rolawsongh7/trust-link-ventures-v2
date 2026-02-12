@@ -33,7 +33,8 @@ import {
   Menu,
   Bell,
   HelpCircle,
-  Heart
+  Heart,
+  Calendar
 } from 'lucide-react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useShoppingCart } from '@/hooks/useShoppingCart';
@@ -96,6 +97,11 @@ export const CustomerNavigation: React.FC = () => {
       title: 'Invoices',
       href: '/portal/invoices',
       icon: FileText
+    },
+    {
+      title: 'Subscriptions',
+      href: '/portal/subscriptions',
+      icon: Calendar
     },
     {
       title: 'Addresses',

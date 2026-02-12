@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   Brain,
   Users,
+  Calendar,
   Target,
   ShoppingCart,
   FileText,
@@ -55,6 +56,7 @@ const navigationItems = [
   { title: 'Customer Quote Requests', url: '/admin/quote-inquiries', icon: MessageSquare, badge: 'quoteInquiries' as const },
   { title: 'Communication', url: '/admin/communication', icon: Phone, badge: 'communications' as const },
   { title: 'Order Issues', url: '/admin/orders/issues', icon: AlertTriangle, badge: 'orderIssues' as const },
+  { title: 'Standing Orders', url: '/admin/standing-orders', icon: Calendar, badge: null },
 ];
 
 
