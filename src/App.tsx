@@ -7,6 +7,7 @@ import { PerformanceMonitor } from '@/components/debug/PerformanceMonitor';
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { TenantProvider } from "@/contexts/TenantContext";
 import { CustomerAuthProvider } from "@/hooks/useCustomerAuth";
 import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedRoute";
 import { AdminProtectedRoute } from "@/components/admin/AdminProtectedRoute";
@@ -167,6 +168,7 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
+            <TenantProvider>
             <CustomerAuthProvider>
               <TooltipProvider>
                 <Toaster />
@@ -593,6 +595,7 @@ const App = () => {
             )}
             </TooltipProvider>
           </CustomerAuthProvider>
+          </TenantProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

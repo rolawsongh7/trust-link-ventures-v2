@@ -167,6 +167,33 @@ async function handler(req: Request): Promise<Response> {
       recaptcha_verified: !!recaptchaToken
     };
 
+    // Resolve tenant_id - use first active tenant for public submissions
+    let tenantId: string | null = null;
+    const authHeader = req.headers.get('authorization');
+    if (authHeader) {
+      // Authenticated user: resolve tenant from tenant_users
+      const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+      if (user) {
+        const { data: tu } = await supabase
+          .from('tenant_users')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .single();
+        if (tu) tenantId = tu.tenant_id;
+      }
+    }
+    if (!tenantId) {
+      // Unauthenticated: use first active tenant
+      const { data: tenant } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('status', 'active')
+        .limit(1)
+        .single();
+      if (tenant) tenantId = tenant.id;
+    }
+
     // Insert lead with service role (bypasses RLS)
     const { data: lead, error: insertError } = await supabase
       .from('leads')
@@ -180,7 +207,8 @@ async function handler(req: Request): Promise<Response> {
         currency,
         ip_address: ipAddress,
         verification_status: 'pending',
-        submission_metadata: submissionMetadata
+        submission_metadata: submissionMetadata,
+        tenant_id: tenantId
       })
       .select()
       .single();
