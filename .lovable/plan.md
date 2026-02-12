@@ -1,59 +1,35 @@
 
 
-# Tenant Feature Eligibility Admin Panel
+# Seed Test Tenant for Feature Eligibility Testing
 
 ## Overview
 
-Create a new admin UI component that lets super admins manage per-tenant feature eligibility (the `tenant_feature_eligibility` table). This panel will be added to the existing "Tenants" tab in the Super Admin settings, alongside the existing `TenantWorkflowConfigPanel`.
+Insert a test tenant and assign the super admin user as owner so the Feature Eligibility panel can be tested interactively.
 
-## What It Does
+## Database Changes
 
-- Shows a list of all tenants (reusing `useAllTenants`)
-- When a super admin clicks "Manage Features" on a tenant, a dialog opens showing all 6 feature keys (`quotes`, `credit_terms`, `loyalty_program`, `payment_proofs`, `standing_orders`, `auto_invoicing`)
-- Each feature has a toggle (enabled/disabled) and a text field for the disabled reason
-- Changes are saved directly to the `tenant_feature_eligibility` table
-- Follows the same visual patterns as the existing `KillSwitchPanel` and `TenantWorkflowConfigPanel`
+Two SQL statements will be executed via a migration:
 
-## Changes
+```text
+1. INSERT INTO tenants (name, slug, status)
+   VALUES ('TrustLink Demo', 'trustlink-demo', 'active')
+   RETURNING id;
 
-### 1. New Component: `TenantFeatureEligibilityPanel`
+2. INSERT INTO tenant_users (tenant_id, user_id, role)
+   VALUES (<tenant_id from step 1>, '7fca904d-7b99-45ae-8f40-b710dc149cf2', 'owner');
+```
 
-**File:** `src/components/admin/TenantFeatureEligibilityPanel.tsx`
+The super admin user being assigned is **info@trustlinkcompany.com**.
 
-- Lists all tenants with a "Manage Features" button per tenant
-- Opens a dialog with toggle switches for each of the 6 `TenantFeatureKey` values
-- Fetches current eligibility from `tenant_feature_eligibility` table for the selected tenant
-- Upserts rows on save (insert if new, update if existing)
-- Shows colored status indicators (green = enabled, red = disabled with reason)
-- Uses the same Card/Dialog/Switch/Badge patterns as `KillSwitchPanel`
+## What Happens Next
 
-### 2. Add to Super Admin Tenants Tab
+After the migration runs:
+- The "Tenants" tab in Super Admin settings will show **TrustLink Demo** in the tenant list
+- Clicking "Manage Features" will open the dialog with 6 feature toggles (quotes, credit_terms, loyalty_program, payment_proofs, standing_orders, auto_invoicing)
+- All features default to enabled (no rows = enabled by convention)
+- Toggling a feature off will prompt for a reason and upsert a row into `tenant_feature_eligibility`
 
-**File:** `src/components/settings/SuperAdminTab.tsx`
+## No Code Changes
 
-- Import and render `TenantFeatureEligibilityPanel` below the existing `TenantWorkflowConfigPanel` in the "tenants" tab content
-
-### 3. New Hook: `useTenantFeatureEligibility`
-
-**File:** `src/hooks/useTenantFeatureEligibility.ts`
-
-- `useTenantFeatureEligibility(tenantId)` -- fetches all rows from `tenant_feature_eligibility` for a given tenant
-- `useUpdateTenantFeatureEligibility()` -- mutation that upserts a row (tenant_id, feature_key, enabled, disabled_reason)
-- Super admin access gated via `useRoleAuth`
-
-## Technical Details
-
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/hooks/useTenantFeatureEligibility.ts` | Query + mutation hooks for `tenant_feature_eligibility` table |
-| `src/components/admin/TenantFeatureEligibilityPanel.tsx` | UI panel with tenant list and feature toggle dialog |
-
-### Modified Files
-| File | Change |
-|------|--------|
-| `src/components/settings/SuperAdminTab.tsx` | Import and render `TenantFeatureEligibilityPanel` in tenants tab |
-
-### No Database Changes
-The `tenant_feature_eligibility` table, RLS policies, and `can_tenant_use_feature` RPC already exist from Phase 5.4.
+Only a database migration is needed -- no frontend or hook changes required.
 
