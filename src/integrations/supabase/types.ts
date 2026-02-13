@@ -4555,7 +4555,9 @@ export type Database = {
       }
       tenants: {
         Row: {
+          admin_domain: string | null
           created_at: string
+          domain: string | null
           id: string
           name: string
           settings: Json | null
@@ -4564,7 +4566,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_domain?: string | null
           created_at?: string
+          domain?: string | null
           id?: string
           name: string
           settings?: Json | null
@@ -4573,7 +4577,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_domain?: string | null
           created_at?: string
+          domain?: string | null
           id?: string
           name?: string
           settings?: Json | null

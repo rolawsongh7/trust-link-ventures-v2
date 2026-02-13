@@ -6,7 +6,7 @@
  * Note: Uses centralized environment detection from env.ts
  */
 
-import { isAdminDomain as checkIsAdminDomain, isNativeApp } from './env';
+import { isAdminDomain as checkIsAdminDomain, isNativeApp, isPlatformAdminDomain, isPlatformPublicDomain } from './env';
 
 export const isAdminDomain = checkIsAdminDomain;
 
@@ -26,8 +26,15 @@ export const getMainUrl = (path: string = ''): string => {
   return `${protocol}//${mainHost}${path}`;
 };
 
+export const getPlatformAdminUrl = (path: string = ''): string => {
+  return `${window.location.protocol}//admin.heseddigitech.com${path}`;
+};
+
+export const getPlatformPublicUrl = (path: string = ''): string => {
+  return `${window.location.protocol}//heseddigitech.com${path}`;
+};
+
 export const redirectToAdminDomain = (path: string = '/') => {
-  // Skip redirect in Lovable preview - use path-based routing
   const isLovablePreview = window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovableproject.com');
   if (isLovablePreview) return;
   
@@ -37,7 +44,6 @@ export const redirectToAdminDomain = (path: string = '/') => {
 };
 
 export const redirectToMainDomain = (path: string = '/') => {
-  // Skip redirect in Lovable preview - use path-based routing
   const isLovablePreview = window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovableproject.com');
   if (isLovablePreview) return;
   
@@ -49,16 +55,13 @@ export const redirectToMainDomain = (path: string = '/') => {
 export const navigateToPublicSite = () => {
   const isLovablePreview = window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovableproject.com');
   if (isLovablePreview) {
-    // In preview, navigate directly to home page (both routes available)
     window.location.href = '/';
   } else {
-    // In production, redirect to main domain
     window.location.href = getMainUrl('/');
   }
 };
 
 export const navigateToAdminPortal = () => {
-  // Block in native apps
   if (isNativeApp()) {
     console.warn('[navigateToAdminPortal] Admin access blocked in native app');
     return;
@@ -66,10 +69,10 @@ export const navigateToAdminPortal = () => {
   
   const isLovablePreview = window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovableproject.com');
   if (isLovablePreview) {
-    // In preview, navigate to admin path
     window.location.href = '/admin/dashboard';
   } else {
-    // In production, redirect to admin subdomain
     window.location.href = getAdminUrl('/admin/dashboard');
   }
 };
+
+export { isPlatformAdminDomain, isPlatformPublicDomain };

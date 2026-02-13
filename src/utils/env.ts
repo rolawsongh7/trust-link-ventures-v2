@@ -71,3 +71,32 @@ export const isPreviewDomain = (): boolean => {
 export const isMainDomain = (): boolean => {
   return !isAdminDomain();
 };
+
+/**
+ * Detect if running on the Platform Admin domain (admin.heseddigitech.com)
+ * In preview, detected via /platform path prefix
+ */
+export const isPlatformAdminDomain = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  if (isNativeApp()) return false;
+  
+  if (isPreviewDomain()) {
+    const path = window.location.pathname;
+    // /platform/home is the marketing page preview, not admin
+    return path.startsWith('/platform') && !path.startsWith('/platform/home');
+  }
+  
+  return window.location.hostname === 'admin.heseddigitech.com';
+};
+
+/**
+ * Detect if running on the Platform Marketing domain (heseddigitech.com)
+ * In preview, not directly accessible (use /platform/home for testing)
+ */
+export const isPlatformPublicDomain = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  if (isNativeApp()) return false;
+  
+  const hostname = window.location.hostname;
+  return hostname === 'heseddigitech.com' || hostname === 'www.heseddigitech.com';
+};
