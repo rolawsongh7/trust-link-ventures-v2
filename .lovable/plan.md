@@ -1,55 +1,117 @@
-# Phase 6.1 — Tenant Core Infrastructure — COMPLETED
 
-## What Was Done
 
-### Database Migration (✅ Complete)
-- Added `tenant_id UUID NOT NULL` with `DEFAULT get_current_tenant_id()` to **40 business tables** across Tiers 1-5
-- Backfilled all existing rows with Tenant 1 ID (`e63a2137-261f-4a63-b805-041cd97ff7a4`)
-- Added FK constraints (`ON DELETE CASCADE`) and indexes on all tables
-- Created `get_current_tenant_id()` SQL function (STABLE, SECURITY DEFINER)
-- Backfilled all 8 users into `tenant_users` table
-- Added **40 RESTRICTIVE tenant isolation RLS policies** (AND'd with existing permissive policies)
-  - Standard variant: requires `tenant_id = get_current_tenant_id() OR super_admin`
-  - Public-insert variant (8 tables): relaxed WITH CHECK for unauthenticated flows
+# Phase 6.2: Hesed Platform Admin — Implementation Plan
 
-### Frontend (✅ Complete)
-- Created `src/contexts/TenantContext.tsx` — provides `currentTenantId`, `currentTenantRole`, `tenantName`, `withTenantId()` helper
-- Created `src/hooks/useTenantId.ts` — convenience hook
-- Integrated `<TenantProvider>` into `App.tsx` (inside AuthProvider, wrapping CustomerAuthProvider)
+## Overview
+Build the Hesed Platform Admin system with three-tier domain resolution. All changes are additive — TrustLink Ventures (Tenant 1) continues working exactly as today.
 
-### Key Design Decision: DEFAULT Column
-- `tenant_id` columns have `DEFAULT get_current_tenant_id()` — this means **frontend INSERT operations auto-fill tenant_id** without any code changes
-- Only edge functions (which use service role and bypass auth context) need explicit tenant_id
+**Domain Architecture:**
 
-### Edge Functions Updated (✅ Complete)
-- `submit-lead`: resolves tenant_id from auth user or falls back to first active tenant
-- `workflow-lead-scoring`: includes tenant_id in lead queries
+| Domain | Purpose |
+|--------|---------|
+| heseddigitech.com | Hesed marketing site |
+| admin.heseddigitech.com | Platform Admin (super-admin only) |
+| trustlinkcompany.com | Tenant 1 public portal |
+| admin.trustlinkcompany.com | Tenant 1 admin dashboard |
 
-### Tables with tenant_id
-customers, orders, quotes, invoices, leads, products, communications, payment_records,
-order_items, order_status_history, quote_items, quote_request_items, quote_requests,
-quote_submissions, quote_revisions, quote_approvals, quote_status_history, invoice_items,
-standing_orders, standing_order_items, standing_order_generations, audit_logs, activities,
-notifications, email_logs, file_uploads, payment_transactions, delivery_history, cart_items,
-customer_favorites, customer_trust_profiles, customer_trust_history, customer_credit_terms,
-customer_credit_ledger, customer_loyalty, customer_benefits, customer_addresses,
-customer_users, opportunities, pipeline_stages, rfqs
+---
 
-### Validation Results
-- ✅ 0 rows with NULL tenant_id across all tables
-- ✅ 0 users without tenant membership
-- ✅ 40 RESTRICTIVE tenant_isolation policies active
-- ✅ All existing permissive policies preserved (not modified)
+## Step 1: Database Migration
 
-## Remaining Edge Functions (Future)
-These edge functions may need tenant_id updates when they insert into tenant-scoped tables:
-- quote-submission, quote-approval, notify-admins, send-email, workflow-auto-deliver
-- check-expiring-quotes (system-level, should iterate per-tenant)
+Add two nullable columns to `tenants` table:
 
-## What Phase 6.1 Did NOT Do
-- No billing or subscription management
-- No onboarding wizard for new tenants
-- No domain routing
-- No feature gating changes
-- No workflow logic changes
-- No payment behavior changes
+- `domain` (TEXT UNIQUE) — tenant public portal hostname
+- `admin_domain` (TEXT UNIQUE) — tenant admin dashboard hostname
+- Indexes on both columns for fast hostname lookups
+- Backfill Tenant 1 with `trustlinkcompany.com` / `admin.trustlinkcompany.com`
+
+---
+
+## Step 2: Domain Resolution
+
+**Modify `src/utils/env.ts`** — Add:
+- `isPlatformAdminDomain()` — detects `admin.heseddigitech.com` or `/platform` path in preview
+- `isPlatformPublicDomain()` — detects `heseddigitech.com` (non-admin)
+
+**Modify `src/utils/domainUtils.ts`** — Add platform URL helpers
+
+Resolution order:
+1. Platform Admin domain check
+2. Platform Marketing domain check
+3. Tenant admin_domain lookup
+4. Tenant domain lookup
+5. Default to Tenant 1 (preview fallback)
+
+---
+
+## Step 3: Platform Marketing Page
+
+**Create `src/pages/platform/PlatformHome.tsx`**
+- Hesed-branded landing page
+- Hero, feature highlights, CTA sections
+- Accessible at `heseddigitech.com` or `/platform/home` in preview
+
+---
+
+## Step 4: Platform Admin Dashboard
+
+**New files:**
+
+| File | Purpose |
+|------|---------|
+| `src/pages/platform/PlatformDashboard.tsx` | Overview stats (tenant count, users) |
+| `src/pages/platform/PlatformTenants.tsx` | Tenant list with CRUD actions |
+| `src/components/platform/PlatformLayout.tsx` | Hesed-branded layout shell |
+| `src/components/platform/PlatformSidebar.tsx` | Platform navigation |
+| `src/components/platform/PlatformProtectedRoute.tsx` | Super-admin access guard |
+| `src/components/platform/CreateTenantDialog.tsx` | Tenant creation form (name, slug, status, domain, admin_domain, owner email) |
+
+---
+
+## Step 5: Routing Updates
+
+**Modify `src/App.tsx`** — Add platform route blocks at the top, before existing tenant routes:
+
+- `isPlatformAdminDomain()` routes: `/platform/dashboard`, `/platform/tenants`, `/platform/settings`
+- `isPlatformPublicDomain()` routes: `/` renders marketing page
+- All existing routes remain untouched
+
+---
+
+## Step 6: Preview Testing
+
+- `/platform` prefix triggers platform admin mode in Lovable preview
+- `/platform/home` shows marketing page in preview
+- All existing routes (`/admin/*`, `/portal/*`, `/products`, etc.) continue working
+
+---
+
+## Safety Guarantees
+
+- Zero impact on TrustLink Ventures — platform code is behind domain checks
+- Zero impact on native mobile app — `isNativeApp()` short-circuits first
+- Nullable columns — existing queries and RLS policies unaffected
+- Additive only — 3 files modified (with additions), 7 new files created, nothing deleted
+
+---
+
+## Technical Details
+
+### Files Modified (3)
+1. `src/utils/env.ts` — Add `isPlatformAdminDomain()`, `isPlatformPublicDomain()`
+2. `src/utils/domainUtils.ts` — Add platform URL helpers
+3. `src/App.tsx` — Add platform route blocks before existing routes
+
+### Files Created (7)
+1. `src/pages/platform/PlatformHome.tsx`
+2. `src/pages/platform/PlatformDashboard.tsx`
+3. `src/pages/platform/PlatformTenants.tsx`
+4. `src/components/platform/PlatformLayout.tsx`
+5. `src/components/platform/PlatformSidebar.tsx`
+6. `src/components/platform/PlatformProtectedRoute.tsx`
+7. `src/components/platform/CreateTenantDialog.tsx`
+
+### Database Changes (1 migration)
+- ALTER TABLE `tenants`: add `domain`, `admin_domain` columns with unique indexes
+- UPDATE Tenant 1 with `trustlinkcompany.com` / `admin.trustlinkcompany.com`
+
