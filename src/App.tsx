@@ -18,7 +18,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { getAdminUrl, getMainUrl } from "@/utils/domainUtils";
-import { isAdminDomain, isNativeApp, isPreviewDomain } from "@/utils/env";
+import { isAdminDomain, isNativeApp, isPreviewDomain, isPlatformAdminDomain, isPlatformPublicDomain } from "@/utils/env";
 import { BlockAdmin } from "@/routes/BlockAdmin";
 import { useEffect, useMemo } from "react";
 import Home from "./pages/Home";
@@ -88,6 +88,13 @@ import AutomationControl from "./pages/admin/AutomationControl";
 import CustomerSettings from "./pages/CustomerSettings";
 import ProductDetail from "./pages/ProductDetail";
 
+// Platform imports
+import PlatformHome from "./pages/platform/PlatformHome";
+import PlatformDashboard from "./pages/platform/PlatformDashboard";
+import PlatformTenants from "./pages/platform/PlatformTenants";
+import { PlatformLayout } from "./components/platform/PlatformLayout";
+import { PlatformProtectedRoute } from "./components/platform/PlatformProtectedRoute";
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -104,6 +111,11 @@ const App = () => {
   // Check if running as native app
   const nativeApp = isNativeApp();
   
+  // Platform domain detection (takes priority)
+  const isPlatformAdmin = useMemo(() => !nativeApp && isPlatformAdminDomain(), [nativeApp]);
+  const isPlatformPublic = useMemo(() => !nativeApp && isPlatformPublicDomain(), [nativeApp]);
+  const isPlatformMode = isPlatformAdmin || isPlatformPublic;
+  
   const isLovablePreview = useMemo(() => 
     !nativeApp && (window.location.hostname.includes('lovable.app') || 
     window.location.hostname.includes('lovableproject.com')), 
@@ -118,9 +130,10 @@ const App = () => {
   // Native apps: only public + customer routes
   // Web preview: both admin and public routes (testing)
   // Web production: admin OR public based on subdomain
-  const showBothRoutes = !nativeApp && isLovablePreview;
-  const showOnlyAdminRoutes = !nativeApp && !isLovablePreview && isAdmin;
-  const showOnlyPublicRoutes = nativeApp || (!isLovablePreview && !isAdmin);
+  // Platform mode: skip all tenant routing
+  const showBothRoutes = !nativeApp && isLovablePreview && !isPlatformMode;
+  const showOnlyAdminRoutes = !nativeApp && !isLovablePreview && isAdmin && !isPlatformMode;
+  const showOnlyPublicRoutes = (nativeApp || (!isLovablePreview && !isAdmin)) && !isPlatformMode;
 
   // Security: Prevent admin routes from being accessible on main domain (except on preview for testing)
   // Skip this entire check in native apps
@@ -391,9 +404,49 @@ const App = () => {
               <BrowserRouter>
                 <ScrollToTop />
                 <Routes>
-                  {/* Same routes for web */}
+                  {/* PLATFORM ROUTES (highest priority) */}
+                  {isPlatformAdmin && (
+                    <>
+                      <Route path="/platform/login" element={<AdminAuth />} />
+                      <Route path="/platform" element={
+                        <PlatformProtectedRoute>
+                          <PlatformLayout />
+                        </PlatformProtectedRoute>
+                      }>
+                        <Route index element={<Navigate to="/platform/dashboard" replace />} />
+                        <Route path="dashboard" element={<PlatformDashboard />} />
+                        <Route path="tenants" element={<PlatformTenants />} />
+                        <Route path="settings" element={<div className="text-muted-foreground">Platform settings coming soon.</div>} />
+                      </Route>
+                      <Route path="/" element={<Navigate to="/platform/dashboard" replace />} />
+                      <Route path="*" element={<Navigate to="/platform/dashboard" replace />} />
+                    </>
+                  )}
+                  
+                  {isPlatformPublic && (
+                    <>
+                      <Route path="/" element={<PlatformHome />} />
+                      <Route path="*" element={<PlatformHome />} />
+                    </>
+                  )}
+                  
+                  {/* TENANT ROUTES (existing) */}
                   {showBothRoutes && (
                     <>
+                      {/* Platform preview routes (accessible via /platform path in preview) */}
+                      <Route path="/platform/login" element={<AdminAuth />} />
+                      <Route path="/platform/home" element={<PlatformHome />} />
+                      <Route path="/platform" element={
+                        <PlatformProtectedRoute>
+                          <PlatformLayout />
+                        </PlatformProtectedRoute>
+                      }>
+                        <Route index element={<Navigate to="/platform/dashboard" replace />} />
+                        <Route path="dashboard" element={<PlatformDashboard />} />
+                        <Route path="tenants" element={<PlatformTenants />} />
+                        <Route path="settings" element={<div className="text-muted-foreground">Platform settings coming soon.</div>} />
+                      </Route>
+                      
                       {/* Admin routes */}
                       <Route path="/admin/login" element={<AdminAuth />} />
                       <Route path="/unauthorized" element={<Unauthorized />} />
